@@ -1,0 +1,58 @@
+{
+  "1": {
+    "inputs": {
+      "image": "Mech_Test_v1_00103_.png [output]"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "2": {
+    "inputs": {
+      "preset": "white",
+      "color": ""
+    },
+    "class_type": "AILab_ColorInput",
+    "_meta": {
+      "title": "Color Input (RMBG) 🎨"
+    }
+  },
+  "3": {
+    "inputs": {
+      "model": "RMBG-2.0",
+      "sensitivity": 1,
+      "process_res": 1024,
+      "mask_blur": 0,
+      "mask_offset": 0,
+      "invert_output": false,
+      "refine_foreground": false,
+      "background": "Alpha",
+      "background_color": [
+        "2",
+        0
+      ],
+      "image": [
+        "1",
+        0
+      ]
+    },
+    "class_type": "RMBG",
+    "_meta": {
+      "title": "Remove Background (RMBG)"
+    }
+  },
+  "4": {
+    "inputs": {
+      "filename_prefix": "Mech_Test_v1",
+      "images": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  }
+}

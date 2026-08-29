@@ -1,0 +1,340 @@
+{
+  "1": {
+    "inputs": {
+      "image": "Mech_Test_v1_00009_.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "5": {
+    "inputs": {
+      "pixels": [
+        "28",
+        0
+      ],
+      "vae": [
+        "12",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "8": {
+    "inputs": {
+      "unet_name": "krea2TurboOfficialComfy_krea2TurboInt8.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "9": {
+    "inputs": {
+      "clip_name": "qwen3vl_4b_bf16.safetensors",
+      "type": "krea2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "11": {
+    "inputs": {
+      "text": "KEEP the exact same mech pose, silhouette, proportions, and pixel-art linework completely unchanged — do not add, remove, or redraw any details, panels, or structural elements. Only add color and shading: recolor each existing tone into a corresponding hue — dark red for the main armor plating,  a glowing red lens for the head visor, gunmetal grey for the Howitzer rifle with darker metal highlights, warm amber for small accent lights along the joints. Use bold, richly saturated colors — avoid muted, desaturated, or washed-out tones. Apply smooth gradient shading within each armor panel, with a brighter highlight toward the upper-left light source and deeper shadow falloff toward the lower-right edges, to give the surfaces a sense of volume and metallic material, rather than flat single-tone fills. Keep the pixel-art style and panel boundaries exactly as they are, simply recolored and shaded. Keep the background flat white, unchanged.",
+      "clip": [
+        "9",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "12": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "13": {
+    "inputs": {
+      "samples": [
+        "16",
+        0
+      ],
+      "vae": [
+        "12",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "14": {
+    "inputs": {
+      "conditioning": [
+        "11",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "Conditioning Zero Out"
+    }
+  },
+  "15": {
+    "inputs": {
+      "model": "RMBG-2.0",
+      "sensitivity": 1,
+      "process_res": 1024,
+      "mask_blur": 0,
+      "mask_offset": 0,
+      "invert_output": false,
+      "refine_foreground": false,
+      "background": "Alpha",
+      "background_color": [
+        "17",
+        0
+      ],
+      "image": [
+        "20",
+        0
+      ]
+    },
+    "class_type": "RMBG",
+    "_meta": {
+      "title": "Remove Background (RMBG)"
+    }
+  },
+  "16": {
+    "inputs": {
+      "seed": 834719098576307,
+      "steps": 12,
+      "cfg": 3,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 0.18,
+      "model": [
+        "8",
+        0
+      ],
+      "positive": [
+        "19",
+        0
+      ],
+      "negative": [
+        "14",
+        0
+      ],
+      "latent_image": [
+        "5",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "17": {
+    "inputs": {
+      "preset": "white",
+      "color": ""
+    },
+    "class_type": "AILab_ColorInput",
+    "_meta": {
+      "title": "Color Input (RMBG) 🎨"
+    }
+  },
+  "18": {
+    "inputs": {
+      "images": [
+        "13",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "InPainted"
+    }
+  },
+  "19": {
+    "inputs": {
+      "conditioning": [
+        "11",
+        0
+      ],
+      "latent": [
+        "5",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "Set Reference Latent"
+    }
+  },
+  "20": {
+    "inputs": {
+      "upscale_model": [
+        "21",
+        0
+      ],
+      "image": [
+        "13",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "Upscale Image (using Model)"
+    }
+  },
+  "21": {
+    "inputs": {
+      "model_name": "realesrganX4plusAnime_v1.pt"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "Load Upscale Model"
+    }
+  },
+  "22": {
+    "inputs": {
+      "images": [
+        "1",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "OriginalMinusAlphaChannel"
+    }
+  },
+  "23": {
+    "inputs": {
+      "images": [
+        "15",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "TransparentBackground"
+    }
+  },
+  "24": {
+    "inputs": {
+      "width": [
+        "25",
+        0
+      ],
+      "height": [
+        "25",
+        1
+      ],
+      "batch_size": 1,
+      "color": [
+        "26",
+        0
+      ]
+    },
+    "class_type": "EmptyImage",
+    "_meta": {
+      "title": "Empty Image"
+    }
+  },
+  "25": {
+    "inputs": {
+      "image": [
+        "1",
+        0
+      ]
+    },
+    "class_type": "GetImageSize",
+    "_meta": {
+      "title": "Get Image Size"
+    }
+  },
+  "26": {
+    "inputs": {
+      "color": "#ffffff"
+    },
+    "class_type": "ColorToRGBInt",
+    "_meta": {
+      "title": "Color Picker"
+    }
+  },
+  "27": {
+    "inputs": {
+      "mask": [
+        "1",
+        1
+      ]
+    },
+    "class_type": "InvertMask",
+    "_meta": {
+      "title": "Invert Mask"
+    }
+  },
+  "28": {
+    "inputs": {
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "destination": [
+        "24",
+        0
+      ],
+      "source": [
+        "1",
+        0
+      ],
+      "mask": [
+        "27",
+        0
+      ]
+    },
+    "class_type": "ImageCompositeMasked",
+    "_meta": {
+      "title": "Image Composite Masked"
+    }
+  },
+  "29": {
+    "inputs": {
+      "images": [
+        "28",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "CompositedImage"
+    }
+  },
+  "31": {
+    "inputs": {
+      "images": [
+        "20",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "UpscaledImage"
+    }
+  }
+}

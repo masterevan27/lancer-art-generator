@@ -1,7 +1,7 @@
 {
   "51": {
     "inputs": {
-      "text": "%prompt%",
+      "text": "A realistic, high-definition photograph of a traditional Chinese pavilion interior, featuring a fixed architectural frame with dark, polished wooden pillars and flooring that creates a clear, symmetrical view looking outward. Through the wide, open bays, a lush, mist-covered garden landscape is revealed, centered around a tranquil pond reflecting the surrounding verdant greenery, manicured shrubs, and ancient trees. On the left, an ornate Chinese pavilion with multi-tiered eaves sits gracefully; on the right, a small wooden footbridge arches over the water. The composition is balanced and serene, emphasizing depth through the foreground interior framing and the sprawling garden background, with meticulous textures on the smooth wood floors and intricate architectural details, capturing a peaceful, contemplative atmosphere.",
       "clip": [
         "181",
         1
@@ -35,7 +35,7 @@
   },
   "54": {
     "inputs": {
-      "seed": "%seed%",
+      "seed": 401724234348003,
       "steps": 10,
       "cfg": 1,
       "sampler_name": "euler",
@@ -113,7 +113,7 @@
   },
   "69": {
     "inputs": {
-      "filename_prefix": "Mech_Test_v1",
+      "filename_prefix": "Lancer_Scene_Workflow_v1",
       "images": [
         "56",
         0
@@ -145,8 +145,8 @@
   },
   "188": {
     "inputs": {
-      "width": "%width%",
-      "height": "%height%",
+      "width": 1920,
+      "height": 1080,
       "batch_size": 1
     },
     "class_type": "EmptyLatentImage",
@@ -184,6 +184,17 @@
     "class_type": "EmptyLatentImage",
     "_meta": {
       "title": "Character Portrait Size"
+    }
+  },
+  "200": {
+    "inputs": {
+      "width": 3840,
+      "height": 2160,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "4k Background image Size"
     }
   }
 }
