@@ -278,3 +278,97 @@ Note that ComfyUI's `%date:…%` and `%Node Title.widget%` filename substitution
 are applied by its web frontend, not the server, so they pass through literally on
 anything submitted over the API. The script sets each `filename_prefix` itself, so
 this only matters if you add such tokens to a workflow by hand.
+
+---
+
+# generate-npc.py — random NPCs, portrait + token
+
+A companion script, not a mode of the one above. `generate-art.py` renders an
+*authored* corpus: every prompt it runs was written by hand into a markdown file,
+and its whole selection model — `--filter`, `--resume`, the manifest, the output
+tree — is keyed to that file's headings. A random NPC has no authored entry to
+key against, needs two prompts with different sizes and different post-processing,
+and wants a different folder layout at the end. Those are the reasons it's a
+separate entry point rather than a flag.
+
+What it *does* share is all the ComfyUI plumbing. `generate-npc.py` imports
+`generate-art.py` and reuses its server discovery, workflow slot detection, job
+builders, RMBG post pass and manifest helpers unchanged, so there is one
+implementation of each. (The hyphen in the filename keeps it off the normal
+import path, so it's loaded by file location — renaming it would invalidate every
+doc and shell history that names it.)
+
+## What one run produces
+
+```
+python generate-npc.py
+```
+
+Rolls one human NPC — pilots, mechanics, dock hands, corpo liaisons — out of
+`../Art Prompts/npc-generator-tables.md`, composes a matched portrait and token
+prompt in the campaign's house style, and writes a self-contained folder under
+the Foundry Lancer token root:
+
+```
+<root>/NPCs/Nadia Okonkwo/Nadia Okonkwo Portrait.png   1024×1024, opaque
+<root>/NPCs/Nadia Okonkwo/Nadia Okonkwo Token.png      1024×1280, transparent
+<root>/NPCs/Nadia Okonkwo/Nadia Okonkwo.md             the rolled dossier
+```
+
+Both images come from the same roll, so they depict the same person. The portrait
+keeps its blurred backdrop and skips background removal; only the token goes
+through RMBG. That is why the two can't share a single `--post` chain.
+
+`<root>` defaults to the live Foundry data tree —
+`…\FoundryVTT-Node-13.351\data\Data\Images\LancerFoundryTokens` — which is the
+doubled `data\Data` path Foundry actually reads at runtime, not the AppData copy.
+If that path doesn't exist the script falls back to the hub's own
+`Assets/LancerFoundryTokens/`. `--out` overrides both.
+
+The dossier records the callsign, every rolled trait, the seed, and both prompts
+verbatim, so an NPC you like can be re-rolled or hand-edited later.
+
+## The roll tables
+
+`../Art Prompts/npc-generator-tables.md` holds eighteen tables — names, callsigns,
+pronouns, age, build, skin, hair, eyes, distinguishing feature, demeanor, role,
+faction, outfit, gear, accent color, portrait backdrop, token stance. Every
+`##` heading is a table and every `-` bullet under it is one option, so adding
+options needs no code change. A bullet may start with `xN ` to count as N
+entries, which is how "common" and "rare" are expressed. Renaming a heading
+*will* break the prompt templates, which look tables up by name.
+
+The prompt templates themselves live in the script, and are reproduced at the
+bottom of the tables file so the house style is visible in one place.
+
+## Options
+
+| Flag | Effect |
+| --- | --- |
+| `--count N` | Roll N NPCs in one run. Default 1. |
+| `--seed N` | Base seed. NPC *i* uses `seed+i`, so a whole run is reproducible. Random if omitted. |
+| `--name "Ivo Karras"` | Use this name instead of rolling one. Single NPC only. |
+| `--set-trait Table=value` | Force one rolled trait, e.g. `--set-trait Role="a field medic"`. Repeatable. |
+| `--tables PATH` | A different tables file. |
+| `--no-portrait` / `--no-token` | Generate only one of the two. |
+| `--keep-raw-token` | Also save the token's opaque pre-RMBG render. |
+| `--out PATH` | Token root to write NPC folders into. |
+| `--overwrite` | Reuse an existing folder of that name instead of suffixing it `(2)`. |
+| `--workflow` / `--rmbg` | Swap either workflow. Same defaults as `generate-art.py`. |
+| `--steps` / `--cfg` / `--sampler` / `--scheduler` / `--set` | Same generation overrides as above. |
+| `--server` / `--timeout` | Same as above. |
+| `--dry-run` | Roll, print the NPCs and their prompts, queue nothing. |
+
+Sizes are fixed per image — 1024×1024 for the portrait, 1024×1280 for the token —
+since the token needs headroom and footroom for a clean background-removal crop
+and the portrait wants to drop straight onto a square actor sheet.
+
+Run log: `.generated-npcs.json`, holding every roll's traits and seed. It's local
+state, gitignored alongside `generate-art.py`'s manifest.
+
+```
+python generate-npc.py --dry-run --count 5
+python generate-npc.py --count 3
+python generate-npc.py --seed 4242            # re-roll a specific NPC
+python generate-npc.py --set-trait Faction="in Harrison Armory service dress, imperial and immaculate"
+```
