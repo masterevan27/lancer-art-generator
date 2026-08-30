@@ -121,6 +121,7 @@ catalogue at the workflow's saved settings.
 | `--seed N` | Base seed; variants use N, N+1, … Default is random per image. |
 | `--steps` `--cfg` `--sampler` `--scheduler` | Override the sampler. |
 | `--width` `--height` | Override the latent size. |
+| `--set NODE.input=value` | Patch any input of the generation workflow — `--set 181.strength_model=0.4`. Repeatable. Generation workflow only; post workflows aren't covered. |
 
 **Post-processing**
 
@@ -146,6 +147,7 @@ catalogue at the workflow's saved settings.
 | --- | --- |
 | `--server ADDR` | ComfyUI address, e.g. `127.0.0.1:8000`. Default: probe 8000–8015. |
 | `--list` | List what would run, then exit. |
+| `--inspect` | Print each workflow's nodes and the inputs the script writes, then exit. |
 | `--dry-run` | Build and validate every job, queue nothing. |
 | `--dump-job PATH` | With `--dry-run`, write the first built job out for inspection. |
 | `--timeout SECONDS` | Per-image ceiling. Default 1800. |
@@ -196,6 +198,37 @@ file; the second only appears if you ask for a post pass:
 The sibling `ComfyUI Importable/` folder holds the UI-format exports for opening
 in ComfyUI itself. Those won't run here — see below.
 
+## Inspecting and patching a workflow
+
+`--inspect` lists every node in the workflows this run would use, tagged with the
+inputs the script writes:
+
+```
+python generate-art.py --inspect --post rmbg
+```
+
+```
+   51  CLIPTextEncode      [CLIP Text Encode (Prompt] <- prompt text
+   54  KSampler            [KSampler]                 <- seed, steps, cfg, sampler_name, scheduler
+   57  EmptyLatentImage    [Token Image Size]         <- width, height
+   69  SaveImage           [Save Image]               <- filename_prefix
+  181  LoraLoader          [Load LoRA (Model and CLI]
+```
+
+Anything untagged is left at whatever the workflow was exported with. `--set`
+reaches those — LoRA strength, denoise, a different checkpoint — without editing
+and re-exporting the file:
+
+```
+python generate-art.py --set 181.strength_model=0.4 --set 54.denoise=0.85 --dry-run
+```
+
+Values parse as JSON when they can (`0.4` is a number, `true` a boolean) and stay
+plain text otherwise, which is what a `.safetensors` filename needs. `--set` is
+applied last, so it beats `--steps` and friends. An unknown node id fails before
+anything is queued. It patches the generation workflow only — post workflows have
+their own node ids and aren't covered.
+
 ## The workflow template
 
 Must be **API format** (**Workflow → Export (API)**), not the UI format with
@@ -216,6 +249,15 @@ its seed, timestamp, and output filenames. Ctrl-C is safe: the manifest is
 flushed after each image, and `--resume` picks up from there. The recorded seed is
 what lets you reproduce or re-roll one specific mech later.
 
+Ctrl-C also tells ComfyUI to stop — it POSTs `/interrupt` and clears the queue, so
+the job in progress doesn't keep running on the server after the script is gone.
+
+A job that vanishes from ComfyUI's queue without landing in its history — the
+server restarted, or you cancelled it from the web UI — is detected within a few
+seconds rather than stalling until `--timeout`. And if ComfyUI accepts a job but
+reports per-node complaints, those are printed as `! node_errors` instead of
+turning up later as a bad image.
+
 A failed job reports ComfyUI's own validation detail and the run continues to the
 next entry, so one bad mech doesn't abort the batch. The exit code is 1 if
 anything failed.
@@ -228,6 +270,8 @@ anything failed.
 | `looks like a UI-format workflow` | Point at the copy in `ComfyUI API runnable/`, or re-export. |
 | `value_not_in_list … sampler_name` | An override naming something this install doesn't have. |
 | `no SaveImage or PreviewImage node` | A post workflow with no output node; add one and re-export. |
+| `left the queue without finishing` | ComfyUI restarted, or the job was cancelled from the web UI. The entry is marked failed and the run moves on. |
+| `--set: node N is not in this workflow` | Run `--inspect` for the node ids this workflow actually has. |
 | `still has unfilled placeholders` | The template has `%vars%` in nodes the script doesn't patch. Give them real values before exporting. |
 
 Note that ComfyUI's `%date:…%` and `%Node Title.widget%` filename substitutions

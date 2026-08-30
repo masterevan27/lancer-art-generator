@@ -216,6 +216,39 @@ class WorkflowError(RuntimeError):
     pass
 
 
+def parse_set(spec):
+    """'54.denoise=0.8' -> ('54', 'denoise', 0.8).
+
+    The value goes through json.loads so numbers, booleans and null arrive as
+    themselves; anything that isn't valid JSON is kept as plain text, which is
+    what a checkpoint or LoRA filename needs.
+    """
+    target, sep, raw = spec.partition("=")
+    node_id, _, key = target.rpartition(".")
+    node_id, key = node_id.strip(), key.strip()
+    if not sep or not node_id or not key:
+        raise ValueError("expected NODE.input=value, got %r" % spec)
+    try:
+        return node_id, key, json.loads(raw)
+    except json.JSONDecodeError:
+        return node_id, key, raw
+
+
+def describe(graph, tags):
+    """One line per node, marking the inputs this script writes."""
+    out = []
+    for nid in sorted(graph, key=lambda n: (len(n), n)):
+        node = graph[nid]
+        title = node.get("_meta", {}).get("title", "")
+        out.append(("  %4s  %-30s %-26s %s" % (
+            nid,
+            node.get("class_type", "?"),
+            ("[%s]" % title[:24]) if title else "",
+            ("<- " + ", ".join(tags[nid])) if nid in tags else "",
+        )).rstrip())
+    return "\n".join(out)
+
+
 def _link(node, socket):
     """Return the upstream node id wired into `socket`, if any."""
     value = node.get("inputs", {}).get(socket)
@@ -411,6 +444,14 @@ def build_job(template, slots, entry, seed, args):
         if args.height:
             latent_inputs["height"] = args.height
 
+    # Last, so an explicit --set beats anything modelled above.
+    for node_id, key, value in args.set:
+        if node_id not in graph:
+            raise WorkflowError(
+                "--set: node %s is not in this workflow (run --inspect to list nodes)" % node_id
+            )
+        graph[node_id].setdefault("inputs", {})[key] = value
+
     prune_orphans(graph)
 
     leftover = [
@@ -454,20 +495,51 @@ class Comfy:
         except Exception:
             return False
 
-    def queue(self, graph):
-        payload = json.dumps({"prompt": graph, "client_id": self.client_id}).encode("utf-8")
+    def _post(self, path, payload, timeout=30):
+        data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
-            self.base + "/prompt", data=payload, headers={"Content-Type": "application/json"}
+            self.base + path, data=data, headers={"Content-Type": "application/json"}
         )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            body = resp.read().decode("utf-8")
+            return json.loads(body) if body else {}
+
+    def queue(self, graph):
         try:
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                return json.loads(resp.read().decode("utf-8"))["prompt_id"]
+            reply = self._post("/prompt", {"prompt": graph, "client_id": self.client_id}, timeout=60)
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", "replace")
             raise RuntimeError("ComfyUI rejected the job (%s): %s" % (exc.code, detail[:800]))
+        # A job can be accepted and still carry per-node complaints; without
+        # this they only ever show up as a bad image.
+        if reply.get("node_errors"):
+            print("    ! node_errors: %s" % json.dumps(reply["node_errors"])[:500],
+                  file=sys.stderr)
+        return reply["prompt_id"]
+
+    def queued(self, prompt_id):
+        """Is this job still running or waiting on the server?"""
+        try:
+            queue = self._get("/queue", timeout=5.0)
+        except Exception:
+            return True  # can't tell - assume it's alive rather than kill a live job
+        for bucket in ("queue_running", "queue_pending"):
+            for item in queue.get(bucket, []):
+                if len(item) > 1 and item[1] == prompt_id:
+                    return True
+        return False
+
+    def cancel_all(self):
+        """Stop the running job and drop anything still queued."""
+        for path, payload in (("/interrupt", {}), ("/queue", {"clear": True})):
+            try:
+                self._post(path, payload, timeout=10)
+            except Exception:
+                pass
 
     def wait(self, prompt_id, poll=1.5, timeout=1800):
         deadline = time.time() + timeout
+        misses = 0
         while time.time() < deadline:
             try:
                 history = self._get("/history/" + prompt_id)
@@ -482,6 +554,21 @@ class Comfy:
                     raise RuntimeError("job failed: " + json.dumps(messages)[:800])
                 if status.get("completed", True):
                     return record
+                misses = 0
+            elif self.queued(prompt_id):
+                misses = 0
+            else:
+                # In neither history nor the queue: the server restarted, or the
+                # job was cancelled from the web UI. Waiting out the full
+                # --timeout for a job that will never report back is 30 minutes
+                # of nothing, so give up after a few polls - a couple of misses
+                # can just be /history lagging the queue.
+                misses += 1
+                if misses >= 5:
+                    raise RuntimeError(
+                        "job %s left the queue without finishing (server restarted, "
+                        "or it was cancelled)" % prompt_id
+                    )
             time.sleep(poll)
         raise TimeoutError("job %s did not finish within %.0fs" % (prompt_id, timeout))
 
@@ -605,6 +692,9 @@ def parse_args(argv=None):
     gen.add_argument("--scheduler", help="override scheduler, e.g. simple")
     gen.add_argument("--width", type=int, help="override latent width")
     gen.add_argument("--height", type=int, help="override latent height")
+    gen.add_argument("--set", action="append", default=[], metavar="NODE.input=value",
+                     help="patch any input of the generation workflow, e.g. --set 54.denoise=0.8; "
+                          "repeatable. Run --inspect for node ids")
 
     post = p.add_argument_group("post-processing")
     post.add_argument("--post", action="append", default=[], metavar="WORKFLOW",
@@ -632,6 +722,8 @@ def parse_args(argv=None):
     run = p.add_argument_group("run mode")
     run.add_argument("--server", help="ComfyUI address, e.g. 127.0.0.1:8000 (default: probe 8000-8015)")
     run.add_argument("--list", action="store_true", help="list the entries that would run, then exit")
+    run.add_argument("--inspect", action="store_true",
+                     help="print each workflow's nodes and the inputs this script writes, then exit")
     run.add_argument("--dry-run", action="store_true", help="build and validate every job, but queue nothing")
     run.add_argument("--dump-job", type=Path,
                      help="with --dry-run, write the first built job here for inspection")
@@ -647,6 +739,14 @@ def parse_args(argv=None):
         p.error("--post-only needs at least one --post workflow")
     if args.post_only and args.resume:
         p.error("--post-only reads the manifest; --resume would skip every entry in it")
+
+    resolved_sets = []
+    for spec in args.set:
+        try:
+            resolved_sets.append(parse_set(spec))
+        except ValueError as exc:
+            p.error("--set %s" % exc)
+    args.set = resolved_sets
 
     # Keep the alias as the filename suffix - "Blackbeard_rmbg.png" beats
     # "Blackbeard_Util_RemoveBackground_makeTransparent.png".
@@ -697,6 +797,47 @@ def select(entries, args):
     return out
 
 
+def inspect(args):
+    """Dump every workflow this run would use, and what gets written where."""
+    if not args.post_only:
+        graph = load_api_workflow(args.workflow)
+        try:
+            slots = locate_slots(graph)
+        except WorkflowError as exc:
+            raise SystemExit("%s: %s" % (args.workflow.name, exc))
+        tags = {
+            slots.positive: ["prompt text"],
+            slots.sampler: ["seed, steps, cfg, sampler_name, scheduler"],
+            slots.save: ["filename_prefix"],
+        }
+        if slots.latent:
+            tags.setdefault(slots.latent, []).append("width, height")
+        print("%s  (generation, --workflow)" % args.workflow.name)
+        print(describe(graph, tags))
+
+    for label, path in args.post:
+        graph = load_api_workflow(path)
+        try:
+            post_slots = locate_post_slots(graph, args.post_output)
+        except WorkflowError as exc:
+            raise SystemExit("%s: %s" % (path.name, exc))
+        tags = {
+            post_slots.load: ["the previous stage's image"],
+            post_slots.output: ["filename_prefix"
+                                + (", promoted to SaveImage" if post_slots.promoted else "")],
+        }
+        if post_slots.sampler:
+            tags.setdefault(post_slots.sampler, []).append("seed")
+        for nid in post_slots.drop:
+            tags.setdefault(nid, []).append("dropped: spare preview")
+        print("%s%s  (--post %s)" % ("\n", path.name, label))
+        print(describe(graph, tags))
+
+    print("%sPatch any of these with --set NODE.input=value (generation workflow only)."
+          % "\n")
+    return 0
+
+
 def main(argv=None):
     args = parse_args(argv)
 
@@ -704,6 +845,9 @@ def main(argv=None):
         raise SystemExit("Prompts file not found: %s" % args.prompts)
     if not args.workflow.exists():
         raise SystemExit("Workflow not found: %s" % args.workflow)
+
+    if args.inspect:
+        return inspect(args)
 
     entries = parse_prompts(args.prompts)
     if not entries:
@@ -867,8 +1011,12 @@ def main(argv=None):
                     saved_images = list(images)
                 saved_images += run_posts(images, entry, seed)
             except KeyboardInterrupt:
-                print("\ninterrupted - manifest saved; rerun with --resume to continue")
+                # Without this the job ComfyUI is mid-way through - and anything
+                # else already queued - keeps running after the script exits.
+                print("\ninterrupted - cancelling the running job and clearing the queue")
+                comfy.cancel_all()
                 save_manifest(args.manifest, manifest)
+                print("manifest saved; rerun with --resume to continue")
                 return 130
             except Exception as exc:
                 failed += 1
