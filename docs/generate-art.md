@@ -67,13 +67,24 @@ suffix and can be isolated or excluded with `--only-alternates` /
 
 ## What it writes
 
-Into ComfyUI's output folder, under `--output-prefix` (default `LancerMechs`):
+Into ComfyUI's output folder, under two roots: generated images go beneath
+`--output-prefix` (default `LancerMechs`), post-processed ones beneath
+`--post-prefix` (default `LancerFoundryTokens`). The folder path below the root
+is the same in both — the markdown headings, so manufacturer and class survive:
 
 ```
 LancerMechs/Player-Frames/IPS-Northstar/Blackbeard_00001_.png
-LancerMechs/Player-Frames/IPS-Northstar/Blackbeard_rmbg_00001_.png
 LancerMechs/NPC-Mech-Classes/Striker/Cataphract_Alternate-look-heavy-cavalry_00001_.png
+
+LancerFoundryTokens/Player-Frames/IPS-Northstar/Blackbeard_rmbg_00001_.png
+LancerFoundryTokens/NPC-Mech-Classes/Striker/Cataphract_Alternate-look-heavy-cavalry_rmbg_00001_.png
 ```
+
+Splitting the roots makes `LancerFoundryTokens/` a self-contained tree of
+transparent PNGs to hand to Foundry, with no raw generations mixed in to strip
+out first.
+`--post-prefix LancerMechs` puts the two side by side again, the way earlier runs
+wrote them.
 
 ComfyUI treats `/` in a `filename_prefix` as subfolders and appends its own
 counter. `--download-to` copies results somewhere else as well; ComfyUI always
@@ -123,7 +134,8 @@ catalogue at the workflow's saved settings.
 
 | Option | |
 | --- | --- |
-| `--output-prefix NAME` | Top-level subfolder in ComfyUI's output dir. Default `LancerMechs`. |
+| `--output-prefix NAME` | Top-level subfolder for generated images. Default `LancerMechs`. |
+| `--post-prefix NAME` | Top-level subfolder for `--post` results. Default `LancerFoundryTokens`. |
 | `--download-to DIR` | Also copy finished images here. |
 | `--manifest PATH` | Run log. Default `.generated-manifest.json` beside the script. |
 | `--resume` | Skip entries already in the manifest. |
@@ -149,8 +161,9 @@ PNGs the Foundry token pipeline wants:
 python generate-art.py --steps 8 --post rmbg
 ```
 
-Outputs are suffixed with the stage name, so `Blackbeard_00001_.png` is joined by
-`Blackbeard_rmbg_00001_.png`.
+Outputs are suffixed with the stage name and written under `--post-prefix`, so
+`LancerMechs/…/Blackbeard_00001_.png` is joined by
+`LancerFoundryTokens/…/Blackbeard_rmbg_00001_.png` at the same sub-path.
 
 To run a pass over images generated earlier, without regenerating them:
 
@@ -166,6 +179,22 @@ image. If it has no `SaveImage`, the script promotes the `PreviewImage` at the e
 of the longest chain — the finished pass rather than a debug tap — strips the
 spare previews so they don't each write a temp file, and prints what it chose.
 `--post-output` overrides that pick.
+
+## Which workflows it runs
+
+Everything lives in `../Workflows/ComfyUI API runnable/`, resolved relative to
+the script rather than the working directory. A default run touches exactly one
+file; the second only appears if you ask for a post pass:
+
+| File | When |
+| --- | --- |
+| `Lancer_Scene_Workflow_v1.json` | Every run. The `--workflow` default. |
+| `Util_RemoveBackground_makeTransparent.json` | Only with `--post rmbg`, the shorthand this maps to. |
+| `Util_Krea2_Inpaint_v1.json` | Never on its own — pass the path to `--workflow` or `--post`. |
+| `lancer-scene-workflow-with-vars.json` | Never on its own — but works as a `--workflow` drop-in. Same graph with `%prompt%` / `%seed%` placeholders, in the two nodes the script overwrites anyway. |
+
+The sibling `ComfyUI Importable/` folder holds the UI-format exports for opening
+in ComfyUI itself. Those won't run here — see below.
 
 ## The workflow template
 

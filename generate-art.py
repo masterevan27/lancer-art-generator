@@ -12,7 +12,12 @@ markdown headings, e.g.
 Stdlib only - no pip installs needed. Run with --list or --dry-run first.
 
 Each result can then be chained through image -> image passes with --post, so a
-mech can go text -> image -> transparent PNG in one run.
+mech can go text -> image -> transparent PNG in one run. Post-pass results land
+under their own root (--post-prefix, default LancerFoundryTokens) rather than
+beside the raw generations, so the finished transparent PNGs can be handed to
+Foundry without dragging the source images along:
+
+    <comfy>/output/LancerFoundryTokens/Player-Frames/IPS-Northstar/Blackbeard_rmbg_00001_.png
 
 Examples:
   python generate-art.py --list
@@ -612,7 +617,12 @@ def parse_args(argv=None):
 
     out = p.add_argument_group("output")
     out.add_argument("--output-prefix", default="LancerMechs",
-                     help="top-level subfolder inside ComfyUI's output dir (default: LancerMechs)")
+                     help="top-level subfolder for generated images (default: LancerMechs)")
+    out.add_argument("--post-prefix", default="LancerFoundryTokens",
+                     help="top-level subfolder for --post results, kept separate from the raw "
+                          "generations so it can be imported into Foundry as-is "
+                          "(default: LancerFoundryTokens; pass LancerMechs for "
+                          "the old side-by-side layout)")
     out.add_argument("--download-to", type=Path,
                      help="also copy finished images here (ComfyUI always keeps its own copy)")
     out.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST,
@@ -649,6 +659,16 @@ def parse_args(argv=None):
         resolved.append((alias if alias in POST_ALIASES else path.stem, path))
     args.post = resolved
     return args
+
+
+def post_prefix(args, entry, label):
+    """filename_prefix for a post-pass result.
+
+    Post outputs get their own root so the finished, background-free PNGs form
+    a self-contained tree Foundry can ingest; the heading subfolders are kept
+    underneath, and the stage label stays on the filename.
+    """
+    return ("%s/%s_%s" % (args.post_prefix, entry.prefix, label)).strip("/")
 
 
 def select(entries, args):
@@ -767,7 +787,7 @@ def main(argv=None):
             for label, path, post_template, post_slots in posts:
                 stage = build_post_job(
                     post_template, post_slots, "<previous stage>",
-                    "%s/%s_%s" % (args.output_prefix, e.prefix, label), 0, args,
+                    post_prefix(args, e, label), 0, args,
                 )
                 first = first or stage
                 print("       + %-8s -> %s" % (
@@ -807,10 +827,9 @@ def main(argv=None):
         for image in images:
             current = image
             for label, path, post_template, post_slots in posts:
-                prefix = "%s/%s_%s" % (args.output_prefix, entry.prefix, label)
                 job = build_post_job(
                     post_template, post_slots, image_ref(current),
-                    prefix.strip("/"), seed, args,
+                    post_prefix(args, entry, label), seed, args,
                 )
                 print("      + %s" % label, flush=True)
                 record = comfy.wait(comfy.queue(job), timeout=args.timeout)
