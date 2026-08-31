@@ -26,8 +26,16 @@ bullet. Anything after the weight is used verbatim in the prompt, so write
 bullets as sentence fragments that read correctly when dropped into the
 templates at the bottom of this file.
 
-`||` splits a bullet into segments. Four tables use it:
+`||` splits a bullet into segments. Six tables use it:
 
+- **Age** and **Build** bullets carry a paired flag. `|| young` on an Age entry
+  is an NPC under twenty: it swaps the prompt's "a fully grown adult" opening
+  and its adult face clause for the young forms. `|| figure` on a Build entry
+  marks a build written in terms of an adult woman's figure — bust, hips, waist
+  — and those bullets are dropped from the pool whenever the Age roll came up
+  `young`, so the unflagged builds are what a late-teen NPC rolls from. Keep
+  enough of them to stay varied. Forcing both at once with `--set-trait` is an
+  error rather than a silent pairing.
 - **Gear** and **Stance** bullets may end `|| hands`. On a Gear entry that means
   the item occupies at least one hand or arm; on a Stance entry it means the
   pose needs both hands free. Stance is rolled after Gear and filtered against
@@ -43,6 +51,11 @@ templates at the bottom of this file.
 - **Weather** bullets may end `|| clear`, meaning the bullet contributes nothing
   to the prompt. Weather only reaches a portrait whose Backdrop is flagged
   `weather`, and never reaches the token at all.
+
+Flags are matched literally and an unrecognized one is ignored rather than
+reported, so `|| Figure` or `|| hand` reads as no flag at all — which fails
+quietly in the render rather than loudly at the console. Copy the spelling from
+a neighboring bullet.
 
 A bullet may also contain a pronoun placeholder, filled from the same roll.
 That is how the Age table reads "in her forties" or "in their forties" without a
@@ -77,7 +90,9 @@ Whatever stays in a base table is meant to be genuinely neutral, so when a
 bullet only makes sense on one gender, move it into that gender's variant rather
 than leaving it in the shared pool. The script has no idea which traits are
 gendered, so adding a new variant needs no code change — drop the heading in
-and it is picked up. Weights apply inside variant tables too, which is the dial
+and it is picked up. The one exception is `GENDER_TRAITS` in
+the script, a short clause asserted for every woman rather than rolled for —
+see the Prompt templates section below. Weights apply inside variant tables too, which is the dial
 for how often a gendered option comes up.
 
 HTML comments, blank lines, and any prose paragraph that isn't a bullet are
@@ -786,6 +801,7 @@ ignored — so notes like this one are safe to leave inline.
 
 - x3 lean and athletic, narrow-hipped and small-busted || figure
 - x3 slim and fine-boned, light through the shoulders and hips || figure
+- x2 athletic and fit, narrow waist and extremely large breasts || figure
 - x2 lithe and slender, with fine shoulders and a long neck
 - x2 trim and toned, flat through the midsection with defined shoulders
 - x2 tall and rangy, long-limbed and narrow through the waist
@@ -1200,13 +1216,17 @@ ignored — so notes like this one are safe to leave inline.
 
 <!-- The single saturated glow color in an otherwise restrained frame. -->
 
-- x3 teal-green
+- teal-green
 - x2 amber
 - dull copper-orange
 - cold blue-white
 - sickly yellow-green
 - deep violet
 - brass-gold
+- crimson-red
+- electric blue
+- magenta-pink
+- neon cyan
 
 ## Backdrop
 
@@ -1353,7 +1373,7 @@ they live in `generate-npc.py` — editing them here changes nothing.
 > **{SHOT}** of **{ROLE}**, **{AGE}**, rendered in a detailed
 > painterly illustration style with fine grain texture and clean linework, halftone
 > dot shading worked into the shadows, moody cinematic lighting. {SUBJECT} is
-> **{BUILD}**, with **{SKIN}**, **{HAIR}**, and **{EYES}**, and **{FEATURE}**,
+> **{BUILD}**, with **{TRAITS}** **{SKIN}**, **{HAIR}**, and **{EYES}**, and **{FEATURE}**,
 > wearing **{OUTFIT}**, **{FACTION}**. **{HEADGEAR}** {POSSESSIVE} face carries
 > **{DEMEANOR}**. {SUBJECT} carries
 > **{GEAR}**. **{BACKDROP}** **{WEATHER}** A faint **{ACCENT}** glow falls across one side of
@@ -1363,6 +1383,13 @@ they live in `generate-npc.py` — editing them here changes nothing.
 > detail, atmospheric sci-fi character portrait. Painterly illustration throughout
 > with visible brushwork, heavy fine grain texture over every surface, and dense
 > halftone dot screentone worked deep into the shadows.
+
+`{TRAITS}` is not rolled from a table at all: it is a fixed clause the script
+asserts for every woman — currently "full lips, feminine posture" — including
+one whose `Age` came up `young`, since it describes a face and a bearing rather
+than an adult figure. It lives in `GENDER_TRAITS` in
+`generate-npc.py`, because a trait that should reach nearly every NPC of one
+gender cannot come out of a pool of thirty bullets.
 
 `{HEADGEAR}` is a whole sentence rather than a noun phrase, and so is
 `{WEATHER}` — which is empty unless the rolled Backdrop is flagged `weather`.
@@ -1379,7 +1406,7 @@ in freefall, without a separate pose table to keep in sync.
 > soles of {POSSESSIVE} boots with clear empty space above and below, rendered in a
 > detailed painterly illustration style with fine grain texture and clean linework,
 > halftone dot shading worked into the shadows. {SUBJECT} is **{BUILD}**, with
-> **{SKIN}**, **{HAIR}**, and **{EYES}**, and **{FEATURE}**, wearing **{OUTFIT}**,
+> **{TRAITS}** **{SKIN}**, **{HAIR}**, and **{EYES}**, and **{FEATURE}**, wearing **{OUTFIT}**,
 > **{FACTION}**. {POSSESSIVE} face carries **{DEMEANOR}**. {SUBJECT} carries
 > **{GEAR}**, picked out with a single **{ACCENT}** glow accent. {SUBJECT} is
 > **{STANCE}**, both boots planted and fully visible, {POSSESSIVE} face toward the

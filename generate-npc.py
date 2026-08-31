@@ -8,9 +8,10 @@ a person out of the tables in
     <comfy>/Art Prompts/npc-generator-tables.md
 
 composes a matched pair of prompts in the campaign's house style, and renders
-both through the same ComfyUI workflow generate-art.py uses. All the ComfyUI
-plumbing - server discovery, workflow slot detection, job building, the RMBG
-post pass - is imported from generate-art.py rather than reimplemented.
+both through a ComfyUI workflow - the one generate-art.py uses, unless the NPC's
+gender selects its own (see GENDER_WORKFLOWS). All the ComfyUI plumbing - server
+discovery, workflow slot detection, job building, the RMBG post pass - is
+imported from generate-art.py rather than reimplemented.
 
 Each NPC lands in its own folder under the Foundry Lancer token root:
 
@@ -30,6 +31,7 @@ Examples:
   python generate-npc.py --count 5
   python generate-npc.py --seed 1234            # reproducible roll
   python generate-npc.py --count 5 --pronouns she   # women only
+  python generate-npc.py --workflow-woman "$(pwd)/wf.json"   # override their default
   python generate-npc.py --name "Ivo Karras" --set-trait Role="a smuggler"
 """
 
@@ -126,6 +128,27 @@ FACE = {
     True: "with a young face, the brow and jaw not yet fully grown",
 }
 
+# Traits asserted for every NPC of a given gender rather than left to a roll,
+# for the same reason MATURITY and FACE are asserted rather than inferred from
+# the Age bullet: one bullet in a pool of thirty does not move the render often
+# enough to matter, and the painterly style otherwise drifts androgynous. Keyed
+# on the noun the Pronouns bullet supplies, so a fourth pronoun set opts in by
+# naming its gender here. Unlike the 'figure' builds, this clause is not gated
+# on the Age flag: it describes a face and a bearing rather than an adult
+# figure, so it applies to every woman the tables roll. Keep it that way -
+# anything naming bust, hips or waist belongs in a 'figure' Build bullet, which
+# a young NPC cannot roll.
+GENDER_TRAITS = {"woman": "full lips, feminine posture, "}
+
+# Generation workflows chosen by gender rather than by flag, keyed the same way
+# GENDER_TRAITS is: women render through their own checkpoint stack, and any
+# gender not named here falls through to --workflow. Only the two text-to-image
+# stages are gendered - background removal is the same cut either way, so --rmbg
+# stays a single workflow.
+GENDER_WORKFLOWS = {
+    "woman": art.WORKFLOW_DIR / "Lancer_Scene_Workflow_for_girls_v1.json",
+}
+
 PORTRAIT_SIZE = (1024, 1024)   # square, straight onto the Foundry actor sheet
 TOKEN_SIZE = (1024, 1280)      # tall, so head and boots keep their margin
 
@@ -133,7 +156,7 @@ PORTRAIT_TEMPLATE = (
     "{shot} of {role}, {maturity} {gender} {age}, rendered in a detailed "
     "painterly illustration style with fine grain texture, clean linework and halftone "
     "dot shading worked into the shadows, moody cinematic lighting. {Subject} {is_are} "
-    "{build}, {face}, and "
+    "{build}, {face}, and {traits}"
     "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction}, the clothing "
     "following the shape of that frame. {headgear} {Possessive} face carries {demeanor}. "
     "{gear_line}{backdrop} {weather_line}A faint {accent} glow falls across one side of {possessive} "
@@ -151,7 +174,7 @@ TOKEN_TEMPLATE = (
     "standing at full height facing the viewer, entire body visible from the top of "
     "{possessive} head to the soles of {possessive} boots with clear empty space above "
     "and below, in realistic adult proportions roughly seven to eight heads tall. "
-    "{Subject} {is_are} {build}, with {skin}, {hair}, {eyes}, and {feature}, wearing "
+    "{Subject} {is_are} {build}, with {traits}{skin}, {hair}, {eyes}, and {feature}, wearing "
     "{outfit}, {faction}, the clothing following the shape of that frame. {headgear} "
     "{Possessive} face carries {demeanor}. {gear_line}{Subject} {is_are} {stance}, both "
     "boots planted and fully visible, the pose relaxed and natural with the arms free. "
@@ -417,6 +440,9 @@ def build_prompts(npc):
         "age": npc["Age"],
         "maturity": MATURITY[npc["_young"]],
         "face": FACE[npc["_young"]],
+        # Asserted for every NPC of that gender rather than rolled for, and
+        # unlike the 'figure' builds not withheld from a young one.
+        "traits": GENDER_TRAITS.get(npc["_pronouns"]["gender"], ""),
         "build": npc["Build"],
         "skin": npc["Skin"],
         "hair": npc["Hair"],
@@ -621,6 +647,11 @@ def parse_args(argv=None):
     gen = p.add_argument_group("generation")
     gen.add_argument("--workflow", type=Path, default=art.DEFAULT_WORKFLOW,
                      help="API-format generation workflow (default: %(default)s)")
+    gen.add_argument("--workflow-woman", type=Path, metavar="PATH",
+                     default=GENDER_WORKFLOWS["woman"],
+                     help="generation workflow for NPCs who read as women "
+                          "(default: %(default)s); pass the same path as --workflow "
+                          "to put every NPC through one workflow")
     gen.add_argument("--rmbg", type=Path, default=art.POST_ALIASES["rmbg"],
                      help="background-removal workflow for the token")
     gen.add_argument("--no-portrait", action="store_true", help="token only")
@@ -679,10 +710,44 @@ def parse_args(argv=None):
         p.error("--pronouns and --set-trait Pronouns= set the same thing; use one")
     args.overrides = overrides
 
+    args.gender_workflows = dict(GENDER_WORKFLOWS, woman=args.workflow_woman)
+
     if args.out is None:
         args.out = default_root()
 
     return args
+
+
+def workflow_for(args, npc):
+    """The generation workflow this NPC's gender selects, else --workflow."""
+    return args.gender_workflows.get(npc["_pronouns"]["gender"], args.workflow)
+
+
+def load_workflows(args, rolled):
+    """Load and validate one template per workflow the roll actually needs.
+
+    Every NPC is rolled before anything is queued, so the exact set of genders
+    is known here. Checking just those fails fast on a missing or malformed
+    workflow without demanding a women's workflow exist for an all-men run.
+    """
+    loaded = {}
+    for _, npc, _ in rolled:
+        path = workflow_for(args, npc)
+        if path in loaded:
+            continue
+        if not path.exists():
+            raise SystemExit("Workflow not found: %s" % path)
+        template = art.load_api_workflow(path)
+        try:
+            slots = art.locate_slots(template)
+        except art.WorkflowError as exc:
+            raise SystemExit("%s: %s" % (path.name, exc))
+        if not slots.latent:
+            print("! %s has no EmptyLatentImage - portrait and token will share the "
+                  "workflow's own size instead of 1024x1024 / 1024x1280"
+                  % path.name, file=sys.stderr)
+        loaded[path] = (template, slots)
+    return loaded
 
 
 def main(argv=None):
@@ -722,6 +787,7 @@ def main(argv=None):
             print("\n  %s  \"%s\"  (seed %d)" % (npc["name"], npc["Callsigns"], seed))
             print("    %s, %s" % (npc["Role"], npc["Faction"]))
             print("    -> %s" % (npc_folder(args.out, npc["name"], args.overwrite)))
+            print("    workflow %s" % workflow_for(args, npc).name)
             if not args.no_portrait:
                 print("    portrait %dx%d ~%d tok: %s..." % (
                     PORTRAIT_SIZE + (estimate_tokens(portrait_prompt), portrait_prompt[:70])))
@@ -732,17 +798,7 @@ def main(argv=None):
         print("\ndry run OK - %d job(s) would be queued" % (len(rolled) * stages))
         return 0
 
-    if not args.workflow.exists():
-        raise SystemExit("Workflow not found: %s" % args.workflow)
-    template = art.load_api_workflow(args.workflow)
-    try:
-        slots = art.locate_slots(template)
-    except art.WorkflowError as exc:
-        raise SystemExit("%s: %s" % (args.workflow.name, exc))
-    if not slots.latent:
-        print("! %s has no EmptyLatentImage - portrait and token will share the "
-              "workflow's own size instead of 1024x1024 / 1024x1280"
-              % args.workflow.name, file=sys.stderr)
+    workflows = load_workflows(args, rolled)
 
     post_template = post_slots = None
     if not args.no_token:
@@ -758,8 +814,9 @@ def main(argv=None):
     print("ComfyUI: %s" % comfy.base)
     manifest = art.load_manifest(args.manifest)
 
-    def render(prompt, slug, stage, size, seed):
+    def render(npc, prompt, slug, stage, size, seed):
         """Queue one text -> image job and return the images it produced."""
+        template, slots = workflows[workflow_for(args, npc)]
         knobs = Knobs(args, size, COMFY_PREFIX)
         job = art.build_job(template, slots, entry_for(slug, stage, prompt), seed, knobs)
         record = comfy.wait(comfy.queue(job), timeout=args.timeout)
@@ -798,13 +855,13 @@ def main(argv=None):
 
             if not args.no_portrait:
                 print("    portrait ...", flush=True)
-                image = render(portrait_prompt, slug, "portrait", PORTRAIT_SIZE, seed)[0]
+                image = render(npc, portrait_prompt, slug, "portrait", PORTRAIT_SIZE, seed)[0]
                 written.append(fetch(comfy, image, folder / ("%s Portrait.png" % stem)).name)
                 print("      -> %s" % written[-1])
 
             if not args.no_token:
                 print("    token ...", flush=True)
-                raw = render(token_prompt, slug, "token", TOKEN_SIZE, seed)[0]
+                raw = render(npc, token_prompt, slug, "token", TOKEN_SIZE, seed)[0]
                 if args.keep_raw_token:
                     written.append(
                         fetch(comfy, raw, folder / ("%s Token (raw).png" % stem)).name)
@@ -834,6 +891,7 @@ def main(argv=None):
             "callsign": npc["Callsigns"],
             "seed": seed,
             "tables": str(args.tables),
+            "workflow": str(workflow_for(args, npc)),
             "traits": {k: v for k, v in npc.items() if not k.startswith("_")},
             "files": written,
             "when": time.strftime("%Y-%m-%d %H:%M:%S"),

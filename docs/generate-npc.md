@@ -108,6 +108,27 @@ of portraits have weather in them.
 The token never does. It renders on flat white so RMBG can cut it out, and
 falling snow would just be more to cut.
 
+There is no `--weather` flag; `Weather` is an ordinary table, so `--set-trait`
+reaches it. Both gates still apply to a forced value, which means pinning the
+`Backdrop` as well — a forced `Weather` on an unflagged backdrop is dropped
+just as silently as a rolled one. Paste a whole bullet from each table:
+
+```bash
+python generate-npc.py --pronouns she --set-trait Weather="Driving snow cuts across the frame at an angle, washing the background pale behind it." --set-trait Backdrop="A half-body character portrait || Behind {object}, softly blurred well out of focus, is a colonial street at night, the signage smeared across wet pavement. || weather"
+```
+
+Keep the trailing `|| weather` on the pasted Backdrop bullet. That flag is the
+thing being tested, and dropping it is exactly the case that produces no weather
+without saying so. The `{object}` / `{possessive}` placeholders are filled
+against the NPC's pronouns afterwards, so leave them as they are.
+
+`--dry-run` prints the assembled prompt, and the dossier carries a
+`Portrait weather` line either way — reading `clear` when the backdrop was
+eligible and the weather opted out, and `none - the rolled scene is indoors or
+in vacuum` when the backdrop was never eligible. That second line is how you
+spot a forced `Weather` that was gated out rather than one that simply came up
+clear.
+
 ## Where the entries came from
 
 Many were reverse-engineered from authored prompts already on this machine, read
@@ -198,6 +219,28 @@ Build roll rather than pasted over the result, and it takes the flag inline:
 python generate-npc.py --set-trait Age="in her late teens, sixteen or seventeen || young"
 ```
 
+Forcing `Build` is checked against that same flag rather than waved through. The
+pool filter above only screens the bullets the roll draws from, so a forced
+Build walked straight past it; the pairing is re-tested after the overrides are
+applied, where the `Age` flag is known whether it was rolled or forced. This
+combination stops before anything is queued:
+
+```bash
+python generate-npc.py --set-trait Age="in her late teens, sixteen or seventeen || young" --set-trait Build="slender but full-busted, with a clearly defined waist || figure"
+```
+
+```
+--set-trait Build: a bullet flagged 'figure' describes an adult woman's build
+and must not be combined with an Age flagged 'young'. Drop one of the two flags.
+```
+
+Drop whichever flag you didn't mean — a `figure` build with an unflagged adult
+`Age` is fine, and so is a `young` age with any of the six unflagged builds.
+
+A forced Build is also unpacked the same way a rolled one is, so a pasted bullet
+keeps its `|| figure` suffix out of the image prompt. Before that, the flag went
+into the prompt as literal text.
+
 If you add bullets, keep the rest consistent: anything describing an NPC as
 short, small, slight or baby-faced fights the templates and brings the drift
 back on an NPC who is *not* flagged young.
@@ -210,6 +253,111 @@ prompt. Reweight the `Outfit` table if you want that to happen less often.
 The prompt templates themselves live in the script, and are reproduced at the
 bottom of the tables file so the house style is visible in one place.
 
+## Traits every woman gets
+
+A trait that should reach nearly every NPC of one gender cannot come out of a
+table: one bullet in a pool of thirty lands about three percent of the time, and
+weighting it high enough to dominate crowds out everything else in the pool.
+`GENDER_TRAITS` in the script asserts those outright instead, the same way
+`MATURITY` and `FACE` assert age:
+
+```python
+GENDER_TRAITS = {"woman": "full lips, feminine posture, "}
+```
+
+It is keyed on the fourth field of the `Pronouns` bullet — the noun the prompt
+calls the subject — so `he` and `they` NPCs get nothing, and a new pronoun set
+opts in by naming its gender as a key. The clause lands in the same slot in both
+templates, immediately before the `Skin` roll:
+
+> ...with mature adult facial structure - grown brow, cheekbones and jaw, and
+> **full lips, feminine posture,** warm brown skin, greying hair tied back in a
+> short tail...
+
+Keep the trailing comma and space if you edit it; both templates read
+`{traits}{skin}` with nothing between them.
+
+Unlike the `figure` builds, this clause is not gated on the `Age` flag — it
+describes a face and a bearing rather than an adult figure, so every woman the
+tables roll gets it, teenagers included. Keep new additions to it on that side
+of the line: anything naming bust, hips or waist belongs in a `figure` `Build`
+bullet, which a `young` NPC cannot roll.
+
+Everything here is spent from the same 512-token budget. This clause costs about
+seven tokens, which moved the portraits that overflow it from two in six thousand
+to four; keep any addition short, and re-check with a long `--count` dry run.
+
+## Women render through their own workflow
+
+Everything above is prompt text. This is the other half of the same idea, one
+level down: women are rendered through a different ComfyUI workflow entirely, so
+the checkpoint and LoRA stack can differ rather than only the words fed into it.
+
+```python
+GENDER_WORKFLOWS = {
+    "woman": art.WORKFLOW_DIR / "Lancer_Scene_Workflow_for_girls_v1.json",
+}
+```
+
+Keyed exactly like `GENDER_TRAITS` — on the fourth field of the `Pronouns`
+bullet, the noun the prompt calls the subject, not on the subject pronoun — so
+the two stay in step, a gender not named falls through to `--workflow`, and a new
+pronoun set opts in by adding a key. Only the two text-to-image stages follow it:
+
+| NPC reads as | portrait + token | background removal |
+| --- | --- | --- |
+| `woman` | `Lancer_Scene_Workflow_for_girls_v1.json` | `Util_RemoveBackground_makeTransparent.json` |
+| `man`, `person`, anything else | `Lancer_Scene_Workflow_v1.json` | *same* |
+
+Cutting a background out is the same operation whoever is standing in front of
+it, so `--rmbg` stays a single workflow and there is no gendered equivalent of
+it. An unpinned run switches per NPC, which means one `--count 10` can queue
+against both files.
+
+`--workflow-woman` overrides the default; `--workflow` is the fallback everyone
+else uses. Point the two at the same file to collapse a run back onto one
+workflow without editing the script:
+
+```bash
+python generate-npc.py --count 10 --workflow-woman "../Workflows/ComfyUI API runnable/Lancer_Scene_Workflow_v1.json"
+```
+
+Both workflows are loaded and validated before the first job is queued, but only
+the ones the run actually needs. The whole roll happens up front, so the script
+knows which genders came up: an all-men run never opens the women's file, and a
+missing or UI-format one fails immediately rather than eight NPCs into a batch.
+Whichever workflow each NPC used is recorded alongside its seed in
+`.generated-npcs.json`.
+
+Swapping in a different file is the same contract `--workflow` has always had —
+API format, and the script locates its own nodes by walking `SaveImage` →
+`KSampler` → `CLIPTextEncode` / `EmptyLatentImage`, so a re-export with different
+node ids still works. `--dry-run` names the workflow per NPC, which is how to
+check the routing without queueing anything:
+
+```bash
+python generate-npc.py --dry-run --count 2 --seed 43
+```
+
+```
+  Maren Ibarra  "Perihelion"  (seed 43)
+    a mercenary sniper, unaligned and freelance
+    -> ...\NPCs\Maren Ibarra
+    workflow Lancer_Scene_Workflow_for_girls_v1.json
+    portrait 1024x1024 ~390 tok: A half-body character portrait of a mercenary sniper, a fully grown...
+
+  Yusuf Fontaine  "Overkill"  (seed 44)
+    a mech pilot, unaligned and freelance
+    -> ...\NPCs\Yusuf Fontaine
+    workflow Lancer_Scene_Workflow_v1.json
+    portrait 1024x1024 ~404 tok: A character portrait seen from behind of a mech pilot, a fully grown...
+```
+
+Sizes are unaffected: 1024×1024 and 1024×1280 are written into whichever
+workflow renders them. A file with no `EmptyLatentImage` gives up that control
+and prints a warning naming itself, so a two-workflow run says which of the two
+is the problem.
+
 ## Options
 
 | Flag | Effect |
@@ -218,13 +366,14 @@ bottom of the tables file so the house style is visible in one place.
 | `--seed N` | Base seed. NPC *i* uses `seed+i`, so a whole run is reproducible. Random if omitted. |
 | `--name "Ivo Karras"` | Use this name instead of rolling one. Single NPC only. |
 | `--pronouns she` | Roll only NPCs with that subject pronoun — `she`, `he` or `they`. Matched against the first field of the `Pronouns` table, so it gates every gendered variant table too. |
-| `--set-trait Table=value` | Force one rolled trait, e.g. `--set-trait Role="a field medic"`. Repeatable. |
+| `--set-trait Table=value` | Force one rolled trait, e.g. `--set-trait Role="a field medic"`. Repeatable across tables, but naming the same table twice is an error rather than a silent last-wins. |
 | `--tables PATH` | A different tables file. |
 | `--no-portrait` / `--no-token` | Generate only one of the two. |
 | `--keep-raw-token` | Also save the token's opaque pre-RMBG render. |
 | `--out PATH` | Token root to write NPC folders into. |
 | `--overwrite` | Reuse an existing folder of that name instead of suffixing it `(2)`. |
-| `--workflow` / `--rmbg` | Swap either workflow. Same defaults as [`generate-art.py`](README.md#options). |
+| `--workflow` / `--rmbg` | Swap the generation or background-removal workflow. Same defaults as [`generate-art.py`](README.md#options). `--workflow` covers every NPC a gender-specific workflow doesn't claim. |
+| `--workflow-woman PATH` | Generation workflow for NPCs who read as women. Defaults to `Lancer_Scene_Workflow_for_girls_v1.json`; pass the same path as `--workflow` to put the whole run through one workflow. |
 | `--steps` / `--cfg` / `--sampler` / `--scheduler` / `--set` | Same generation overrides as [`generate-art.py`](README.md#options). |
 | `--server` / `--timeout` | Same as [`generate-art.py`](README.md#options). |
 | `--dry-run` | Roll, print the NPCs and their prompts, queue nothing. |
@@ -233,8 +382,9 @@ Sizes are fixed per image — 1024×1024 for the portrait, 1024×1280 for the to
 since the token needs headroom and footroom for a clean background-removal crop
 and the portrait wants to drop straight onto a square actor sheet.
 
-Run log: `.generated-npcs.json`, holding every roll's traits and seed. It's local
-state, gitignored alongside `generate-art.py`'s manifest.
+Run log: `.generated-npcs.json`, holding every roll's traits, seed and the
+workflow it rendered through. It's local state, gitignored alongside
+`generate-art.py`'s manifest.
 
 ```
 python generate-npc.py --dry-run --count 5
@@ -242,6 +392,10 @@ python generate-npc.py --count 3
 python generate-npc.py --count 5 --pronouns she   # women only
 python generate-npc.py --seed 4242            # re-roll a specific NPC
 python generate-npc.py --set-trait Faction="in Harrison Armory service dress, imperial and immaculate"
+
+python generate-npc.py --dry-run --count 6 --seed 42   # which workflow each NPC gets
+python generate-npc.py --count 4 --pronouns he         # never opens the women's workflow
+python generate-npc.py --count 4 --workflow-woman "../Workflows/ComfyUI API runnable/Lancer_Scene_Workflow_v1.json"
 ```
 
 ## Rolling a group
@@ -252,17 +406,23 @@ below:
 
 - **A pinned trait is pinned for the whole run.** `--set-trait` takes one value,
   not a subset, so `--count 5 --set-trait Role="a field medic"` gives five field
-  medics. A group that should vary along an axis needs one run per value EM the
+  medics. A group that should vary along an axis needs one run per value — the
   runs are independent and each NPC gets its own folder, so they compose freely.
 - **`--set-trait` values are not checked against the table.** Anything you pass
   goes into the prompt verbatim, which is how you get a role or faction the
   tables never listed. The cost is that a typo fails silently rather than
   erroring, so `--dry-run` first.
 
+  Three things *are* checked, because each one used to fail quietly in a way
+  that looked like it had worked: naming the same table twice (an error naming
+  both values, rather than the last one silently winning), a `figure` Build
+  forced onto a `young` Age, and — not an error, just a silent no-op worth
+  knowing about — a forced `Weather` whose Backdrop lacks the `weather` flag.
+
 Always `--dry-run` a group before committing to it. Each NPC is three ComfyUI
 jobs — portrait, token, RMBG pass — so a five-NPC group is fifteen.
 
-**A Union marine fireteam EM five women, same unit.** `Pronouns` must carry all
+**A Union marine fireteam — five women, same unit.** `Pronouns` must carry all
 four fields (`subject/object/possessive/noun`); `she/her` alone leaves
 `{possessive}` empty and the prompt reads "in  mid-thirties".
 
@@ -270,7 +430,7 @@ four fields (`subject/object/possessive/noun`); `she/her` alone leaves
 python generate-npc.py --count 5 --seed 1000   --set-trait Pronouns="she/her/her/woman"   --set-trait Role="a Union marine soldier"   --set-trait Faction="in worn Union Administrative Department kit"
 ```
 
-**A mercenary crew EM one outfit, mixed people, varied jobs.** Roles differ, so
+**A mercenary crew — one outfit, mixed people, varied jobs.** Roles differ, so
 this is three runs sharing a faction. Pronouns are left to roll.
 
 ```
@@ -279,7 +439,7 @@ python generate-npc.py --count 2 --seed 1200 --set-trait Faction="unaligned and 
 python generate-npc.py --count 2 --seed 1300 --set-trait Faction="unaligned and freelance" --set-trait Role="an elite mercenary pilot"
 ```
 
-**A corpo delegation EM SSC, immaculate, all in the same room.** Pinning
+**A corpo delegation — SSC, immaculate, all in the same room.** Pinning
 `Backdrop` puts the whole group in one location, which is what makes them read as
 a delegation rather than six portraits. Backdrop bullets carry both halves of the
 shot split on `||`, so paste a whole bullet:
@@ -288,7 +448,7 @@ shot split on `||`, so paste a whole bullet:
 python generate-npc.py --count 4 --seed 1400   --set-trait Role="a corporate liaison officer"   --set-trait Faction="in Smith-Shimano Corpro corporate wear, sleek and expensive"   --set-trait Backdrop="A half-body character portrait || Behind {object}, softly blurred well out of focus, is a station corridor lined with conduit and hazard striping."
 ```
 
-**An EVA salvage crew EM everyone weightless.** Same trick, pointed at one of the
+**An EVA salvage crew — everyone weightless.** Same trick, pointed at one of the
 zero-gravity bullets. Copy the one you want out of the tables file; the EVA
 entries add a slim harness over whatever `Outfit` rolls, so the kit stays
 coherent in vacuum.
@@ -297,7 +457,7 @@ coherent in vacuum.
 python generate-npc.py --count 3 --seed 1500   --set-trait Role="a freelance salvager"   --set-trait Backdrop="A close, low-angle character portrait || {Subject} {is_are} floating weightless in a narrow access tube, one arm braced against the wall above {possessive} head and knees drawn up, {possessive} body turned off vertical with nothing underfoot, small debris and loose tools hanging motionless in the air alongside {object}, dim panel lighting receding down the tube behind."
 ```
 
-**A station's worth of background faces.** No pins at all EM just volume, for
+**A station's worth of background faces.** No pins at all — just volume, for
 when you want a folder to draw from rather than a specific crew.
 
 ```
@@ -310,6 +470,24 @@ python generate-npc.py --count 10 --seed 2000
 python generate-npc.py --count 6 --seed 2100 --no-portrait
 ```
 
+**A group that exercises both workflows.** Leaving `Pronouns` to roll is all
+it takes — the run switches per NPC. Worth a `--dry-run` first, since the two
+workflows need not be the same speed:
+
+```
+python generate-npc.py --dry-run --count 8 --seed 2300 --set-trait Faction="in worn Union Administrative Department kit"
+```
+
+**The same crew twice, to compare the two workflows.** A pinned seed and pinned
+pronouns make the roll identical, so the only variable left is which workflow
+rendered it. Point `--workflow-woman` at the men's file for the second run and
+give it an `--out` of its own, or the second run suffixes every folder `(2)`:
+
+```
+python generate-npc.py --count 4 --seed 2200 --pronouns she
+python generate-npc.py --count 4 --seed 2200 --pronouns she --out ./compare --workflow-woman "../Workflows/ComfyUI API runnable/Lancer_Scene_Workflow_v1.json"
+```
+
 **Re-rolling one member of a group.** NPC *i* of a run uses `seed+i`, counting
 from zero, so the third NPC of the fireteam above is seed 1002. Re-run it alone
 with the same pins and you get that exact person back:
@@ -318,13 +496,13 @@ with the same pins and you get that exact person back:
 python generate-npc.py --count 1 --seed 1002   --set-trait Pronouns="she/her/her/woman"   --set-trait Role="a Union marine soldier"   --set-trait Faction="in worn Union Administrative Department kit"
 ```
 
-Give each group a base seed far enough apart that their blocks don't overlap EM
-1000, 1100, 1200 EM and any group can be reproduced or extended later. The seed
+Give each group a base seed far enough apart that their blocks don't overlap —
+1000, 1100, 1200 — and any group can be reproduced or extended later. The seed
 is also recorded per NPC in the dossier and in `.generated-npcs.json`.
 
 **One caveat on forced pronouns.** `Given names` is a single mixed pool with no
 per-pronoun variant, so a run pinned to `she/her/her/woman` still draws names
-like Quintus or Anselm. Everything else EM build, hair, outfit, stance EM does
+like Quintus or Anselm. Everything else — build, hair, outfit, stance — does
 follow the pinned pronouns, since the pronoun roll happens before the variant
 tables are chosen. Use `--name` for a single NPC you care about, or split
 `Given names` into `(she) +` / `(he) +` variants the way `Hair` is split.

@@ -194,6 +194,7 @@ file; the second only appears if you ask for a post pass:
 | `Util_RemoveBackground_makeTransparent.json` | Only with `--post rmbg`, the shorthand this maps to. |
 | `Util_Krea2_Inpaint_v1.json` | Never on its own — pass the path to `--workflow` or `--post`. |
 | `lancer-scene-workflow-with-vars.json` | Never on its own — but works as a `--workflow` drop-in. Same graph with `%prompt%` / `%seed%` placeholders, in the two nodes the script overwrites anyway. |
+| `Lancer_Scene_Workflow_for_girls_v1.json` | Never from this script. `generate-npc.py` routes NPCs who read as women through it automatically — see [generate-npc.md](generate-npc.md#women-render-through-their-own-workflow). Valid as a `--workflow` value here if you want it. |
 
 The sibling `ComfyUI Importable/` folder holds the UI-format exports for opening
 in ComfyUI itself. Those won't run here — see below.
@@ -288,5 +289,10 @@ A companion script that rolls random human NPCs from
 and transparent token. It imports this script's ComfyUI plumbing rather than
 duplicating it, so the server discovery, workflow overrides and post-processing
 described above apply to it unchanged.
+
+One difference worth knowing before reading it: `generate-npc.py` does not run a
+single workflow per invocation the way this script does. NPCs who read as women
+render through `Lancer_Scene_Workflow_for_girls_v1.json` and everyone else
+through the `--workflow` default, so a mixed run queues against both.
 
 It has its own doc: **[generate-npc.md](generate-npc.md)**.
