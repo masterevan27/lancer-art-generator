@@ -89,12 +89,22 @@ ignored — so notes like this one are safe to leave inline.
 
 - Adaeze
 - Anselm
+- Arden
+- Ari
+- Ariane
+- Aster
+- Aven
 - Ayodele
 - Beatriz
+- Cael
 - Cai
 - Camille
+- Ciel
+- Cyr
+- Dalen
 - Dmitri
 - Eleni
+- Eren
 - Esperanza
 - Fen
 - Gabriel
@@ -103,42 +113,116 @@ ignored — so notes like this one are safe to leave inline.
 - Ingrid
 - Isabela
 - Jae-won
+- Jules
 - Junia
 - Kasimir
+- Kest
+- Kestrel
+- Kiran
 - Kwame
 - Lior
 - Lucia
 - Mahmoud
+- Maren
 - Marisol
 - Nadia
+- Niko
 - Nkechi
 - Oksana
 - Osric
 - Priya
 - Quintus
 - Rashida
+- Ren
+- Rian
+- Riven
 - Rosalind
+- Sable
 - Sanjay
 - Selin
 - Sipho
+- Soren
 - Tamsin
+- Tarin
 - Thandiwe
 - Tobias
 - Ulla
 - Valentina
+- Varen
+- Vesper
+- Vey
 - Wen
 - Xiulan
 - Yusuf
 - Zaid
 - Zora
 
+## Given names (she) +
+
+<!--
+  '+' means these are added to the Given names table rather than replacing it,
+  so a woman can still roll any of the neutral names above.
+-->
+
+- Alina
+- Amara
+- Astra
+- Calia
+- Cyra
+- Elara
+- Eris
+- Ilyra
+- Ivara
+- Kaia
+- Lena
+- Liora
+- Maelin
+- Mara
+- Naya
+- Neris
+- Nyra
+- Rhea
+- Selene
+- Sera
+- Seren
+- Talia
+- Thessa
+- Vera
+- Veya
+
+## Given names (he) +
+
+- Adrian
+- Aren
+- Cassian
+- Corvin
+- Darian
+- Dax
+- Elias
+- Evren
+- Jonas
+- Joren
+- Kael
+- Kellan
+- Luc
+- Lucan
+- Marek
+- Milo
+- Silas
+- Tavian
+- Theron
+- Viktor
+
 ## Family names
 
 - Abara
 - Achterberg
 - Adeyemi
+- Aras
 - Baptiste
 - Beaumont
+- Cade
+- Calder
 - Castellan
 - Chaudhry
 - Dalisay
@@ -147,31 +231,51 @@ ignored — so notes like this one are safe to leave inline.
 - Farkas
 - Fontaine
 - Gao
+- Hale
 - Halvorsen
 - Ibarra
 - Ikeda
 - Jarrah
+- Kade
 - Kalu
 - Karras
+- Kess
+- Kreel
 - Lindqvist
 - Machado
 - Marchetti
 - Mbeki
 - Nakamura
 - Okonkwo
+- Orin
+- Ors
 - Oyelaran
 - Petrov
 - Quintero
 - Rahimi
+- Rane
+- Renn
 - Reyes
+- Rook
 - Sandoval
 - Sarkisian
 - Sokolova
+- Sol
+- Solvek
+- Sorn
 - Tanaka
 - Thorne
 - Ubeda
+- Vale
+- Varr
 - Vasquez
+- Venn
+- Vey
+- Veyran
+- Veyre
 - Volkov
+- Vos
+- Voss
 - Whitlock
 - Xu
 - Yildirim
@@ -179,7 +283,17 @@ ignored — so notes like this one are safe to leave inline.
 
 ## Callsigns
 
-<!-- Used in the dossier, not in the art prompts. -->
+<!--
+  Used in the dossier, not in the art prompts.
+
+  The '###' group headings below are for human eyes only - the parser reads a
+  table from '##' to the next '##', so every bullet here is one flat pool and
+  the groups do not affect the roll. They are here so a whole tone can be
+  weighted or cut in one pass. Deleting the Comedic block, for instance, drops
+  Steve and Wi-Fi without touching anything else.
+-->
+
+### Nautical / old-trade
 
 - Ash
 - Bellwether
@@ -215,6 +329,373 @@ ignored — so notes like this one are safe to leave inline.
 - Waypoint
 - Whetstone
 - Yardarm
+
+### Military / professional
+
+- Aegis
+- Anvil
+- Atlas
+- Bastion
+- Bishop
+- Bulwark
+- Coyote
+- Fox
+- Ghost
+- Glaive
+- Hammer
+- Havoc
+- Hound
+- Jackal
+- Knight
+- Lance
+- Lancer
+- Mace
+- Maverick
+- Overwatch
+- Palisade
+- Phantom
+- Rampart
+- Raptor
+- Reaper
+- Rook
+- Sentinel
+- Spear
+- Specter
+- Striker
+- Talon
+- Vanguard
+- Viper
+- Vulture
+- Warden
+- Wolf
+- Wraith
+
+### Aggressive
+
+- Aftershock
+- Blackout
+- Bloodhound
+- Breach
+- Breakneck
+- Buckshot
+- Burnout
+- Cataclysm
+- Crash
+- Crusher
+- Deadlock
+- Detonator
+- Extinction
+- Graves
+- Grim
+- Grinder
+- Killswitch
+- Malice
+- Mauler
+- Overkill
+- Razor
+- Reckoning
+- Rend
+- Ripper
+- Ruin
+- Scorch
+- Shatter
+- Siege
+- Slag
+- Sunder
+- Trigger
+- Warpath
+- Wrath
+- Wreck
+
+### Stealth / recon
+
+- Afterimage
+- Blackglass
+- Blindspot
+- Crow
+- Darkstar
+- Dead Air
+- Drifter
+- Echo
+- Flicker
+- Hush
+- Lynx
+- Mirage
+- Moth
+- Nightfall
+- Null
+- Owl
+- Prowler
+- Raven
+- Shade
+- Shadow
+- Silence
+- Stalker
+- Static
+- Veil
+- Whisper
+- Wisp
+- Zero
+
+### Hacker / tech
+
+- 404
+- AFK
+- Backdoor
+- Backtrace
+- Bitrot
+- Blue Screen
+- Botnet
+- Checksum
+- Cipher
+- Ciphertext
+- Daemon
+- Exploit
+- Failsafe
+- Fork
+- Glitch
+- Hash
+- Heap
+- Kernel
+- Kernel Panic
+- Killbit
+- Loop
+- Override
+- Packet
+- Paradox
+- Payload
+- Ping
+- Process
+- Proxy
+- Race Condition
+- Recursive
+- Root
+- Rootkit
+- Sandbox
+- Segfault
+- Stack
+- Thread
+- Zero-Day
+
+### HORUS-adjacent
+
+- Angel
+- Answer
+- Anyone
+- Bad Idea
+- Black
+- Bone
+- Devil
+- Do Not Open
+- Doll
+- Error
+- Event Horizon
+- Everyone
+- Flesh
+- God
+- God.exe
+- Knife
+- Marionette
+- Meat
+- Mirror
+- Mothman
+- Mouth
+- No One
+- Nobody
+- Oracle
+- Problem
+- Prophet
+- Puppet
+- Question
+- Rabbit
+- Red
+- Saint
+- Seraph
+- Sinner
+- Skin
+- Solution
+- Somebody
+- Teeth
+- The Algorithm
+- The Other
+- The Passenger
+- The Thing
+- The Voice
+- Undefined
+- Unknown
+- Unperson
+- White
+- Witness
+- Works On My Machine
+- Worm
+
+### Cosmic
+
+- Aphelion
+- Blueshift
+- Burn
+- Comet
+- Corona
+- Deepfield
+- Drift
+- Eclipse
+- Escape Velocity
+- Eventide
+- Farpoint
+- Gravity
+- Horizon
+- Lightcone
+- Luna
+- Meteor
+- Nova
+- Orbit
+- Perihelion
+- Pulsar
+- Quasar
+- Redshift
+- Singularity
+- Sol
+- Solstice
+- Starfall
+- Starlight
+- Terminus
+- Umbra
+- Vacuum
+- Vector
+- Void
+- Wayfarer
+- Zenith
+
+### Pilot reputation
+
+- Again
+- Bad Luck
+- Black Cat
+- Close Call
+- Dead Reckoning
+- Deadeye
+- Ghost Story
+- Hard Reset
+- Hardcase
+- Kid
+- Last Chance
+- Last One
+- Longshot
+- Loose Cannon
+- Lucky
+- Lucky Seven
+- Missed Me
+- Near Miss
+- Nevermind
+- Nine Lives
+- No Refunds
+- Old Man
+- One Shot
+- Out of Ammo
+- Problem Child
+- Rabbit's Foot
+- Respawn
+- Second Wind
+- Seven
+- Still Here
+- The Survivor
+- Third Time
+- Thirteen
+- Two-Times
+- Unkillable
+- Unlucky
+- Walking Away
+- Wrong Way
+
+### Comedic
+
+- Accountant
+- Audit
+- Batteries
+- Big Gun
+- Blue on Blue
+- Bluetooth
+- Child Support
+- Collateral
+- Compliance
+- Critical Error
+- Customer Service
+- Dad
+- Dave
+- Divorce
+- Don't Worry
+- Freebird
+- Friendly Fire
+- HR
+- Intern
+- It's Fine
+- Kevin
+- Legal
+- Lunchbox
+- Management
+- Medium Gun
+- Microwave
+- Mom
+- Mortgage
+- My Bad
+- Not Me
+- Oops
+- OSHA
+- Printer
+- Probably Fine
+- Procurement
+- Rent
+- Skill Check
+- Skill Issue
+- Small Gun
+- Steve
+- Taxman
+- Tech Support
+- The Intern
+- Toaster
+- Trust Me
+- Tuesday
+- Warranty
+- Wasn't Me
+- Whoops
+- Wi-Fi
+- Witness Protection
+
+### Futuristic
+
+- Anathema
+- Apostle
+- Axiom
+- Causality
+- Coldstar
+- Continuum
+- Convergence
+- Deadlight
+- Divergence
+- Eidolon
+- Entropy
+- Faraday
+- Ghostline
+- Halcyon
+- Hardlight
+- Heretic
+- Iconoclast
+- Invariant
+- Lucid
+- Memento
+- Meridian
+- Mnemonic
+- Nightwire
+- Oblivion
+- Palimpsest
+- Parallax
+- Pariah
+- Revenant
+- Silverline
+- Starling
+- Threshold
+- Vestige
+- Wayline
 
 ## Pronouns
 
@@ -463,6 +944,8 @@ ignored — so notes like this one are safe to leave inline.
 - {Subject} {wear} a hooded shroud drawn up over a full-face helmet, its visor tinted dark and a breather mask sealed across the lower face.
 - {Subject} {wear} a deep hood drawn up, a pair of goggles clipped across the brow of it.
 - {Subject} {wear} a flat-brimmed ball cap with a small stitched patch at the front.
+- {Subject} {wear} an open-face crash helmet with the visor swung up clear of {possessive} eyes.
+- {Subject} {wear} a ballistic helmet with its visor tipped up and a black breather mask sealed over the lower face.
 
 ## Headgear (she) +
 
@@ -579,6 +1062,12 @@ ignored — so notes like this one are safe to leave inline.
 - a black hooded field jacket webbed with pull-tabs and cinch straps, a pale shoulder shroud thrown over one side, a chest rig above cargo trousers with padded thighs
 - a sealed white-and-grey field suit with an armored gorget at the throat, a plate carrier and a compact pack strapped over it, padded knees and heavy boots
 - an olive bomber jacket over a black bodysuit and plate carrier, grey cargo trousers and a drop-leg holster rig strapped down one thigh
+- an olive field jacket with the sleeves pushed back over a close black bodysuit, a chest rig of magazine pouches, armored knee and shin guards above heavy trainers
+- a sealed rescue hardsuit of segmented panels with armored boots and a hard equipment pack riding high on the shoulders
+- a segmented armored bodysuit under an open hooded jacket, a long scarf wound at the throat and trailing loose behind
+- a heavy insulated flight jacket over a hooded pullover, cargo trousers and strapped knee pads
+- a plate carrier over a dark bodysuit with a powered leg exo-frame braced from hip to boot
+- an oversized rollneck sweater with the sleeves pushed back, harness straps over both shoulders and enormously baggy cargo trousers gathered at the ankle
 
 ## Outfit (she) +
 
