@@ -13,11 +13,12 @@ gender selects its own (see GENDER_WORKFLOWS). All the ComfyUI plumbing - server
 discovery, workflow slot detection, job building, the RMBG post pass - is
 imported from generate-art.py rather than reimplemented.
 
-Each NPC lands in its own folder under the Foundry Lancer token root:
+Each NPC lands in its own folder, nested under a category folder for their
+rolled Role (see ROLE_CATEGORIES), under the Foundry Lancer token root:
 
-    <root>/Nadia Okonkwo/Nadia Okonkwo Portrait.png   1024x1024, opaque
-    <root>/Nadia Okonkwo/Nadia Okonkwo Token.png      transparent, RMBG'd
-    <root>/Nadia Okonkwo/Nadia Okonkwo.md             the rolled dossier
+    <root>/Soldiers/Nadia Okonkwo/Nadia Okonkwo Portrait.png   1024x1024, opaque
+    <root>/Soldiers/Nadia Okonkwo/Nadia Okonkwo Token.png      transparent, RMBG'd
+    <root>/Soldiers/Nadia Okonkwo/Nadia Okonkwo.md             the rolled dossier
 
 The portrait deliberately skips background removal - it wants its blurred
 backdrop - so the two images take different paths through the same workflow
@@ -140,6 +141,39 @@ FACE = {
 # a young NPC cannot roll.
 GENDER_TRAITS = {"woman": "full lips, feminine posture, "}
 
+# The coarse folder each rolled Role lands in - <root>/<category>/<Name>/ - so
+# that "a mercenary sniper" and "a close-quarters blade specialist" end up
+# together under Soldiers rather than each getting their own one-NPC folder,
+# which is what grouping on the raw Role text would do. Keyed on the exact
+# bullet text from the Role table, so a new bullet added to the tables file
+# needs an entry here too; one that's missing falls into UNCATEGORIZED_ROLE
+# rather than failing the run, with a warning printed so it doesn't go unnoticed.
+ROLE_CATEGORIES = {
+    "a mech pilot": "Pilots",
+    "a starship pilot": "Pilots",
+    "an elite mercenary pilot": "Pilots",
+    "a chief mechanic": "Technicians",
+    "a maintenance technician": "Technicians",
+    "a dockworker": "Laborers",
+    "a freelance salvager": "Laborers",
+    "a corporate liaison officer": "Officials",
+    "a Union inspector": "Officials",
+    "a colonial administrator": "Officials",
+    "a field medic": "Support",
+    "a comms and sensors operator": "Support",
+    "a smuggler": "Criminals",
+    "a pirate": "Criminals",
+    "a Union marine soldier": "Soldiers",
+    "a mercenary squad lead": "Soldiers",
+    "a security officer": "Soldiers",
+    "a mercenary sniper": "Soldiers",
+    "a close-quarters blade specialist": "Soldiers",
+    "a bar owner and information broker": "Civilians",
+    "a data courier": "Civilians",
+    "a scavenger-priest of a local machine cult": "Civilians",
+}
+UNCATEGORIZED_ROLE = "Other"
+
 # Generation workflows chosen by gender rather than by flag, keyed the same way
 # GENDER_TRAITS is: women render through their own checkpoint stack, and any
 # gender not named here falls through to --workflow. Only the two text-to-image
@@ -170,7 +204,8 @@ PORTRAIT_TEMPLATE = (
 TOKEN_TEMPLATE = (
     "A full-body character illustration of {role}, {maturity} {gender} {age}, "
     "rendered in a detailed painterly illustration style with fine grain texture, clean "
-    "linework and halftone dot shading worked into the shadows. {Subject} {is_are} "
+    "linework and halftone dot shading worked into the shadows, moody cinematic lighting "
+    "on the figure. {Subject} {is_are} "
     "standing at full height facing the viewer, entire body visible from the top of "
     "{possessive} head to the soles of {possessive} boots with clear empty space above "
     "and below, in realistic adult proportions roughly seven to eight heads tall. "
@@ -179,10 +214,11 @@ TOKEN_TEMPLATE = (
     "{Possessive} face carries {demeanor}. {gear_line}{Subject} {is_are} {stance}, both "
     "boots planted and fully visible, the pose relaxed and natural with the arms free. "
     "Keep the palette restrained - greys, olive drab and rust - with a single {accent} "
-    "glow the only saturated color. The background is a solid flat plain white, no "
-    "texture, no gradient, no shadow, no environment. Centered composition, even "
+    "glow the only saturated color. The background alone is a solid flat plain white, no "
+    "texture, no gradient, no shadow, no environment. Centered composition, dramatic "
     "lighting, isolated character illustration, clean silhouette, painterly brushwork "
-    "with heavy grain and dense halftone screentone worked into every shadow."
+    "with heavy grain and dense halftone screentone worked into every shadow, matching "
+    "the same painterly rendering as the portrait shot."
 )
 
 
@@ -489,14 +525,24 @@ def _safe(name):
     return re.sub(r"\s+", " ", re.sub(r'[<>:"/\\|?*]', "", name)).strip(" .")
 
 
-def npc_folder(root, name, overwrite):
-    """<root>/<Name>/, suffixed if that name has already been rolled."""
+def role_category(npc):
+    """The folder this NPC's Role sorts into, warning once for an unmapped one."""
+    category = ROLE_CATEGORIES.get(npc["Role"])
+    if category is None:
+        print("! Role %r has no entry in ROLE_CATEGORIES - filing under %r"
+              % (npc["Role"], UNCATEGORIZED_ROLE), file=sys.stderr)
+        category = UNCATEGORIZED_ROLE
+    return category
+
+
+def npc_folder(root, name, category, overwrite):
+    """<root>/<category>/<Name>/, suffixed if that name has already been rolled."""
     base = _safe(name)
-    folder = root / base
+    folder = root / _safe(category) / base
     if overwrite or not folder.exists():
         return folder
     for n in range(2, 100):
-        candidate = root / ("%s (%d)" % (base, n))
+        candidate = folder.parent / ("%s (%d)" % (base, n))
         if not candidate.exists():
             return candidate
     raise RuntimeError("too many NPCs already named %s" % base)
@@ -786,7 +832,7 @@ def main(argv=None):
         for seed, npc, (portrait_prompt, token_prompt) in rolled:
             print("\n  %s  \"%s\"  (seed %d)" % (npc["name"], npc["Callsigns"], seed))
             print("    %s, %s" % (npc["Role"], npc["Faction"]))
-            print("    -> %s" % (npc_folder(args.out, npc["name"], args.overwrite)))
+            print("    -> %s" % (npc_folder(args.out, npc["name"], role_category(npc), args.overwrite)))
             print("    workflow %s" % workflow_for(args, npc).name)
             if not args.no_portrait:
                 print("    portrait %dx%d ~%d tok: %s..." % (
@@ -841,7 +887,7 @@ def main(argv=None):
 
     for index, (seed, npc, prompts) in enumerate(rolled, 1):
         portrait_prompt, token_prompt = prompts
-        folder = npc_folder(args.out, npc["name"], args.overwrite)
+        folder = npc_folder(args.out, npc["name"], role_category(npc), args.overwrite)
         slug = art._slug(npc["name"])
         stem = _safe(npc["name"])
         tag = "[%d/%d]" % (index, len(rolled))

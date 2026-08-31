@@ -725,13 +725,13 @@ ignored — so notes like this one are safe to leave inline.
   woman, he -> man, anything else -> person), so old three-field bullets and
   '--set-trait Pronouns=she/her/her' still work.
 
-  Edit the fourth field to taste: "androgynous person" or "nonbinary person" in
-  place of "person" pushes the look further; "person" leaves it unspecified.
+  A they/them/their/person set used to live here. It's gone - the fourth-field
+  noun "person" wasn't a strong enough signal on its own, and the renders came
+  back visibly androgynous/inconsistent rather than reading as a coherent look.
 -->
 
 - she/her/her/woman
 - he/him/his/man
-- they/them/their/person
 
 ## Age
 
@@ -1405,7 +1405,8 @@ in freefall, without a separate pose table to keep in sync.
 > adult height and facing the viewer, entire body visible from the top of {POSSESSIVE} head to the
 > soles of {POSSESSIVE} boots with clear empty space above and below, rendered in a
 > detailed painterly illustration style with fine grain texture and clean linework,
-> halftone dot shading worked into the shadows. {SUBJECT} is **{BUILD}**, with
+> halftone dot shading worked into the shadows, moody cinematic lighting on the
+> figure. {SUBJECT} is **{BUILD}**, with
 > **{TRAITS}** **{SKIN}**, **{HAIR}**, and **{EYES}**, and **{FEATURE}**, wearing **{OUTFIT}**,
 > **{FACTION}**. {POSSESSIVE} face carries **{DEMEANOR}**. {SUBJECT} carries
 > **{GEAR}**, picked out with a single **{ACCENT}** glow accent. {SUBJECT} is
@@ -1413,11 +1414,20 @@ in freefall, without a separate pose table to keep in sync.
 > viewer — a relaxed, natural pose with the arms free, not a rigid attention
 > stance with the hands pinned at the sides. Keep the
 > palette restrained — greys, olive drab and rust — with **{ACCENT}** as the only
-> saturated color. The background is a solid flat plain white, no texture, no
-> gradient, no shadow, no environment. Centered composition, even lighting,
+> saturated color. The background alone is a solid flat plain white, no texture, no
+> gradient, no shadow, no environment. Centered composition, dramatic lighting,
 > isolated character illustration, clean silhouette. Painterly illustration throughout with
 > visible brushwork, heavy fine grain texture over every surface, and dense
-> halftone dot screentone worked deep into the shadows.
+> halftone dot screentone worked deep into the shadows, matching the same painterly
+> rendering as the portrait shot.
+
+The `even lighting` / flat-background phrasing this used to carry was flattening
+the whole render toward a clean cel-shaded look rather than just the background —
+`{ACCENT}` aside, the token came out visibly less painterly than the portrait even
+though both prompts asserted the same style words. Scoping "no texture, no
+gradient" to "the background alone" and giving the figure its own "moody
+cinematic lighting" / "dramatic lighting" cue keeps the flat cutout background
+Comfy's RMBG pass needs, without pulling the figure's rendering along with it.
 
 ### Settings
 
