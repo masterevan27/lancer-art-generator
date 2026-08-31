@@ -90,48 +90,57 @@ COMFY_PREFIX = "LancerNPCs"
 REQUIRED_TABLES = [
     "Given names", "Family names", "Callsigns", "Pronouns", "Age", "Build",
     "Skin", "Hair", "Eyes", "Feature", "Demeanor", "Role", "Faction",
-    "Outfit", "Headgear", "Gear", "Accent", "Backdrop", "Stance",
+    "Outfit", "Headgear", "Gear", "Accent", "Backdrop", "Weather", "Stance",
 ]
+
+# Krea 2 conditions on at most 512 tokens and silently truncates the rest, so a
+# prompt that runs long loses its tail - which is where the palette, the flat
+# white background and the closing style tags live. Measured against ComfyUI's
+# own Qwen2 tokenizer over 9000 generated prompts, this file averages 4.8
+# characters per token; the estimate is deliberately pessimistic at 4.5 so the
+# warning fires before the server actually truncates.
+TOKEN_LIMIT = 512
+CHARS_PER_TOKEN = 4.5
+
+
+def estimate_tokens(text):
+    return int(len(text) / CHARS_PER_TOKEN)
+
 
 PORTRAIT_SIZE = (1024, 1024)   # square, straight onto the Foundry actor sheet
 TOKEN_SIZE = (1024, 1280)      # tall, so head and boots keep their margin
 
 PORTRAIT_TEMPLATE = (
-    "{shot} of {role}, a fully grown adult {age}, rendered in a "
-    "detailed painterly illustration style with fine grain texture and clean linework, "
-    "halftone dot shading worked into the shadows, moody cinematic lighting. {Subject} "
-    "{is_are} an adult with fully mature adult facial structure - grown brow, cheekbones "
-    "and jaw, a full-size adult head in adult proportion to the shoulders - with none of "
-    "the soft rounded features of a child or teenager. {Subject} {is_are} {build}, with "
-    "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction} - the clothing "
-    "draped over that frame and following its shape rather than flattening or hiding it. "
-    "{headgear} {Possessive} face carries {demeanor}. {gear_line}{backdrop} A faint "
-    "{accent} glow falls across one side of {possessive} face, contrasted against warm dim "
-    "ambient light on the other. Keep the palette restrained - greys, olive drab and rust - "
-    "with {accent} as the only saturated color in the frame. Shallow depth of field, square "
-    "framing, high detail, atmospheric sci-fi character portrait."
+    "{shot} of {role}, a fully grown adult {gender} {age}, rendered in a detailed "
+    "painterly illustration style with fine grain texture, clean linework and halftone "
+    "dot shading worked into the shadows, moody cinematic lighting. {Subject} {is_are} "
+    "{build}, with mature adult facial structure - grown brow, cheekbones and jaw - and "
+    "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction}, the clothing "
+    "following the shape of that frame. {headgear} {Possessive} face carries {demeanor}. "
+    "{gear_line}{backdrop} {weather_line}A faint {accent} glow falls across one side of {possessive} "
+    "face against warm dim ambient light on the other. Keep the palette restrained - "
+    "greys, olive drab and rust - with {accent} the only saturated color in the frame. "
+    "Shallow depth of field, square framing, high detail, atmospheric sci-fi character "
+    "portrait, painterly brushwork with heavy grain and dense halftone screentone worked "
+    "into every shadow."
 )
 
 TOKEN_TEMPLATE = (
-    "A full-body character illustration of {role}, a fully grown adult {age}, standing at "
-    "full adult height and facing directly forward, entire body visible from the top of "
-    "{possessive} head to the soles of {possessive} boots with clear empty space above and "
-    "below, the figure tall in frame and filling most of its height, rendered in a detailed "
-    "painterly illustration style with fine grain texture and clean linework, halftone dot "
-    "shading worked into the shadows. Realistic adult human proportions throughout - "
-    "roughly seven to eight heads tall, long adult legs, a full-length adult torso and "
-    "full-size adult hands - never the short stature, oversized head or soft rounded face "
-    "of a child, teenager or chibi figure. {Subject} {is_are} {build}, with {skin}, {hair}, "
-    "{eyes}, and {feature}, wearing {outfit}, {faction} - the clothing draped over that "
-    "frame and following its shape rather than flattening or hiding it. {headgear} {Possessive} "
-    "face carries "
-    "{demeanor}. {gear_line}A single {accent} glow - an indicator light, a lit "
-    "seam, a display - is the only saturated color on {possessive} kit. "
-    "{Subject} {is_are} {stance}, boots fully planted and visible, looking straight ahead. "
-    "Keep the palette restrained - greys, olive drab and rust - with {accent} as the only "
-    "saturated color. The background is a solid flat plain white, no texture, no gradient, "
-    "no shadow, no environment. Centered composition, even lighting, isolated character "
-    "illustration, clean silhouette."
+    "A full-body character illustration of {role}, a fully grown adult {gender} {age}, "
+    "rendered in a detailed painterly illustration style with fine grain texture, clean "
+    "linework and halftone dot shading worked into the shadows. {Subject} {is_are} "
+    "standing at full height facing the viewer, entire body visible from the top of "
+    "{possessive} head to the soles of {possessive} boots with clear empty space above "
+    "and below, in realistic adult proportions roughly seven to eight heads tall. "
+    "{Subject} {is_are} {build}, with {skin}, {hair}, {eyes}, and {feature}, wearing "
+    "{outfit}, {faction}, the clothing following the shape of that frame. {headgear} "
+    "{Possessive} face carries {demeanor}. {gear_line}{Subject} {is_are} {stance}, both "
+    "boots planted and fully visible, the pose relaxed and natural with the arms free. "
+    "Keep the palette restrained - greys, olive drab and rust - with a single {accent} "
+    "glow the only saturated color. The background is a solid flat plain white, no "
+    "texture, no gradient, no shadow, no environment. Centered composition, even "
+    "lighting, isolated character illustration, clean silhouette, painterly brushwork "
+    "with heavy grain and dense halftone screentone worked into every shadow."
 )
 
 
@@ -147,12 +156,15 @@ def parse_tables(md_path):
     express 'common' versus 'rare' without a weights column.
     """
     tables = {}
+    seen = []
     current = None
 
     for line in md_path.read_text(encoding="utf-8").splitlines():
         heading = re.match(r"^##\s+(?!#)\s*(.*?)\s*$", line)
         if heading:
             current = heading.group(1)
+            if current in tables:
+                seen.append(current)
             tables.setdefault(current, [])
             continue
 
@@ -163,10 +175,16 @@ def parse_tables(md_path):
             count, text = (int(weight.group(1)), weight.group(2)) if weight else (1, text)
             tables[current].extend([text] * count)
 
+    parse_tables.repeated = sorted(set(seen))
     return {name: options for name, options in tables.items() if options}
 
 
-def check_tables(tables, path):
+def check_tables(tables, path, repeated=()):
+    for name in repeated:
+        print("! %s: '## %s' appears more than once; the blocks are merged, so "
+              "any bullet listed twice rolls twice as often" % (path.name, name),
+              file=sys.stderr)
+
     missing = [name for name in REQUIRED_TABLES if name not in tables]
     if missing:
         raise SystemExit(
@@ -201,16 +219,35 @@ def roll_npc(tables, rng, overrides=None):
     npc = {"Pronouns": pronouns}
     npc.update({
         name: rng.choice(variant_table(tables, name, subject))
-        for name in REQUIRED_TABLES if name != "Pronouns"
+        for name in REQUIRED_TABLES if name not in ("Pronouns", "Stance")
     })
+
+    # Stance is rolled last, and filtered against the Gear roll. The two tables
+    # are otherwise independent, which produced NPCs standing with their hands
+    # pushed into their pockets while holding a rifle in both hands. Gear that
+    # occupies a hand rules out the stances that need both of them free.
+    npc["Gear"], gear_flags = split_flags(npc["Gear"])
+    stances = [split_flags(x) for x in variant_table(tables, "Stance", subject)]
+    if "hands" in gear_flags:
+        free = [x for x in stances if "hands" not in x[1]]
+        stances = free or stances          # never filter the pool down to nothing
+    npc["Stance"] = rng.choice(stances)[0]
+
     npc.update(overrides or {})
 
     if "name" not in npc:
         npc["name"] = "%s %s" % (npc["Given names"], npc["Family names"])
 
-    subject, object_, possessive = (npc["Pronouns"].split("/") + ["", ""])[:3]
+    # subject/object/possessive, plus an optional fourth field: the noun the
+    # image prompt uses for the subject. Pronouns alone left the model guessing
+    # - tokens came back androgynous - so the prompt now says "adult woman" or
+    # "adult man" outright. A three-field bullet still works and infers it.
+    bits = (npc["Pronouns"].split("/") + ["", "", ""])[:4]
+    subject, object_, possessive, gender = bits
     plural = subject == "they"
+    gender = gender or {"she": "woman", "he": "man"}.get(subject, "person")
     npc["_pronouns"] = {
+        "gender": gender,
         "subject": subject,
         "Subject": subject.capitalize(),
         "object": object_,
@@ -236,6 +273,17 @@ def roll_npc(tables, rng, overrides=None):
     return npc
 
 
+def split_flags(bullet):
+    """'a rifle held in her hands || hands' -> the text, and its flags.
+
+    Same '||' convention Backdrop uses, for tables whose bullets are a single
+    phrase. The one flag is 'hands', meaning the entry occupies at least one
+    hand (on Gear) or needs both of them free (on Stance).
+    """
+    text, _, rest = bullet.partition("||")
+    return text.strip(), tuple(f for f in rest.split() if f)
+
+
 def split_backdrop(bullet):
     """A Backdrop bullet carries the shot, the scene, and optional flags.
 
@@ -256,6 +304,22 @@ def split_backdrop(bullet):
     shot, scene = parts[0], parts[1]
     flags = tuple(f for f in parts[2].split() if f) if len(parts) > 2 else ()
     return shot, scene, flags
+
+
+def weather_sentence(npc):
+    """The weather sentence this NPC's portrait gets, or '' for none.
+
+    Weather is portrait-only: the token renders on flat white so it can be cut
+    out, and falling snow would only give RMBG more to cut. It also reaches
+    only the Backdrop entries flagged 'weather', since rain inside a cockpit or
+    in hard vacuum is nonsense, and a Weather bullet flagged 'clear' opts out
+    of it in turn - that flag is the dial for how often an outdoor scene comes
+    up with nothing drifting in it.
+    """
+    if "weather" not in split_backdrop(npc["Backdrop"])[2]:
+        return ""
+    text, flags = split_flags(npc["Weather"])
+    return "" if "clear" in flags else text
 
 
 def build_prompts(npc):
@@ -280,13 +344,25 @@ def build_prompts(npc):
         "backdrop": scene,
         "stance": npc["Stance"],
     })
+    weather = weather_sentence(npc)
+    fields["weather_line"] = weather + " " if weather else ""
+
     # Built from the same fields and inserted already-substituted, since
     # str.format does a single pass and would leave any nested placeholder raw.
     carrying = "{Subject} {carry} {gear}. ".format(**fields)
     portrait_fields = dict(fields, gear_line="" if "nogear" in flags else carrying)
 
-    return (PORTRAIT_TEMPLATE.format(**portrait_fields),
-            TOKEN_TEMPLATE.format(**dict(fields, gear_line=carrying)))
+    prompts = (PORTRAIT_TEMPLATE.format(**portrait_fields),
+               TOKEN_TEMPLATE.format(**dict(fields, gear_line=carrying)))
+
+    for label, text in zip(("portrait", "token"), prompts):
+        n = estimate_tokens(text)
+        if n > TOKEN_LIMIT:
+            print("! %s prompt is about %d tokens, over Krea 2's %d-token limit - the "
+                  "tail will be truncated. Shorten the longest bullet it rolled."
+                  % (label, n, TOKEN_LIMIT), file=sys.stderr)
+
+    return prompts
 
 
 # --------------------------------------------------------------------------
@@ -317,6 +393,7 @@ def write_dossier(path, npc, seed, prompts, images):
     traits = [
         ("Callsign", npc["Callsigns"]),
         ("Pronouns", npc["Pronouns"]),
+        ("Reads as", npc["_pronouns"]["gender"]),
         ("Role", npc["Role"]),
         ("Affiliation", npc["Faction"]),
         ("Age", npc["Age"]),
@@ -331,6 +408,9 @@ def write_dossier(path, npc, seed, prompts, images):
         ("Accent color", npc["Accent"]),
         ("Portrait shot", split_backdrop(npc["Backdrop"])[0]),
         ("Portrait scene", split_backdrop(npc["Backdrop"])[1]),
+        ("Portrait weather", weather_sentence(npc) or (
+            "clear" if "weather" in split_backdrop(npc["Backdrop"])[2]
+            else "none - the rolled scene is indoors or in vacuum")),
         ("Token stance", npc["Stance"]),
     ]
 
@@ -511,7 +591,7 @@ def main(argv=None):
     if not args.tables.exists():
         raise SystemExit("Tables file not found: %s" % args.tables)
     tables = parse_tables(args.tables)
-    check_tables(tables, args.tables)
+    check_tables(tables, args.tables, getattr(parse_tables, "repeated", ()))
 
     unknown = [t for t in args.overrides if t not in REQUIRED_TABLES and t != "name"]
     if unknown:
@@ -541,9 +621,11 @@ def main(argv=None):
             print("    %s, %s" % (npc["Role"], npc["Faction"]))
             print("    -> %s" % (npc_folder(args.out, npc["name"], args.overwrite)))
             if not args.no_portrait:
-                print("    portrait %dx%d: %s..." % (PORTRAIT_SIZE + (portrait_prompt[:90],)))
+                print("    portrait %dx%d ~%d tok: %s..." % (
+                    PORTRAIT_SIZE + (estimate_tokens(portrait_prompt), portrait_prompt[:70])))
             if not args.no_token:
-                print("    token    %dx%d: %s..." % (TOKEN_SIZE + (token_prompt[:90],)))
+                print("    token    %dx%d ~%d tok: %s..." % (
+                    TOKEN_SIZE + (estimate_tokens(token_prompt), token_prompt[:70])))
         stages = (0 if args.no_portrait else 1) + (0 if args.no_token else 2)
         print("\ndry run OK - %d job(s) would be queued" % (len(rolled) * stages))
         return 0
