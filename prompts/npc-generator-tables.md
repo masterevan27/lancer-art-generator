@@ -48,12 +48,12 @@ A bullet may also contain a pronoun placeholder, filled from the same roll.
 That is how the Age table reads "in her forties" or "in their forties" without a
 separate table per pronoun set. The full set is:
 
-| Placeholder | Fills with |
-| --- | --- |
-| `{subject}` / `{object}` / `{possessive}` | she / her / her |
-| `{Subject}` / `{Possessive}` | Sentence-initial forms. There is no `{Object}`. |
-| `{is_are}` / `{carry}` / `{wear}` | Verb agreement, so they/them bullets read correctly. |
-| `{gender}` | The noun the prompt calls the subject — woman, man, person. |
+| Placeholder                               | Fills with                                                  |
+| ----------------------------------------- | ----------------------------------------------------------- |
+| `{subject}` / `{object}` / `{possessive}` | she / her / her                                             |
+| `{Subject}` / `{Possessive}`              | Sentence-initial forms. There is no `{Object}`.             |
+| `{is_are}` / `{carry}` / `{wear}`         | Verb agreement, so they/them bullets read correctly.        |
+| `{gender}`                                | The noun the prompt calls the subject — woman, man, person. |
 
 A placeholder that isn't on this list raises an error naming the bullet, so a
 typo fails loudly rather than reaching a prompt.
@@ -720,13 +720,37 @@ ignored — so notes like this one are safe to leave inline.
 
 ## Age
 
+<!--
+  A bullet flagged 'young' is an NPC under twenty. The flag does two things in
+  the script, because an age alone was not enough to move the render:
+
+    1. It swaps the prompt's opening "a fully grown adult" for "a young", and
+       the portrait's "mature adult facial structure" clause for a young one.
+       Both templates otherwise assert an adult outright, in the highest-signal
+       position in the prompt, and the model believed the assertion over the
+       age - "a fully grown adult woman in her late teens" rendered as a woman
+       in her thirties every time.
+
+    2. It rules out the Build bullets flagged 'figure'. Those describe an adult
+       one - bust, hips, curves - and must never be hung on a teenager. See the
+       note on Build (she).
+
+  Weights keep the roster mostly adult: these are soldiers, technicians and
+  officers, so a late-teen NPC should read as the youngest person in the room
+  rather than the median.
+-->
+
+- in {possessive} late teens, sixteen or seventeen, face still soft and unlined || young
+- x2 just nineteen, newly in uniform and still growing into it || young
+- x2 in {possessive} early twenties, jaw and cheekbones fully adult
+- x2 twenty-one or twenty-two, young but fully grown, the face unlined and unweathered
+- x2 in {possessive} mid-twenties, fully grown but not yet weathered
 - x2 in {possessive} late twenties, jaw and cheekbones fully adult
 - x3 in {possessive} early thirties, the first lines already setting around the eyes
 - x3 in {possessive} mid-thirties, face lean and weathered
 - x2 in {possessive} forties, grey coming in at the temples
 - in {possessive} fifties, weathered but unslowed, deeply lined
 - in {possessive} sixties, face deeply creased, old enough that the war stories are first-hand
-- in {possessive} forties but weathered well past it, deep lines across the face from too long out in bad weather
 
 ## Build
 
@@ -751,19 +775,26 @@ ignored — so notes like this one are safe to leave inline.
   entries are left in at weight 1 apiece so the roster is not uniform, but they
   come up rarely - a heavy build also tends to disagree with the portrait, which
   is framed too close to show the body and so always reads slim.
+
+  The 'figure' flag marks a bullet that describes an adult woman's figure -
+  bust, hips, waist, curves. Those are dropped from the pool whenever the Age
+  roll came up flagged 'young', so a teenage NPC is never described in those
+  terms. Flag any new bullet that names one of those, and leave it off the ones
+  that describe frame and conditioning alone; the unflagged entries are what a
+  late-teen NPC rolls from, so keep enough of them to stay varied.
 -->
 
-- x3 lean and athletic, narrow-hipped and small-busted
-- x3 slim and fine-boned, light through the shoulders and hips
+- x3 lean and athletic, narrow-hipped and small-busted || figure
+- x3 slim and fine-boned, light through the shoulders and hips || figure
 - x2 lithe and slender, with fine shoulders and a long neck
 - x2 trim and toned, flat through the midsection with defined shoulders
 - x2 tall and rangy, long-limbed and narrow through the waist
 - x2 compact and athletic, short and densely muscled
 - x2 wiry and hard-trained, visibly strong without being bulky
 - broad-shouldered and muscular, carrying obvious strength
-- tall and statuesque, long-legged and narrow-waisted
-- slender but full-busted, with a clearly defined waist
-- sturdy and thickset through the shoulders and hips
+- tall and statuesque, long-legged and narrow-waisted || figure
+- slender but full-busted, with a clearly defined waist || figure
+- sturdy and thickset through the shoulders and hips || figure
 
 ## Skin
 

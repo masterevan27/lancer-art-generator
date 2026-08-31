@@ -29,6 +29,7 @@ Examples:
   python generate-npc.py                        # one NPC
   python generate-npc.py --count 5
   python generate-npc.py --seed 1234            # reproducible roll
+  python generate-npc.py --count 5 --pronouns she   # women only
   python generate-npc.py --name "Ivo Karras" --set-trait Role="a smuggler"
 """
 
@@ -107,14 +108,32 @@ def estimate_tokens(text):
     return int(len(text) / CHARS_PER_TOKEN)
 
 
+# What the prompt asserts about the subject's age, in the two highest-signal
+# positions it has: the opening phrase, and the face clause. Both templates used
+# to hardcode the adult form, which is why an Age bullet reading "in her late
+# teens" still rendered a woman in her thirties - the opening phrase won. An Age
+# bullet flagged 'young' swaps in the other pair instead.
+MATURITY = {
+    False: "a fully grown adult",
+    True: "a young",
+}
+FACE = {
+    False: "with mature adult facial structure - grown brow, cheekbones and jaw",
+    # Kept shorter than the adult form on purpose: it is the longest single
+    # clause either template can take, and the Age bullet has already said the
+    # same thing once. At the old length one roll in six thousand tipped the
+    # prompt over Krea 2's 512-token ceiling.
+    True: "with a young face, the brow and jaw not yet fully grown",
+}
+
 PORTRAIT_SIZE = (1024, 1024)   # square, straight onto the Foundry actor sheet
 TOKEN_SIZE = (1024, 1280)      # tall, so head and boots keep their margin
 
 PORTRAIT_TEMPLATE = (
-    "{shot} of {role}, a fully grown adult {gender} {age}, rendered in a detailed "
+    "{shot} of {role}, {maturity} {gender} {age}, rendered in a detailed "
     "painterly illustration style with fine grain texture, clean linework and halftone "
     "dot shading worked into the shadows, moody cinematic lighting. {Subject} {is_are} "
-    "{build}, with mature adult facial structure - grown brow, cheekbones and jaw - and "
+    "{build}, {face}, and "
     "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction}, the clothing "
     "following the shape of that frame. {headgear} {Possessive} face carries {demeanor}. "
     "{gear_line}{backdrop} {weather_line}A faint {accent} glow falls across one side of {possessive} "
@@ -126,7 +145,7 @@ PORTRAIT_TEMPLATE = (
 )
 
 TOKEN_TEMPLATE = (
-    "A full-body character illustration of {role}, a fully grown adult {gender} {age}, "
+    "A full-body character illustration of {role}, {maturity} {gender} {age}, "
     "rendered in a detailed painterly illustration style with fine grain texture, clean "
     "linework and halftone dot shading worked into the shadows. {Subject} {is_are} "
     "standing at full height facing the viewer, entire body visible from the top of "
@@ -209,6 +228,26 @@ def variant_table(tables, name, subject):
     return tables[name] + tables.get("%s (%s) +" % (name, subject), [])
 
 
+def resolve_pronouns(tables, subject):
+    """'she' -> the full 'she/her/her/woman' bullet out of the Pronouns table.
+
+    The table stays the source of truth: this matches on the subject field
+    rather than knowing what pronoun sets exist, so adding a fourth bullet to
+    the markdown makes it selectable here with no change to the script. Pinning
+    the whole bullet rather than just the subject also keeps the fourth field -
+    the noun the image prompt states outright - which is what actually stops the
+    tokens coming back androgynous.
+    """
+    wanted = subject.strip().lower().split("/")[0]
+    for bullet in tables["Pronouns"]:
+        if bullet.split("/")[0].strip().lower() == wanted:
+            return bullet
+    raise SystemExit(
+        "--pronouns %s: no such set in the Pronouns table. Available: %s"
+        % (subject, ", ".join(sorted({b.split("/")[0] for b in tables["Pronouns"]})))
+    )
+
+
 def roll_npc(tables, rng, overrides=None):
     """One NPC as a flat dict of trait -> rolled text."""
     # Pronouns first: every other table may have a per-pronoun variant, so the
@@ -216,11 +255,44 @@ def roll_npc(tables, rng, overrides=None):
     pronouns = (overrides or {}).get("Pronouns") or rng.choice(tables["Pronouns"])
     subject = pronouns.split("/")[0]
 
+    # Age is resolved up front for the same reason Pronouns is: its flag gates
+    # the Build roll, so an override has to be in hand before Build is rolled
+    # rather than pasted over the result afterwards. Pass the flag to keep it,
+    # as in --set-trait Age="in her late teens || young".
+    forced_age = (overrides or {}).get("Age")
+
     npc = {"Pronouns": pronouns}
-    npc.update({
-        name: rng.choice(variant_table(tables, name, subject))
-        for name in REQUIRED_TABLES if name not in ("Pronouns", "Stance")
-    })
+    young = False
+    for name in REQUIRED_TABLES:
+        if name in ("Pronouns", "Stance"):
+            continue
+        options = variant_table(tables, name, subject)
+
+        # Build is filtered against the Age roll, the same way Stance is
+        # filtered against Gear below. An Age bullet flagged 'young' is a
+        # teenager; the Build bullets flagged 'figure' describe an adult
+        # woman's - bust, hips, waist - and the two must never be combined.
+        # Age precedes Build in REQUIRED_TABLES, so the flag is known by the
+        # time this runs; keep it that way if the list is ever reordered.
+        if name == "Build" and young:
+            plain = [x for x in options if "figure" not in split_flags(x)[1]]
+            options = plain or options     # never filter the pool down to nothing
+
+        # Rolled either way, so that forcing a trait does not shift the rest of
+        # the run's random stream and change every NPC after it.
+        value = rng.choice(options)
+        if name == "Age" and forced_age is not None:
+            value = forced_age
+        # Only these two are unpacked here. Backdrop's '||' separates three
+        # fields rather than two and is parsed by split_backdrop, and Gear's
+        # flags are read further down, so neither can be split in passing.
+        if name in ("Age", "Build"):
+            value, flags = split_flags(value)
+            if name == "Age":
+                young = "young" in flags
+        npc[name] = value
+
+    npc["_young"] = young
 
     # Stance is rolled last, and filtered against the Gear roll. The two tables
     # are otherwise independent, which produced NPCs standing with their hands
@@ -234,6 +306,7 @@ def roll_npc(tables, rng, overrides=None):
     npc["Stance"] = rng.choice(stances)[0]
 
     npc.update(overrides or {})
+    npc["Age"] = split_flags(npc["Age"])[0]   # the override still carries its flag
 
     if "name" not in npc:
         npc["name"] = "%s %s" % (npc["Given names"], npc["Family names"])
@@ -329,6 +402,8 @@ def build_prompts(npc):
     fields.update({
         "role": npc["Role"],
         "age": npc["Age"],
+        "maturity": MATURITY[npc["_young"]],
+        "face": FACE[npc["_young"]],
         "build": npc["Build"],
         "skin": npc["Skin"],
         "hair": npc["Hair"],
@@ -522,6 +597,10 @@ def parse_args(argv=None):
     roll.add_argument("--tables", type=Path, default=DEFAULT_TABLES,
                       help="roll-tables markdown (default: %(default)s)")
     roll.add_argument("--name", help="force the NPC's name instead of rolling one")
+    roll.add_argument("--pronouns", metavar="SUBJECT",
+                      help="roll only NPCs with this subject pronoun, e.g. --pronouns she; "
+                           "matched against the first field of the Pronouns table, so it "
+                           "gates every gendered variant table along with it")
     roll.add_argument("--set-trait", action="append", default=[], metavar="Table=value",
                       help="force one rolled trait, e.g. --set-trait Role='a field medic' "
                            "(repeatable; table names are the markdown headings)")
@@ -577,6 +656,8 @@ def parse_args(argv=None):
         if not sep or not table.strip():
             p.error("--set-trait: expected Table=value, got %r" % spec)
         overrides[table.strip()] = value.strip()
+    if args.pronouns and "Pronouns" in overrides:
+        p.error("--pronouns and --set-trait Pronouns= set the same thing; use one")
     args.overrides = overrides
 
     if args.out is None:
@@ -604,6 +685,8 @@ def main(argv=None):
     overrides = dict(args.overrides)
     if args.name:
         overrides["name"] = args.name
+    if args.pronouns:
+        overrides["Pronouns"] = resolve_pronouns(tables, args.pronouns)
 
     rolled = []
     for n in range(args.count):

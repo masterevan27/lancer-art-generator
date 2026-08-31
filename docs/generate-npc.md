@@ -75,6 +75,14 @@ per-pronoun variants the rest of the roll draws from. That is why
 `--set-trait Pronouns=...` steers build, hair, outfit and stance as well as the
 grammar.
 
+`--pronouns she` is the shorthand for exactly that: it looks the subject up in
+the `Pronouns` table and pins the whole bullet, fourth field included, so a run
+comes back all women — drawing their builds, hair and outfits from the `(she)`
+variant tables throughout. `--pronouns he` and `--pronouns they` do the same for
+the other two, and a fourth bullet added to the markdown becomes selectable with
+no change to the script. It and `--set-trait Pronouns=` set the same thing, so
+passing both is an error rather than a silent precedence rule.
+
 `Backdrop` bullets carry the portrait's opening phrase as well as its scene,
 because the two have to agree — a dive at the camera cannot be staged inside "a
 half-body character portrait". Nine plain `A half-body character portrait`
@@ -135,6 +143,11 @@ smooth-faced twenty-something whenever the `Hair` roll suggested one. Both now
 say a decade ("in her sixties", "in her forties but weathered well past it") and
 land. Keep new bullets numeric.
 
+The under-twenty bullets name the actual number for the same reason — "sixteen
+or seventeen", "just nineteen" — rather than leaving "late teens" to carry it
+alone. They also carry the `young` flag; see
+[Keeping figures adult and on-model](#keeping-figures-adult-and-on-model).
+
 ## Period vocabulary matters
 
 The military entries originally used mid-20th-century words — *webbing*, *flak
@@ -151,10 +164,43 @@ If a new entry comes out looking dated, check its nouns before adding qualifiers
 
 The painterly style drifts toward short, soft-faced, large-headed figures that
 read as teenagers, so both templates anchor adult height, seven-to-eight-head
-proportion and mature facial structure explicitly, and the Age and Build tables
-avoid youth and small-stature wording. If you add bullets, keep them consistent:
-anything describing an NPC as short, small, slight or baby-faced fights the
-templates and brings the drift back.
+proportion and mature facial structure explicitly. That anchor is why an `Age`
+bullet reading "in her late teens" used to render a woman in her thirties: the
+opening phrase asserted `a fully grown adult` in the highest-signal position in
+the prompt, and the model believed the assertion over the age.
+
+Two of those three anchors are now conditional, keyed off a single flag:
+
+| | default | `Age` bullet flagged `young` |
+| --- | --- | --- |
+| opening phrase | `a fully grown adult {gender}` | `a young {gender}` |
+| face clause | `with mature adult facial structure - grown brow, cheekbones and jaw` | `with a young face, the brow and jaw not yet fully grown` |
+| token proportions | seven-to-eight heads tall | *unchanged* |
+
+Proportion stays anchored either way, because it is what stops the chibi drift
+and a sixteen-year-old is within a head-height of adult anyway. Flag the bullet
+and the other two follow; leave it off and nothing changes.
+
+The `young` flag also gates the **Build** roll. Build bullets flagged `figure`
+describe an adult woman's — bust, hips, waist, curves — and are dropped from the
+pool entirely when the age came up `young`, the same way `Gear` flagged `hands`
+drops the `Stance` entries that need both hands free. That filter is the reason
+the flag exists on `Age` rather than the wording simply being baked into the
+bullet: the two tables roll independently, so nothing else would stop an adult
+figure descriptor landing on a teenager. Six unflagged builds remain for a young
+NPC to roll from — keep it that way if you add more.
+
+`Age` is resolved before `Build` in `REQUIRED_TABLES` so the flag is known in
+time. Don't reorder that list. `--set-trait Age=` is likewise applied before the
+Build roll rather than pasted over the result, and it takes the flag inline:
+
+```bash
+python generate-npc.py --set-trait Age="in her late teens, sixteen or seventeen || young"
+```
+
+If you add bullets, keep the rest consistent: anything describing an NPC as
+short, small, slight or baby-faced fights the templates and brings the drift
+back on an NPC who is *not* flagged young.
 
 The templates also state that clothing follows the figure rather than flattening
 it, since heavy outerwear otherwise erases a rolled build entirely. A full-length
@@ -171,6 +217,7 @@ bottom of the tables file so the house style is visible in one place.
 | `--count N` | Roll N NPCs in one run. Default 1. |
 | `--seed N` | Base seed. NPC *i* uses `seed+i`, so a whole run is reproducible. Random if omitted. |
 | `--name "Ivo Karras"` | Use this name instead of rolling one. Single NPC only. |
+| `--pronouns she` | Roll only NPCs with that subject pronoun — `she`, `he` or `they`. Matched against the first field of the `Pronouns` table, so it gates every gendered variant table too. |
 | `--set-trait Table=value` | Force one rolled trait, e.g. `--set-trait Role="a field medic"`. Repeatable. |
 | `--tables PATH` | A different tables file. |
 | `--no-portrait` / `--no-token` | Generate only one of the two. |
@@ -192,6 +239,7 @@ state, gitignored alongside `generate-art.py`'s manifest.
 ```
 python generate-npc.py --dry-run --count 5
 python generate-npc.py --count 3
+python generate-npc.py --count 5 --pronouns she   # women only
 python generate-npc.py --seed 4242            # re-roll a specific NPC
 python generate-npc.py --set-trait Faction="in Harrison Armory service dress, imperial and immaculate"
 ```
