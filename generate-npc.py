@@ -14,11 +14,18 @@ discovery, workflow slot detection, job building, the RMBG post pass - is
 imported from generate-art.py rather than reimplemented.
 
 Each NPC lands in its own folder, nested under a category folder for their
-rolled Role (see ROLE_CATEGORIES), under the Foundry Lancer token root:
+rolled Role (see ROLE_CATEGORIES), under a fresh numbered run folder in the
+output root - by default ComfyUI's own output tree, *not* the Foundry token
+root, so a batch can be looked over before any of it is decided worth keeping:
 
-    <root>/Soldiers/Nadia Okonkwo/Nadia Okonkwo Portrait.png   1024x1024, opaque
-    <root>/Soldiers/Nadia Okonkwo/Nadia Okonkwo Token.png      transparent, RMBG'd
-    <root>/Soldiers/Nadia Okonkwo/Nadia Okonkwo.md             the rolled dossier
+    <root>/run1/Soldiers/Nadia Okonkwo/Nadia Okonkwo Portrait.png   1024x1024, opaque
+    <root>/run1/Soldiers/Nadia Okonkwo/Nadia Okonkwo Token.png      transparent, RMBG'd
+    <root>/run1/Soldiers/Nadia Okonkwo/Nadia Okonkwo.md             the rolled dossier
+
+Each invocation gets the next unused runN folder (run1, run2, ...) under the
+output root, so successive batches never collide. Moving a keeper into the
+live Foundry token tree is a manual step - pass --out to point a run straight
+at it instead, if that's ever wanted.
 
 The portrait deliberately skips background removal - it wants its blurred
 backdrop - so the two images take different paths through the same workflow
@@ -49,7 +56,6 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 COMFY_DIR = SCRIPT_DIR.parent
-HUB_DIR = COMFY_DIR.parent.parent
 
 
 def _load_generator():
@@ -77,17 +83,12 @@ art = _load_generator()
 DEFAULT_TABLES = COMFY_DIR / "Art Prompts" / "npc-generator-tables.md"
 DEFAULT_MANIFEST = SCRIPT_DIR / ".generated-npcs.json"
 
-# Foundry creates a 'Data' folder inside the --dataPath it is given, so the live
-# tree is the doubled data\Data - the AppData copy is never read at runtime.
-FOUNDRY_TOKEN_ROOT = Path(
-    r"G:\Programs\FoundryVTT_v13\FoundryVTT-Node-13.351\data\Data\Images\LancerFoundryTokens"
-)
-FALLBACK_TOKEN_ROOT = HUB_DIR / "Assets" / "LancerFoundryTokens"
-NPC_SUBFOLDER = "NPCs"
-
-# Where ComfyUI's own output folder collects the raw renders, before they are
-# fetched into the Foundry tree under their final names.
+# Where ComfyUI's own output folder collects the raw renders, and also this
+# script's default staging root - a review copy lands here under its own
+# runN folder rather than going straight into the Foundry token tree, so a
+# batch can be eyeballed before any of it is promoted there by hand.
 COMFY_PREFIX = "LancerNPCs"
+DEFAULT_OUTPUT_ROOT = Path(r"G:\Documents\ComfyUI\output") / COMFY_PREFIX
 
 # Tables the prompt templates below require. Anything else in the markdown file
 # is ignored, so extra tables can be added for reference without breaking this.
@@ -675,9 +676,20 @@ def fetch(comfy, image, target):
 
 
 def default_root():
-    if FOUNDRY_TOKEN_ROOT.exists():
-        return FOUNDRY_TOKEN_ROOT / NPC_SUBFOLDER
-    return FALLBACK_TOKEN_ROOT / NPC_SUBFOLDER
+    return DEFAULT_OUTPUT_ROOT
+
+
+def next_run_folder(root):
+    """root/runN, the first N whose folder doesn't already exist.
+
+    Always run1 on a fresh root - the increment only kicks in once a previous
+    run has actually created that folder, so a bare, never-used root doesn't
+    jump straight to some higher number.
+    """
+    n = 1
+    while (root / ("run%d" % n)).exists():
+        n += 1
+    return root / ("run%d" % n)
 
 
 def parse_args(argv=None):
@@ -725,8 +737,10 @@ def parse_args(argv=None):
 
     out = p.add_argument_group("output")
     out.add_argument("--out", type=Path, default=None,
-                     help="token root to write NPC folders into (default: the live "
-                          "Foundry Images/LancerFoundryTokens/NPCs, else the hub's Assets copy)")
+                     help="root to write NPC folders into (default: a fresh runN folder "
+                          "under %s, so a batch can be reviewed before any of it is moved "
+                          "into Foundry by hand; passed explicitly, the path is used as-is "
+                          "with no runN folder inserted)" % DEFAULT_OUTPUT_ROOT)
     out.add_argument("--overwrite", action="store_true",
                      help="reuse an existing folder of the same name instead of suffixing it")
     out.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST,
@@ -771,7 +785,7 @@ def parse_args(argv=None):
     args.gender_workflows = dict(GENDER_WORKFLOWS, woman=args.workflow_woman)
 
     if args.out is None:
-        args.out = default_root()
+        args.out = next_run_folder(default_root())
 
     return args
 

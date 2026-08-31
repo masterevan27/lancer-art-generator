@@ -1225,6 +1225,7 @@ ignored — so notes like this one are safe to leave inline.
 - a sidearm gripped and raised in both hands, sighted dead level at the viewer || hands gun
 - twin sidearms held akimbo, one arm thrust forward and the other braced out to the side || hands gun
 - a service rifle held loosely in both hands at an easy, unhurried low ready || hands gun
+- twin sidearms held low and loose in both hands, muzzles angled down at {possessive} sides || hands gun
 
 ## Accent
 
@@ -1310,6 +1311,7 @@ ignored — so notes like this one are safe to leave inline.
 - x3 A half-body character portrait || Behind {object}, out of focus, an immense flying superstructure eclipses the low sun over a sprawl of sun-baked rooftops, its long shadow stretching through the haze. || weather
 - A character portrait || {Subject} {is_are} standing on a windswept ridge, a weapon lowered and faintly smoking at {possessive} side, looking out over a mist-filled valley - behind {object} a vast ring of wreckage hangs frozen in the air above a plunging waterfall, a pair of transports drifting past far below. || nogear weather
 - A character portrait || {Subject} {is_are} sitting cross-legged on a rooftop ledge, eyes closed in quiet stillness, a sheathed blade laid flat across {possessive} lap - behind {object} a dense night skyline glows through drifting haze, thin trails of aircraft light threading between the towers. || nogear weather
+- A dynamic character portrait || {Subject} {is_are} walking straight toward the viewer down a rain-slicked neon-lit street at night, flanked on either side by a pair of hulking bipedal war-mechs looming half into frame, their optics burning dull red in the murk, signage bleeding into smeared reflections on the wet pavement behind them all. || weather
 
 ## Weather
 
@@ -1370,6 +1372,7 @@ ignored — so notes like this one are safe to leave inline.
 - standing squared to the viewer with {possessive} weapon raised and shouldered, sighting down it || gun
 - standing at a low ready, weapon angled down and across the body, alert and scanning the middle distance || gun
 - standing in a sharp half-turn with a sidearm gripped in each hand, one arm extended straight out toward the viewer and the other braced out to the side || gun
+- caught mid-stride walking straight toward the viewer, twin sidearms held low and loose at {possessive} sides || gun
 
 ## Stance (she) +
 
