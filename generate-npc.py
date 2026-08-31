@@ -308,6 +308,19 @@ def roll_npc(tables, rng, overrides=None):
     npc.update(overrides or {})
     npc["Age"] = split_flags(npc["Age"])[0]   # the override still carries its flag
 
+    # Build needs the same unpacking, and for a second reason beyond tidiness:
+    # the young/figure filter above only screens the *rolled* pool, so a forced
+    # Build walks straight past it. Re-check the pairing here, where the Age
+    # flag is known whether it was rolled or forced.
+    build, build_flags = split_flags(npc["Build"])
+    if young and "figure" in build_flags:
+        raise SystemExit(
+            "--set-trait Build: a bullet flagged 'figure' describes an adult "
+            "woman's build and must not be combined with an Age flagged "
+            "'young'. Drop one of the two flags."
+        )
+    npc["Build"] = build
+
     if "name" not in npc:
         npc["name"] = "%s %s" % (npc["Given names"], npc["Family names"])
 
@@ -655,7 +668,13 @@ def parse_args(argv=None):
         table, sep, value = spec.partition("=")
         if not sep or not table.strip():
             p.error("--set-trait: expected Table=value, got %r" % spec)
-        overrides[table.strip()] = value.strip()
+        table = table.strip()
+        # A repeated table used to last-wins silently, which reads as though
+        # both values took effect when only the final one did.
+        if table in overrides:
+            p.error("--set-trait %s given twice (%r then %r); pass it once"
+                    % (table, overrides[table], value.strip()))
+        overrides[table] = value.strip()
     if args.pronouns and "Pronouns" in overrides:
         p.error("--pronouns and --set-trait Pronouns= set the same thing; use one")
     args.overrides = overrides
