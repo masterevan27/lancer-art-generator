@@ -205,7 +205,8 @@ TOKEN_TEMPLATE = (
     "A full-body character illustration of {role}, {maturity} {gender} {age}, "
     "rendered in a detailed painterly illustration style with fine grain texture, clean "
     "linework and halftone dot shading worked into the shadows, moody cinematic lighting "
-    "on the figure. {Subject} {is_are} "
+    "on the figure. {Possessive} face carries the same fine grain and visible brushwork "
+    "as a close-up portrait, not simplified or cel-shaded. {Subject} {is_are} "
     "standing at full height facing the viewer, entire body visible from the top of "
     "{possessive} head to the soles of {possessive} plain modern boots, no leg wraps or "
     "puttees, with clear empty space above and below, in realistic adult proportions "
@@ -357,9 +358,15 @@ def roll_npc(tables, rng, overrides=None):
     # Stance is rolled last, and filtered against the Gear roll. The two tables
     # are otherwise independent, which produced NPCs standing with their hands
     # pushed into their pockets while holding a rifle in both hands. Gear that
-    # occupies a hand rules out the stances that need both of them free.
+    # occupies a hand rules out the stances that need both of them free, and a
+    # Stance that describes aiming or firing a weapon needs the Gear roll to
+    # have actually come up a firearm, or the pose has nothing in hand to back
+    # it up.
     npc["Gear"], gear_flags = split_flags(npc["Gear"])
     stances = [split_flags(x) for x in variant_table(tables, "Stance", subject)]
+    if "gun" not in gear_flags:
+        unarmed = [x for x in stances if "gun" not in x[1]]
+        stances = unarmed or stances       # never filter the pool down to nothing
     if "hands" in gear_flags:
         free = [x for x in stances if "hands" not in x[1]]
         stances = free or stances          # never filter the pool down to nothing
@@ -423,8 +430,12 @@ def split_flags(bullet):
     """'a rifle held in her hands || hands' -> the text, and its flags.
 
     Same '||' convention Backdrop uses, for tables whose bullets are a single
-    phrase. The one flag is 'hands', meaning the entry occupies at least one
-    hand (on Gear) or needs both of them free (on Stance).
+    phrase. On Gear/Stance the flags are 'hands', meaning the entry occupies at
+    least one hand (on Gear) or needs both of them free (on Stance), and 'gun',
+    meaning the entry is an actual firearm held in hand (on Gear) or a pose that
+    describes aiming, firing or otherwise handling one (on Stance) - a bullet
+    can carry both at once, '|| hands gun'. Age and Build reuse the same split
+    for their own unrelated flags, 'young' and 'figure'.
     """
     text, _, rest = bullet.partition("||")
     return text.strip(), tuple(f for f in rest.split() if f)
