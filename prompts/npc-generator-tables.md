@@ -1403,7 +1403,8 @@ in freefall, without a separate pose table to keep in sync.
 
 > A full-body character illustration of **{ROLE}**, **{AGE}**, standing at full
 > adult height and facing the viewer, entire body visible from the top of {POSSESSIVE} head to the
-> soles of {POSSESSIVE} boots with clear empty space above and below, rendered in a
+> soles of {POSSESSIVE} plain modern boots, no leg wraps or puttees, with clear empty
+> space above and below, rendered in a
 > detailed painterly illustration style with fine grain texture and clean linework,
 > halftone dot shading worked into the shadows, moody cinematic lighting on the
 > figure. {SUBJECT} is **{BUILD}**, with
@@ -1420,6 +1421,14 @@ in freefall, without a separate pose table to keep in sync.
 > visible brushwork, heavy fine grain texture over every surface, and dense
 > halftone dot screentone worked deep into the shadows, matching the same painterly
 > rendering as the portrait shot.
+
+The token template names the footwear outright - "plain modern boots, no leg
+wraps or puttees" - because with nothing said about them the campaign's
+painterly style kept defaulting to wrapped WWI-style puttees rising from the
+boot tops, the same kind of drift the Age table fights with an explicit "fully
+grown adult". Outfit bullets that specify their own footwear (the knee boots,
+thigh-high boots and so on in `Outfit (she) +`) still win, since they land
+later in the prompt and are far more specific.
 
 The `even lighting` / flat-background phrasing this used to carry was flattening
 the whole render toward a clean cel-shaded look rather than just the background —

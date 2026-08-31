@@ -207,8 +207,9 @@ TOKEN_TEMPLATE = (
     "linework and halftone dot shading worked into the shadows, moody cinematic lighting "
     "on the figure. {Subject} {is_are} "
     "standing at full height facing the viewer, entire body visible from the top of "
-    "{possessive} head to the soles of {possessive} boots with clear empty space above "
-    "and below, in realistic adult proportions roughly seven to eight heads tall. "
+    "{possessive} head to the soles of {possessive} plain modern boots, no leg wraps or "
+    "puttees, with clear empty space above and below, in realistic adult proportions "
+    "roughly seven to eight heads tall. "
     "{Subject} {is_are} {build}, with {traits}{skin}, {hair}, {eyes}, and {feature}, wearing "
     "{outfit}, {faction}, the clothing following the shape of that frame. {headgear} "
     "{Possessive} face carries {demeanor}. {gear_line}{Subject} {is_are} {stance}, both "
@@ -636,9 +637,9 @@ class Knobs:
         self.output_prefix = output_prefix
 
 
-def entry_for(slug, stage, prompt):
+def entry_for(category, slug, stage, prompt):
     """A generate-art.py Entry, so its job builder can be reused unchanged."""
-    return art.Entry(name=slug, label=stage, path=[slug], prompt=prompt, line=0)
+    return art.Entry(name=slug, label=stage, path=[category, slug], prompt=prompt, line=0)
 
 
 def fetch(comfy, image, target):
@@ -860,20 +861,20 @@ def main(argv=None):
     print("ComfyUI: %s" % comfy.base)
     manifest = art.load_manifest(args.manifest)
 
-    def render(npc, prompt, slug, stage, size, seed):
+    def render(npc, prompt, category, slug, stage, size, seed):
         """Queue one text -> image job and return the images it produced."""
         template, slots = workflows[workflow_for(args, npc)]
         knobs = Knobs(args, size, COMFY_PREFIX)
-        job = art.build_job(template, slots, entry_for(slug, stage, prompt), seed, knobs)
+        job = art.build_job(template, slots, entry_for(category, slug, stage, prompt), seed, knobs)
         record = comfy.wait(comfy.queue(job), timeout=args.timeout)
         images = comfy.images(record)
         if not images:
             raise RuntimeError("the %s job produced no image" % stage)
         return images
 
-    def remove_background(image, slug, seed):
+    def remove_background(image, category, slug, seed):
         knobs = Knobs(args, TOKEN_SIZE, COMFY_PREFIX)
-        prefix = "%s/%s/token_rmbg" % (COMFY_PREFIX, slug)
+        prefix = "%s/%s/%s/token_rmbg" % (COMFY_PREFIX, category, slug)
         job = art.build_post_job(
             post_template, post_slots, art.image_ref(image), prefix, seed, knobs)
         record = comfy.wait(comfy.queue(job), timeout=args.timeout)
@@ -887,7 +888,8 @@ def main(argv=None):
 
     for index, (seed, npc, prompts) in enumerate(rolled, 1):
         portrait_prompt, token_prompt = prompts
-        folder = npc_folder(args.out, npc["name"], role_category(npc), args.overwrite)
+        category = role_category(npc)
+        folder = npc_folder(args.out, npc["name"], category, args.overwrite)
         slug = art._slug(npc["name"])
         stem = _safe(npc["name"])
         tag = "[%d/%d]" % (index, len(rolled))
@@ -901,18 +903,18 @@ def main(argv=None):
 
             if not args.no_portrait:
                 print("    portrait ...", flush=True)
-                image = render(npc, portrait_prompt, slug, "portrait", PORTRAIT_SIZE, seed)[0]
+                image = render(npc, portrait_prompt, category, slug, "portrait", PORTRAIT_SIZE, seed)[0]
                 written.append(fetch(comfy, image, folder / ("%s Portrait.png" % stem)).name)
                 print("      -> %s" % written[-1])
 
             if not args.no_token:
                 print("    token ...", flush=True)
-                raw = render(npc, token_prompt, slug, "token", TOKEN_SIZE, seed)[0]
+                raw = render(npc, token_prompt, category, slug, "token", TOKEN_SIZE, seed)[0]
                 if args.keep_raw_token:
                     written.append(
                         fetch(comfy, raw, folder / ("%s Token (raw).png" % stem)).name)
                 print("      + background removal", flush=True)
-                cut = remove_background(raw, slug, seed)
+                cut = remove_background(raw, category, slug, seed)
                 written.append(fetch(comfy, cut, folder / ("%s Token.png" % stem)).name)
                 print("      -> %s" % written[-1])
 
