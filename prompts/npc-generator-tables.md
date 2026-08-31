@@ -759,11 +759,11 @@ ignored — so notes like this one are safe to leave inline.
 - x2 just nineteen, newly in uniform and still growing into it || young
 - x2 in {possessive} early twenties, jaw and cheekbones fully adult
 - x2 twenty-one or twenty-two, young but fully grown, the face unlined and unweathered
-- x2 in {possessive} mid-twenties, fully grown but not yet weathered
+- x3 in {possessive} mid-twenties, fully grown but not yet weathered
 - x2 in {possessive} late twenties, jaw and cheekbones fully adult
 - x3 in {possessive} early thirties, the first lines already setting around the eyes
-- x3 in {possessive} mid-thirties, face lean and weathered
-- x2 in {possessive} forties, grey coming in at the temples
+- x2 in {possessive} mid-thirties, face lean and weathered
+- in {possessive} forties, grey coming in at the temples
 - in {possessive} fifties, weathered but unslowed, deeply lined
 - in {possessive} sixties, face deeply creased, old enough that the war stories are first-hand
 
