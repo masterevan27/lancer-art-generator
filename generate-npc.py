@@ -90,33 +90,42 @@ COMFY_PREFIX = "LancerNPCs"
 REQUIRED_TABLES = [
     "Given names", "Family names", "Callsigns", "Pronouns", "Age", "Build",
     "Skin", "Hair", "Eyes", "Feature", "Demeanor", "Role", "Faction",
-    "Outfit", "Gear", "Accent", "Backdrop", "Stance",
+    "Outfit", "Headgear", "Gear", "Accent", "Backdrop", "Stance",
 ]
 
 PORTRAIT_SIZE = (1024, 1024)   # square, straight onto the Foundry actor sheet
 TOKEN_SIZE = (1024, 1280)      # tall, so head and boots keep their margin
 
 PORTRAIT_TEMPLATE = (
-    "A half-body character portrait of {role}, {age}, rendered in a detailed painterly "
-    "illustration style with fine grain texture and clean linework, halftone dot shading "
-    "worked into the shadows, moody cinematic lighting. {Subject} {is_are} {build}, with "
-    "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction}. {Possessive} "
-    "face carries {demeanor}. {Subject} {carry} {gear}. Behind {object}, softly blurred "
-    "well out of focus, is {backdrop}, its lights casting a faint {accent} glow across one "
-    "side of {possessive} face, contrasted against warm dim ambient light on the other. "
-    "Keep the palette restrained - greys, olive drab and rust - with {accent} as the only "
-    "saturated color in the frame. Shallow depth of field, centered composition, square "
+    "{shot} of {role}, a fully grown adult {age}, rendered in a "
+    "detailed painterly illustration style with fine grain texture and clean linework, "
+    "halftone dot shading worked into the shadows, moody cinematic lighting. {Subject} "
+    "{is_are} an adult with fully mature adult facial structure - grown brow, cheekbones "
+    "and jaw, a full-size adult head in adult proportion to the shoulders - with none of "
+    "the soft rounded features of a child or teenager. {Subject} {is_are} {build}, with "
+    "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction} - the clothing "
+    "draped over that frame and following its shape rather than flattening or hiding it. "
+    "{headgear} {Possessive} face carries {demeanor}. {gear_line}{backdrop} A faint "
+    "{accent} glow falls across one side of {possessive} face, contrasted against warm dim "
+    "ambient light on the other. Keep the palette restrained - greys, olive drab and rust - "
+    "with {accent} as the only saturated color in the frame. Shallow depth of field, square "
     "framing, high detail, atmospheric sci-fi character portrait."
 )
 
 TOKEN_TEMPLATE = (
-    "A full-body character illustration of {role}, {age}, standing and facing directly "
-    "forward, entire body visible from the top of {possessive} head to the soles of "
-    "{possessive} boots with clear empty space above and below, rendered in a detailed "
+    "A full-body character illustration of {role}, a fully grown adult {age}, standing at "
+    "full adult height and facing directly forward, entire body visible from the top of "
+    "{possessive} head to the soles of {possessive} boots with clear empty space above and "
+    "below, the figure tall in frame and filling most of its height, rendered in a detailed "
     "painterly illustration style with fine grain texture and clean linework, halftone dot "
-    "shading worked into the shadows. {Subject} {is_are} {build}, with {skin}, {hair}, "
-    "{eyes}, and {feature}, wearing {outfit}, {faction}. {Possessive} face carries "
-    "{demeanor}. {Subject} {carry} {gear}. A single {accent} glow - an indicator light, a lit "
+    "shading worked into the shadows. Realistic adult human proportions throughout - "
+    "roughly seven to eight heads tall, long adult legs, a full-length adult torso and "
+    "full-size adult hands - never the short stature, oversized head or soft rounded face "
+    "of a child, teenager or chibi figure. {Subject} {is_are} {build}, with {skin}, {hair}, "
+    "{eyes}, and {feature}, wearing {outfit}, {faction} - the clothing draped over that "
+    "frame and following its shape rather than flattening or hiding it. {headgear} {Possessive} "
+    "face carries "
+    "{demeanor}. {gear_line}A single {accent} glow - an indicator light, a lit "
     "seam, a display - is the only saturated color on {possessive} kit. "
     "{Subject} {is_are} {stance}, boots fully planted and visible, looking straight ahead. "
     "Keep the palette restrained - greys, olive drab and rust - with {accent} as the only "
@@ -166,9 +175,34 @@ def check_tables(tables, path):
         )
 
 
+def variant_table(tables, name, subject):
+    """The options one pronoun set rolls from, base table plus any variant.
+
+    Two forms, because the two cases genuinely differ. 'Build (she)' is used
+    *instead of* 'Build' - the masculine builds should not apply at all.
+    'Outfit (she) +' is added *to* 'Outfit', so a woman can still roll every
+    neutral option alongside the feminine ones rather than being forced out of
+    grey coveralls. Either way the script stays ignorant of which traits are
+    gendered; the tables file decides.
+    """
+    replacement = tables.get("%s (%s)" % (name, subject))
+    if replacement is not None:
+        return replacement
+    return tables[name] + tables.get("%s (%s) +" % (name, subject), [])
+
+
 def roll_npc(tables, rng, overrides=None):
     """One NPC as a flat dict of trait -> rolled text."""
-    npc = {name: rng.choice(tables[name]) for name in REQUIRED_TABLES}
+    # Pronouns first: every other table may have a per-pronoun variant, so the
+    # roll that selects between them has to happen before the rest.
+    pronouns = (overrides or {}).get("Pronouns") or rng.choice(tables["Pronouns"])
+    subject = pronouns.split("/")[0]
+
+    npc = {"Pronouns": pronouns}
+    npc.update({
+        name: rng.choice(variant_table(tables, name, subject))
+        for name in REQUIRED_TABLES if name != "Pronouns"
+    })
     npc.update(overrides or {})
 
     if "name" not in npc:
@@ -184,6 +218,7 @@ def roll_npc(tables, rng, overrides=None):
         "Possessive": possessive.capitalize(),
         "is_are": "are" if plural else "is",
         "carry": "carry" if plural else "carries",
+        "wear": "wear" if plural else "wears",
     }
 
     # A bullet may carry pronoun placeholders of its own - "in {possessive}
@@ -201,8 +236,31 @@ def roll_npc(tables, rng, overrides=None):
     return npc
 
 
+def split_backdrop(bullet):
+    """A Backdrop bullet carries the shot, the scene, and optional flags.
+
+    Split on '||': the opening phrase ("A half-body character portrait"), then
+    the scene sentence, then any flags. Shot and scene travel together because
+    they have to agree - a dive toward the camera in dramatic foreshortening
+    cannot be staged inside a half-body portrait, and a zero-gravity pose over a
+    rain-streaked street would be nonsense either way.
+
+    The one flag is 'nogear': an action scene that already puts a weapon in the
+    subject's hands suppresses the "{Subject} {carry} {gear}" sentence, which
+    otherwise arms them a second time from the Gear roll - a rolled rifle on top
+    of the two blades the rooftop scene hands out.
+    """
+    parts = [p.strip() for p in bullet.split("||")]
+    if len(parts) == 1:
+        return "A half-body character portrait", parts[0], ()
+    shot, scene = parts[0], parts[1]
+    flags = tuple(f for f in parts[2].split() if f) if len(parts) > 2 else ()
+    return shot, scene, flags
+
+
 def build_prompts(npc):
     """The portrait and token prompt text for one rolled NPC."""
+    shot, scene, flags = split_backdrop(npc["Backdrop"])
     fields = dict(npc["_pronouns"])
     fields.update({
         "role": npc["Role"],
@@ -213,14 +271,22 @@ def build_prompts(npc):
         "eyes": npc["Eyes"],
         "feature": npc["Feature"],
         "outfit": npc["Outfit"],
+        "headgear": npc["Headgear"],
         "faction": npc["Faction"],
         "demeanor": npc["Demeanor"],
         "gear": npc["Gear"],
         "accent": npc["Accent"],
-        "backdrop": npc["Backdrop"],
+        "shot": shot,
+        "backdrop": scene,
         "stance": npc["Stance"],
     })
-    return PORTRAIT_TEMPLATE.format(**fields), TOKEN_TEMPLATE.format(**fields)
+    # Built from the same fields and inserted already-substituted, since
+    # str.format does a single pass and would leave any nested placeholder raw.
+    carrying = "{Subject} {carry} {gear}. ".format(**fields)
+    portrait_fields = dict(fields, gear_line="" if "nogear" in flags else carrying)
+
+    return (PORTRAIT_TEMPLATE.format(**portrait_fields),
+            TOKEN_TEMPLATE.format(**dict(fields, gear_line=carrying)))
 
 
 # --------------------------------------------------------------------------
@@ -263,7 +329,8 @@ def write_dossier(path, npc, seed, prompts, images):
         ("Wearing", npc["Outfit"]),
         ("Carrying", npc["Gear"]),
         ("Accent color", npc["Accent"]),
-        ("Portrait backdrop", npc["Backdrop"]),
+        ("Portrait shot", split_backdrop(npc["Backdrop"])[0]),
+        ("Portrait scene", split_backdrop(npc["Backdrop"])[1]),
         ("Token stance", npc["Stance"]),
     ]
 
