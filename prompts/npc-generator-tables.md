@@ -746,16 +746,24 @@ ignored — so notes like this one are safe to leave inline.
   overtly feminine to lean and androgynous lives inside the table, so how often
   a woman reads strongly feminine is tuned by editing weights here rather than
   in the script.
+
+  The weights lean hard toward lean, fit and athletic frames. The heavier
+  entries are left in at weight 1 apiece so the roster is not uniform, but they
+  come up rarely - a heavy build also tends to disagree with the portrait, which
+  is framed too close to show the body and so always reads slim.
 -->
 
-- x2 full-busted and curvy, with a clearly defined waist and wide hips
-- x2 soft and full-figured, broad at the bust and hips
-- tall and statuesque, hourglass-figured with long legs and a narrow waist
-- lean and athletic, narrow-hipped and small-busted
-- wide-hipped and sturdy through the thighs, heavy-boned
-- ample and heavy-set, thick through the arms and midsection
-- lithe and slender, with fine shoulders and a long neck
+- x3 lean and athletic, narrow-hipped and small-busted
+- x3 slim and fine-boned, light through the shoulders and hips
+- x2 lithe and slender, with fine shoulders and a long neck
+- x2 trim and toned, flat through the midsection with defined shoulders
+- x2 tall and rangy, long-limbed and narrow through the waist
+- x2 compact and athletic, short and densely muscled
+- x2 wiry and hard-trained, visibly strong without being bulky
 - broad-shouldered and muscular, carrying obvious strength
+- tall and statuesque, long-legged and narrow-waisted
+- slender but full-busted, with a clearly defined waist
+- sturdy and thickset through the shoulders and hips
 
 ## Skin
 
