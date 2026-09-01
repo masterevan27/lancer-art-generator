@@ -41,6 +41,12 @@ Examples:
   python generate-npc.py --count 5 --pronouns she   # women only
   python generate-npc.py --workflow-woman "$(pwd)/wf.json"   # override their default
   python generate-npc.py --name "Ivo Karras" --set-trait Role="a smuggler"
+
+  # Re-render one already-rolled NPC exactly, or with a fresh seed - the
+  # traits (and so the prompt) come from the manifest either way, not a roll:
+  python generate-npc.py --regen-manifest .generated-npcs.json --regen-id npc-Nadia-Okonkwo-1234
+  python generate-npc.py --regen-manifest .generated-npcs.json --regen-id npc-Nadia-Okonkwo-1234 \\
+      --new-seed 5678 --no-token
 """
 
 from __future__ import annotations
@@ -329,6 +335,38 @@ def variant_table(tables, name, subject):
     return tables[name] + tables.get("%s (%s) +" % (name, subject), [])
 
 
+def filter_by_mil(options, mil):
+    """Faction/Outfit bullets flagged 'civ' or 'mil', filtered by a military Role.
+
+    A bullet flagged 'civ' reads as plainly civilian dress and is dropped when
+    the NPC's Role came up flagged 'mil' - a soldier should not turn up in a
+    cropped tank top and cut-offs. One flagged 'mil' reads as an actual issued
+    uniform and is dropped for a civilian Role instead, per the brief:
+    civilians may carry any gear they like, including military-issue weapons,
+    but shouldn't appear in uniform unless they used to serve. An unflagged
+    bullet is neutral and reachable either way, the same as an untagged
+    Gear/Stance entry - never filtered down to nothing.
+    """
+    exclude = "civ" if mil else "mil"
+    plain = [x for x in options if exclude not in split_flags(x)[1]]
+    return plain or options
+
+
+def bias_mil_gear(options, mil):
+    """For a military Role, weight the Gear roll toward its 'mil'-flagged bullets.
+
+    'Almost always' armed rather than 'always', per the brief - a soldier
+    caught without a weapon on them should be rare, not impossible - so this
+    duplicates the flagged bullets into the pool instead of excluding the
+    rest outright. A civilian Role's Gear roll is untouched: carrying
+    military gear is explicitly fine for a civilian.
+    """
+    if not mil:
+        return options
+    tagged = [x for x in options if "mil" in split_flags(x)[1]]
+    return options + tagged * 4 if tagged else options
+
+
 def resolve_pronouns(tables, subject):
     """'she' -> the full 'she/her/her/woman' bullet out of the Pronouns table.
 
@@ -349,6 +387,29 @@ def resolve_pronouns(tables, subject):
     )
 
 
+def pronoun_fields(pronouns):
+    """'she/her/her/woman' -> the subject/object/possessive fields prompts substitute.
+
+    Split out of roll_npc so --regen-manifest can rebuild the same fields from
+    a stored Pronouns trait without re-rolling anything.
+    """
+    bits = (pronouns.split("/") + ["", "", ""])[:4]
+    subject, object_, possessive, gender = bits
+    plural = subject == "they"
+    gender = gender or {"she": "woman", "he": "man"}.get(subject, "person")
+    return {
+        "gender": gender,
+        "subject": subject,
+        "Subject": subject.capitalize(),
+        "object": object_,
+        "possessive": possessive,
+        "Possessive": possessive.capitalize(),
+        "is_are": "are" if plural else "is",
+        "carry": "carry" if plural else "carries",
+        "wear": "wear" if plural else "wears",
+    }
+
+
 def roll_npc(tables, rng, overrides=None):
     """One NPC as a flat dict of trait -> rolled text."""
     # Pronouns first: every other table may have a per-pronoun variant, so the
@@ -356,14 +417,18 @@ def roll_npc(tables, rng, overrides=None):
     pronouns = (overrides or {}).get("Pronouns") or rng.choice(tables["Pronouns"])
     subject = pronouns.split("/")[0]
 
-    # Age is resolved up front for the same reason Pronouns is: its flag gates
-    # the Build roll, so an override has to be in hand before Build is rolled
-    # rather than pasted over the result afterwards. Pass the flag to keep it,
-    # as in --set-trait Age="in her late teens || young".
+    # Age and Role are both resolved up front, for the same reason Pronouns
+    # is: each one's flag gates a later roll, so an override has to be in
+    # hand before that later table is rolled rather than pasted over the
+    # result afterwards. Pass the flag to keep it, as in
+    # --set-trait Age="in her late teens || young" or
+    # --set-trait Role="a Union marine soldier || mil".
     forced_age = (overrides or {}).get("Age")
+    forced_role = (overrides or {}).get("Role")
 
     npc = {"Pronouns": pronouns}
     young = False
+    role_mil = False
     for name in REQUIRED_TABLES:
         if name in ("Pronouns", "Stance"):
             continue
@@ -379,18 +444,34 @@ def roll_npc(tables, rng, overrides=None):
             plain = [x for x in options if "figure" not in split_flags(x)[1]]
             options = plain or options     # never filter the pool down to nothing
 
+        # Faction and Outfit are filtered against the Role roll the same way:
+        # a Role flagged 'mil' excludes bullets flagged 'civ' and vice versa,
+        # so a soldier doesn't turn up in a cropped tank top and a dockworker
+        # doesn't turn up in a dress uniform. Gear isn't filtered at all - a
+        # civilian may carry military gear same as anyone - just biased
+        # toward its 'mil'-flagged bullets when the Role calls for it. Role
+        # precedes all three in REQUIRED_TABLES, so role_mil is already known.
+        if name in ("Faction", "Outfit"):
+            options = filter_by_mil(options, role_mil)
+        if name == "Gear":
+            options = bias_mil_gear(options, role_mil)
+
         # Rolled either way, so that forcing a trait does not shift the rest of
         # the run's random stream and change every NPC after it.
         value = rng.choice(options)
         if name == "Age" and forced_age is not None:
             value = forced_age
-        # Only these two are unpacked here. Backdrop's '||' separates three
-        # fields rather than two and is parsed by split_backdrop, and Gear's
-        # flags are read further down, so neither can be split in passing.
-        if name in ("Age", "Build"):
+        if name == "Role" and forced_role is not None:
+            value = forced_role
+        # Backdrop's '||' separates three fields rather than two and is
+        # parsed by split_backdrop, and Gear's flags are read further down,
+        # so neither can be split in passing here.
+        if name in ("Age", "Build", "Role", "Faction", "Outfit"):
             value, flags = split_flags(value)
             if name == "Age":
                 young = "young" in flags
+            if name == "Role":
+                role_mil = "mil" in flags
         npc[name] = value
 
     npc["_young"] = young
@@ -414,6 +495,11 @@ def roll_npc(tables, rng, overrides=None):
 
     npc.update(overrides or {})
     npc["Age"] = split_flags(npc["Age"])[0]   # the override still carries its flag
+    # Same reason as Age: a --set-trait override for any of these pastes the
+    # raw bullet text back over the split-out value above, flag and all.
+    npc["Role"] = split_flags(npc["Role"])[0]
+    npc["Faction"] = split_flags(npc["Faction"])[0]
+    npc["Outfit"] = split_flags(npc["Outfit"])[0]
 
     # Build needs the same unpacking, and for a second reason beyond tidiness:
     # the young/figure filter above only screens the *rolled* pool, so a forced
@@ -435,21 +521,7 @@ def roll_npc(tables, rng, overrides=None):
     # image prompt uses for the subject. Pronouns alone left the model guessing
     # - tokens came back androgynous - so the prompt now says "adult woman" or
     # "adult man" outright. A three-field bullet still works and infers it.
-    bits = (npc["Pronouns"].split("/") + ["", "", ""])[:4]
-    subject, object_, possessive, gender = bits
-    plural = subject == "they"
-    gender = gender or {"she": "woman", "he": "man"}.get(subject, "person")
-    npc["_pronouns"] = {
-        "gender": gender,
-        "subject": subject,
-        "Subject": subject.capitalize(),
-        "object": object_,
-        "possessive": possessive,
-        "Possessive": possessive.capitalize(),
-        "is_are": "are" if plural else "is",
-        "carry": "carry" if plural else "carries",
-        "wear": "wear" if plural else "wears",
-    }
+    npc["_pronouns"] = pronoun_fields(npc["Pronouns"])
 
     # A bullet may carry pronoun placeholders of its own - "in {possessive}
     # forties" - so that a rolled trait agrees with the rolled pronouns rather
@@ -474,8 +546,12 @@ def split_flags(bullet):
     least one hand (on Gear) or needs both of them free (on Stance), and 'gun',
     meaning the entry is an actual firearm held in hand (on Gear) or a pose that
     describes aiming, firing or otherwise handling one (on Stance) - a bullet
-    can carry both at once, '|| hands gun'. Age and Build reuse the same split
-    for their own unrelated flags, 'young' and 'figure'.
+    can carry both at once, '|| hands gun'. Gear may also carry 'mil', marking
+    an actual weapon or piece of military-issue equipment. Age and Build reuse
+    the same split for their own unrelated flags, 'young' and 'figure', and so
+    do Role ('mil', an active-duty military or paramilitary occupation) and
+    Faction/Outfit ('civ' or 'mil', filtered against the Role flag) - see
+    filter_by_mil() and bias_mil_gear().
     """
     text, _, rest = bullet.partition("||")
     return text.strip(), tuple(f for f in rest.split() if f)
@@ -800,6 +876,20 @@ def parse_args(argv=None):
     out.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST,
                      help="run log of every NPC rolled (default: %(default)s)")
 
+    regen = p.add_argument_group("regenerate one NPC from a manifest entry")
+    regen.add_argument("--regen-manifest", type=Path, metavar="PATH",
+                       help="skip rolling entirely and reload one NPC's traits from this "
+                            "manifest instead (requires --regen-id); the entry's own folder is "
+                            "reused and overwritten in place, and the manifest is updated with "
+                            "the new seed/files when it's done")
+    regen.add_argument("--regen-id", metavar="ID",
+                       help="the manifest entry's \"id\" to regenerate (requires --regen-manifest)")
+    regen.add_argument("--new-seed", type=int, metavar="N",
+                       help="seed for the re-render (default: the entry's original seed, which "
+                            "reproduces the image exactly); every rolled trait comes from the "
+                            "entry either way, so a different seed renders the same character "
+                            "with new noise instead of a new roll")
+
     run = p.add_argument_group("run mode")
     run.add_argument("--server", help="ComfyUI address, e.g. 127.0.0.1:8000")
     run.add_argument("--dry-run", action="store_true",
@@ -810,6 +900,22 @@ def parse_args(argv=None):
 
     if args.no_portrait and args.no_token:
         p.error("--no-portrait and --no-token together leave nothing to generate")
+
+    if bool(args.regen_manifest) != bool(args.regen_id):
+        p.error("--regen-manifest and --regen-id must be given together")
+    if args.regen_manifest:
+        conflicting = [
+            flag for flag, given in (
+                ("--count", args.count != 1), ("--seed", args.seed is not None),
+                ("--name", bool(args.name)), ("--pronouns", bool(args.pronouns)),
+                ("--set-trait", bool(args.set_trait)),
+            ) if given
+        ]
+        if conflicting:
+            p.error("--regen-manifest replaces the roll entirely; drop %s" % ", ".join(conflicting))
+    elif args.new_seed is not None:
+        p.error("--new-seed only makes sense with --regen-manifest")
+
     if args.count < 1:
         p.error("--count must be at least 1")
     if args.name and args.count > 1:
@@ -838,7 +944,7 @@ def parse_args(argv=None):
 
     args.gender_workflows = dict(GENDER_WORKFLOWS, woman=args.workflow_woman)
 
-    if args.out is None:
+    if args.out is None and not args.regen_manifest:
         args.out = next_run_folder(default_root())
 
     return args
@@ -876,8 +982,138 @@ def load_workflows(args, rolled):
     return loaded
 
 
+def regenerate_one(args):
+    """Re-render one NPC's portrait and/or token from a stored manifest entry.
+
+    Skips roll_npc and the tables file entirely - every trait comes from the
+    entry exactly as it was originally rolled, so the prompt reproduces
+    identically regardless of --new-seed. The entry's own folder is reused and
+    overwritten in place (same filenames), unlike a fresh roll's npc_folder(),
+    which suffixes rather than collides.
+    """
+    manifest = art.load_manifest(args.regen_manifest)
+    folder_path, entry = next(
+        ((k, v) for k, v in manifest.items() if isinstance(v, dict) and v.get("id") == args.regen_id),
+        (None, None),
+    )
+    if entry is None:
+        raise SystemExit("--regen-id %r: no such entry in %s" % (args.regen_id, args.regen_manifest))
+
+    npc = dict(entry["traits"])
+    npc["_pronouns"] = pronoun_fields(npc["Pronouns"])
+    if "young" not in entry:
+        print("! %s has no recorded 'young' flag (written by an older version of this script) - "
+              "assuming not young; the maturity/face wording may drift slightly from the "
+              "original render." % args.regen_id, file=sys.stderr)
+    npc["_young"] = entry.get("young", False)
+
+    seed = args.new_seed if args.new_seed is not None else entry["seed"]
+    prompts = build_prompts(npc)
+    portrait_prompt, token_prompt = prompts
+    category = role_category(npc)
+    folder = Path(folder_path)
+    stem = _safe(npc["name"])
+    slug = art._slug(npc["name"])
+    workflow_path = Path(entry["workflow"])
+
+    print("regenerating %s  \"%s\"  seed=%d -> %s" % (npc["name"], npc["Callsigns"], seed, folder))
+
+    if not workflow_path.exists():
+        raise SystemExit("Workflow not found: %s" % workflow_path)
+    template = art.load_api_workflow(workflow_path)
+    try:
+        slots = art.locate_slots(template)
+    except art.WorkflowError as exc:
+        raise SystemExit("%s: %s" % (workflow_path.name, exc))
+
+    post_template = post_slots = None
+    if not args.no_token:
+        if not args.rmbg.exists():
+            raise SystemExit("Background-removal workflow not found: %s" % args.rmbg)
+        post_template = art.load_api_workflow(args.rmbg)
+        try:
+            post_slots = art.locate_post_slots(post_template)
+        except art.WorkflowError as exc:
+            raise SystemExit("%s: %s" % (args.rmbg.name, exc))
+
+    comfy = art.find_server(args.server)
+    print("ComfyUI: %s" % comfy.base)
+
+    def render(prompt, stage, size):
+        knobs = Knobs(args, size, COMFY_PREFIX)
+        job = art.build_job(template, slots, entry_for(category, slug, stage, prompt), seed, knobs)
+        record = comfy.wait(comfy.queue(job), timeout=args.timeout)
+        images = comfy.images(record)
+        if not images:
+            raise RuntimeError("the %s job produced no image" % stage)
+        return images
+
+    def remove_background(image):
+        knobs = Knobs(args, TOKEN_SIZE, COMFY_PREFIX)
+        prefix = "%s/%s/%s/token_rmbg" % (COMFY_PREFIX, category, slug)
+        job = art.build_post_job(
+            post_template, post_slots, art.image_ref(image), prefix, seed, knobs)
+        record = comfy.wait(comfy.queue(job), timeout=args.timeout)
+        images = comfy.images(record)
+        if not images:
+            raise RuntimeError("background removal produced no image")
+        return images[0]
+
+    folder.mkdir(parents=True, exist_ok=True)
+    written = list(entry.get("files", []))
+    portrait_file = entry.get("portrait")
+    token_file = entry.get("token")
+
+    try:
+        if not args.no_portrait:
+            print("    portrait ...", flush=True)
+            image = render(portrait_prompt, "portrait", PORTRAIT_SIZE)[0]
+            portrait_file = fetch(comfy, image, folder / ("%s Portrait.png" % stem)).name
+            if portrait_file not in written:
+                written.append(portrait_file)
+            print("      -> %s" % portrait_file)
+
+        if not args.no_token:
+            print("    token ...", flush=True)
+            raw = render(token_prompt, "token", TOKEN_SIZE)[0]
+            if args.keep_raw_token:
+                raw_file = fetch(comfy, raw, folder / ("%s Token (raw).png" % stem)).name
+                if raw_file not in written:
+                    written.append(raw_file)
+            print("      + background removal", flush=True)
+            cut = remove_background(raw)
+            token_file = fetch(comfy, cut, folder / ("%s Token.png" % stem)).name
+            if token_file not in written:
+                written.append(token_file)
+            print("      -> %s" % token_file)
+    except KeyboardInterrupt:
+        print("\ninterrupted - cancelling the running job")
+        comfy.cancel_all()
+        return 130
+
+    dossier = folder / ("%s.md" % stem)
+    write_dossier(dossier, npc, seed, prompts, written)
+    if dossier.name not in written:
+        written.append(dossier.name)
+
+    entry["seed"] = seed
+    entry["files"] = written
+    entry["portrait"] = portrait_file
+    entry["token"] = token_file
+    entry["young"] = npc["_young"]
+    entry["when"] = time.strftime("%Y-%m-%d %H:%M:%S")
+    manifest[folder_path] = entry
+    art.save_manifest(args.regen_manifest, manifest)
+
+    print("done: %s" % folder)
+    return 0
+
+
 def main(argv=None):
     args = parse_args(argv)
+
+    if args.regen_manifest:
+        return regenerate_one(args)
 
     if not args.tables.exists():
         raise SystemExit("Tables file not found: %s" % args.tables)
@@ -1028,6 +1264,11 @@ def main(argv=None):
             "tables": str(args.tables),
             "workflow": str(workflow_for(args, npc)),
             "traits": {k: v for k, v in npc.items() if not k.startswith("_")},
+            # Not itself a table roll, so it lives beside traits rather than in
+            # it - --regen-manifest reads it back to pick the right MATURITY/
+            # FACE clause without re-deriving it from the (already flag-
+            # stripped) Age text.
+            "young": npc["_young"],
             "files": written,
             "portrait": portrait_file,
             "token": token_file,
