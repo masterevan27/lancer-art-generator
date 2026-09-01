@@ -1446,13 +1446,10 @@ they live in `generate-npc.py` — editing them here changes nothing.
 > **{BUILD}**, with **{TRAITS}** **{SKIN}**, **{HAIR}**, and **{EYES}**, and **{FEATURE}**,
 > wearing **{OUTFIT}**, **{FACTION}**. **{HEADGEAR}** {POSSESSIVE} face carries
 > **{DEMEANOR}**. {SUBJECT} carries
-> **{GEAR}**. **{BACKDROP}** **{WEATHER}** A faint **{ACCENT}** glow falls across one side of
-> {POSSESSIVE} face, contrasted against warm dim ambient light on the other. Keep
-> the palette restrained — greys, olive drab and rust — with **{ACCENT}** as the
-> only saturated color in the frame. Shallow depth of field, square framing, high
-> detail, atmospheric sci-fi character portrait. Painterly illustration throughout
-> with visible brushwork, heavy fine grain texture over every surface, and dense
-> halftone dot screentone worked deep into the shadows.
+> **{GEAR}**. **{BACKDROP}** **{WEATHER}** **{ACCENT_LINE}** Shallow depth of field, square
+> framing, high detail, atmospheric sci-fi character portrait. Painterly illustration
+> throughout with visible brushwork, heavy fine grain texture over every surface, and
+> dense halftone dot screentone worked deep into the shadows.
 
 `{TRAITS}` is not rolled from a table at all: it is a fixed clause the script
 asserts for every woman — currently "full lips, feminine posture" — including
@@ -1469,6 +1466,25 @@ entry restage the whole shot, swapping "a half-body character portrait" for "a
 dynamic, dramatically foreshortened character portrait" and putting the subject
 in freefall, without a separate pose table to keep in sync.
 
+`{ACCENT_LINE}` is "A faint **{ACCENT}** glow falls across one side of
+{POSSESSIVE} face against warm dim ambient light on the other. Keep the palette
+restrained — greys, olive drab and rust — with **{ACCENT}** as the only
+saturated color in the frame." _only_ when something rolled for this NPC would
+actually cast that glow — a lit instrument panel, neon signage, a muzzle flash
+in the Backdrop scene, or a glowing/lit detail in Gear, Outfit, Headgear,
+Feature or Eyes. `has_light_source()` in `generate-npc.py` checks the rolled
+text of those fields against a short list of light-implying words (`glow`,
+`lit`, `neon`, `lantern`, `beacon`, `readout`, `monitor`, `display`, `screen`,
+`flame`, `ember`, `burning`, `instrument`, `holographic`, `headlamp`, `glaring`,
+`muzzle flash`) — deliberately excluding plain daylight words like `sun`, since
+natural light doesn't motivate an arbitrary saturated accent color either. When
+nothing matches, `{ACCENT_LINE}` falls back to "Keep the palette restrained —
+greys, olive drab and rust, with no stray saturated color." instead of
+inventing a source for a color that has nothing to shine from — which used to
+happen on plenty of rolls (a dim mech hangar, a dropship bay door against a
+plain sky) and is why a stray green glow could land on a face with nothing
+nearby to cast it.
+
 ### Token (1024x1280, then RMBG to a transparent PNG)
 
 > A full-body character illustration of **{ROLE}**, **{AGE}**, standing at full
@@ -1480,17 +1496,24 @@ in freefall, without a separate pose table to keep in sync.
 > figure. {SUBJECT} is **{BUILD}**, with
 > **{TRAITS}** **{SKIN}**, **{HAIR}**, and **{EYES}**, and **{FEATURE}**, wearing **{OUTFIT}**,
 > **{FACTION}**. {POSSESSIVE} face carries **{DEMEANOR}**. {SUBJECT} carries
-> **{GEAR}**, picked out with a single **{ACCENT}** glow accent. {SUBJECT} is
+> **{GEAR}**. {SUBJECT} is
 > **{STANCE}**, both boots planted and fully visible, {POSSESSIVE} face toward the
 > viewer — a relaxed, natural pose with the arms free, not a rigid attention
-> stance with the hands pinned at the sides. Keep the
-> palette restrained — greys, olive drab and rust — with **{ACCENT}** as the only
-> saturated color. The background alone is a solid flat plain white, no texture, no
+> stance with the hands pinned at the sides. **{ACCENT_LINE}** The background alone
+> is a solid flat plain white, no texture, no
 > gradient, no shadow, no environment. Centered composition, dramatic lighting,
 > isolated character illustration, clean silhouette. Painterly illustration throughout with
 > visible brushwork, heavy fine grain texture over every surface, and dense
 > halftone dot screentone worked deep into the shadows, matching the same painterly
 > rendering as the portrait shot.
+
+`{ACCENT_LINE}` here is "Keep the palette restrained — greys, olive drab and
+rust — with a single **{ACCENT}** glow the only saturated color.", gated the
+same way as the portrait's — except the token has no backdrop at all (it's
+flat white for RMBG), so only an equipped source counts: something glowing or
+lit in the rolled Gear, Outfit, Headgear, Feature or Eyes. No match falls back
+to "Keep the palette restrained — greys, olive drab and rust, with no stray
+saturated color." See the portrait section above for the word list.
 
 The token template names the footwear outright - "plain modern boots, no leg
 wraps or puttees" - because with nothing said about them the campaign's

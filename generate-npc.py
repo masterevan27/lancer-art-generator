@@ -112,6 +112,27 @@ def estimate_tokens(text):
     return int(len(text) / CHARS_PER_TOKEN)
 
 
+# Words a rolled Gear, Outfit, Headgear, Feature, Eyes or Backdrop-scene bullet
+# already uses when it describes something that would actually cast colored
+# light - a lit instrument panel, a glowing seam, a neon sign, a muzzle flash.
+# The accent-glow sentences below only fire when at least one rolled bullet
+# matches, so the "faint {accent} glow" they describe always has something in
+# frame to have cast it, rather than landing on a scene with no light source
+# at all (a mech hangar in shadow, a dropship bay door against a plain sky).
+# Deliberately excludes plain daylight/dusk words like "sun" or "sunlit" -
+# natural light doesn't motivate an arbitrary saturated accent color either.
+LIGHT_SOURCE_WORDS = re.compile(
+    r"\b(glow\w*|lit|lighting|lights?|neon|lanterns?|beacons?|readouts?|"
+    r"monitors?|displays?|screens?|flames?|embers?|burning|instruments?|"
+    r"holographic|holograms?|headlamps?|glaring)\b|muzzle flash",
+    re.IGNORECASE,
+)
+
+
+def has_light_source(*texts):
+    return any(LIGHT_SOURCE_WORDS.search(text) for text in texts)
+
+
 # What the prompt asserts about the subject's age, in the two highest-signal
 # positions it has: the opening phrase, and the face clause. Both templates used
 # to hardcode the adult form, which is why an Age bullet reading "in her late
@@ -194,9 +215,7 @@ PORTRAIT_TEMPLATE = (
     "{build}, {face}, and {traits}"
     "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction}, the clothing "
     "following the shape of that frame. {headgear} {Possessive} face carries {demeanor}. "
-    "{gear_line}{backdrop} {weather_line}A faint {accent} glow falls across one side of {possessive} "
-    "face against warm dim ambient light on the other. Keep the palette restrained - "
-    "greys, olive drab and rust - with {accent} the only saturated color in the frame. "
+    "{gear_line}{backdrop} {weather_line}{accent_line} "
     "Shallow depth of field, square framing, high detail, atmospheric sci-fi character "
     "portrait, painterly brushwork with heavy grain and dense halftone screentone worked "
     "into every shadow."
@@ -216,12 +235,32 @@ TOKEN_TEMPLATE = (
     "{outfit}, {faction}, the clothing following the shape of that frame. {headgear} "
     "{Possessive} face carries {demeanor}. {gear_line}{Subject} {is_are} {stance}, both "
     "boots planted and fully visible, the pose relaxed and natural with the arms free. "
-    "Keep the palette restrained - greys, olive drab and rust - with a single {accent} "
-    "glow the only saturated color. The background alone is a solid flat plain white, no "
+    "{accent_line} The background alone is a solid flat plain white, no "
     "texture, no gradient, no shadow, no environment. Centered composition, dramatic "
     "lighting, isolated character illustration, clean silhouette, painterly brushwork "
     "with heavy grain and dense halftone screentone worked into every shadow, matching "
     "the same painterly rendering as the portrait shot."
+)
+
+# The two forms {accent_line} takes, gated on has_light_source() - see there
+# for why. The "with" case keeps the original wording verbatim; the "without"
+# case drops the accent color entirely rather than inventing a source for it.
+ACCENT_PORTRAIT = (
+    "A faint {accent} glow falls across one side of {possessive} face against "
+    "warm dim ambient light on the other. Keep the palette restrained - greys, "
+    "olive drab and rust - with {accent} the only saturated color in the frame."
+)
+ACCENT_PORTRAIT_NONE = (
+    "Keep the palette restrained - greys, olive drab and rust, with no stray "
+    "saturated color."
+)
+ACCENT_TOKEN = (
+    "Keep the palette restrained - greys, olive drab and rust - with a single "
+    "{accent} glow the only saturated color."
+)
+ACCENT_TOKEN_NONE = (
+    "Keep the palette restrained - greys, olive drab and rust, with no stray "
+    "saturated color."
 )
 
 
@@ -513,10 +552,25 @@ def build_prompts(npc):
     # Built from the same fields and inserted already-substituted, since
     # str.format does a single pass and would leave any nested placeholder raw.
     carrying = "{Subject} {carry} {gear}. ".format(**fields)
-    portrait_fields = dict(fields, gear_line="" if "nogear" in flags else carrying)
+
+    # The accent glow only belongs in the prompt when something rolled for
+    # this NPC would actually cast it. Equipped sources (something worn or
+    # carried) apply to both shots; the backdrop's own light - a neon sign, an
+    # instrument panel, a muzzle flash - only reaches the portrait, since the
+    # token has no backdrop at all, just flat white.
+    equipped_glow = has_light_source(
+        npc["Gear"], npc["Outfit"], npc["Headgear"], npc["Feature"], npc["Eyes"])
+    portrait_glow = equipped_glow or has_light_source(scene)
+
+    portrait_fields = dict(
+        fields, gear_line="" if "nogear" in flags else carrying,
+        accent_line=(ACCENT_PORTRAIT if portrait_glow else ACCENT_PORTRAIT_NONE).format(**fields))
+    token_fields = dict(
+        fields, gear_line=carrying,
+        accent_line=(ACCENT_TOKEN if equipped_glow else ACCENT_TOKEN_NONE).format(**fields))
 
     prompts = (PORTRAIT_TEMPLATE.format(**portrait_fields),
-               TOKEN_TEMPLATE.format(**dict(fields, gear_line=carrying)))
+               TOKEN_TEMPLATE.format(**token_fields))
 
     for label, text in zip(("portrait", "token"), prompts):
         n = estimate_tokens(text)
