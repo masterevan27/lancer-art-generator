@@ -899,6 +899,14 @@ ignored — so notes like this one are safe to leave inline.
 - a short black bob left deliberately choppy, the ends spiked and uneven, long bangs swept across one eye
 - a high ponytail tied off loose and messy, long strands left free either side of the face
 - hair worn poker-straight and very long, falling well past the waist, a long fringe swept down one side of the face
+- a pale chin-length bob with a straight-cut fringe
+- a lavender-grey bob swept low across one eye
+- a long teal double braid falling past the waist
+- black hair cut in a blunt chin-length bob with heavy straight bangs
+- a long twin-tail, loose strands pulled forward across one shoulder
+- a messy silver-lavender topknot, one side shaved close beneath it
+- a long single braid, loose strands escaping at the crown
+- hair gathered into twin space buns, loose strands falling free at the temples
 
 ## Hair (he) +
 
@@ -1029,6 +1037,11 @@ ignored — so notes like this one are safe to leave inline.
 - {Subject} {wear} a russet leather flight cap with ear flaps and a monocular scanner lens fixed down over one eye.
 - {Subject} {wear} a wide woven sedge hat, its brim throwing {possessive} face into shadow.
 - {Subject} {wear} a pale cloth wrapped loosely over the lower face beneath a wide straw hat.
+- {Subject} {wear} a sleek integrated visor plate curving back over one ear, thin cable jacks seated at the jaw and temple, a faint accent light glowing along its edge.
+- {Subject} {wear} a bulky visored rig clamped down over the eyes, a stub antenna and a cluster of cable jacks rising from the crown, a single indicator light glowing beneath the visor's edge.
+- {Subject} {wear} a gold-trimmed headset clamped over one ear, a coiled cable trailing from it down past {possessive} collar.
+- {Subject} {wear} a sleek pilot's helmet with a curved visor, faint HUD readouts scrolling across the inside of the glass and a stencilled call-sign plate set at the jaw.
+- {Subject} {wear} round wire-rimmed glasses, their lenses lit faintly at the edges with a soft glow.
 
 ## Headgear (she) +
 
@@ -1059,6 +1072,7 @@ ignored — so notes like this one are safe to leave inline.
 - a soft, unhurried expression that gives nothing away
 - a bright, quick grin
 - a cool, composed poise that does not invite argument
+- a narrow-eyed, studious focus, lips slightly parted mid-read
 
 ## Role
 
@@ -1227,6 +1241,9 @@ ignored — so notes like this one are safe to leave inline.
 - a dark work shirt with the sleeves rolled to the elbow under a strapped harness rig, a radio pouch at the chest, baggy olive cargo trousers, tactical gloves and armored shin guards over heavy boots || civ
 - an elaborate floral kimono layered over a plain white underrobe, sleeves trailing long past the fingertips || civ
 - white shrine robes with a red hakama skirt, a cord-tied over-sash crossing the chest || civ
+- a black jacket studded with spikes at the collar and shoulders, a small enamel pin at the breast, over a cropped top and a low-slung belt hung with metal loops || civ
+- a worn hooded jacket patched with faded characters at the sleeve, torn and taped at the seams || civ
+- an olive tank top over cargo trousers, a pair of fingerless gloves and worn lace-up boots || civ
 
 ## Gear
 
@@ -1282,6 +1299,10 @@ ignored — so notes like this one are safe to leave inline.
 - a small pale fox cradled against the chest in both arms || hands
 - a lacquered walking stick gripped in one hand, weight braced into it || hands
 - a long polearm banded in trailing red cord, planted butt-down and held upright in one hand || hands mil
+- a long suppressed sniper rifle with a scope, its stock stencilled with a small painted tally number, slung across {possessive} back || mil
+- a fist-sized holographic sphere hovering just above one open palm, its surface a shifting lattice of glowing fracture-lines and readouts
+- a translucent holographic data-sheet held up in both hands, dense scrolling text glowing across its surface || hands
+- a pair of oversized clawed gauntlets, a single sensor node glowing in each palm || hands mil
 
 ## Accent
 
@@ -1382,6 +1403,21 @@ ignored — so notes like this one are safe to leave inline.
 - x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a sunlit ruin of towering stone archways and a broken aqueduct climbing a green mountainside, ivy and wind-bent trees reclaiming the old stonework. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a colossal robotic figure half-risen from a canal, only its ornate head, shoulders and clawed hands breaking the water, gold filigree tracing its dark plating; beyond it domed shrines and slender gold-latticed spires ring a plaza where two hooded robed figures pause at the water's edge beneath a hazy dusk sky, a dull red sun hanging low beside a darker second disc. || weather
 - A three-quarter rear-view character portrait || {Subject} {is_are} standing in a mech's calibration bay, gazing up at a towering white-armored war-machine looming just ahead, one hand raised holding a slim holographic data-slate glowing with dense diagnostic readouts, {possessive} other hand braced at {possessive} hip - thick power cabling and chain hoists hang down around the mech's bulk, a wall-mounted display beside {object} scrolling systems-check telemetry, cool blue interior lighting washing the bay. || nogear
+- A character portrait || {Subject} {is_are} standing atop the hull of a companion vessel in high orbit, a cropped tactical jacket patched at the shoulder catching the thin light, looking back over one shoulder - beyond {object} a planet's night side curves away below, its cities burning in scattered threads of light against the dark.
+- A dramatic low-angle character portrait || {Subject} {is_are} standing amid drifting embers on a scorched battlefield in heavy rain, {possessive} back to the viewer, a long rifle gripped and lowered at {possessive} side - ahead of {object} churned mud and shattered rock fade into grey mist streaked with falling ash. || nogear weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a floor-to-ceiling window wall overlooking a dense neon high-rise skyline at night, faint status readouts glowing at the edge of the frame.
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a graffiti-tagged alley lit by tube neon signage bleeding red and teal through drifting mist.
+- A character portrait || {Subject} {is_are} standing beside a parked muscle car on a dark cyberpunk street at night, one hand braced on the doorframe, glancing up at the looming high-rises ahead - behind {object} the car's tail-lights glow red against the wet pavement. || weather
+- A character portrait || {Subject} {is_are} standing at a rooftop railing in the rain, glancing back over one shoulder, a pair of aircraft streaking low across the skyline behind {object} - below {object} a dense neon high-rise district stretches away into the haze. || weather
+- A close character portrait || {Subject} {is_are} seated inside a parked vehicle's cockpit in heavy rain, one hand braced on the wheel, neon shopfronts smearing color across the fogged, rain-streaked windshield ahead. || weather
+- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} weightless in freefall, twisting hard to slip between a crossing lattice of taut laser tripwires, {possessive} body bent and one arm flung wide for balance while the other reaches ahead, loose debris and shattered fragments drifting alongside {object} - the beams cut bright green lines through the dark around {object}, faint structural wreckage receding into the black beyond.
+- A character portrait || {Subject} {is_are} standing before the hull of a beached derelict starship, reaching up to touch a faint glowing panel set into its plating - behind {object} the ship's saucer-like silhouette looms against a field of stars.
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a wall of humming, dust-caked monitors and tangled cable runs, their pale glow the only light in the room.
+- A dynamic character portrait || {Subject} {is_are} crouched low and reaching forward through the wreckage of a gutted server room, heavy clawed gauntlets braced against a fallen strut - behind {object} shattered windows let pale light leak through drifting dust and hanging cable. || nogear
+- A character portrait || {Subject} {is_are} perched on the raised knee-joint of a crouched companion mech in heavy night rain, one hand braced against its plating - behind {object} a neon-lit high-rise district fades into the downpour. || weather
+- A character portrait || {Subject} {is_are} standing beside a parked muscle car on a pastel-lit street at dusk, one hand resting on the open door - behind {object} a tangle of towering cyberpunk architecture rises hazy into the fading light. || weather
+- A character portrait || {Subject} {is_are} sitting cross-legged on a rooftop ledge at night, hands braced behind {object} - beyond {object} a massive ringed planet hangs low over a grid-lit synthwave skyline lined with palm trees.
+- A character portrait || {Subject} {is_are} sitting on the hood of a parked muscle car beneath an enormous full moon, hands braced back against the metal - small dark shapes wheel through the night air above the rain-slick street around {object}. || weather
 
 ## Weather
 

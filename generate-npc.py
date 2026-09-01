@@ -1099,7 +1099,9 @@ def regenerate_one(args):
     entry["seed"] = seed
     entry["files"] = written
     entry["portrait"] = portrait_file
+    entry["portraitPrompt"] = portrait_prompt
     entry["token"] = token_file
+    entry["tokenPrompt"] = token_prompt
     entry["young"] = npc["_young"]
     entry["when"] = time.strftime("%Y-%m-%d %H:%M:%S")
     manifest[folder_path] = entry
@@ -1151,11 +1153,13 @@ def main(argv=None):
             print("    -> %s" % (npc_folder(args.out, npc["name"], role_category(npc), args.overwrite)))
             print("    workflow %s" % workflow_for(args, npc).name)
             if not args.no_portrait:
-                print("    portrait %dx%d ~%d tok: %s..." % (
-                    PORTRAIT_SIZE + (estimate_tokens(portrait_prompt), portrait_prompt[:70])))
+                print("    portrait %dx%d ~%d tok:" % (
+                    PORTRAIT_SIZE + (estimate_tokens(portrait_prompt),)))
+                print("        %s" % portrait_prompt)
             if not args.no_token:
-                print("    token    %dx%d ~%d tok: %s..." % (
-                    TOKEN_SIZE + (estimate_tokens(token_prompt), token_prompt[:70])))
+                print("    token    %dx%d ~%d tok:" % (
+                    TOKEN_SIZE + (estimate_tokens(token_prompt),)))
+                print("        %s" % token_prompt)
         stages = (0 if args.no_portrait else 1) + (0 if args.no_token else 2)
         print("\ndry run OK - %d job(s) would be queued" % (len(rolled) * stages))
         return 0
@@ -1271,7 +1275,9 @@ def main(argv=None):
             "young": npc["_young"],
             "files": written,
             "portrait": portrait_file,
+            "portraitPrompt": portrait_prompt,
             "token": token_file,
+            "tokenPrompt": token_prompt,
             "dossier": dossier.name,
             "when": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
