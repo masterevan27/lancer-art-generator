@@ -923,13 +923,15 @@ def main(argv=None):
         print("    %s, %s" % (npc["Role"], npc["Faction"]))
 
         written = []
+        portrait_file = token_file = None
         try:
             folder.mkdir(parents=True, exist_ok=True)
 
             if not args.no_portrait:
                 print("    portrait ...", flush=True)
                 image = render(npc, portrait_prompt, category, slug, "portrait", PORTRAIT_SIZE, seed)[0]
-                written.append(fetch(comfy, image, folder / ("%s Portrait.png" % stem)).name)
+                portrait_file = fetch(comfy, image, folder / ("%s Portrait.png" % stem)).name
+                written.append(portrait_file)
                 print("      -> %s" % written[-1])
 
             if not args.no_token:
@@ -940,7 +942,8 @@ def main(argv=None):
                         fetch(comfy, raw, folder / ("%s Token (raw).png" % stem)).name)
                 print("      + background removal", flush=True)
                 cut = remove_background(raw, category, slug, seed)
-                written.append(fetch(comfy, cut, folder / ("%s Token.png" % stem)).name)
+                token_file = fetch(comfy, cut, folder / ("%s Token.png" % stem)).name
+                written.append(token_file)
                 print("      -> %s" % written[-1])
 
         except KeyboardInterrupt:
@@ -960,6 +963,11 @@ def main(argv=None):
 
         done += 1
         manifest[str(folder)] = {
+            # Deterministic from name+seed so a --overwrite rerun of the same
+            # NPC reuses it rather than minting a new one - this is what the
+            # Foundry importer keys its "already imported" tracking on.
+            "id": "npc-%s-%d" % (slug, seed),
+            "kind": "npc",
             "name": npc["name"],
             "callsign": npc["Callsigns"],
             "seed": seed,
@@ -967,6 +975,9 @@ def main(argv=None):
             "workflow": str(workflow_for(args, npc)),
             "traits": {k: v for k, v in npc.items() if not k.startswith("_")},
             "files": written,
+            "portrait": portrait_file,
+            "token": token_file,
+            "dossier": dossier.name,
             "when": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
         art.save_manifest(args.manifest, manifest)

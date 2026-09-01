@@ -1011,6 +1011,8 @@ ignored — so notes like this one are safe to leave inline.
 - {Subject} {wear} an open-face crash helmet with the visor swung up clear of {possessive} eyes.
 - {Subject} {wear} a ballistic helmet with its visor tipped up and a black breather mask sealed over the lower face.
 - {Subject} {wear} a russet leather flight cap with ear flaps and a monocular scanner lens fixed down over one eye.
+- {Subject} {wear} a wide woven sedge hat, its brim throwing {possessive} face into shadow.
+- {Subject} {wear} a pale cloth wrapped loosely over the lower face beneath a wide straw hat.
 
 ## Headgear (she) +
 
@@ -1134,6 +1136,10 @@ ignored — so notes like this one are safe to leave inline.
 - a heavy insulated flight jacket over a hooded pullover, cargo trousers and strapped knee pads
 - a plate carrier over a dark bodysuit with a powered leg exo-frame braced from hip to boot
 - an oversized rollneck sweater with the sleeves pushed back, harness straps over both shoulders and enormously baggy cargo trousers gathered at the ankle
+- a dark travel-worn robe with a crimson underlayer at the collar and sleeves, belted over wide hakama-style trousers
+- layered white pilgrim's robes gone travel-stained at the hem, a coarse rope belt cinched at the waist
+- a weathered haori-style jacket over a high-collared undershirt, sleeves bound back with cord
+- segmented lacquered armor plates over a dark underrobe, a torn banner cord trailing from one shoulder
 
 ## Outfit (she) +
 
@@ -1184,6 +1190,8 @@ ignored — so notes like this one are safe to leave inline.
 - a white double-breasted officer's tunic with a high open collar and armored shoulder boards, belted at the waist over a short flared skirt, a long dark cape hanging from the shoulders, garter straps at the thigh above white boots
 - a cropped olive bomber jacket over a slim chest rig and a fitted tee, a band of bare midriff above olive cargo trousers slung with pouches
 - a dark work shirt with the sleeves rolled to the elbow under a strapped harness rig, a radio pouch at the chest, baggy olive cargo trousers, tactical gloves and armored shin guards over heavy boots
+- an elaborate floral kimono layered over a plain white underrobe, sleeves trailing long past the fingertips
+- white shrine robes with a red hakama skirt, a cord-tied over-sash crossing the chest
 
 ## Gear
 
@@ -1223,9 +1231,15 @@ ignored — so notes like this one are safe to leave inline.
 - a compact field radio in a chest pouch, its stub antenna angled up past {possessive} shoulder
 - a slab-sided equipment case clipped to the harness at {possessive} hip
 - a sidearm gripped and raised in both hands, sighted dead level at the viewer || hands gun
+- an oversized rail cannon gripped and leveled at the viewer with both hands, a thick barrel shroud and boxy under-slung magazine || hands gun
 - twin sidearms held akimbo, one arm thrust forward and the other braced out to the side || hands gun
 - a service rifle held loosely in both hands at an easy, unhurried low ready || hands gun
 - twin sidearms held low and loose in both hands, muzzles angled down at {possessive} sides || hands gun
+- a compact twin-thruster pack strapped across {possessive} back, its vents lit with a colored glow
+- a folded oilpaper parasol held in one hand, its tip braced against the ground || hands
+- a small pale fox cradled against the chest in both arms || hands
+- a lacquered walking stick gripped in one hand, weight braced into it || hands
+- a long polearm banded in trailing red cord, planted butt-down and held upright in one hand || hands
 
 ## Accent
 
@@ -1293,11 +1307,14 @@ ignored — so notes like this one are safe to leave inline.
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} weightless in freefall down a dim ship corridor, {possessive} body angled hard toward the viewer in strong foreshortening, one arm extended down and out gripping a raised sidearm with the muzzle tracking past the frame, the other hand bent back near {possessive} own head bracing against an unseen handhold, legs trailing loose behind {object}, faint motion blur streaking the corridor's lit panels and hazard striping as they rush past. Dramatic foreshortened composition. || nogear
 - A character portrait || {Subject} {is_are} glancing back over one shoulder with a faint, private smile, one hand raised near {possessive} own face in a loose two-fingered gesture, hair drifting weightless with the motion - behind {object}, softly out of focus, a starfield and the curved limb of a planet glow low against the dark.
 - A dynamic, close character portrait || {Subject} {is_are} standing square to the viewer with {possessive} arm fully extended, a pistol gripped level and aimed straight at the camera, {possessive} off hand braced beneath for support, {possessive} expression flat and controlled - behind {object}, blurred well out of focus, a plain dim interior with hard directional light. Dramatic side lighting rakes across {possessive} face and the weapon. || nogear
+- A dynamic, low-angle character portrait || {Subject} {is_are} standing beside a parked matte-black superbike, both hands locked around an oversized cannon raised and leveled dead at the viewer, a sheathed blade slung crosswise across {possessive} back - behind {object} a rain-slick night street glows faintly blue through fogged storefront glass, the bike's windscreen starred with a bullet crack close beside {object}. || nogear weather
 - A dynamic character portrait || {Subject} {is_are} braced with a double-barreled shotgun raised and shouldered, sighting hard toward the viewer, hair whipped loose by the wind - behind {object}, out of focus, an open sunlit horizon under a pale hazy sky. Hard directional light rakes across {possessive} face and the weapon. || nogear weather
 - A dynamic, low-angle character portrait || {Subject} {is_are} braced low on one knee, a long suppressed sniper rifle shouldered and firing toward the viewer, a spent casing arcing free from the action and {possessive} hair caught mid-motion by the recoil - behind {object}, out of focus, a dusty open flatland fading into haze. Dramatic side lighting rakes across {possessive} face and the weapon. || nogear weather
 - A dynamic, low-angle character portrait || {Subject} {is_are} braced low on one knee behind a belt-fed light machine gun, sighting down it toward the viewer with the ammo belt trailing to a drum magazine, gear-laden webbing crossing {possessive} chest - beside {object}, out of focus, the watchful shape of a large working dog crouches low in the frame, and behind them both a pale washed-out sky stretches away. || nogear weather
+- A dynamic, low-angle character portrait || {Subject} {is_are} advancing down a cramped service corridor, a rifle raised and sighted toward the viewer, red emergency strip-lighting striping the walls and ceiling around {object} and dark stains marking the deck underfoot - ahead down the passage, two more silhouetted figures stand caught in a bright wash of light and drifting haze. Hard red-tinted side lighting rakes across {possessive} face and the weapon. || nogear
 - x3 A half-body character portrait || Behind {object}, out of focus, is a muted frontier backdrop of dusty rockcrete structures and faint industrial haze, a dim atmospheric glow low on the horizon. Dramatic side lighting casts hard shadow across half {possessive} face. || weather
 - A three-quarter character portrait || {Subject} {is_are} leaning intently over a cluttered workbench, hunched forward and studying something closely, both hands down on a mechanical keyboard - to one side a large monitor glows with dense terminal code, casting light across {possessive} face, and behind {object} a cluttered workshop of stacked machinery, tangled cabling and scattered papers recedes into soft focus under dim overhead light. Warm light on {possessive} face against the cooler background. || nogear
+- A character portrait || {Subject} {is_are} leaning back against the flank of a long, low speeder bike parked at a fuel stop, ankles crossed and weight settled easy against the fuselage, a cigarette held forgotten near {possessive} mouth, gazing out at the fading light - behind {object} a hazy golden dusk skyline of distant spires rises beyond a scatter of old fuel pumps and hand-lettered signage crowding the foreground out of focus. || nogear weather
 - A character portrait || {Subject} {is_are} sitting in profile, leaning back against the bent knee of a massive crouched military mech - the machine is boxy and heavily industrial, thick armored plating stencilled with unit markings, a single lit optic sensor and antenna protrusions rising from its head, its bulk looming just behind {possessive} shoulder. Behind them a rundown industrial refinery at dusk: tangled scaffolding, pipes and a tall numbered tower silhouetted against a low sun. Warm light rakes across {possessive} face and the mech's armor. || weather
 - A dramatic low-angle character portrait || {Subject} {is_are} leaning back against the massive bent knee of a towering mech, looking down at the viewer, the shot angled steeply upward to emphasise the scale of both - the mech's leg fills the foreground in fine panel-line and rivet detail, a weapon barrel running off the top of the frame, a crescent moon faint through cloud above and a distant skyline low on the horizon. || weather
 - A character portrait || {Subject} {is_are} sitting in the round hatch of an open viewport, one leg drawn up and hooked over the rim and the other hanging free outside it, {possessive} weight braced back against the frame in unhurried repose, gazing out past the opening. Tucked into the corner of frame below {object}, the domed head and lit photoreceptor of a small utility droid peeks into view. Beyond the hatch a pair of pale suns hang low over a sun-bleached horizon. || weather
@@ -1312,6 +1329,16 @@ ignored — so notes like this one are safe to leave inline.
 - A character portrait || {Subject} {is_are} standing on a windswept ridge, a weapon lowered and faintly smoking at {possessive} side, looking out over a mist-filled valley - behind {object} a vast ring of wreckage hangs frozen in the air above a plunging waterfall, a pair of transports drifting past far below. || nogear weather
 - A character portrait || {Subject} {is_are} sitting cross-legged on a rooftop ledge, eyes closed in quiet stillness, a sheathed blade laid flat across {possessive} lap - behind {object} a dense night skyline glows through drifting haze, thin trails of aircraft light threading between the towers. || nogear weather
 - A dynamic character portrait || {Subject} {is_are} walking straight toward the viewer down a rain-slicked neon-lit street at night, flanked on either side by a pair of hulking bipedal war-mechs looming half into frame, their optics burning dull red in the murk, signage bleeding into smeared reflections on the wet pavement behind them all. || weather
+- A dynamic, low-angle character portrait || {Subject} {is_are} crouched low in a wide balanced stance atop a hovering skateboard ridden like a surfboard, knees bent and weight low, one arm flung out wide for balance and the other pointing off past the frame, a twin-thruster pack strapped across {possessive} back glowing faintly at the vents, hair and jacket sleeves whipped back by the wind - behind {object} a dense neon-lit cyberpunk skyline rises through drifting haze, towering signage in tangled scripts and corporate logos glowing through the mist, other riders on hoverbikes cutting past in the middle distance. || nogear weather
+- A dramatic low-angle character portrait || {Subject} {is_are} crouched low behind an abandoned vehicle on a rain-slicked city street at night, weapon raised and sighting up at a colossal insectoid war-machine that fills the skyline ahead, its hull studded with glowing sensor clusters and thin segmented limbs trailing into the smoke-hazed street below, twin beams lancing down from its underside through the drifting mist - behind {object} a burning wreck casts long orange light across the wet pavement. || nogear weather
+- A character portrait || {Subject} {is_are} standing just inside the shattered nave of a ruined cathedral, dust hanging thick in broad shafts of light falling through the broken vaulting overhead, gazing up at an ancient gold-plated war-machine crouched motionless among the rubble ahead - a pair of cloaked, hooded companions stand just ahead of {object}, silhouetted small against its bulk. || weather
+- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} caught mid-kick in heavy powered armor, driving a braced boot into the armored hull of a massive segmented war-machine at close quarters, {possessive} sidearm still gripped and firing point-blank in the other hand, sparks and debris bursting from the impact - behind {object} a shattered cityscape unfurls in smoke and falling rubble, distant explosions blooming against a pale hazy sky. || nogear weather
+- A character portrait || {Subject} {is_are} standing amid drifting embers and rubble, watching a hulking quadrupedal war-mech stride past close behind {object}, an oversized cannon swinging loose from one of its forelimbs, a small armed flyer banking low overhead - beyond them a bombed-out industrial skyline fades into a bruised violet dusk, fire guttering low among the wreckage. || weather
+- x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a windswept plain of tall pale grass, a small stilted wayside shrine strung with paper streamers and a spear driven upright nearby trailing a strip of red cloth, a faint rainbow arcing through the haze beyond. || weather
+- x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-slick shrine courtyard at dusk, stone steps climbing to wooden eaves hung with a glowing paper lantern, pale fox-shaped shapes moving low through the mist. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is the fog-wrapped wreck of a fallen war-mech looming over a rain-soaked shrine courtyard, its broken frame threaded with strung paper talismans. || weather
+- x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a sunlit ruin of towering stone archways and a broken aqueduct climbing a green mountainside, ivy and wind-bent trees reclaiming the old stonework. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a colossal robotic figure half-risen from a canal, only its ornate head, shoulders and clawed hands breaking the water, gold filigree tracing its dark plating; beyond it domed shrines and slender gold-latticed spires ring a plaza where two hooded robed figures pause at the water's edge beneath a hazy dusk sky, a dull red sun hanging low beside a darker second disc. || weather
 
 ## Weather
 
@@ -1320,12 +1347,13 @@ ignored — so notes like this one are safe to leave inline.
   background removal, so falling snow there would just be more for RMBG to cut
   out; and weather is only added to Backdrop entries carrying the 'weather'
   flag, because rain inside a cockpit or in hard vacuum is nonsense. About
-  twenty backdrop bullets are flagged now, covering most of the outdoor and
-  semi-outdoor scenes - the street, the dropship door, the rooftops, the
+  twenty-three backdrop bullets are flagged now, covering most of the outdoor
+  and semi-outdoor scenes - the street, the dropship door, the rooftops, the
   frontier vista, the two mech-companion shots, the ruined city, the rail
   platform, the fire-escape alley, the snow crash site, the
-  flying-superstructure skyline, the ridge vista and the rooftop meditation
-  shot.
+  flying-superstructure skyline, the ridge vista, the rooftop meditation shot,
+  the rain-slicked mech-flanked street, the kaiju street ambush, the ruined
+  cathedral and the mech close-quarters kick.
 
   The 'clear' flag means the bullet contributes nothing to the prompt; its text
   exists only so the dossier has something to print. That is the dial for how
@@ -1351,6 +1379,7 @@ ignored — so notes like this one are safe to leave inline.
 - A dust-laden wind lifts {possessive} hair and drags a thick haze across the background.
 - A low industrial fog rolls through, swallowing the background a few paces behind {object}.
 - Heat shimmer distorts the air behind {object}, the background rippling with it.
+- A pale ground mist clings low across open grass, blurring everything a few paces behind {object}.
 
 ## Stance
 
@@ -1373,6 +1402,8 @@ ignored — so notes like this one are safe to leave inline.
 - standing at a low ready, weapon angled down and across the body, alert and scanning the middle distance || gun
 - standing in a sharp half-turn with a sidearm gripped in each hand, one arm extended straight out toward the viewer and the other braced out to the side || gun
 - caught mid-stride walking straight toward the viewer, twin sidearms held low and loose at {possessive} sides || gun
+- standing with head bowed and shoulders drawn in against the weather
+- standing in a slow half-bow, one hand pressed flat against the chest
 
 ## Stance (she) +
 
