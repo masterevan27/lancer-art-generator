@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-09-01T00:00:01-05:00",
+  "source_images": [
+    "pasted image: pilot with tablet beside a towering white mech in a hangar calibration bay"
+  ],
+  "entries": [
+    {
+      "id": "e1",
+      "table": "Backdrop",
+      "bullet": "A three-quarter rear-view character portrait || {Subject} {is_are} standing in a mech's calibration bay, gazing up at a towering white-armored war-machine looming just ahead, one hand raised holding a slim holographic data-slate glowing with dense diagnostic readouts, {possessive} other hand braced at {possessive} hip - thick power cabling and chain hoists hang down around the mech's bulk, a wall-mounted display beside {object} scrolling systems-check telemetry, cool blue interior lighting washing the bay. || nogear",
+      "source_image": "pasted image: pilot with tablet beside a towering white mech in a hangar calibration bay",
+      "placement_hint": "next to the other mech-companion Backdrop bullets (the mech-knee sitting/leaning shots) and near the plain 'dim interior of a mech hangar' entry",
+      "bookkeeping_note": "adds one to the 43 weighted Backdrop entries and to the sixteen scene-specific ones named in Scripts/generate-npc.md's 'Backdrop bullets carry the portrait's opening phrase...' paragraph, turning 'two mech-companion shots' there into three",
+      "notes": "nogear because the data-slate already occupies a hand, per the table header's 'something in the subject's hands' wording (not just weapons). No weather flag - scene is an interior hangar bay. Dropped the image's literal unit number/branding ('Hangar 09', 'Orbital Armaments', 'Unit 09') since Backdrop bullets in this file stay generic rather than naming a specific unit or faction; kept 'calibration bay' and the diagnostic-screen signage as generic set dressing. Left the mech's glow/lighting uncolored so it doesn't fight the rolled Accent. Did not stage a Hair entry - the cut is a plain bob and the face/hair are turned three-quarter away, not distinctive enough to add over the existing 'short blonde bob' / 'short silver-white bob' entries already in Hair (she) +.",
+      "imported": true,
+      "imported_at": "2026-09-01T04:46:39.385Z"
+    }
+  ]
+}
