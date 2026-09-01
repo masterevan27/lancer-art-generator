@@ -100,7 +100,7 @@ DEFAULT_OUTPUT_ROOT = Path(r"G:\Documents\ComfyUI\output") / COMFY_PREFIX
 # is ignored, so extra tables can be added for reference without breaking this.
 REQUIRED_TABLES = [
     "Given names", "Family names", "Callsigns", "Pronouns", "Age", "Build",
-    "Skin", "Hair", "Eyes", "Feature", "Demeanor", "Role", "Faction",
+    "Height", "Skin", "Hair", "Eyes", "Feature", "Demeanor", "Role", "Faction",
     "Outfit", "Headgear", "Gear", "Accent", "Backdrop", "Weather", "Stance",
 ]
 
@@ -202,6 +202,14 @@ ROLE_CATEGORIES = {
 }
 UNCATEGORIZED_ROLE = "Other"
 
+# The Gear-roll policy each ROLE_CATEGORIES bucket gets, layered on top of the
+# mil/civ split - see apply_gear_policy(). A category with no entry here rolls
+# Gear exactly as it always has: no filter, no bias.
+GEAR_POLICY = {
+    "Officials": "restricted",
+    "Criminals": "armed_bias",
+}
+
 # Generation workflows chosen by gender rather than by flag, keyed the same way
 # GENDER_TRAITS is: women render through their own checkpoint stack, and any
 # gender not named here falls through to --workflow. Only the two text-to-image
@@ -218,7 +226,7 @@ PORTRAIT_TEMPLATE = (
     "{shot} of {role}, {maturity} {gender} {age}, rendered in a detailed "
     "painterly illustration style with fine grain texture, clean linework and halftone "
     "dot shading worked into the shadows, moody cinematic lighting. {Subject} {is_are} "
-    "{build}, {face}, and {traits}"
+    "{height}, {build}, {face}, and {traits}"
     "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction}, the clothing "
     "following the shape of that frame. {headgear} {Possessive} face carries {demeanor}. "
     "{gear_line}{backdrop} {weather_line}{accent_line} "
@@ -237,7 +245,7 @@ TOKEN_TEMPLATE = (
     "{possessive} head to the soles of {possessive} plain modern boots, no leg wraps or "
     "puttees, with clear empty space above and below, in realistic adult proportions "
     "roughly seven to eight heads tall. "
-    "{Subject} {is_are} {build}, with {traits}{skin}, {hair}, {eyes}, and {feature}, wearing "
+    "{Subject} {is_are} {height}, {build}, with {traits}{skin}, {hair}, {eyes}, and {feature}, wearing "
     "{outfit}, {faction}, the clothing following the shape of that frame. {headgear} "
     "{Possessive} face carries {demeanor}. {gear_line}{Subject} {is_are} {stance}, both "
     "boots planted and fully visible, the pose relaxed and natural with the arms free. "
@@ -352,19 +360,47 @@ def filter_by_mil(options, mil):
     return plain or options
 
 
-def bias_mil_gear(options, mil):
-    """For a military Role, weight the Gear roll toward its 'mil'-flagged bullets.
+def apply_gear_policy(options, category, mil):
+    """Bias or filter the Gear roll to fit the NPC's Role.
 
-    'Almost always' armed rather than 'always', per the brief - a soldier
-    caught without a weapon on them should be rare, not impossible - so this
-    duplicates the flagged bullets into the pool instead of excluding the
-    rest outright. A civilian Role's Gear roll is untouched: carrying
-    military gear is explicitly fine for a civilian.
+    Three tiers, layered on top of filter_by_mil's civ/mil split:
+
+      - A mil-flagged Role (a soldier, pilot or similar - see the note near
+        the top of the tables file) is always armed, not just usually: the
+        pool is restricted to bullets flagged 'sidearm' - a holstered or
+        openly worn pistol, alone or paired with a slung primary weapon - so
+        a holstered pistol is never optional. The compound pistol+rifle
+        bullets outweigh the pistol-only ones, which is the "usually a rifle
+        too" half of the brief. Never filtered to nothing: an untagged
+        tables file falls back to the full pool rather than erroring.
+      - GEAR_POLICY['Officials'] ("restricted"): these almost never carry
+        anything dangerous, and never anything but a pocketable weapon when
+        they do. Bullets flagged 'weapon' are dropped unless also flagged
+        'simple', then the unarmed bullets are duplicated heavily so an
+        armed roll stays rare rather than impossible.
+      - GEAR_POLICY['Criminals'] ("armed_bias"): usually carrying something.
+        'weapon'-flagged bullets are duplicated into the pool, the same
+        trick this function used to reserve for a mil Role alone.
+
+    Any other category - or a tables file with no 'weapon'/'sidearm' flags at
+    all - rolls Gear exactly as before: untouched.
     """
-    if not mil:
-        return options
-    tagged = [x for x in options if "mil" in split_flags(x)[1]]
-    return options + tagged * 4 if tagged else options
+    if mil:
+        armed = [x for x in options if "sidearm" in split_flags(x)[1]]
+        return armed or options
+
+    policy = GEAR_POLICY.get(category)
+    if policy == "restricted":
+        pocketable = [
+            x for x in options
+            if "weapon" not in split_flags(x)[1] or "simple" in split_flags(x)[1]
+        ] or options
+        unarmed = [x for x in pocketable if "weapon" not in split_flags(x)[1]]
+        return pocketable + unarmed * 5 if unarmed else pocketable
+    if policy == "armed_bias":
+        tagged = [x for x in options if "weapon" in split_flags(x)[1]]
+        return options + tagged * 4 if tagged else options
+    return options
 
 
 def resolve_pronouns(tables, subject):
@@ -417,18 +453,21 @@ def roll_npc(tables, rng, overrides=None):
     pronouns = (overrides or {}).get("Pronouns") or rng.choice(tables["Pronouns"])
     subject = pronouns.split("/")[0]
 
-    # Age and Role are both resolved up front, for the same reason Pronouns
-    # is: each one's flag gates a later roll, so an override has to be in
-    # hand before that later table is rolled rather than pasted over the
-    # result afterwards. Pass the flag to keep it, as in
-    # --set-trait Age="in her late teens || young" or
-    # --set-trait Role="a Union marine soldier || mil".
+    # Age, Role and Outfit are all resolved up front, for the same reason
+    # Pronouns is: each one's flag gates a later roll, so an override has to
+    # be in hand before that later table is rolled rather than pasted over
+    # the result afterwards. Pass the flag to keep it, as in
+    # --set-trait Age="in her late teens || young",
+    # --set-trait Role="a Union marine soldier || mil", or
+    # --set-trait Outfit="an elaborate floral kimono ... || civ notac".
     forced_age = (overrides or {}).get("Age")
     forced_role = (overrides or {}).get("Role")
+    forced_outfit = (overrides or {}).get("Outfit")
 
     npc = {"Pronouns": pronouns}
     young = False
     role_mil = False
+    outfit_notac = False
     for name in REQUIRED_TABLES:
         if name in ("Pronouns", "Stance"):
             continue
@@ -453,8 +492,18 @@ def roll_npc(tables, rng, overrides=None):
         # precedes all three in REQUIRED_TABLES, so role_mil is already known.
         if name in ("Faction", "Outfit"):
             options = filter_by_mil(options, role_mil)
+
+        # An Outfit flagged 'notac' - an elaborate or traditional civilian
+        # dress like a kimono or shrine robes - shouldn't be paired with
+        # military-styled gear, so the Gear pool drops every 'mil'-flagged
+        # bullet whenever one is rolled. Outfit precedes Gear in
+        # REQUIRED_TABLES, so outfit_notac is already known by the time this
+        # runs.
+        if name == "Gear" and outfit_notac:
+            no_mil = [x for x in options if "mil" not in split_flags(x)[1]]
+            options = no_mil or options
         if name == "Gear":
-            options = bias_mil_gear(options, role_mil)
+            options = apply_gear_policy(options, ROLE_CATEGORIES.get(npc["Role"]), role_mil)
 
         # Rolled either way, so that forcing a trait does not shift the rest of
         # the run's random stream and change every NPC after it.
@@ -463,6 +512,8 @@ def roll_npc(tables, rng, overrides=None):
             value = forced_age
         if name == "Role" and forced_role is not None:
             value = forced_role
+        if name == "Outfit" and forced_outfit is not None:
+            value = forced_outfit
         # Backdrop's '||' separates three fields rather than two and is
         # parsed by split_backdrop, and Gear's flags are read further down,
         # so neither can be split in passing here.
@@ -472,6 +523,8 @@ def roll_npc(tables, rng, overrides=None):
                 young = "young" in flags
             if name == "Role":
                 role_mil = "mil" in flags
+            if name == "Outfit":
+                outfit_notac = "notac" in flags
         npc[name] = value
 
     npc["_young"] = young
@@ -547,11 +600,14 @@ def split_flags(bullet):
     meaning the entry is an actual firearm held in hand (on Gear) or a pose that
     describes aiming, firing or otherwise handling one (on Stance) - a bullet
     can carry both at once, '|| hands gun'. Gear may also carry 'mil', marking
-    an actual weapon or piece of military-issue equipment. Age and Build reuse
-    the same split for their own unrelated flags, 'young' and 'figure', and so
-    do Role ('mil', an active-duty military or paramilitary occupation) and
-    Faction/Outfit ('civ' or 'mil', filtered against the Role flag) - see
-    filter_by_mil() and bias_mil_gear().
+    an actual weapon or piece of military-issue equipment, and 'weapon',
+    'simple' or 'sidearm', read by apply_gear_policy() rather than
+    filter_by_mil() - see the tables file for what each one means. Age and
+    Build reuse the same split for their own unrelated flags, 'young' and
+    'figure', and so do Role ('mil', an active-duty military or paramilitary
+    occupation), Faction/Outfit ('civ' or 'mil', filtered against the Role
+    flag - see filter_by_mil()) and Outfit's own 'notac' (read by
+    apply_gear_policy() to keep tactical Gear off a handful of outfits).
     """
     text, _, rest = bullet.partition("||")
     return text.strip(), tuple(f for f in rest.split() if f)
@@ -607,6 +663,7 @@ def build_prompts(npc):
         # Asserted for every NPC of that gender rather than rolled for, and
         # unlike the 'figure' builds not withheld from a young one.
         "traits": GENDER_TRAITS.get(npc["_pronouns"]["gender"], ""),
+        "height": npc["Height"],
         "build": npc["Build"],
         "skin": npc["Skin"],
         "hair": npc["Hair"],
@@ -700,6 +757,7 @@ def write_dossier(path, npc, seed, prompts, images):
         ("Role", npc["Role"]),
         ("Affiliation", npc["Faction"]),
         ("Age", npc["Age"]),
+        ("Height", npc["Height"]),
         ("Build", npc["Build"]),
         ("Skin", npc["Skin"]),
         ("Hair", npc["Hair"]),
@@ -895,6 +953,10 @@ def parse_args(argv=None):
     run.add_argument("--dry-run", action="store_true",
                      help="roll and print the NPCs and their prompts, queue nothing")
     run.add_argument("--timeout", type=float, default=1800, help="per-job timeout in seconds")
+    run.add_argument("--pause", type=float, default=2.0,
+                     help="seconds to sleep after each ComfyUI job (portrait, token, "
+                          "background removal), so a batch doesn't queue jobs back-to-back "
+                          "faster than the server can keep up (default: %(default)s)")
 
     args = p.parse_args(argv)
 
@@ -1006,6 +1068,11 @@ def regenerate_one(args):
               "assuming not young; the maturity/face wording may drift slightly from the "
               "original render." % args.regen_id, file=sys.stderr)
     npc["_young"] = entry.get("young", False)
+    if "Height" not in npc:
+        print("! %s has no recorded Height trait (written before the Height table existed) - "
+              "regenerating without one; re-roll instead of regenerating to pick one up."
+              % args.regen_id, file=sys.stderr)
+        npc["Height"] = "of average height"
 
     seed = args.new_seed if args.new_seed is not None else entry["seed"]
     prompts = build_prompts(npc)
@@ -1072,6 +1139,7 @@ def regenerate_one(args):
             if portrait_file not in written:
                 written.append(portrait_file)
             print("      -> %s" % portrait_file)
+            time.sleep(args.pause)
 
         if not args.no_token:
             print("    token ...", flush=True)
@@ -1080,12 +1148,14 @@ def regenerate_one(args):
                 raw_file = fetch(comfy, raw, folder / ("%s Token (raw).png" % stem)).name
                 if raw_file not in written:
                     written.append(raw_file)
+            time.sleep(args.pause)
             print("      + background removal", flush=True)
             cut = remove_background(raw)
             token_file = fetch(comfy, cut, folder / ("%s Token.png" % stem)).name
             if token_file not in written:
                 written.append(token_file)
             print("      -> %s" % token_file)
+            time.sleep(args.pause)
     except KeyboardInterrupt:
         print("\ninterrupted - cancelling the running job")
         comfy.cancel_all()
@@ -1128,6 +1198,21 @@ def main(argv=None):
             "--set-trait: unknown table(s) %s. Known: %s"
             % (", ".join(unknown), ", ".join(REQUIRED_TABLES))
         )
+
+    # --pronouns already validates against the Pronouns table via
+    # resolve_pronouns(); --set-trait Pronouns= bypasses that path entirely,
+    # which is how a subject the table no longer offers (they/them, removed
+    # for reading back androgynous - see the Pronouns table's own comment)
+    # could still be forced back in. Same check, same error shape, so both
+    # paths agree on what's actually selectable.
+    if "Pronouns" in args.overrides:
+        subject = args.overrides["Pronouns"].split("/")[0].strip().lower()
+        known = {b.split("/")[0].strip().lower() for b in tables["Pronouns"]}
+        if subject not in known:
+            raise SystemExit(
+                "--set-trait Pronouns=%r: no such subject in the Pronouns table. "
+                "Available: %s" % (args.overrides["Pronouns"], ", ".join(sorted(known)))
+            )
 
     base_seed = args.seed if args.seed is not None else random.randint(0, 2 ** 32 - 1)
     overrides = dict(args.overrides)
@@ -1227,6 +1312,7 @@ def main(argv=None):
                 portrait_file = fetch(comfy, image, folder / ("%s Portrait.png" % stem)).name
                 written.append(portrait_file)
                 print("      -> %s" % written[-1])
+                time.sleep(args.pause)
 
             if not args.no_token:
                 print("    token ...", flush=True)
@@ -1234,11 +1320,13 @@ def main(argv=None):
                 if args.keep_raw_token:
                     written.append(
                         fetch(comfy, raw, folder / ("%s Token (raw).png" % stem)).name)
+                time.sleep(args.pause)
                 print("      + background removal", flush=True)
                 cut = remove_background(raw, category, slug, seed)
                 token_file = fetch(comfy, cut, folder / ("%s Token.png" % stem)).name
                 written.append(token_file)
                 print("      -> %s" % written[-1])
+                time.sleep(args.pause)
 
         except KeyboardInterrupt:
             print("\ninterrupted - cancelling the running job and clearing the queue")

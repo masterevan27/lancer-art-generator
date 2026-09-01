@@ -72,10 +72,20 @@ templates at the bottom of this file.
   neither flag is neutral and reachable either way — most Outfit entries stay
   this way, the same as a build or gear item with no flag at all. **Gear**
   bullets may also carry `|| mil`, marking an actual weapon or piece of
-  military-issue equipment; a `mil` Role's Gear roll is weighted toward those
-  bullets rather than filtered down to them, so the roll almost always turns
-  up armed rather than always — the same "never filter to nothing" spirit as
-  everywhere else this file rolls from a pool.
+  military-issue equipment.
+
+  Three more flags on Gear, plus one on Outfit, are read by
+  `apply_gear_policy()` rather than by the civ/mil split above — see the
+  comments on the Gear and Outfit tables themselves for the full detail:
+  `weapon` (an actual weapon, as opposed to equipment that's merely `mil`),
+  `simple` (a `weapon` small and pocketable enough for a role that should
+  rarely be armed), and `sidearm` (a bullet that explicitly includes a
+  holstered or worn pistol). A `mil` Role's Gear roll is now restricted to
+  `sidearm`-flagged bullets — always armed with at least a holstered pistol,
+  not just usually — with the pistol+rifle compound bullets weighted heavier
+  so a rifle on top of it is the common case rather than the rare one.
+  Outfit's `notac` keeps a handful of elaborate or traditional outfits (a
+  kimono, shrine robes) from ever pairing with `mil`-flagged Gear.
 
 Flags are matched literally and an unrecognized one is ignored rather than
 reported, so `|| Figure` or `|| hand` reads as no flag at all — which fails
@@ -783,7 +793,7 @@ ignored — so notes like this one are safe to leave inline.
 - in {possessive} late teens, sixteen or seventeen, face still soft and unlined || young
 - x2 just nineteen, newly in uniform and still growing into it || young
 - x2 in {possessive} early twenties, jaw and cheekbones fully adult
-- x2 twenty-one or twenty-two, young but fully grown, the face unlined and unweathered
+- x2 twenty-one or twenty-two, fully grown for a couple of years now, the face still unlined and unweathered
 - x3 in {possessive} mid-twenties, fully grown but not yet weathered
 - x2 in {possessive} late twenties, jaw and cheekbones fully adult
 - x3 in {possessive} early thirties, the first lines already setting around the eyes
@@ -836,6 +846,33 @@ ignored — so notes like this one are safe to leave inline.
 - tall and statuesque, long-legged and narrow-waisted || figure
 - slender but full-busted, with a clearly defined waist || figure
 - sturdy and thickset through the shoulders and hips || figure
+
+## Height
+
+<!--
+  A full replacement table for she/her the same way Build (she) is - see
+  Height (she) below - so the two distributions can be tuned independently
+  rather than fighting over one shared pool. The brief: women read fairly
+  tall, only slightly shorter than men on average, and this table (like
+  Build) skews the whole roster taller than a real-world average on purpose -
+  it's a painterly action-adventure cast, not a demographic sample.
+-->
+
+- x3 tall, standing several inches over six feet
+- x4 a solid six feet even
+- x3 just under six feet, average height for the line of work
+- x2 five foot ten or so, on the shorter side but still solid
+- broad and towering, close to six and a half feet
+- compact, a shade under five foot nine, built to fit tight spaces
+
+## Height (she)
+
+- x2 tall, standing just a few inches under six feet
+- x4 a solid five foot nine or so
+- x3 five foot seven, average height and unremarkable
+- x2 five foot five, on the shorter side but not short
+- statuesque, brushing six feet even
+- compact and small, a shade over five feet
 
 ## Skin
 
@@ -1129,6 +1166,11 @@ ignored — so notes like this one are safe to leave inline.
   equipment rather than a uniform and is deliberately left unflagged, so it
   stays reachable either way: a civilian with military-grade gear is exactly
   what the flag split is meant to allow.
+
+  A third flag, 'notac', marks an elaborate or traditional outfit - a kimono,
+  shrine robes - that shouldn't turn up paired with tactical gear no matter
+  how the Gear roll would otherwise land. It drops every 'mil'-flagged Gear
+  bullet from the pool for that NPC. See the note on the Gear table below.
 -->
 
 - a heavy work jacket over a stained undersuit, sleeves shoved to the elbow || civ
@@ -1185,9 +1227,9 @@ ignored — so notes like this one are safe to leave inline.
 - a heavy insulated flight jacket over a hooded pullover, cargo trousers and strapped knee pads
 - a plate carrier over a dark bodysuit with a powered leg exo-frame braced from hip to boot
 - an oversized rollneck sweater with the sleeves pushed back, harness straps over both shoulders and enormously baggy cargo trousers gathered at the ankle || civ
-- a dark travel-worn robe with a crimson underlayer at the collar and sleeves, belted over wide hakama-style trousers || civ
-- layered white pilgrim's robes gone travel-stained at the hem, a coarse rope belt cinched at the waist || civ
-- a weathered haori-style jacket over a high-collared undershirt, sleeves bound back with cord || civ
+- a dark travel-worn robe with a crimson underlayer at the collar and sleeves, belted over wide hakama-style trousers || civ notac
+- layered white pilgrim's robes gone travel-stained at the hem, a coarse rope belt cinched at the waist || civ notac
+- a weathered haori-style jacket over a high-collared undershirt, sleeves bound back with cord || civ notac
 - segmented lacquered armor plates over a dark underrobe, a torn banner cord trailing from one shoulder
 
 ## Outfit (she) +
@@ -1239,8 +1281,8 @@ ignored — so notes like this one are safe to leave inline.
 - a white double-breasted officer's tunic with a high open collar and armored shoulder boards, belted at the waist over a short flared skirt, a long dark cape hanging from the shoulders, garter straps at the thigh above white boots || mil
 - a cropped olive bomber jacket over a slim chest rig and a fitted tee, a band of bare midriff above olive cargo trousers slung with pouches || civ
 - a dark work shirt with the sleeves rolled to the elbow under a strapped harness rig, a radio pouch at the chest, baggy olive cargo trousers, tactical gloves and armored shin guards over heavy boots || civ
-- an elaborate floral kimono layered over a plain white underrobe, sleeves trailing long past the fingertips || civ
-- white shrine robes with a red hakama skirt, a cord-tied over-sash crossing the chest || civ
+- an elaborate floral kimono layered over a plain white underrobe, sleeves trailing long past the fingertips || civ notac
+- white shrine robes with a red hakama skirt, a cord-tied over-sash crossing the chest || civ notac
 - a black jacket studded with spikes at the collar and shoulders, a small enamel pin at the breast, over a cropped top and a low-slung belt hung with metal loops || civ
 - a worn hooded jacket patched with faded characters at the sleeve, torn and taped at the seams || civ
 - an olive tank top over cargo trousers, a pair of fingerless gloves and worn lace-up boots || civ
@@ -1249,18 +1291,41 @@ ignored — so notes like this one are safe to leave inline.
 
 <!--
   '|| mil' marks an actual weapon or piece of military-issue equipment - see
-  the note on it near the top of this file. It only ever biases the roll for
-  a Role flagged 'mil'; a civilian Role rolls this table exactly as before,
-  since carrying military gear is explicitly fine for a civilian to do.
+  the note on it near the top of this file.
+
+  Three more flags layer on top of it, all read by apply_gear_policy() in the
+  script rather than by filter_by_mil():
+
+  - 'weapon' marks a bullet as an actual weapon - a firearm, a blade, a
+    polearm - as opposed to equipment that just happens to be 'mil' (a radio,
+    a backpack, magazine pouches with nothing on the hip to fill them). This
+    is what GEAR_POLICY's Officials and Criminals tiers key off: Officials
+    almost never roll a 'weapon' bullet at all, Criminals are biased toward
+    rolling one.
+  - 'simple' marks a 'weapon' bullet as small and pocketable - a knife, a
+    single holstered or worn pistol - as opposed to something that reads as
+    a real armament: a rifle, a katana drawn, twin pistols raised. This is
+    the tier an armed Official is allowed to roll.
+  - 'sidearm' marks a bullet that explicitly includes a holstered or openly
+    worn pistol, alone or paired with a slung primary weapon (a rifle, a
+    carbine). A mil-flagged Role's Gear roll is restricted to this set - see
+    apply_gear_policy() - so "always at least a holstered pistol" is a
+    guarantee about the bullet's text, not a weighting. A bullet gripped or
+    raised in the hands doesn't count, even if it's a single pistol: that's
+    reachable by everyone including a mil Role, just not part of the
+    guaranteed baseline.
+
+  A civilian (unflagged) Role rolls this table exactly as before - none of
+  the three flags do anything without GEAR_POLICY or a mil Role in play.
 -->
 
 - a battered data-slate tucked under one arm || hands
 - a heavy multitool holstered at the hip
-- a sidearm holstered high on a chest rig || mil
-- a bullpup service carbine slung muzzle-down across {possessive} chest on its sling || mil
-- a bullpup service carbine held at a low ready in both hands, rail-mounted optic on top || hands gun mil
-- a katana with a colored glowing accent along its edge slung over {possessive} shoulder || mil
-- a katana with a colored glowing accent along its edge held in {possessive} hands || hands mil
+- a sidearm holstered high on a chest rig || mil weapon simple sidearm
+- a bullpup service carbine slung muzzle-down across {possessive} chest on its sling || mil weapon
+- a bullpup service carbine held at a low ready in both hands, rail-mounted optic on top || hands gun mil weapon
+- a katana with a colored glowing accent along its edge slung over {possessive} shoulder || mil weapon
+- a katana with a colored glowing accent along its edge held in {possessive} hands || hands mil weapon
 - a coil of cabling and diagnostic leads slung across the body
 - a scarred pilot helmet carried in the crook of one elbow || hands
 - a compact rebreather clipped at the collar
@@ -1276,33 +1341,40 @@ ignored — so notes like this one are safe to leave inline.
 - a folded jacket slung over one forearm || hands
 - a sheaf of stamped requisition forms || hands
 - a dented thermos of something long gone cold || hands
-- a service pistol worn openly at the thigh || mil
+- a service pistol worn openly at the thigh || mil weapon simple sidearm
 - a folded maintenance drone perched dormant on one shoulder
-- a compact sidearm holstered at the hip and a utility belt of pouches at the waist || mil
-- a sheathed katana crossed against {possessive} back alongside a second, shorter blade || mil
-- a suppressed precision rifle with a rail-mounted optic, slung muzzle-up over one shoulder, one hand resting on the sling at {possessive} chest || hands gun mil
+- a compact sidearm holstered at the hip and a utility belt of pouches at the waist || mil weapon simple sidearm
+- a sheathed katana crossed against {possessive} back alongside a second, shorter blade || mil weapon
+- a suppressed precision rifle with a rail-mounted optic, slung muzzle-up over one shoulder, one hand resting on the sling at {possessive} chest || hands gun mil weapon
 - a battered leather-bound ledger tucked in a breast pocket, worn soft from handling
-- an AK-pattern assault rifle with a distinctive curved magazine held across {possessive} body || hands gun mil
+- an AK-pattern assault rifle with a distinctive curved magazine held across {possessive} body || hands gun mil weapon
 - a loaded tactical backpack slung from one shoulder || mil
-- a suppressed short-barrelled carbine carried muzzle-down in one hand || hands gun mil
+- a suppressed short-barrelled carbine carried muzzle-down in one hand || hands gun mil weapon
 - a hard-shelled assault pack worn high on the back, its straps cinched across the chest || mil
-- a drop-leg holster rig and magazine pouches strapped down one thigh || mil
+- a drop-leg holster rig and magazine pouches strapped down one thigh || mil weapon simple sidearm
 - a compact field radio in a chest pouch, its stub antenna angled up past {possessive} shoulder || mil
 - a slab-sided equipment case clipped to the harness at {possessive} hip
-- a sidearm gripped and raised in both hands, sighted dead level at the viewer || hands gun mil
-- an oversized rail cannon gripped and leveled at the viewer with both hands, a thick barrel shroud and boxy under-slung magazine || hands gun mil
-- twin sidearms held akimbo, one arm thrust forward and the other braced out to the side || hands gun mil
-- a service rifle held loosely in both hands at an easy, unhurried low ready || hands gun mil
-- twin sidearms held low and loose in both hands, muzzles angled down at {possessive} sides || hands gun mil
+- a sidearm gripped and raised in both hands, sighted dead level at the viewer || hands gun mil weapon simple
+- an oversized rail cannon gripped and leveled at the viewer with both hands, a thick barrel shroud and boxy under-slung magazine || hands gun mil weapon
+- twin sidearms held akimbo, one arm thrust forward and the other braced out to the side || hands gun mil weapon
+- a service rifle held loosely in both hands at an easy, unhurried low ready || hands gun mil weapon
+- twin sidearms held low and loose in both hands, muzzles angled down at {possessive} sides || hands gun mil weapon
 - a compact twin-thruster pack strapped across {possessive} back, its vents lit with a colored glow
 - a folded oilpaper parasol held in one hand, its tip braced against the ground || hands
 - a small pale fox cradled against the chest in both arms || hands
 - a lacquered walking stick gripped in one hand, weight braced into it || hands
-- a long polearm banded in trailing red cord, planted butt-down and held upright in one hand || hands mil
-- a long suppressed sniper rifle with a scope, its stock stencilled with a small painted tally number, slung across {possessive} back || mil
+- a long polearm banded in trailing red cord, planted butt-down and held upright in one hand || hands mil weapon
+- a long suppressed sniper rifle with a scope, its stock stencilled with a small painted tally number, slung across {possessive} back || mil weapon
 - a fist-sized holographic sphere hovering just above one open palm, its surface a shifting lattice of glowing fracture-lines and readouts
 - a translucent holographic data-sheet held up in both hands, dense scrolling text glowing across its surface || hands
-- a pair of oversized clawed gauntlets, a single sensor node glowing in each palm || hands mil
+- a pair of oversized clawed gauntlets, a single sensor node glowing in each palm || hands mil weapon
+- x4 a sidearm holstered at the hip and a service rifle slung muzzle-down across {possessive} chest || mil weapon sidearm
+- x3 a service pistol worn openly at the thigh and a bullpup carbine slung across {possessive} back || mil weapon sidearm
+- x3 a holstered sidearm and a suppressed carbine slung muzzle-down over one shoulder || mil weapon sidearm
+- a plain combat knife sheathed at the hip || weapon simple
+- a folding push-dagger tucked into a boot sheath || weapon simple
+- a compact hold-out pistol tucked into a shoulder rig, mostly hidden under a jacket || weapon simple
+- a cracked-open slate bristling with jack cables and cracking tools, plainly meant for breaking into things it shouldn't || hands
 
 ## Accent
 
@@ -1345,8 +1417,11 @@ ignored — so notes like this one are safe to leave inline.
   The standing entries are weighted x3 against eight zero-gravity ones, so about
   a quarter of portraits come up weightless. Change that weight to shift the mix.
 
-  The exterior/vacuum entries add a slim EVA harness over whatever Outfit was
-  rolled, so a corporate blouse in hard vacuum stays coherent.
+  The exterior/vacuum entries dress the subject in a sealed EVA pressure suit
+  and helmet over whatever Outfit was rolled, so a corporate blouse in hard
+  vacuum stays coherent - a harness or open faceplate isn't enough on its own
+  out there, so those entries commit to the full suit rather than implying
+  one.
 -->
 
 - x3 A half-body character portrait || Behind {object}, softly blurred well out of focus, is the dim interior of a mech hangar, gantries and chain hoists receding into shadow.
@@ -1361,9 +1436,9 @@ ignored — so notes like this one are safe to leave inline.
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} weightless in freefall, {possessive} body tilted no more than about 30 to 40 degrees off vertical and stretched toward the viewer in strong foreshortening, one gloved hand thrust out at the camera and {possessive} legs trailing loose behind {object}, hair and tether lines floating free, having just pushed off a bulkhead out of frame - behind {object} a darkened docking bay, its running lights streaking past. Dramatic foreshortened composition.
 - A close, low-angle character portrait || {Subject} {is_are} floating weightless in a narrow access tube, one arm braced against the wall above {possessive} head and knees drawn up, {possessive} body turned a mild 20 to 30 degrees off vertical with nothing underfoot, small debris and loose tools hanging motionless in the air alongside {object}, dim panel lighting receding down the tube behind.
 - A dynamic, gently canted-angle character portrait || {Subject} {is_are} weightless in freefall, body tilted no more than about 30 to 40 degrees off vertical across the frame with one hand reaching out and {possessive} legs drifting loose behind {object}, hair lifted free - around {object} the netted crates of an unlit cargo hold hang untethered in the air, a single work lamp raking across {object} from one side.
-- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} gliding along the exterior hull of a ship in a low zero-gravity recline, {possessive} back arched and body tilted no more than about 30 to 40 degrees off vertical across the frame, one arm reaching up and back to grip an angular strut above {possessive} head while the other extends down to brace against a rail beneath {object}, legs drawn up and bent, head tilted back gazing up and to the side, hair swept by the motion, a slim EVA harness pulled on over {possessive} kit - behind {object} the dark hull curves away into the void, faint teal atmospheric light bleeding in from one side and streaks of motion-blurred light trailing past in the starfield. Dramatic rim lighting along {possessive} silhouette.
-- A dynamic, gently canted-angle character portrait || {Subject} {is_are} drifting weightless just outside an open airlock in a slim EVA harness pulled on over {possessive} kit, body turned in a shallow roll no more than about 30 to 40 degrees off vertical with one hand still on the hatch coaming and {possessive} legs floating free, tether line coiling loose behind {object} - beyond {object} the ship's plating falls away into the void and the lit limb of a planet curves across the background. Dramatic rim lighting along {possessive} silhouette.
-- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} braced weightless between two struts of an orbital gantry, {possessive} body tilted no more than about 30 to 40 degrees off vertical and slowly rotating, one gloved hand overhead on a spar and one boot hooked under a rail, a slim EVA harness pulled on over {possessive} kit - behind {object} the scaffold recedes into the dark and the starfield streaks past in faint motion-blurred lines. Dramatic rim lighting along {possessive} silhouette.
+- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} gliding along the exterior hull of a ship in a low zero-gravity recline, {possessive} back arched and body tilted no more than about 30 to 40 degrees off vertical across the frame, one gloved hand reaching up and back to grip an angular strut above {possessive} head while the other extends down to brace against a rail beneath {object}, legs drawn up and bent, head tilted back inside a sealed EVA helmet, visor down, gazing up and to the side, a full pressure suit worn close over {possessive} kit - behind {object} the dark hull curves away into the void, faint teal atmospheric light bleeding in from one side and streaks of motion-blurred light trailing past in the starfield. Dramatic rim lighting along {possessive} silhouette.
+- A dynamic, gently canted-angle character portrait || {Subject} {is_are} drifting weightless just outside an open airlock in a sealed EVA pressure suit and helmet, visor down, worn over {possessive} kit, body turned in a shallow roll no more than about 30 to 40 degrees off vertical with one gloved hand still on the hatch coaming and {possessive} legs floating free, tether line coiling loose behind {object} - beyond {object} the ship's plating falls away into the void and the lit limb of a planet curves across the background. Dramatic rim lighting along {possessive} silhouette.
+- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} braced weightless between two struts of an orbital gantry, {possessive} body tilted no more than about 30 to 40 degrees off vertical and slowly rotating, one gloved hand overhead on a spar and one boot hooked under a rail, a sealed EVA pressure suit and helmet, visor down, worn over {possessive} kit - behind {object} the scaffold recedes into the dark and the starfield streaks past in faint motion-blurred lines. Dramatic rim lighting along {possessive} silhouette.
 - A close, low-angle character portrait || {Subject} {is_are} floating weightless inside a pressurised observation blister, one palm flat against the curved glass above {possessive} head and {possessive} body turned a mild 20 to 30 degrees off vertical, legs drawn up and bent, hair lifted free - beyond the glass the ship's hull curves away and the starfield turns slowly past. Rim lighting along {possessive} silhouette.
 - A dynamic character portrait || {Subject} {is_are} caught in a three-quarter turn, raising a compact sidearm and firing directly toward the viewer, muzzle flash bursting from the barrel and a spent shell casing ejecting mid-air - behind {object} a dim industrial interior of dark metal panelling, faintly lit and kept soft and out of focus so {subject} {is_are} clearly the subject. Even key lighting on {possessive} face and weapon, with a dramatic but restrained rim light thrown by the muzzle flash. || nogear
 - A dynamic, three-quarter rear-view character portrait || {Subject} {is_are} seen from behind on a rooftop ledge, glancing back over one shoulder and drawing a single-edged blade that glows faintly along its cutting edge, a second blade sheathed crosswise against {possessive} back - behind {object} a dim industrial cityscape stretches away, muted grey-olive towers dotted with sparse lit windows beneath a hazy dusk sky, and the hulking silhouette of something vast and serpentine looms low on the horizon as a dark rust-toned shape. Twin warning beacons glow dull amber at the edges of the frame. || nogear weather
@@ -1403,7 +1478,7 @@ ignored — so notes like this one are safe to leave inline.
 - x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a sunlit ruin of towering stone archways and a broken aqueduct climbing a green mountainside, ivy and wind-bent trees reclaiming the old stonework. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a colossal robotic figure half-risen from a canal, only its ornate head, shoulders and clawed hands breaking the water, gold filigree tracing its dark plating; beyond it domed shrines and slender gold-latticed spires ring a plaza where two hooded robed figures pause at the water's edge beneath a hazy dusk sky, a dull red sun hanging low beside a darker second disc. || weather
 - A three-quarter rear-view character portrait || {Subject} {is_are} standing in a mech's calibration bay, gazing up at a towering white-armored war-machine looming just ahead, one hand raised holding a slim holographic data-slate glowing with dense diagnostic readouts, {possessive} other hand braced at {possessive} hip - thick power cabling and chain hoists hang down around the mech's bulk, a wall-mounted display beside {object} scrolling systems-check telemetry, cool blue interior lighting washing the bay. || nogear
-- A character portrait || {Subject} {is_are} standing atop the hull of a companion vessel in high orbit, a cropped tactical jacket patched at the shoulder catching the thin light, looking back over one shoulder - beyond {object} a planet's night side curves away below, its cities burning in scattered threads of light against the dark.
+- A character portrait || {Subject} {is_are} standing atop the hull of a companion vessel in high orbit, sealed inside an EVA pressure suit and helmet, a cropped mission patch at the shoulder catching the thin light through the visor, looking back over one shoulder - beyond {object} a planet's night side curves away below, its cities burning in scattered threads of light against the dark.
 - A dramatic low-angle character portrait || {Subject} {is_are} standing amid drifting embers on a scorched battlefield in heavy rain, {possessive} back to the viewer, a long rifle gripped and lowered at {possessive} side - ahead of {object} churned mud and shattered rock fade into grey mist streaked with falling ash. || nogear weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a floor-to-ceiling window wall overlooking a dense neon high-rise skyline at night, faint status readouts glowing at the edge of the frame.
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a graffiti-tagged alley lit by tube neon signage bleeding red and teal through drifting mist.
