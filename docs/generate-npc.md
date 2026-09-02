@@ -22,7 +22,7 @@ python generate-npc.py
 ```
 
 Rolls one human NPC — pilots, mechanics, dock hands, corpo liaisons — out of
-`../Art Prompts/npc-generator-tables.md`, composes a matched portrait and token
+`prompts/npc-generator-tables.md`, composes a matched portrait and token
 prompt in the campaign's house style, and writes a self-contained folder under
 the Foundry Lancer token root:
 
@@ -47,7 +47,7 @@ verbatim, so an NPC you like can be re-rolled or hand-edited later.
 
 ## The roll tables
 
-`../Art Prompts/npc-generator-tables.md` holds the tables — names, callsigns,
+`prompts/npc-generator-tables.md` holds the tables — names, callsigns,
 pronouns, age, build, skin, hair, eyes, distinguishing feature, demeanor, role,
 faction, outfit, headgear, gear, accent color, portrait backdrop, portrait
 weather, token stance.
@@ -162,7 +162,7 @@ Two things learned the hard way, worth keeping if you add more:
 Newer entries arrive through tooling rather than by hand, applying those same
 two edits. The `/npc-trait-import` skill
 (`.claude/skills/npc-trait-import/`) reads reference images and writes
-*candidate* bullets to `../Art Prompts/staged-imports/<timestamp>.json` — it
+*candidate* bullets to `prompts/staged-imports/<timestamp>.json` — it
 never edits the tables file itself. The Import GUI (`import-gui-server`, part
 of the NHP Uplink repo and started by `StackLauncher.ps1`) then shows those
 candidates for review and appends the accepted ones, marking each `imported`
@@ -338,7 +338,7 @@ else uses. Point the two at the same file to collapse a run back onto one
 workflow without editing the script:
 
 ```bash
-python generate-npc.py --count 10 --workflow-woman "../Workflows/ComfyUI API runnable/Lancer_Scene_Workflow_v1.json"
+python generate-npc.py --count 10 --workflow-woman "workflows/api/Lancer_Scene_Workflow_v1.json"
 ```
 
 Both workflows are loaded and validated before the first job is queued, but only
@@ -414,7 +414,7 @@ python generate-npc.py --set-trait Faction="in Harrison Armory service dress, im
 
 python generate-npc.py --dry-run --count 6 --seed 42   # which workflow each NPC gets
 python generate-npc.py --count 4 --pronouns he         # never opens the women's workflow
-python generate-npc.py --count 4 --workflow-woman "../Workflows/ComfyUI API runnable/Lancer_Scene_Workflow_v1.json"
+python generate-npc.py --count 4 --workflow-woman "workflows/api/Lancer_Scene_Workflow_v1.json"
 ```
 
 ## Rolling a group
@@ -504,7 +504,7 @@ give it an `--out` of its own, or the second run suffixes every folder `(2)`:
 
 ```
 python generate-npc.py --count 4 --seed 2200 --pronouns she
-python generate-npc.py --count 4 --seed 2200 --pronouns she --out ./compare --workflow-woman "../Workflows/ComfyUI API runnable/Lancer_Scene_Workflow_v1.json"
+python generate-npc.py --count 4 --seed 2200 --pronouns she --out ./compare --workflow-woman "workflows/api/Lancer_Scene_Workflow_v1.json"
 ```
 
 **Re-rolling one member of a group.** NPC *i* of a run uses `seed+i`, counting

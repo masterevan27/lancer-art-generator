@@ -5,7 +5,7 @@ Companion to generate-art.py. That script walks an authored art-prompt markdown
 file and renders every prompt in it; this one has no authored corpus - it rolls
 a person out of the tables in
 
-    <comfy>/Art Prompts/npc-generator-tables.md
+    prompts/npc-generator-tables.md
 
 composes a matched pair of prompts in the campaign's house style, and renders
 both through a ComfyUI workflow - the one generate-art.py uses, unless the NPC's

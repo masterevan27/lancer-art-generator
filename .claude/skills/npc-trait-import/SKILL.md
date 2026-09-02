@@ -10,8 +10,8 @@ model: sonnet
 
 This turns concept-art / screenshot reference images into **candidate** roll-
 table bullets for
-`AI GM/ComfyUI/Art Prompts/npc-generator-tables.md`, written to a timestamped
-JSON file under `AI GM/ComfyUI/Art Prompts/staged-imports/` instead of being
+`prompts/npc-generator-tables.md`, written to a timestamped
+JSON file under `prompts/staged-imports/` instead of being
 edited into the table file directly. A separate review step (a webpage built
 for this purpose) reads that file and lets the user selectively import
 individual entries. **This skill never edits `npc-generator-tables.md`
@@ -76,7 +76,7 @@ while an unlisted placeholder raises a hard error. So a typo'd flag reaches a
 render and quietly does nothing — which is exactly why §7's validation pass
 exists.
 
-Also skim `Scripts/generate-npc.md`, specifically **"Where the entries came
+Also skim `docs/generate-npc.md`, specifically **"Where the entries came
 from"**, **"Period vocabulary matters"**, and **"Keeping figures adult and
 on-model"**. Those sections encode lessons learned the hard way about this
 exact task (importing reference art into these tables) and are the source of
@@ -229,7 +229,7 @@ have had to work out fresh:
 - **`bookkeeping_note`** — if importing this entry would change one of the
   file's own flagged-entry counts (e.g. the `## Weather` section's "about
   twenty-three backdrop bullets are flagged [weather]" comment, or the
-  enumeration in `Scripts/generate-npc.md`'s "The roll tables" section), name
+  enumeration in `docs/generate-npc.md`'s "The roll tables" section), name
   the comment and what the new count would be. Leave it `null` when nothing
   is affected — a stale count is worse than no count, and this note is what
   keeps the later import from introducing one.
@@ -240,7 +240,7 @@ have had to work out fresh:
 ## 6. Write the staging file
 
 Write one JSON file per skill run to
-`AI GM/ComfyUI/Art Prompts/staged-imports/<YYYY-MM-DD-HHMMSS>.json` (create the
+`prompts/staged-imports/<YYYY-MM-DD-HHMMSS>.json` (create the
 `staged-imports/` directory if it doesn't exist yet), with this shape:
 
 ```json
@@ -257,7 +257,7 @@ Write one JSON file per skill run to
       "bullet": "A dramatic low-angle character portrait || {Subject} {is_are} crouched low behind an abandoned vehicle on a rain-slicked city street at night, weapon raised and sighting up at a colossal insectoid war-machine that fills the skyline ahead, its hull studded with glowing sensor clusters and thin segmented limbs trailing into the smoke-hazed street below, twin beams lancing down from its underside through the drifting mist - behind {object} a burning wreck casts long orange light across the wet pavement. || nogear weather",
       "source_image": "colossal-insect-warmachine.png",
       "placement_hint": "next to the other mech-companion / cityscape Backdrop bullets",
-      "bookkeeping_note": "adds one to the weather-flagged Backdrop count in the ## Weather section comment and in Scripts/generate-npc.md's roll-table enumeration",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count in the ## Weather section comment and in docs/generate-npc.md's roll-table enumeration",
       "notes": "nogear because the sentence already puts a weapon in the subject's hands; glow left uncolored so it doesn't fight the rolled Accent"
     }
   ],
@@ -365,7 +365,7 @@ three read as staged Backdrop scenes (subject acting *in* the environment,
 not just standing in front of it), so each became one `{Subject} {is_are}...`
 Backdrop candidate with `weather` (all three are outdoors) and `nogear` on the
 two where a weapon is already in the subject's hands. The run produces one
-file, `AI GM/ComfyUI/Art Prompts/staged-imports/2026-09-01-142300.json`:
+file, `prompts/staged-imports/2026-09-01-142300.json`:
 
 ```json
 {

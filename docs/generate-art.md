@@ -44,7 +44,7 @@ root or anywhere else.
 
 ## What it reads
 
-`--prompts` accepts any of the collections in `../Art Prompts/`:
+`--prompts` accepts any of the collections in `prompts/`:
 
 | File | Prompts |
 | --- | --- |
@@ -184,7 +184,7 @@ spare previews so they don't each write a temp file, and prints what it chose.
 
 ## Which workflows it runs
 
-Everything lives in `../Workflows/ComfyUI API runnable/`, resolved relative to
+Everything lives in `workflows/api/`, resolved relative to
 the script rather than the working directory. A default run touches exactly one
 file; the second only appears if you ask for a post pass:
 
@@ -196,7 +196,7 @@ file; the second only appears if you ask for a post pass:
 | `lancer-scene-workflow-with-vars.json` | Never on its own — but works as a `--workflow` drop-in. Same graph with `%prompt%` / `%seed%` placeholders, in the two nodes the script overwrites anyway. |
 | `Lancer_Scene_Workflow_for_girls_v1.json` | Never from this script. `generate-npc.py` routes NPCs who read as women through it automatically — see [generate-npc.md](generate-npc.md#women-render-through-their-own-workflow). Valid as a `--workflow` value here if you want it. |
 
-The sibling `ComfyUI Importable/` folder holds the UI-format exports for opening
+The sibling `workflows/editable/` folder holds the UI-format exports for opening
 in ComfyUI itself. Those won't run here — see below.
 
 ## Inspecting and patching a workflow
@@ -268,7 +268,7 @@ anything failed.
 | Message | Cause |
 | --- | --- |
 | `No ComfyUI found on 127.0.0.1:8000-8015` | Server isn't up, or it's on another host — start the stack, or pass `--server`. |
-| `looks like a UI-format workflow` | Point at the copy in `ComfyUI API runnable/`, or re-export. |
+| `looks like a UI-format workflow` | Point at the copy in `workflows/api/`, or re-export. |
 | `value_not_in_list … sampler_name` | An override naming something this install doesn't have. |
 | `no SaveImage or PreviewImage node` | A post workflow with no output node; add one and re-export. |
 | `left the queue without finishing` | ComfyUI restarted, or the job was cancelled from the web UI. The entry is marked failed and the run moves on. |
@@ -285,7 +285,7 @@ this only matters if you add such tokens to a workflow by hand.
 ## generate-npc.py
 
 A companion script that rolls random human NPCs from
-`../Art Prompts/npc-generator-tables.md` and gives each one a matched portrait
+`prompts/npc-generator-tables.md` and gives each one a matched portrait
 and transparent token. It imports this script's ComfyUI plumbing rather than
 duplicating it, so the server discovery, workflow overrides and post-processing
 described above apply to it unchanged.
