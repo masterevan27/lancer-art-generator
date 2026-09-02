@@ -944,6 +944,9 @@ ignored — so notes like this one are safe to leave inline.
 - a messy silver-lavender topknot, one side shaved close beneath it
 - a long single braid, loose strands escaping at the crown
 - hair gathered into twin space buns, loose strands falling free at the temples
+- a high ponytail in fiery orange-red fading to dark roots, choppy bangs falling across one eye
+- a pale lavender bob with a sharp side-swept fringe and a single streaked strand
+- a silver-white bob with a pair of small horn-shaped ornamental clips swept back at the temples
 
 ## Hair (he) +
 
@@ -1019,6 +1022,8 @@ ignored — so notes like this one are safe to leave inline.
 - a small barcode stamped at the collarbone
 - a diagonal scar cutting clean across one eye
 - a gauze patch taped over one eye, the rest of the face unmarked
+- a cybernetic optic implant wired into one side of the face, fine conduit lines tracing down past the jaw to the collar
+- a synthetic shoulder casing peeled back at a seam, exposing internal wiring and structural framework beneath
 
 ## Feature (she) +
 
@@ -1028,6 +1033,9 @@ ignored — so notes like this one are safe to leave inline.
 - a delicate line of old piercings climbing one ear
 - a faded floral tattoo curling over one shoulder
 - a wedding band worn on a cord rather than a finger
+- a faint scatter of freckles across the bridge of the nose
+- visible mechanical rib plating and joint segments across the bare midriff, marking {object} as heavily augmented
+- faint surgical scarring tracing from temple to cheekbone, the mark of old cyberware work
 
 ## Feature (he) +
 
@@ -1110,6 +1118,7 @@ ignored — so notes like this one are safe to leave inline.
 - a bright, quick grin
 - a cool, composed poise that does not invite argument
 - a narrow-eyed, studious focus, lips slightly parted mid-read
+- a lazy, half-lidded stare around a lit cigarette, faintly unimpressed
 
 ## Role
 
@@ -1558,6 +1567,10 @@ ignored — so notes like this one are safe to leave inline.
 - caught mid-stride walking straight toward the viewer, twin sidearms held low and loose at {possessive} sides || gun
 - standing with head bowed and shoulders drawn in against the weather
 - standing in a slow half-bow, one hand pressed flat against the chest
+- standing with both arms raised overhead, a long board gripped in both hands and braced across the back of the shoulders like a yoke || hands
+- sitting cross-legged in a formal meditative pose, palms pressed together at the chest, segmented mechanical arms folded still || hands
+- leaning down into open machinery from above, braced on one forearm and reaching in with the other hand || hands
+- crouched low and coiled on a raised ledge, weight braced forward on one arm, ready to spring || hands
 
 ## Stance (she) +
 
@@ -1585,6 +1598,7 @@ ignored — so notes like this one are safe to leave inline.
 - standing with {possessive} head tilted slightly, one hand trailing loose at {possessive} thigh
 - standing with {possessive} back to the viewer and one hand set on the hip, looking back over {possessive} shoulder
 - standing with one hip kicked out, one hand brushing a loose strand of hair back near {possessive} temple, the other resting low on {possessive} belt
+- sitting back with both hands laced behind {possessive} head, elbows out, utterly at ease || hands
 
 ## Prompt templates
 

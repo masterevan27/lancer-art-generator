@@ -1,8 +1,8 @@
 ---
 name: npc-trait-import
 description: Extract Backdrop scenes, Stance poses, Gear/weapons, Outfit, Headgear, Hair, Demeanor (facial expression), Faction and Accent-color entries from reference images and stage them as importable candidate entries in a timestamped JSON file, for later selective review/import into npc-generator-tables.md (by the import webpage or by hand) rather than editing that file directly. Use whenever the user shares one or more reference images (pasted inline or given as file paths) from this Lancer campaign's ComfyUI/Krea pipeline and asks to add, extract, stage, or import backdrops, scenes, poses, gear, weapons, outfits, headgear, hairstyles, or expressions "from these" or "in our house style" into the NPC generator.
-allowed-tools: Read, Write, Grep, Glob
-argument-hint: [image paths, or omit to use images already shown in the conversation]
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
+argument-hint: [image paths or a directory, or omit to use images already shown in the conversation]
 model: sonnet
 ---
 
@@ -27,12 +27,54 @@ context for someone else (or a later pass) to insert it correctly.
 ## 0. Read the rules fresh, every time
 
 Before writing anything, read `## How the script reads this file` at the top
-of `npc-generator-tables.md` in full. It is the authoritative spec for `xN`
-weights, the `||` flag conventions (`hands`, `gun`, `civ`, `mil`, `nogear`,
-`weather`, `clear`, `young`, `figure`), and the pronoun placeholders
-(`{Subject}`/`{subject}`/`{object}`/`{possessive}`/`{Possessive}`/`{is_are}`/
-`{carry}`/`{wear}`/`{gender}`). It can change independently of this skill, so
-don't rely on memory of it — read it live.
+of `npc-generator-tables.md` in full, **and the HTML comment above whichever
+tables you're writing into** — the Gear and Outfit comments carry flag rules
+that the top-of-file section only summarizes.
+
+That file is the authoritative spec for `xN` weights, the `||` flag
+conventions, and the pronoun placeholders. As of this writing the flags are:
+
+| Flag | Tables | Meaning |
+| --- | --- | --- |
+| `hands` | Gear, Stance | Gear: occupies at least one hand/arm. Stance: pose needs both hands free. |
+| `gun` | Gear, Stance | Gear: an actual firearm *held in hand*. Stance: a pose that aims/fires/handles a weapon. |
+| `mil` | Role, Faction, Outfit, Gear | Issued uniform / military-issue equipment. Dropped for a civilian Role. |
+| `civ` | Faction, Outfit | Plainly civilian dress. Dropped for a `mil` Role. |
+| `weapon` | Gear | An actual weapon, as opposed to equipment that merely *is* `mil` (a radio, a pack). |
+| `simple` | Gear | A `weapon` small and pocketable — a knife, one holstered pistol. |
+| `sidearm` | Gear | A bullet that explicitly includes a **holstered or openly worn** pistol. |
+| `notac` | Outfit | Elaborate/traditional dress that must never pair with `mil` Gear. |
+| `nogear` | Backdrop | The scene already puts something in the subject's hands. |
+| `weather` | Backdrop | Outdoors, so a Weather roll can land in it. |
+| `clear` | Weather | Contributes nothing to the prompt. |
+| `young` | Age | NPC under twenty; swaps the adult clauses. |
+| `figure` | Build | Written in terms of an adult woman's figure; dropped when Age rolled `young`. |
+
+**Treat that table as a mirror that has already gone stale once, not as the
+spec.** It previously omitted `weapon`, `simple`, `sidearm` and `notac`
+entirely, and a run trusting it emitted wrong flags. Diff it against the file
+every run and fix this skill if they disagree.
+
+Two flag traps worth stating outright, because both have been gotten wrong:
+
+- **`sidearm` means holstered or worn, never gripped.** The Gear comment is
+  explicit: "A bullet gripped or raised in the hands doesn't count, even if
+  it's a single pistol." It's the guaranteed-armed baseline for `mil` Roles,
+  so mis-tagging it puts an unarmed-looking bullet in that pool.
+- **`hands`/`gun` describe the hands, not the hardware.** A shoulder-mounted
+  pod or a slung rifle is `mil weapon` with no `hands`/`gun` — those two are
+  for what the subject is actually holding.
+
+The pronoun placeholders are
+`{Subject}`/`{subject}`/`{object}`/`{possessive}`/`{Possessive}`/`{is_are}`/
+`{carry}`/`{wear}`/`{gender}`. There is no `{Object}`, and no possessive
+built on `{object}` — write `{possessive} shoulder`, never `{object}'s
+shoulder`.
+
+**Unrecognized flags fail silently** (matched literally, ignored if unknown),
+while an unlisted placeholder raises a hard error. So a typo'd flag reaches a
+render and quietly does nothing — which is exactly why §7's validation pass
+exists.
 
 Also skim `Scripts/generate-npc.md`, specifically **"Where the entries came
 from"**, **"Period vocabulary matters"**, and **"Keeping figures adult and
@@ -47,9 +89,40 @@ Images arrive one of two ways:
 - **Pasted inline** in the conversation — look at what's already shown to you.
 - **File paths** passed as arguments — `Read` each one.
 
+- **A directory path** — list it first and treat *every* image file in it as
+  an input. Don't infer content from filenames: screenshot names like
+  `2026-09-01 13_42_31-... - File Explorer.png` are usually full-screen
+  captures of the artwork itself, not pictures of a file manager.
+
 Look at every image before writing anything. A batch of images can feed
 several different tables (one is a backdrop, one is a weapon, one is a
 garment) — don't assume they all belong to the same table.
+
+### Large batches (roughly 20+ images)
+
+A hundred-plus images won't fit in one context. Split them across parallel
+subagents, but hold these lines, all of which have failed in practice:
+
+- **Give each worker a verbatim output contract** — the exact JSON shape, an
+  id prefix unique to its chunk (`c1-e1`, `c2-e1`, …) so ids can't collide,
+  and an instruction to return *only* that JSON. Workers have returned a
+  status sentence ("the forks are running, I'll merge shortly") instead of
+  results, and a worker that echoes coordinator-speak has done no work.
+  **Read what came back before merging it**; re-dispatch the ones that didn't
+  comply rather than accepting the gap.
+- **Require exact filenames.** Workers abbreviate long names to
+  `2026-09-01 13_54_27-...batch2 - File Explo.png`, which resolves to
+  nothing. Every `source_image` must be a real filename, verified against the
+  directory listing in §7.
+- **Trust the pixels, not the worker's label.** A worker mislabeled which
+  screenshot a scene came from, and the error was only caught by opening both
+  images. When a listing and a description disagree, open the image.
+- **Each worker must account for every image it was given** — as an entry or
+  as a `skipped` record. Silent drops are how an image disappears from a
+  139-file run without anyone noticing.
+- **Dedupe at merge time, not in the workers.** Workers can't see each
+  other's output, so near-duplicates across chunks are yours to catch. Note
+  the overlap in `notes` and let the reviewer choose; don't silently drop one.
 
 ## 2. Classify each image by what it actually adds
 
@@ -57,7 +130,7 @@ garment) — don't assume they all belong to the same table.
 | --- | --- | --- |
 | A wide scene/environment, with or without the subject doing something in it | **Backdrop** | Portrait only. If the subject is actively posed against the scene (leaning, fighting, kneeling), stage the whole shot as one `{Subject} {is_are} ...` sentence rather than a blurred-background phrase. |
 | A body pose with no particular environment, meant for the full-body token | **Stance** | Token only — no scene, no lighting, just the pose. |
-| A weapon, tool, or carried item | **Gear** | Tag `hands`/`gun`/`mil` as applicable. |
+| A weapon, tool, or carried item | **Gear** | Tag `hands`/`gun`/`mil`/`weapon`/`simple`/`sidearm` as applicable — see the flag traps in §0. |
 | A garment, armor, or full kit | **Outfit** (or `Outfit (she) +` if the cut only reads on a woman's figure) | Tag `civ`/`mil`. |
 | A helmet, hood, hat, or headset | **Headgear** (or `Headgear (she) +`) | Full sentence: `{Subject} {wear} ...`. |
 | A hairstyle/cut visible on its own (not tucked under headgear) | **Hair** (or `Hair (she) +` / `Hair (he) +` if the cut only reads on one gender) | Noun phrase only — no flags, no sentence. If headgear covers all but a fringe or a couple of strands, it's fine to note that (existing bullets do), but the cut itself is still what gets recorded. |
@@ -127,8 +200,11 @@ the image will not fit this file. Apply all of these:
   in the subject's hands, so the template doesn't also hand them a rolled
   Gear item on top of it.
 - **Stance**: `<participial phrase, third person> || [hands] [gun]`
-- **Gear**: `<noun phrase, may use {possessive}> || [hands] [gun] [mil]`
-- **Outfit**: `<noun phrase clause> || [civ] [mil]`
+- **Gear**: `<noun phrase, may use {possessive}> || [hands] [gun] [mil] [weapon] [simple] [sidearm]`
+  A held weapon is `hands gun mil weapon` (+ `simple` if pocketable); a worn
+  or slung one drops `hands gun`; only a holstered/worn pistol earns
+  `sidearm`. Re-read the §0 traps before tagging.
+- **Outfit**: `<noun phrase clause> || [civ] [mil] [notac]`
 - **Headgear**: `{Subject} {wear} <full sentence>.` (no flags)
 - **Hair**: `<noun phrase>` (no flags, no placeholders — dropped straight into `{HAIR}` alongside Skin and Eyes)
 - **Demeanor**: `<noun phrase>` (no flags, no placeholders — dropped straight into "{POSSESSIVE} face carries **{DEMEANOR}**")
@@ -184,6 +260,9 @@ Write one JSON file per skill run to
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count in the ## Weather section comment and in Scripts/generate-npc.md's roll-table enumeration",
       "notes": "nogear because the sentence already puts a weapon in the subject's hands; glow left uncolored so it doesn't fight the rolled Accent"
     }
+  ],
+  "skipped": [
+    { "source_image": "lighthouse-cottage.png", "reason": "contemporary/mundane, no sci-fi content to translate" }
   ]
 }
 ```
@@ -197,23 +276,72 @@ Field notes:
   tells the later import step which table to insert into.
 - `bullet` — the finished line from §4, exactly as it should appear after
   `- ` in the table file (including any `xN`, `||` segments, and flags).
-- `source_image` — which image (by filename, or a short description if the
-  image was pasted inline with no filename) this candidate came from.
+- `source_image` — the **exact** filename this candidate came from, byte for
+  byte as it appears on disk (or a short description if the image was pasted
+  inline with no filename). Never abbreviate or elide part of a long name:
+  the GUI shows this string and the reviewer uses it to find the image.
 - `placement_hint` / `bookkeeping_note` / `notes` — from §5. Use `null` for
   `bookkeeping_note` when nothing is affected; the other two are always a
   string.
+- `skipped` — every input image that produced no candidate, each with a
+  `reason` (off-genre, near-duplicate of an existing bullet, unreadable
+  file, nothing new to add). Together with `entries` this must account for
+  every image in the run — that's what §7 checks.
 
 Group every candidate from this run into one file's `entries` array, even
 when they target different tables — the review step filters by table on its
 own side.
 
-## 7. Tell the user what you staged
+**What the importer actually does with this file** (`import-gui-server`'s
+`allTraitCandidates()` / `insertBulletIntoTables()`), which shapes what
+matters here:
+
+- It reads only `entries` and `generated_at`. Extra top-level keys like
+  `source_images` and `skipped` are ignored, and survive the write-back it
+  does when marking an entry `imported`.
+- It **refuses a `table` whose `## heading` doesn't exist** rather than
+  inventing one — so an invented or misspelled table name is a hard failure
+  at import, not a silent one.
+- It appends the bullet as the **last bullet in that section**, so
+  `placement_hint` is advice for the human reviewer, not something the
+  importer acts on. Write it for a person.
+
+## 7. Validate the file before reporting it
+
+Most of what can go wrong here fails *silently* — an unknown flag is ignored
+at render time, a truncated filename resolves to nothing, a dropped image is
+invisible. Don't hand over a staged file you haven't checked. Run these
+against the file you just wrote and fix anything they surface:
+
+1. **It parses.** Valid JSON, and `entries` is non-empty.
+2. **Every `table` is a real `## heading`** in `npc-generator-tables.md`,
+   matched exactly including any variant suffix. The importer refuses
+   anything else.
+3. **Every flag is in §0's table.** Unknown flags fail quietly forever.
+4. **Every `{placeholder}` is in the allowed set**, with no `{Object}` and no
+   `{object}'s`.
+5. **Every `source_image` exists on disk**, compared against a real directory
+   listing — this catches both truncation and invention.
+6. **Every input image is accounted for** in `entries` or `skipped`, with no
+   image referenced that isn't in the run.
+7. **`id`s are unique.**
+
+A short script is the fast way to do all seven; if the run was small enough
+to eyeball, eyeball it. Report what you checked, not just that you checked.
+
+## 8. Tell the user what you staged
 
 After writing the file, summarize in chat: how many candidates, which tables
-they target, and the file path — so the user knows a review step is waiting
-without needing to open the JSON to check.
+they target, how many images were skipped and why (in categories, not one
+line per image), and the file path — so the user knows a review step is
+waiting without needing to open the JSON to check.
 
-## 8. Confirm a candidate renders, if the user wants a check
+Surface anything the reviewer would otherwise discover the hard way:
+candidates that overlap each other or an existing bullet, judgment calls you
+made on their behalf, and any bookkeeping counts that will need recounting
+after they choose what to import.
+
+## 9. Confirm a candidate renders, if the user wants a check
 
 `generate-npc.py --dry-run` prints the assembled prompt without queuing a
 render, which is the fast way to sanity-check token budget and placeholder
@@ -283,3 +411,19 @@ Note what didn't carry over from the source images: no color names for the
 machines' lighting (left as "glowing"/lit), no mention of the reference art's
 own rendering style, and no restatement of anything the shared templates
 already assert (painterly style, halftone shading, restrained palette).
+
+## Common mistakes
+
+All of these have actually happened on a run of this skill.
+
+| Mistake | Fix |
+| --- | --- |
+| Trusting this skill's flag list instead of the file's | Diff §0 against the file every run; it has drifted before. |
+| `sidearm` on a pistol held in hand | `sidearm` is holstered/worn only — see §0. |
+| `hands gun` on a slung or shoulder-mounted weapon | Those flags describe the hands, not the hardware. |
+| `{object}'s shoulder` | Use `{possessive} shoulder`; there is no `{Object}`. |
+| Abbreviating a long filename in `source_image` | Copy it byte for byte; verify it against a directory listing. |
+| Assuming a `- File Explorer.png` name is a UI screenshot | Open it — they're usually full-screen captures of the art. |
+| Accepting a subagent's status sentence as its results | Read the return; re-dispatch anything that didn't produce JSON. |
+| Handing over the file without checking it | Run §7. Unknown flags and bad filenames fail silently. |
+| Inventing a table heading that doesn't exist yet | The importer refuses it; use an existing `##` heading. |

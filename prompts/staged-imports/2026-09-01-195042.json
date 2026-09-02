@@ -1,0 +1,1342 @@
+{
+  "generated_at": "2026-09-01T19:50:42-04:00",
+  "source_images": [
+    "Assets/Unsorted Inspiration/batch2/ (139 files; every image in the directory was reviewed - see entries and skipped below)"
+  ],
+  "entries": [
+    {
+      "id": "c1-e1",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} seated low in a rain-slicked alley, jacket half-shrugged off one shoulder and cable straps trailing loose across {possessive} lap, gazing up past the camera - behind {object} neon signage in unfamiliar characters glows through the mist, a server rack blinking against the wall. || weather",
+      "source_image": "2026-09-01 12_40_23-Greenshot.png",
+      "placement_hint": "near other alley/neon Backdrop bullets",
+      "bookkeeping_note": "Adds a weather-flagged Backdrop bullet, bumping the Weather section's stated flagged-bullet count.",
+      "notes": null
+    },
+    {
+      "id": "c1-e2",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} seated in a crowded night transit car, one hand raised holding a drink, oversized headphones clamped over {possessive} ears - behind {object} out-of-focus passengers sway with the motion and neon signage glows through the window beyond.",
+      "source_image": "2026-09-01 12_41_52-Greenshot.png",
+      "placement_hint": "near other transit/vehicle-interior Backdrop bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c1-e3",
+      "table": "Backdrop",
+      "bullet": "A close character portrait || {Subject} {is_are} standing motionless before the lowered head of a colossal war-machine, its single optic burning close overhead, sparks showering down as welding light flares behind {possessive} shoulder - a steel catwalk and dim industrial scaffolding recede into the haze around {object}.",
+      "source_image": "2026-09-01 12_42_12-Greenshot.png",
+      "placement_hint": "near the other mech-companion Backdrop bullets, as a closer/more confrontational variant",
+      "bookkeeping_note": "A mech-companion-style Backdrop bullet; see the combined note on c1-e11/c1-e27 about how many this batch adds if all are imported.",
+      "notes": null
+    },
+    {
+      "id": "c1-e4",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a scuffed recon helmet with a stubby antenna and an integrated comm mic curling to the jaw, cable jacks trailing from the crown to a collar rig.",
+      "source_image": "2026-09-01 12_46_17-G__Documents - File Explorer.png",
+      "placement_hint": "near other field-helmet Headgear bullets (night-vision helmet, domed flight helmet)",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c1-e5",
+      "table": "Backdrop",
+      "bullet": "A close character portrait || {Subject} {is_are} reclined still in a diagnostic rig, head tipped back and eyes closed, a crown of cabling radiating out from {possessive} temples to banks of softly blinking readouts on either side of {object}.",
+      "source_image": "2026-09-01 12_50_13-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
+      "placement_hint": "near other lab/diagnostic-bay Backdrop bullets",
+      "bookkeeping_note": null,
+      "notes": "Kept generic (no bust/exposure description carried over); glow color left unnamed per house rules."
+    },
+    {
+      "id": "c1-e6",
+      "table": "Backdrop",
+      "bullet": "A dramatic low-angle character portrait || {Subject} {is_are} braced against the wind with one hand raised to shield {possessive} face, tribal markings streaking {possessive} cheek - beyond {object} a huge moon hangs low over a besieged orbital structure, beam weapons lancing down through drifting smoke. || weather",
+      "source_image": "2026-09-01 12_50_43-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
+      "placement_hint": "near other besieged-skyline / warship Backdrop bullets",
+      "bookkeeping_note": "Adds a weather-flagged Backdrop bullet.",
+      "notes": null
+    },
+    {
+      "id": "c1-e7",
+      "table": "Outfit",
+      "bullet": "a heavy hooded work jacket with a reflective hazard stripe down one sleeve and patched insignia at the shoulder || civ",
+      "source_image": "2026-09-01 12_50_43-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
+      "placement_hint": "near other heavy civilian work-jacket Outfit bullets",
+      "bookkeeping_note": null,
+      "notes": "Same source image as c1-e6."
+    },
+    {
+      "id": "c1-e8",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} sitting cross-legged atop the hull of a parked armored vehicle, segmented mechanical prosthetic arms resting in {possessive} lap - behind {object} a dense neon-lit night skyline glows above a heavy cannon barrel angled into frame.",
+      "source_image": "2026-09-01 12_52_27-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
+      "placement_hint": "near other parked-vehicle Backdrop bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c1-e9",
+      "table": "Backdrop",
+      "bullet": "A character portrait seen from behind || {Subject} {is_are} standing in silhouette against a huge glowing sun rising behind a ring of ruined structural arches, hair and coat trailing in the wind - a shattered cityscape stretches out to either side of {object} beneath the glow. || weather",
+      "source_image": "2026-09-01 13_03_34-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
+      "placement_hint": "near other backlit-ruin / rear-view vista Backdrop bullets",
+      "bookkeeping_note": "Adds a weather-flagged Backdrop bullet.",
+      "notes": null
+    },
+    {
+      "id": "c1-e10",
+      "table": "Backdrop",
+      "bullet": "A dynamic character portrait || {Subject} {is_are} drifting limp and weightless above the planet's curve, arms trailing loose and a line of cabling reeling out behind {object}, shattered debris and a distant damaged vessel tumbling nearby, {possessive} suit scorched and torn across the chest.",
+      "source_image": "2026-09-01 13_06_58-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
+      "placement_hint": "near the existing zero-gravity EVA Backdrop entries, as a wounded/emergency variant",
+      "bookkeeping_note": "generate-npc.md names eight zero-gravity Backdrop entries by type; this would be a ninth if imported.",
+      "notes": null
+    },
+    {
+      "id": "c1-e11",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} standing before the looming bulk of a black companion war-machine, its twin shoulder cannons rising to either side and its optics burning faint red overhead - behind {object} a hazy night skyline glows low against the dark.",
+      "source_image": "2026-09-01 13_07_53-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
+      "placement_hint": "near the other mech-companion Backdrop bullets and c1-e3/c1-e27",
+      "bookkeeping_note": "Between c1-e3, c1-e11 and c1-e27, this batch alone offers three more mech-companion-style Backdrop candidates; generate-npc.md's Backdrop breakdown currently names only 'two mech-companion shots' and would need updating if several of these are imported together.",
+      "notes": "Pointed ears on the reference figure were dropped as an off-model fantasy trait; translated as a standard human NPC."
+    },
+    {
+      "id": "c1-e12",
+      "table": "Backdrop",
+      "bullet": "A close character portrait || {Subject} {is_are} framed tight in a cracked flight helmet, a thin readout glowing at the brow, half {possessive} face lit by a bright detonation tearing through a field of tumbling rock and debris just beyond {possessive} shoulder.",
+      "source_image": "2026-09-01 13_08_27-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
+      "placement_hint": "near other asteroid-field / debris Backdrop bullets",
+      "bookkeeping_note": null,
+      "notes": "Reworded slightly from the fork's draft, which used \"{object}'s shoulder\" - a possessive built on {object} rather than the {possessive} placeholder."
+    },
+    {
+      "id": "c1-e13",
+      "table": "Gear",
+      "bullet": "a slim single-edged blade held low and reversed at {possessive} side || hands mil weapon",
+      "source_image": "2026-09-01 13_25_29-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other bladed-weapon Gear bullets",
+      "bookkeeping_note": null,
+      "notes": "Exposed midriff/outfit on the source not carried over; only the held weapon translated."
+    },
+    {
+      "id": "c1-e14",
+      "table": "Hair (she) +",
+      "bullet": "a silver-white bob with a pair of small horn-shaped ornamental clips swept back at the temples",
+      "source_image": "2026-09-01 13_26_18-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "among the other stylized bob-length feminine cuts",
+      "bookkeeping_note": null,
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T00:07:22.689Z"
+    },
+    {
+      "id": "c1-e15",
+      "table": "Gear",
+      "bullet": "a massive twin-barreled support cannon carried braced against {possessive} hip || hands gun mil weapon",
+      "source_image": "2026-09-01 13_26_54-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other heavy/support-weapon Gear bullets",
+      "bookkeeping_note": null,
+      "notes": "Outfit not restated separately given how exposed/form-fitting the reference reads."
+    },
+    {
+      "id": "c1-e16",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a bulky illuminated visor rig clamped low over the eyes, graffitied casing and a stub antenna rising from one side.",
+      "source_image": "2026-09-01 13_28_42-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other visor-rig Headgear bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c1-e17",
+      "table": "Backdrop",
+      "bullet": "A close character portrait || {Subject} {is_are} reclined loose in a vehicle's seat, one arm slung back over the headrest and a knee drawn up, glancing out through a rain-streaked window - neon signage smears past in the dark beyond {object}. || weather",
+      "source_image": "2026-09-01 13_29_11-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other seated-in-a-vehicle-at-night Backdrop bullets",
+      "bookkeeping_note": "Adds a weather-flagged Backdrop bullet.",
+      "notes": null
+    },
+    {
+      "id": "c1-e18",
+      "table": "Hair (she) +",
+      "bullet": "a pale lavender bob with a sharp side-swept fringe and a single streaked strand",
+      "source_image": "2026-09-01 13_29_11-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other pastel-colored bob-length cuts",
+      "bookkeeping_note": null,
+      "notes": "Same source image as c1-e17.",
+      "imported": true,
+      "imported_at": "2026-09-02T00:07:22.685Z"
+    },
+    {
+      "id": "c1-e19",
+      "table": "Stance",
+      "bullet": "crouched low and coiled on a raised ledge, weight braced forward on one arm, ready to spring || hands",
+      "source_image": "2026-09-01 13_30_09-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other coiled/ready-to-move Stance bullets",
+      "bookkeeping_note": null,
+      "notes": "Mechanical limb plating and exposed torso on the source not carried over; only the pose translated.",
+      "imported": true,
+      "imported_at": "2026-09-02T00:07:22.677Z"
+    },
+    {
+      "id": "c1-e20",
+      "table": "Backdrop",
+      "bullet": "A dynamic character portrait || {Subject} {is_are} walking straight toward the viewer down a narrow overgrown alley, a heavy pack slung on {possessive} back - ivy and reclaimed neon signage crowd the walls to either side of {object}, an old arcade cabinet half-buried in creepers behind.",
+      "source_image": "2026-09-01 13_31_24-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other reclaimed-ruin / overgrown-alley Backdrop bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c1-e21",
+      "table": "Outfit",
+      "bullet": "an oversized weatherproof jacket bristling with pouches and straps, worn over a slung backpack with its harness crossing {possessive} chest || civ",
+      "source_image": "2026-09-01 13_31_24-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other bulky civilian jacket-plus-pack Outfit bullets",
+      "bookkeeping_note": null,
+      "notes": "Same source image as c1-e20."
+    },
+    {
+      "id": "c1-e22",
+      "table": "Outfit",
+      "bullet": "a battered set of heavy segmented plate armor, scorched and scarred at the shoulders and forearms, in dull combat red || mil",
+      "source_image": "2026-09-01 13_31_36-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other scuffed hardshell/plate-armor Outfit bullets, alongside c1-e34",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c1-e23",
+      "table": "Backdrop",
+      "bullet": "A close character portrait || {Subject} {is_are} crouched low in a wrecked, fire-lit room, banks of dead monitors stacked behind {object} and a fire smoldering in the wreckage beyond.",
+      "source_image": "2026-09-01 13_31_36-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other ruin/wreckage-interior Backdrop bullets",
+      "bookkeeping_note": null,
+      "notes": "Same source image as c1-e22."
+    },
+    {
+      "id": "c1-e24",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a curved white plate clipped snug over one ear, a short antenna-like horn rising from its crown and a thin cable trailing to the collar.",
+      "source_image": "2026-09-01 13_32_03-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other integrated ear-piece Headgear bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c1-e25",
+      "table": "Backdrop",
+      "bullet": "A close character portrait || {Subject} {is_are} tipped back in a mech cockpit seat, {possessive} gaze lifted past the camera - dense banks of glowing readouts and a night skyline crowd the canopy around {object}.",
+      "source_image": "2026-09-01 13_32_03-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other cockpit-interior Backdrop bullets",
+      "bookkeeping_note": null,
+      "notes": "Same source image as c1-e24."
+    },
+    {
+      "id": "c1-e26",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} reclined deep in a low chair, legs crossed and stretched long, a hand of cards held loosely - mechanical prosthetic arm plating catches the light, and a heavy weapon rests propped against the chair beside {object}, screens of dense readouts glowing at {possessive} back.",
+      "source_image": "2026-09-01 13_34_51-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other lounge/downtime Backdrop bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c1-e27",
+      "table": "Backdrop",
+      "bullet": "A dramatic character portrait seen from behind || {Subject} {is_are} standing still in the rain, gazing up at a towering battle-scarred war-machine looming just ahead, its single core glowing steady in its chest - a dense city skyline rises hazy through the downpour behind {object}. || weather",
+      "source_image": "2026-09-01 13_35_40-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other mech-companion Backdrop bullets - see note on c1-e3/c1-e11",
+      "bookkeeping_note": "Adds a weather-flagged Backdrop bullet; see the combined mech-companion count note on c1-e11.",
+      "notes": null
+    },
+    {
+      "id": "c1-e28",
+      "table": "Backdrop",
+      "bullet": "A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cramped hacker's den lit green by a wall of humming CRT monitors, rain streaking a window at the far end. || weather",
+      "source_image": "2026-09-01 13_36_17-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the existing hacker-den Backdrop bullet, as a background-only variant",
+      "bookkeeping_note": "generate-npc.md names a single 'hacker den' Backdrop entry; this would be a second, background-only take on the same concept.",
+      "notes": "Overlaps c3-e22 and c4-e14, two other hacker-den candidates in this same run - a reviewer should probably pick one rather than importing all three."
+    },
+    {
+      "id": "c1-e29",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a sleek red-tinted visor strapped low across the eyes, built into a close-fitted skullcap with a jack seated at one temple.",
+      "source_image": "2026-09-01 13_36_49-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other visor/eyewear-rig Headgear bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c1-e30",
+      "table": "Backdrop",
+      "bullet": "A character portrait seen from behind || {Subject} {is_are} sitting on a rooftop bar's counter ledge, glancing back over one shoulder - a dense rain-soaked high-rise district glows through the downpour beyond {object}, potted plants crowding the rail. || weather",
+      "source_image": "2026-09-01 13_37_03-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other rooftop-bar/balcony Backdrop bullets",
+      "bookkeeping_note": "Adds a weather-flagged Backdrop bullet.",
+      "notes": "Outfit not restated as a separate entry given how form-fitting/exposed the reference reads; kept the bullet to scene and pose only."
+    },
+    {
+      "id": "c1-e31",
+      "table": "Gear",
+      "bullet": "a heavy shoulder-mounted weapon pod worn like a backpack, twin barrels rising above {possessive} head, a sidearm holstered at {possessive} hip || mil weapon sidearm",
+      "source_image": "2026-09-01 13_38_30-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other heavy/exo-mounted weapon Gear bullets",
+      "bookkeeping_note": null,
+      "notes": "Flags corrected from the fork's draft ('hands gun mil weapon'): the pod is worn on the shoulders rather than held, so hands/gun don't apply, while the explicitly holstered pistol earns sidearm per the Gear table's own comment."
+    },
+    {
+      "id": "c1-e32",
+      "table": "Backdrop",
+      "bullet": "A close character portrait || {Subject} {is_are} leaning back into a mech cockpit seat, rain-damp hair swept across {possessive} face, one gloved hand braced on the console - beyond the canopy a night skyline glows through the rain. || weather",
+      "source_image": "2026-09-01 13_39_52-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other cockpit-interior Backdrop bullets, as a rain-soaked variant",
+      "bookkeeping_note": "Adds a weather-flagged Backdrop bullet.",
+      "notes": null
+    },
+    {
+      "id": "c1-e33",
+      "table": "Stance",
+      "bullet": "leaning down into open machinery from above, braced on one forearm and reaching in with the other hand || hands",
+      "source_image": "2026-09-01 13_41_06-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other work/repair-pose Stance bullets",
+      "bookkeeping_note": null,
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T00:07:22.672Z"
+    },
+    {
+      "id": "c1-e34",
+      "table": "Outfit",
+      "bullet": "a segmented white technical armor shell with dark reinforced wrapping at the thighs, scorched and battle-worn || mil",
+      "source_image": "2026-09-01 13_41_40-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other scuffed hardshell/plate-armor Outfit bullets, alongside c1-e22",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c1-e35",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} sitting perched on a heap of mangled wreckage, one hand raised to {possessive} collar - a sun-bleached desert stretches out behind {object}, distant explosions blooming pale against the sky. || weather",
+      "source_image": "2026-09-01 13_41_40-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other desert/wreckage-field Backdrop bullets",
+      "bookkeeping_note": "Adds a weather-flagged Backdrop bullet.",
+      "notes": "Same source image as c1-e34."
+    },
+    {
+      "id": "c1-e36",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a compact over-ear headset with red accent panels, a short boom mic curling toward the jaw.",
+      "source_image": "2026-09-01 13_42_07-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other headset/comm-piece Headgear bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c1-e37",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} gripping an overhead handhold inside a moving vehicle, one arm raised and braced, glancing up and to the side - a night skyline streaks past the window behind {object}.",
+      "source_image": "2026-09-01 13_42_07-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near other vehicle-interior Backdrop bullets",
+      "bookkeeping_note": null,
+      "notes": "Same source image as c1-e36."
+    },
+    {
+      "id": "c1-e38",
+      "table": "Backdrop",
+      "bullet": "A dramatic low-angle character portrait || {Subject} {is_are} crouched on a narrow icy ledge high above the city, a pistol held ready in one hand, glancing back over {possessive} shoulder - a dense high-rise skyline drops away into the night far below {object}. || nogear weather",
+      "source_image": "2026-09-01 13_42_31-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other rooftop-ledge / vertiginous Backdrop bullets",
+      "bookkeeping_note": "Adds a weather-flagged Backdrop bullet.",
+      "notes": "Rendering style (photorealistic render) discarded per house rules; only staging and pose kept."
+    },
+    {
+      "id": "c2-e1",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} seated in a shuttle's passenger cabin, poring over a thick bound technical manual balanced on one knee, a travel bag propped against the seat, a richly robed diplomatic passenger seated close beside {object} - beyond the windows a scatter of escort ships hangs against the stars.",
+      "source_image": "2026-09-01 13_43_03-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other cockpit/cabin interior Backdrop bullets (\"a cramped cockpit lit only by instrument readouts\")",
+      "bookkeeping_note": null,
+      "notes": "source image showed named alien species (blue-skinned, pointed-eared) among the passengers; stripped to a generic richly robed passenger to keep the table's human-neutral baseline intact."
+    },
+    {
+      "id": "c2-e2",
+      "table": "Backdrop",
+      "bullet": "A close, low-angle character portrait || {Subject} {is_are} reclined deep in a mech cockpit's padded seat, sealed head to toe in scuffed dark pressure armor, one gloved hand fallen slack across {possessive} lap, a dense asteroid field drifting past the canopy overhead - beside {object} a second pilot leans in close, watching the field pass.",
+      "source_image": "2026-09-01 13_43_14-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other cockpit-interior Backdrop bullets",
+      "bookkeeping_note": null,
+      "notes": "subject's face is fully obscured by a sealed helmet, precedented by the existing EVA-helmet Backdrop entries."
+    },
+    {
+      "id": "c2-e3",
+      "table": "Backdrop",
+      "bullet": "A three-quarter character portrait || {Subject} {is_are} seated at a terminal, working a hovering holographic display with one hand, a hulking rust-streaked companion mech looming close behind {possessive} shoulder, its optics glowing faintly in the low light - around {object} banks of server racks glow in the dark. || nogear",
+      "source_image": "2026-09-01 13_43_23-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "alongside the existing workbench/terminal Backdrop bullet (~line 1454) and the other mech-companion staging bullets",
+      "bookkeeping_note": null,
+      "notes": "source had small demon-style horns on the subject; omitted as off-model fantasy detail, kept the terminal + mech-companion staging which is the genuinely new content."
+    },
+    {
+      "id": "c2-e4",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a pair of boxy retro-industrial headphones, worn olive-grey earcups ringed in exposed rivets and a scuffed control dial on one side.",
+      "source_image": "2026-09-01 13_43_29-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other bulky/retro headset entries (padded flight headset, monocular sensor rig)",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c2-e5",
+      "table": "Feature (she) +",
+      "bullet": "a faint scatter of freckles across the bridge of the nose",
+      "source_image": "2026-09-01 13_43_29-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other small facial-detail Feature (she) bullets (piercings, gold chain)",
+      "bookkeeping_note": null,
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T00:07:22.644Z"
+    },
+    {
+      "id": "c2-e6",
+      "table": "Backdrop",
+      "bullet": "A dynamic character portrait || {Subject} {is_are} leaning low over the handlebars of a weathered vintage motorcycle, cutting fast across a sunbaked salt flat, {possessive} scarf and hair streaming back in the wind - behind {object} a chain of distant mesas breaks the horizon under a darkening sky. || weather",
+      "source_image": "2026-09-01 13_43_38-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the speeder-bike and muscle-car Backdrop bullets",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count in the ## Weather section comment and the roll-table enumeration in generate-npc.md.",
+      "notes": null
+    },
+    {
+      "id": "c2-e7",
+      "table": "Outfit",
+      "bullet": "a weathered mustard-yellow flight suit with a shoulder star patch and a small unit patch at the chest, a pale scarf knotted loose at the throat || mil",
+      "source_image": "2026-09-01 13_43_38-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other stencilled/patch field-jacket mil Outfit bullets",
+      "bookkeeping_note": null,
+      "notes": "Overlaps c3-e26, a mustard-yellow flight suit staged as Outfit (she) + from a different source image in this same run."
+    },
+    {
+      "id": "c2-e8",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} half-turned against open space, a tattered scarf-cloak streaming out weightless behind {object}, hair drifting loose in the void - beyond {object} a churning red nebula glows low around a dark dwarf star.",
+      "source_image": "2026-09-01 13_43_59-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other starfield/nebula Backdrop bullets (planet-limb glow entry, ~line 1446)",
+      "bookkeeping_note": null,
+      "notes": "same character/kit as c2-e6/c2-e7, shown here against a space backdrop instead of the desert."
+    },
+    {
+      "id": "c2-e9",
+      "table": "Backdrop",
+      "bullet": "A dramatic low-angle character portrait || {Subject} {is_are} crouched low on a rain-slick rooftop ledge, bracing a long rifle sighted down into the streets below, weight settled low over one knee - beneath {object} a dense neon-lit cityscape glows through the downpour. || nogear weather",
+      "source_image": "2026-09-01 13_44_15-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other sniper/rifle Backdrop bullets (kneeling suppressed sniper rifle entry, ~line 1450)",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
+      "notes": null
+    },
+    {
+      "id": "c2-e10",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} standing braced with both hands flat on a lit control console, framed against a floor-to-ceiling viewport of a rain-swept neon high-rise skyline beyond. || nogear weather",
+      "source_image": "2026-09-01 13_44_31-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the workbench/terminal Backdrop bullet and the window-wall skyline bullet (~line 1483)",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
+      "notes": null
+    },
+    {
+      "id": "c2-e11",
+      "table": "Backdrop",
+      "bullet": "A dramatic low-angle character portrait || {Subject} {is_are} standing framed close against the camera, hair and jacket lifted by displaced air, glancing back over {possessive} shoulder as a colossal armored war-machine looms directly overhead - the shot angled steeply upward to emphasise its scale against the neon high-rise skyline beyond. || weather",
+      "source_image": "2026-09-01 13_44_36-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the towering-mech low-angle Backdrop bullet (~line 1457)",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
+      "notes": null
+    },
+    {
+      "id": "c2-e12",
+      "table": "Outfit (she) +",
+      "bullet": "an oversized cropped black jacket with dull gold trim, worn open over a graphic crop top and a low-slung utility belt || civ",
+      "source_image": "2026-09-01 13_44_36-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other cropped-jacket/bare-midriff Outfit (she) entries",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c2-e13",
+      "table": "Backdrop",
+      "bullet": "A dynamic, close character portrait || {Subject} {is_are} raising a compact pistol close to the camera, fine circuitry glowing faintly along {possessive} fingertips and knuckles - behind {object} a pair of masked companions stand watch at a railing overlooking a dense rain-slicked neon cityscape. || nogear weather",
+      "source_image": "2026-09-01 13_45_11-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the \"pistol gripped level and aimed straight at the camera\" bullet (~line 1447)",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
+      "notes": "background companions wore stylised animal-motif full helmets in the source; kept as masked/helmeted figures rather than literal animal features."
+    },
+    {
+      "id": "c2-e14",
+      "table": "Backdrop",
+      "bullet": "A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} tumbling backward through open air in cracked powered armor, twin beams of light searing across {possessive} torso and shattering plating away in jagged fragments, hair whipped wild by the fall - far below {object} a dark cityscape glows red beneath the drifting debris. || weather",
+      "source_image": "2026-09-01 13_45_58-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other dramatic foreshortened freefall Backdrop bullets",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
+      "notes": "no color named on the beams so it doesn't fight the rolled Accent."
+    },
+    {
+      "id": "c2-e15",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} reclined loose in a cockpit's crash seat, one hand reaching lazily out into the glow, banks of console screens and readouts ringing {object} on every side.",
+      "source_image": "2026-09-01 13_46_11-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near \"a cramped cockpit lit only by instrument readouts\" background bullet",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c2-e16",
+      "table": "Outfit (she) +",
+      "bullet": "a cropped black graphic hoodie with a small patch at the sleeve, over dark track trousers striped down the leg || civ",
+      "source_image": "2026-09-01 13_46_22-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other casual streetwear Outfit (she) entries (graffiti-tagged crop tee, open shirt)",
+      "bookkeeping_note": null,
+      "notes": "skipped the Backdrop angle (leaning on a parked car at night) as a near-duplicate of the file's several existing muscle-car Backdrop bullets."
+    },
+    {
+      "id": "c2-e17",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} standing at a rooftop ledge, a data-slate held loose in one hand and a sidearm holstered at {possessive} hip, a dark fabric wrap pulled up over the lower face - beyond {object} a dense neon-lit skyline glows red through the night haze. || weather",
+      "source_image": "2026-09-01 13_46_43-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the calibration-bay data-slate entry (~line 1480) and the rooftop meditation bullet",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
+      "notes": "omitted the small demon-style horns and floating halo-ring HUD element as off-model fantasy/decorative-UI details not translatable into the prompt."
+    },
+    {
+      "id": "c2-e18",
+      "table": "Backdrop",
+      "bullet": "A dynamic character portrait || {Subject} {is_are} walking straight toward the viewer down a dim industrial hangar bay, a flight helmet carried loose under one arm, a hulking quadrupedal war-machine striding through drifting steam close behind {object}, overhead lights raking down through the haze. || nogear",
+      "source_image": "2026-09-01 13_46_51-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the mech-flanked street bullet (~line 1469) and the mech-hangar background bullet",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c2-e19",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} tinted wraparound sunglasses pushed rakishly up into {possessive} hair.",
+      "source_image": "2026-09-01 13_48_34-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the goggles/visor Headgear entries",
+      "bookkeeping_note": null,
+      "notes": "skipped an Outfit entry for the glowing-lined jacket as a near-duplicate of the existing \"black tactical jacket... interior lining faintly glowing\" bullet (~line 1203)."
+    },
+    {
+      "id": "c2-e20",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} standing squared to the viewer, a long white coat draped over {possessive} shoulders, an immense capital ship descending directly behind {object}, its hull lit sharply against a burning red city glow far below, drifting haze softening the skyline. || weather",
+      "source_image": "2026-09-01 13_49_38-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the \"immense flying superstructure eclipses the low sun\" background bullet (~line 1466)",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
+      "notes": "kept \"burning red city glow\" as scene-defining color per the existing exception (matches the file's \"dull amber beacons\"-style precedent) rather than a strippable single-source glow."
+    },
+    {
+      "id": "c2-e21",
+      "table": "Feature (she) +",
+      "bullet": "visible mechanical rib plating and joint segments across the bare midriff, marking {object} as heavily augmented",
+      "source_image": "2026-09-01 13_50_01-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other visible-seam/cybernetic Feature entries (\"visible mechanical seams and joint lines across the shoulders\", ~line 1017)",
+      "bookkeeping_note": null,
+      "notes": "skipped separate Outfit/Gear entries for the tactical harness and slung rifle as close overlaps with existing bullets.",
+      "imported": true,
+      "imported_at": "2026-09-02T00:07:22.650Z"
+    },
+    {
+      "id": "c2-e22",
+      "table": "Backdrop",
+      "bullet": "A close character portrait || {Subject} {is_are} standing perfectly still as an oversized mechanical hand reaches into frame to project a thin beam of light directly into {possessive} eye, a small stamped code marked at {possessive} cheekbone, the moment held in tense stillness.",
+      "source_image": "2026-09-01 13_50_23-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the workbench/terminal Backdrop bullet and other close tech-interface scenes",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c2-e23",
+      "table": "Outfit (she) +",
+      "bullet": "a black leather corset-coat with a high spiked collar, a short pleated underskirt and thigh-high tactical boots || civ",
+      "source_image": "2026-09-01 13_50_40-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near \"a black jacket studded with spikes at the collar and shoulders\" (~line 1286)",
+      "bookkeeping_note": null,
+      "notes": "skipped the Backdrop angle (walking toward viewer down a ruined alley) as a near-duplicate of existing walking-toward-viewer street bullets; skipped the katana as Gear since sheathed/crossed-katana bullets already exist."
+    },
+    {
+      "id": "c2-e24",
+      "table": "Backdrop",
+      "bullet": "A character portrait seen from behind || {Subject} {is_are} standing atop a rooftop ledge high above a sprawling neon-red cityscape at night, a sidearm held loose and low in one hand, gazing down at the grid of light far below. || nogear weather",
+      "source_image": "2026-09-01 13_50_50-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the existing rear-view rooftop Backdrop bullet (~line 1459)",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
+      "notes": null
+    },
+    {
+      "id": "c2-e25",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} standing beside a towering crimson war-machine, its cockpit visor glowing pale blue in the dark, {possessive} fitted suit catching the light - around them the dim outline of a nighttime hangar recedes into shadow.",
+      "source_image": "2026-09-01 13_51_12-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other mech-companion Backdrop bullets (~lines 1456-1457)",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c2-e26",
+      "table": "Backdrop",
+      "bullet": "A character portrait seen from behind || {Subject} {is_are} standing at a viewport beside a hulking white powered-armor companion, one hand raised flat against the glass, a stencilled unit number marking {possessive} shoulder - beyond the glass a sunlit planet curves away below, city lights scattered across its night side.",
+      "source_image": "2026-09-01 13_52_23-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near \"standing atop the hull of a companion vessel in high orbit\" (~line 1481)",
+      "bookkeeping_note": null,
+      "notes": "an earlier frame of the same scene (13_52_06) was treated as a duplicate and skipped."
+    },
+    {
+      "id": "c2-e27",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} standing in three-quarter profile, a towering red-and-white war-machine looming just behind {possessive} shoulder, its single optic lit - down the street behind {object} red paper lanterns and shopfront signage glow through the night haze. || weather",
+      "source_image": "2026-09-01 13_54_06-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the mech-companion refinery/dusk Backdrop bullet (~line 1456)",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
+      "notes": null
+    },
+    {
+      "id": "c3-e1",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} standing with both cybernetic prosthetic hands raised and pressed together in prayer, forearms segmented and scarred with use, a ring of glowing script arcing overhead like a halo - behind {object} a congregation of hooded, bowed worshippers recedes into a dim golden haze, their faces indistinct.",
+      "source_image": "2026-09-01 13_54_27-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the shrine/machine-cult and cybernetic-prosthetic Backdrop entries",
+      "bookkeeping_note": null,
+      "notes": "Glow kept uncolored except the ambient golden haze of the crowd, which reads as scene lighting rather than a single Accent-fighting light source; hands described as prosthetic per existing Feature-table convention for cyborg limbs."
+    },
+    {
+      "id": "c3-e2",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a segmented cybernetic implant sheathing one ear and running down the jaw, faint lit seams tracing its joints.",
+      "source_image": "2026-09-01 13_54_36-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other sensor/comms Headgear entries",
+      "bookkeeping_note": null,
+      "notes": "Source image also showed rain and blue-lit hair, but those read as generic Backdrop/Weather material already well covered by the existing pool, so only the distinctive implant was kept."
+    },
+    {
+      "id": "c3-e3",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} seated in the open cockpit of a parked attack craft on a rocky ridge at night, flight helmet secured and visor down, a stitched unit patch at the shoulder of {possessive} flight jacket, gazing off past the frame - behind {object} a huge banded planet glows low over the ridge, faint stars scattered through the dark. || weather",
+      "source_image": "2026-09-01 13_57_12-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other cockpit/mech-companion Backdrop entries",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count noted in the ## Weather section comment and generate-npc.md's roll-table enumeration",
+      "notes": "Source image had a real-world national flag patch on the jacket; genericized to an unnamed stitched unit patch since a real flag doesn't fit the setting."
+    },
+    {
+      "id": "c3-e4",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a domed flight helmet in weathered burnt-orange with a full mirrored visor down, a coiled comms cable trailing from one side.",
+      "source_image": "2026-09-01 13_57_12-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other full flight helmet Headgear entries",
+      "bookkeeping_note": null,
+      "notes": "Companion entry to c3-e3, same source image, so the helmet can also be rolled independently of that specific Backdrop."
+    },
+    {
+      "id": "c3-e5",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} standing with a spent cigarette held loosely at the corner of {possessive} mouth, a pair of heavy mechanical support struts trailing cabling rising to either side of {possessive} head - behind {object}, out of focus, a dense hazy cityscape glows faintly through drifting mist.",
+      "source_image": "2026-09-01 13_57_22-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other neon-cityscape half-body Backdrop entries",
+      "bookkeeping_note": null,
+      "notes": "The struts read ambiguously as either worn hardware or background machinery in the source; kept close to the source framing rather than guessing which."
+    },
+    {
+      "id": "c3-e6",
+      "table": "Backdrop",
+      "bullet": "A half-body character portrait || Behind {object}, out of focus, is a towering sci-fi skyline beneath a colossal glowing ring-shaped structure hanging in the night sky, freighters and cruisers drifting past its light, the streets below slick with rain and threaded with cool running-lights. || weather",
+      "source_image": "2026-09-01 13_57_33-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the flying-superstructure and frontier-vista half-body Backdrop entries",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
+      "notes": null
+    },
+    {
+      "id": "c3-e7",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a compact visor rig pushed up above the brow, articulated plating framing one side of the face and a thin mic boom curving down past the cheek.",
+      "source_image": "2026-09-01 13_57_45-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the monocular sensor rig and comms earpiece Headgear entries",
+      "bookkeeping_note": null,
+      "notes": "The source's glowing red cybernetic eye was skipped as an entry since the Eyes table already has a near-identical bullet."
+    },
+    {
+      "id": "c3-e8",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} seated astride a parked matte-black superbike on a railed overlook, one boot braced against the ground, glancing back over {possessive} shoulder - behind {object} a tiered river city of lantern-lit pagodas and waterfalls spreads below towering spired structures at dusk. || weather",
+      "source_image": "2026-09-01 13_57_59-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the existing parked-superbike Backdrop entry",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
+      "notes": null
+    },
+    {
+      "id": "c3-e9",
+      "table": "Backdrop",
+      "bullet": "A character portrait seen from behind || {Subject} {is_are} standing at the foot of a towering dormant war-machine in a cluttered maintenance bay, a ladder propped against its leg and a flight helmet held loose in one hand at {possessive} side, dim standby lighting glowing from vents across its hull - a weathered poster and status monitors line the walls to either side, steam venting low across the floor. || nogear",
+      "source_image": "2026-09-01 13_58_09-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "next to the other mech-hangar / mech-companion Backdrop bullets",
+      "bookkeeping_note": null,
+      "notes": "nogear because the helmet already occupies one hand."
+    },
+    {
+      "id": "c3-e10",
+      "table": "Demeanor (she) +",
+      "bullet": "a lazy, half-lidded stare around a lit cigarette, faintly unimpressed",
+      "source_image": "2026-09-01 13_58_24-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other cool/composed Demeanor (she) + entries",
+      "bookkeeping_note": null,
+      "notes": "Source was a stat-card style graphic (ID, augmentations list, vitals); only the expression itself was taken, not the UI framing or stats.",
+      "imported": true,
+      "imported_at": "2026-09-02T00:07:22.629Z"
+    },
+    {
+      "id": "c3-e11",
+      "table": "Backdrop",
+      "bullet": "A character portrait seen from behind || {Subject} {is_are} standing at a rocky overlook, a long tattered cloak snapping loose in the wind behind {object}, gazing out over a hazy desert city ringed by tall spires - overhead a massive banded planet with a debris ring dominates the sky, smaller moons scattered around it, the whole scene washed in the deep orange of a dying sun. || weather",
+      "source_image": "2026-09-01 14_00_00-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the frontier-vista and ridge-overlook Backdrop entries",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
+      "notes": null
+    },
+    {
+      "id": "c3-e12",
+      "table": "Feature",
+      "bullet": "a cybernetic optic implant wired into one side of the face, fine conduit lines tracing down past the jaw to the collar",
+      "source_image": "2026-09-01 14_01_39-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other optical-implant and cyborg-seam Feature entries",
+      "bookkeeping_note": null,
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T00:07:22.635Z"
+    },
+    {
+      "id": "c3-e13",
+      "table": "Outfit (she) +",
+      "bullet": "an oversized black tactical jacket, unzipped over a cropped top baring the midriff, small mismatched patches on one sleeve and a segmented armored panel at one shoulder",
+      "source_image": "2026-09-01 14_01_52-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other black tactical jacket / bare-midriff Outfit (she) + entries",
+      "bookkeeping_note": null,
+      "notes": "Holstered pistol from the source folded into the companion Backdrop entry instead of repeated here."
+    },
+    {
+      "id": "c3-e14",
+      "table": "Backdrop",
+      "bullet": "A dynamic character portrait || {Subject} {is_are} standing on the broken rocky surface of an airless moon, a pistol gripped and lowered at {possessive} side, glancing back over one shoulder - behind {object} a searing beam of weapons fire lances low across the horizon, kicking up a spray of debris where it grazes the ground. || nogear",
+      "source_image": "2026-09-01 14_01_52-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other low-gravity / off-world combat Backdrop entries",
+      "bookkeeping_note": null,
+      "notes": "nogear because the pistol is already in hand; no weather since the surface is airless."
+    },
+    {
+      "id": "c3-e15",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} reclined loosely in a cockpit seat, one leg - a segmented cybernetic prosthetic - propped up against the console, {possessive} head tipped back and gaze drifting past the canopy - beyond {object} a dense starfield stretches away into the dark, banks of status readouts glowing at the edges of the frame.",
+      "source_image": "2026-09-01 14_02_01-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other cockpit-interior half-body Backdrop entries",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c3-e16",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a compact sensor rig clipped into {possessive} hair at the crown, trailing thin cables and a torn strip of fabric like a streamer.",
+      "source_image": "2026-09-01 14_02_10-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the monocular sensor rig Headgear entry",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c3-e17",
+      "table": "Outfit (she) +",
+      "bullet": "a sleek black-and-white armored bodysuit with an oversized geometric pauldron on one shoulder, a lit status display set into the chest plate and thin glowing seams tracing the joints, a bare midriff panel at the waist",
+      "source_image": "2026-09-01 16_17_07-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other segmented-plating / glowing-seam Outfit (she) + entries",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c3-e18",
+      "table": "Backdrop",
+      "bullet": "A dynamic character portrait || {Subject} {is_are} standing amid drifting debris and fire on a cratered surface, glancing sharply toward the viewer, one heavy geometric shoulder plate catching the light - behind {object} explosions bloom low across the ground and a bright streak burns across the black sky above.",
+      "source_image": "2026-09-01 16_17_07-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other battlefield/embers Backdrop entries",
+      "bookkeeping_note": null,
+      "notes": "No weather flag - reads as an airless cratered surface, not open sky."
+    },
+    {
+      "id": "c3-e19",
+      "table": "Backdrop",
+      "bullet": "A character portrait seen from behind || {Subject} {is_are} standing at the edge of a high rooftop with both arms flung wide, an oversized jacket printed with bold graphic linework across the back - below and behind {object} a dense neon high-rise skyline stretches away into the haze, a single towering spire glowing at the center of the frame. || weather",
+      "source_image": "2026-09-01 16_19_08-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "placement_hint": "near the other rooftop-balcony Backdrop entries",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
+      "notes": null
+    },
+    {
+      "id": "c3-e20",
+      "table": "Backdrop",
+      "bullet": "A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} punching forward through the air in heavy powered armor plating, {possessive} lead arm driven out toward the viewer in a braced clawed gauntlet and the trailing arm cocked back, {possessive} legs trailing behind in motion, hair whipped back - behind {object} bright beams of weapons fire streak past low across a debris-strewn battlefield. || weather",
+      "source_image": "2026-09-01 17_50_10-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other close-quarters action / powered-armor Backdrop entries",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
+      "notes": null
+    },
+    {
+      "id": "c3-e21",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a slim translucent visor band across the brow, a cluster of cabling running from a port at {possessive} temple back into the rig behind {object}.",
+      "source_image": "2026-09-01 17_50_22-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other sensor-visor Headgear entries",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c3-e22",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} reclined deep in a battered gaming chair, arms crossed and half-lidded, a translucent visor band glowing faintly across {possessive} brow and cabling trailing from a jack at {possessive} temple - around {object} a bank of terminal displays glows with dense scrolling data, a burned-down cigarette smoldering in a nearby ashtray. || nogear",
+      "source_image": "2026-09-01 17_50_22-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "next to the existing hacker-den workbench Backdrop bullet",
+      "bookkeeping_note": null,
+      "notes": "A distinct hacker-den staging from the existing workbench one - reclined/jacked-in rather than typing. Overlaps c1-e28 and c4-e14, two other hacker-den candidates in this run."
+    },
+    {
+      "id": "c3-e23",
+      "table": "Outfit (she) +",
+      "bullet": "a fitted black leather bodysuit with a high popped collar, rain-slicked and traced with faint glowing seam lines at the wrists",
+      "source_image": "2026-09-01 17_50_47-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other black bodysuit / glowing-seam Outfit (she) + entries",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c3-e24",
+      "table": "Feature (she) +",
+      "bullet": "faint surgical scarring tracing from temple to cheekbone, the mark of old cyberware work",
+      "source_image": "2026-09-01 17_50_47-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other Feature (she) + entries",
+      "bookkeeping_note": null,
+      "notes": "Named brand billboard ('KIROSHI') in the source was dropped as real-world/franchise-specific; only the scar and outfit content carried over.",
+      "imported": true,
+      "imported_at": "2026-09-02T00:07:22.654Z"
+    },
+    {
+      "id": "c3-e25",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a chunky over-ear headset with a lit accent ring at each cup, the band nested into {possessive} hair.",
+      "source_image": "2026-09-01 17_50_56-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the padded flight headset Headgear entries",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c3-e26",
+      "table": "Outfit (she) +",
+      "bullet": "a mustard-yellow flight suit with padded shoulder patches and a wide belted utility harness, sleeves rolled to reveal a lighter underlayer, a weathered grey scarf knotted loosely at the throat",
+      "source_image": "2026-09-01 17_50_56-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other flight-suit Outfit entries",
+      "bookkeeping_note": null,
+      "notes": "Overlaps c2-e7, a mustard-yellow flight suit staged as a neutral mil Outfit from a different source image in this same run."
+    },
+    {
+      "id": "c3-e27",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} standing with {possessive} bare mechanical hands folded low in front, fully articulated at every joint - behind {object} a hulking twin-turreted combat vehicle looms close, its optics glowing steady in the dark, a pair of moons rising in the night sky beyond. || weather",
+      "source_image": "2026-09-01 17_51_11-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other mech-companion Backdrop entries",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
+      "notes": "Mechanical hands already covered by existing Feature bullets, so not repeated as a separate entry here."
+    },
+    {
+      "id": "c3-e28",
+      "table": "Gear",
+      "bullet": "a pair of articulated mechanical wing extensions mounted at the shoulders, each feather-like segment tipped with a small lit sensor lens",
+      "source_image": "2026-09-01 17_51_26-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the twin-thruster pack Gear entry",
+      "bookkeeping_note": null,
+      "notes": "Source was a fanart 'cyber-angel' with a halo and revealing bikini-style top; only the mechanical wing hardware was kept as translatable content, everything else skipped as off-style/too exposed for this table's house style. No flags: worn rather than held, and not a weapon."
+    },
+    {
+      "id": "c3-e29",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} reclined in the driver's seat of a battered open-top vehicle, both hands laced behind {possessive} head, elbows out, gazing off past the frame - behind {object} a ruined cityscape rises in ivy-choked towers under a hazy morning sun, birds scattering across the empty street ahead. || weather",
+      "source_image": "2026-09-01 17_51_33-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other ruined-city Backdrop entries",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
+      "notes": null
+    },
+    {
+      "id": "c3-e30",
+      "table": "Stance (she) +",
+      "bullet": "sitting back with both hands laced behind {possessive} head, elbows out, utterly at ease || hands",
+      "source_image": "2026-09-01 17_51_33-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other relaxed Stance (she) + entries",
+      "bookkeeping_note": null,
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T00:07:22.659Z"
+    },
+    {
+      "id": "c3-e31",
+      "table": "Outfit (she) +",
+      "bullet": "a glossy black bodysuit with a short pleated skirt panel at the hip, one arm sheathed in an articulated mechanical gauntlet running to the shoulder, over knee-high boots",
+      "source_image": "2026-09-01 17_51_58-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other bodyglove / mechanical-prosthetic Outfit (she) + entries",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c3-e32",
+      "table": "Backdrop",
+      "bullet": "A character portrait seen from behind || {Subject} {is_are} walking away down a narrow alley, one arm a fully articulated mechanical prosthetic at {possessive} side - behind {object} a rain-slicked passage recedes into drifting fog, hazy signage bleeding color low across the wet stone. || weather",
+      "source_image": "2026-09-01 17_51_58-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other neon-alley Backdrop entries",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
+      "notes": null
+    },
+    {
+      "id": "c3-e33",
+      "table": "Feature",
+      "bullet": "a synthetic shoulder casing peeled back at a seam, exposing internal wiring and structural framework beneath",
+      "source_image": "2026-09-01 17_52_11-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other cyborg-seam Feature entries",
+      "bookkeeping_note": null,
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T00:07:22.640Z"
+    },
+    {
+      "id": "c3-e34",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} sitting cross-legged atop the hull of a parked aircraft at night, {possessive} fully articulated prosthetic hands resting loose on {possessive} knees, gazing up past the frame - behind {object} banks of cloud drift past a star-scattered sky, the aircraft's markings faintly lit along its flank. || weather",
+      "source_image": "2026-09-01 17_52_42-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other rooftop/vehicle-perch Backdrop entries",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
+      "notes": null
+    },
+    {
+      "id": "c3-e35",
+      "table": "Hair (she) +",
+      "bullet": "a high ponytail in fiery orange-red fading to dark roots, choppy bangs falling across one eye",
+      "source_image": "2026-09-01 17_52_51-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other ponytail Hair (she) + entries",
+      "bookkeeping_note": null,
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T00:07:22.681Z"
+    },
+    {
+      "id": "c3-e36",
+      "table": "Outfit (she) +",
+      "bullet": "a cropped olive tank top with a patch pocket at the chest, twin red armbands worn above the elbow",
+      "source_image": "2026-09-01 17_52_51-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other cropped-tank Outfit (she) + entries",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c3-e37",
+      "table": "Gear",
+      "bullet": "a compact sidearm gripped low and loose in one hand || hands gun mil weapon simple",
+      "source_image": "2026-09-01 17_52_51-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other single-sidearm-in-hand Gear entries",
+      "bookkeeping_note": null,
+      "notes": "Flags corrected from the fork's draft, which also carried 'sidearm'; the Gear table's comment is explicit that a pistol gripped or raised in the hands does not qualify for that flag, which is reserved for a holstered or openly worn one."
+    },
+    {
+      "id": "c3-e38",
+      "table": "Backdrop",
+      "bullet": "A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-slicked stairway alley lined with paper lanterns and a tiny bar counter, a hazy city skyline glimpsed below through the wet stone steps. || weather",
+      "source_image": "2026-09-01 17_53_01-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the existing bar-interior and fire-escape-alley Backdrop entries",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
+      "notes": "Source was a photoreal Japanese back-alley bar with no character in frame - staged as background-only, same as the other blurred-backdrop bullets."
+    },
+    {
+      "id": "c4-e1",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} sitting slouched against a graffiti-tagged wall in a rain-slicked neon alley, one boot planted and the other leg drawn up, {possessive} head tipped back and eyes half-lidded, loose change and a dropped data-chit scattered on the wet pavement beside {object} - behind {object} tangled cable runs and stacked neon signage in unfamiliar characters glow through the drifting mist. || weather",
+      "source_image": "776df30564cb841f06117770af29d639.jpg",
+      "placement_hint": "next to the other neon-alley / fire-escape / transit-terminal Backdrop bullets",
+      "bookkeeping_note": "adds one to the ~23 weather-flagged Backdrop count noted in the ## Weather section comment",
+      "notes": "glow left uncolored (cable runs, signage) so it doesn't fight the rolled Accent; the jacket's cable-strap detailing could alternately become an Outfit bullet if a reviewer prefers that table instead. Note this is the same artwork as c1-e1's source screenshot (2026-09-01 12_40_23-Greenshot.png) - a reviewer should import at most one of the two."
+    },
+    {
+      "id": "c4-e2",
+      "table": "Outfit",
+      "bullet": "an olive tactical jumpsuit under a cropped chest harness loaded with hip pouches, fingerless gloves and low tactical boots || mil",
+      "source_image": "AB_Female Military Science Fiction Anime (195).jpeg",
+      "placement_hint": "next to the other plate-carrier / chest-rig Outfit bullets",
+      "bookkeeping_note": null,
+      "notes": "distinct from the existing plate-carrier/chest-rig bullets in being one integrated jumpsuit rather than separate top and trousers"
+    },
+    {
+      "id": "c4-e3",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a red-plated visor rig clamped down over the eyes, twin lens apertures lit faintly, a cluster of thin cables trailing back into {possessive} hair.",
+      "source_image": "2026-09-01 17_54_32-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "next to the other visor/sensor-rig Headgear bullets",
+      "bookkeeping_note": null,
+      "notes": "source is a green-lit cyberpunk 'hacker den' scene with foliage - only the visor was pulled out; the scene itself is close enough to the existing hacker-den Backdrop bullet that it wasn't duplicated"
+    },
+    {
+      "id": "c4-e4",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a sleek visored headset clamped over the eyes, a hinged jaw guard sealed below it and a cluster of thin cables trailing back into {possessive} hair.",
+      "source_image": "2026-09-01 17_54_44-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "next to the other visor/sensor-rig Headgear bullets",
+      "bookkeeping_note": null,
+      "notes": "glow and color stripped from the source's red/cyan palette so it doesn't fight the rolled Accent"
+    },
+    {
+      "id": "c4-e5",
+      "table": "Backdrop",
+      "bullet": "A close-up character portrait || {Subject} {is_are} framed tight in profile, raising a segmented mechanical hand close to {possessive} own face, fingers half-curled - behind {object}, out of focus, a dense cyberpunk high-rise district glows through drifting haze.",
+      "source_image": "2026-09-01 17_54_55-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "next to the other close-up / cyberpunk-skyline Backdrop bullets",
+      "bookkeeping_note": null,
+      "notes": "the mechanical hand reads as a Feature (prosthetic) rather than a Backdrop element, but a reviewer could also lift it into a Feature bullet by hand"
+    },
+    {
+      "id": "c4-e6",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} standing in profile beside the towering head of a war-machine looming just behind {possessive} shoulder, gazing out across a hazy industrial skyline as a beam weapon fires from a distant flying craft overhead, faded unit markings stencilled across the machine's scarred plating. || weather",
+      "source_image": "2026-09-01 17_55_07-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "next to the two existing mech-companion Backdrop bullets",
+      "bookkeeping_note": "adds a mech-companion-style Backdrop scene beyond the 'two mech-companion shots' named in generate-npc.md's Backdrop enumeration; also adds one to the ~23 weather-flagged Backdrop count. See also c1-e3/c1-e11/c1-e27 and c2-e25/c2-e27 - this run stages several such scenes and the enumeration should be recounted once, after the reviewer picks which to import.",
+      "notes": null
+    },
+    {
+      "id": "c4-e7",
+      "table": "Stance",
+      "bullet": "sitting cross-legged in a formal meditative pose, palms pressed together at the chest, segmented mechanical arms folded still || hands",
+      "source_image": "2026-09-01 17_55_49-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near 'standing in a slow half-bow, one hand pressed flat against the chest'",
+      "bookkeeping_note": null,
+      "notes": "hands flag added since the praying-hands gesture occupies both hands",
+      "imported": true,
+      "imported_at": "2026-09-02T00:07:22.668Z"
+    },
+    {
+      "id": "c4-e8",
+      "table": "Backdrop",
+      "bullet": "A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-slicked elevated transit line threading between towering neon-lit high-rises, billboards glowing in unfamiliar characters. || weather",
+      "source_image": "2026-09-01 17_56_27-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "next to the other neon-skyline background-only Backdrop bullets",
+      "bookkeeping_note": "adds one to the ~23 weather-flagged Backdrop count",
+      "notes": null
+    },
+    {
+      "id": "c4-e9",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} seated inside a transit car at night, gazing out through the window at a dense neon high-rise skyline sliding past, faint circuitry tracing along {possessive} jaw and throat - the glass behind {object} streaks with drifting rain and passing light. || weather",
+      "source_image": "2026-09-01 17_56_32-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "next to the other neon-skyline / transit Backdrop bullets",
+      "bookkeeping_note": "adds one to the ~23 weather-flagged Backdrop count",
+      "notes": "circuitry/cybernetic jaw detail folded into the scene sentence rather than a separate Feature bullet"
+    },
+    {
+      "id": "c4-e10",
+      "table": "Outfit",
+      "bullet": "a weathered leather jacket with a segmented armor plate at one shoulder, worn open over a dark top || civ",
+      "source_image": "2026-09-01 17_56_32-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "next to the other leather-jacket Outfit bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c4-e11",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a segmented white cybernetic headpiece clamped over the crown and one temple, faint cable jacks seated at the jaw.",
+      "source_image": "2026-09-01 17_57_16-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "next to the other integrated visor/headset Headgear bullets",
+      "bookkeeping_note": null,
+      "notes": "the source's wall of holographic city-map displays would make a decent Backdrop too, but it reads close to the existing 'operations room wall of tactical displays' bullet, so only the headpiece was pulled out"
+    },
+    {
+      "id": "c4-e12",
+      "table": "Outfit",
+      "bullet": "a padded jacket with riveted metal pauldrons at both shoulders, a scarf wound loose at the throat || civ",
+      "source_image": "2026-09-01 17_57_40-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "next to the other padded-jacket / harness-strap Outfit bullets",
+      "bookkeeping_note": null,
+      "notes": "color stripped (source is orange) since Outfit bullets generally avoid saturated colors that could fight the rolled Accent"
+    },
+    {
+      "id": "c4-e13",
+      "table": "Stance",
+      "bullet": "standing with both arms raised overhead, a long board gripped in both hands and braced across the back of the shoulders like a yoke || hands",
+      "source_image": "2026-09-01 17_57_40-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "near the other both-hands-occupied standing Stance bullets",
+      "bookkeeping_note": null,
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T00:07:22.664Z"
+    },
+    {
+      "id": "c4-e14",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} seated at a bank of monitors glowing violet and cyan, both hands on the keyboard and dense telemetry scrolling across the screens ahead, thick cable runs hanging tangled from the ceiling around {object}. || nogear",
+      "source_image": "2026-09-01 17_58_11-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "next to the existing hacker-den workbench Backdrop bullet",
+      "bookkeeping_note": null,
+      "notes": "close in flavor to the existing 'leaning intently over a cluttered workbench... terminal code' bullet - included as a variant (a full monitor wall rather than one workbench screen) for the reviewer to weigh against it rather than as an outright duplicate; nogear matches the precedent on that existing bullet. Overlaps c1-e28 and c3-e22, two other hacker-den candidates in this run."
+    },
+    {
+      "id": "c4-e15",
+      "table": "Outfit",
+      "bullet": "a fitted black tactical bodysuit with buckled strap detailing at the shoulder and ribbed panel seams || civ",
+      "source_image": "2026-09-01 17_58_11-Home and 1 more tab - File Explorer.png",
+      "placement_hint": "next to the other fitted-bodysuit Outfit bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c4-e16",
+      "table": "Outfit",
+      "bullet": "a navy flight jumpsuit under a cropped tactical vest loaded with chest pouches, a sidearm holstered at the hip || mil",
+      "source_image": "AB_Female Military Science Fiction Anime (197).jpeg",
+      "placement_hint": "next to the other flight-suit / chest-rig Outfit bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c4-e17",
+      "table": "Outfit",
+      "bullet": "a segmented composite tactical armor suit with actuated knee joints and a compact backpack module, worn over an olive combat shirt || mil",
+      "source_image": "AB_Female Military Science Fiction Anime (198).jpeg",
+      "placement_hint": "next to the other hardshell/composite armor Outfit bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c4-e18",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a sealed tactical helmet with a smoked visor and an integrated breather mask, a coiled comms cable trailing from the jaw.",
+      "source_image": "AB_Female Military Science Fiction Anime (198).jpeg",
+      "placement_hint": "next to the other sealed-helmet-with-breather-mask Headgear bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c4-e19",
+      "table": "Gear",
+      "bullet": "a bullpup service rifle with an under-barrel attachment held at a low ready in both hands || hands gun mil weapon",
+      "source_image": "AB_Female Military Science Fiction Anime (198).jpeg",
+      "placement_hint": "next to the other bullpup-carbine-held Gear bullets",
+      "bookkeeping_note": null,
+      "notes": "close to the existing 'a bullpup service carbine held at a low ready in both hands, rail-mounted optic on top' bullet - a reviewer may consider it a duplicate"
+    },
+    {
+      "id": "c4-e20",
+      "table": "Outfit",
+      "bullet": "a sleek black powered tactical exo-suit with segmented plating at the knees and shoulders, a long dark half-cape trailing from one shoulder || mil",
+      "source_image": "AB_Female Military Science Fiction Anime (199).jpeg",
+      "placement_hint": "next to the other powered exo-frame Outfit bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c4-e21",
+      "table": "Headgear",
+      "bullet": "{Subject} {wear} a smooth blue-visored full-face helmet with a hood drawn up over it, a scarf wound loose at the throat.",
+      "source_image": "AB_Female Military Science Fiction Anime (199).jpeg",
+      "placement_hint": "next to the other full-face-visor Headgear bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c4-e22",
+      "table": "Gear",
+      "bullet": "a suppressed marksman rifle with an extended barrel held low in one hand || hands gun mil weapon",
+      "source_image": "AB_Female Military Science Fiction Anime (199).jpeg",
+      "placement_hint": "next to the other suppressed-rifle Gear bullets",
+      "bookkeeping_note": null,
+      "notes": null
+    },
+    {
+      "id": "c4-e23",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} standing on a raised gantry platform beside the crouched bulk of a towering war-machine filling a dim maintenance bay, its single optic sensor lit and a heavy cannon barrel angled down past {object}, faded unit markings stencilled across its scarred armor plating, stacked crates and hazard placards cluttering the shadowed bay floor below.",
+      "source_image": "BT08.png",
+      "placement_hint": "next to the other mech-hangar / mech-companion Backdrop bullets",
+      "bookkeeping_note": "another mech-hangar-style Backdrop scene; see the combined recount note on c4-e6",
+      "notes": null
+    },
+    {
+      "id": "c4-e24",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} sitting atop the broad missile-pod shoulder of an idle war-machine, a cigarette smoking forgotten in one hand, looking out over a muddy grey wasteland toward a distant radio mast, the machine's hull marked with a faded heraldic shield insignia and streaked with rain. || nogear weather",
+      "source_image": "BT09.png",
+      "placement_hint": "next to the other mech-companion Backdrop bullets",
+      "bookkeeping_note": "another mech-companion-style Backdrop scene; adds one to the ~23 weather-flagged Backdrop count. See the combined recount note on c4-e6.",
+      "notes": "nogear since the cigarette already occupies the hand, matching the precedent on the existing speeder-bike/cigarette Backdrop bullet"
+    },
+    {
+      "id": "c4-e25",
+      "table": "Backdrop",
+      "bullet": "A character portrait || {Subject} {is_are} walking down a wide ceremonial ramp through falling snow, a combat helmet held loosely in one hand at {possessive} side, faction banners snapping either side and hooded onlookers lining the way, the hulking silhouette of a towering war-machine looming backlit behind {object} in the drifting snow and haze. || weather",
+      "source_image": "BT10.png",
+      "placement_hint": "next to the other snow / ceremonial Backdrop bullets",
+      "bookkeeping_note": "adds one to the ~23 weather-flagged Backdrop count",
+      "notes": "a reviewer may want nogear here too, since the helmet already occupies one hand - left unflagged because the helmet is carried rather than wielded"
+    }
+  ],
+  "skipped": [
+    {
+      "source_image": "2026-09-01 12_40_50-Greenshot.png",
+      "reason": "Explicit/overly sexualized twin near-nude cyborg figures - no translatable content appropriate for this table's restrained style."
+    },
+    {
+      "source_image": "2026-09-01 13_19_49-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "reason": "Green-eyed pilot raising a mechanical hand to the temple against a cockpit canopy; near-duplicate of the composition staged as c4-e5."
+    },
+    {
+      "source_image": "2026-09-01 13_29_36-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "reason": "Explicit/overly sexualized rear-view bar scene - no translatable content appropriate for this table's restrained style."
+    },
+    {
+      "source_image": "2026-09-01 13_35_15-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "reason": "Clasped-hands prayer pose with a glowing halo ring; near-duplicate of the scene staged as c3-e1."
+    },
+    {
+      "source_image": "2026-09-01 13_42_40-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "reason": "near-duplicate of the existing Backdrop bullet (~line 1454, hacker workbench/terminal scene with monitor code)"
+    },
+    {
+      "source_image": "2026-09-01 13_46_35-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "reason": "near-duplicate reinforcing c2-e3's mech-companion + rust mech staging, no new content"
+    },
+    {
+      "source_image": "2026-09-01 13_49_04-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "reason": "off-genre (angelic wings and halo), and remaining armored-bodyglove content already covered by existing Outfit (she) entries"
+    },
+    {
+      "source_image": "2026-09-01 13_50_11-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "reason": "near-duplicate of c2-e2/c2-e15's cockpit-recline staging"
+    },
+    {
+      "source_image": "2026-09-01 13_50_30-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "reason": "near-duplicate of c2-e14's tumbling-through-beams action Backdrop"
+    },
+    {
+      "source_image": "2026-09-01 13_51_40-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "reason": "mech only, no human subject in frame; mech art belongs in mech-catalogue-art-prompts.md per this file's own scope note, not the NPC tables"
+    },
+    {
+      "source_image": "2026-09-01 13_51_49-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "reason": "mech only, no human subject in frame; same reason as above"
+    },
+    {
+      "source_image": "2026-09-01 13_52_06-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "reason": "near-duplicate of the same android-and-mech-at-viewport scene captured as c2-e26 (different angle/moment)"
+    },
+    {
+      "source_image": "2026-09-01 13_52_38-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "reason": "near-duplicate of the existing Headgear bullet (~line 1078, bulky visored rig clamped over the eyes with cable jacks)"
+    },
+    {
+      "source_image": "2026-09-01 13_53_18-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "reason": "minor variant of the existing bulky-visor Headgear entries, no distinct new content"
+    },
+    {
+      "source_image": "2026-09-01 13_53_26-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
+      "reason": "duplicate of the same character (retro headphones, coral hair, orange jacket, scarf) already captured in c2-e4/c2-e5/c2-e6/c2-e7"
+    },
+    {
+      "source_image": "2026-09-01 17_49_48-Home and 1 more tab - File Explorer.png",
+      "reason": "off-genre fantasy/pirate crew scene, nothing translatable to a military sci-fi campaign"
+    },
+    {
+      "source_image": "2026-09-01 17_50_36-Home and 1 more tab - File Explorer.png",
+      "reason": "close-up crying face with horn-shaped hair clips and a mask - reads as specific-IP fanart (mecha-anime protagonist); the only generic content (a crying expression) is already covered by existing Demeanor entries"
+    },
+    {
+      "source_image": "2026-09-01 17_51_47-Home and 1 more tab - File Explorer.png",
+      "reason": "subject's head is fused directly onto a mech body with no separation (personified/anthropomorphized mecha), not a person wearing gear - this file's own scope note says mech art belongs in mech-catalogue-art-prompts.md, not the NPC tables"
+    },
+    {
+      "source_image": "2026-09-01 17_53_11-Home and 1 more tab - File Explorer.png",
+      "reason": "cozy 'lofi' converted-tram cafe perched above a rainy skyline; no subject, and the neon-skyline content is already well covered by existing Backdrop entries"
+    },
+    {
+      "source_image": "2026-09-01 17_53_24-Home and 1 more tab - File Explorer.png",
+      "reason": "neon-decorated contemporary apartment living room interior, no subject, not sci-fi"
+    },
+    {
+      "source_image": "2026-09-01 17_53_39-Home and 1 more tab - File Explorer.png",
+      "reason": "rainy lighthouse cottage scene, no subject, contemporary/mundane and not sci-fi"
+    },
+    {
+      "source_image": "2026-09-01 17_53_54-Home and 1 more tab - File Explorer.png",
+      "reason": "rainforest cabin deck scene, no subject, contemporary/mundane and not sci-fi"
+    },
+    {
+      "source_image": "2026-09-01 17_54_03-Home and 1 more tab - File Explorer.png",
+      "reason": "off-genre nature b-roll (forest river), no sci-fi/military content to translate"
+    },
+    {
+      "source_image": "2026-09-01 17_54_15-Home and 1 more tab - File Explorer.png",
+      "reason": "off-genre cozy rain-bedroom scene, no tactical/sci-fi content to translate"
+    },
+    {
+      "source_image": "2026-09-01 17_55_22-Home and 1 more tab - File Explorer.png",
+      "reason": "glitchy horror-styled creepy expression, off-tone for the campaign's house style"
+    },
+    {
+      "source_image": "2026-09-01 17_56_09-Home and 1 more tab - File Explorer.png",
+      "reason": "heavily branded Cyberpunk Edgerunners key art, mostly obscured by title logo text"
+    },
+    {
+      "source_image": "2026-09-01 17_56_50-Home and 1 more tab - File Explorer.png",
+      "reason": "near-duplicate of the c4-e8 skyline Backdrop and existing skyline entries"
+    },
+    {
+      "source_image": "2026-09-01 17_58_02-Home and 1 more tab - File Explorer.png",
+      "reason": "fanservice/partial-nudity framing, inappropriate for the table"
+    },
+    {
+      "source_image": "AB_Female Military Science Fiction Anime (200).jpeg",
+      "reason": "near-duplicate of the existing Outfit bullet 'an oversized rollneck sweater ... enormously baggy cargo trousers gathered at the ankle || civ'"
+    },
+    {
+      "source_image": "BT03.png",
+      "reason": "battlefield wide-shot with no human-scale subject; content already covered by existing Backdrop battlefield/weather entries"
+    },
+    {
+      "source_image": "BT04.png",
+      "reason": "near-duplicate of BT09 (pilot perched atop an idle mech overlooking a landscape); BT09 chosen as the stronger, more distinct variant"
+    },
+    {
+      "source_image": "BT05.png",
+      "reason": "low-detail ensemble war-room scene, no single clear focal subject or outfit to translate cleanly"
+    },
+    {
+      "source_image": "BT06.png",
+      "reason": "pure space/ship scene, no human-scale figure to stage as {Subject}"
+    },
+    {
+      "source_image": "BT07.png",
+      "reason": "pure space/ship dogfight scene, no human-scale figure to stage as {Subject}"
+    },
+    {
+      "source_image": "BT11.png",
+      "reason": "battlefield convoy vista; subject too small/indistinct to stage, content close to existing entries"
+    },
+    {
+      "source_image": "BT12.png",
+      "reason": "mech battle wide-shot, no human-scale subject; near-duplicate of BT03 and existing entries"
+    },
+    {
+      "source_image": "a466dd0f-8e25-43a5-8541-6fc918e69312.avif",
+      "reason": "corrupt/unreadable .avif file, cannot be visually inspected"
+    },
+    {
+      "source_image": "anime-pirate-adventure-stockcake.jpg",
+      "reason": "off-genre fantasy/pirate content, nothing translatable to a sci-fi mech campaign"
+    }
+  ]
+}
