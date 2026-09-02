@@ -1,6 +1,6 @@
 # Random NPC Generator Tables
 
-Roll tables for `Scripts/generate-npc.py`, which rolls one human NPC from these
+Roll tables for `generate-npc.py`, which rolls one human NPC from these
 lists and generates a matched pair of images in the campaign's house style: a
 half-body **portrait** for the Foundry actor sheet, and a full-body **token** on
 flat white that gets run through RMBG into a transparent PNG.

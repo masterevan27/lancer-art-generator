@@ -43,7 +43,7 @@
       "bullet": "A dramatic low-angle character portrait || {Subject} {is_are} standing amid drifting embers on a scorched battlefield in heavy rain, {possessive} back to the viewer, a long rifle gripped and lowered at {possessive} side - ahead of {object} churned mud and shattered rock fade into grey mist streaked with falling ash. || nogear weather",
       "source_image": "2026-08-31 23_34_45-...png",
       "placement_hint": "near the ridge-vista and windswept-plain Backdrop entries",
-      "bookkeeping_note": "adds one to the weather-flagged Backdrop count in the ## Weather section comment (currently ~23) and to Scripts/generate-npc.md's roll-table enumeration",
+      "bookkeeping_note": "adds one to the weather-flagged Backdrop count in the ## Weather section comment (currently ~23) and to docs/generate-npc.md's roll-table enumeration",
       "notes": "nogear because the rifle is already named in the sentence; source image's exposed-leg pose and boot markings were dropped, keeping just the weapon and the scorched-rain setting.",
       "imported": true,
       "imported_at": "2026-09-01T05:07:51.562Z"

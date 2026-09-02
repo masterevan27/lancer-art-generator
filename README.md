@@ -102,7 +102,8 @@ repository's root** — Claude Code discovers skills under the current
 project's `.claude/skills/`, not from an arbitrary working directory. If you
 want it available while working elsewhere (e.g. from the Hub), symlink it
 into your user-level skills directory instead of copying it, so edits here
-stay the single source of truth:
+stay the single source of truth (adjust the source path if you cloned this
+repository somewhere other than `/g/GIT-REPOS/lancer-art-generator`):
 
 ```
 ln -s "/g/GIT-REPOS/lancer-art-generator/.claude/skills/npc-trait-import" ~/.claude/skills/npc-trait-import
