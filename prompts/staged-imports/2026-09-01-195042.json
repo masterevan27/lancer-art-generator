@@ -11,7 +11,9 @@
       "source_image": "2026-09-01 12_40_23-Greenshot.png",
       "placement_hint": "near other alley/neon Backdrop bullets",
       "bookkeeping_note": "Adds a weather-flagged Backdrop bullet, bumping the Weather section's stated flagged-bullet count.",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.132Z"
     },
     {
       "id": "c1-e2",
@@ -20,7 +22,9 @@
       "source_image": "2026-09-01 12_41_52-Greenshot.png",
       "placement_hint": "near other transit/vehicle-interior Backdrop bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.136Z"
     },
     {
       "id": "c1-e3",
@@ -29,7 +33,9 @@
       "source_image": "2026-09-01 12_42_12-Greenshot.png",
       "placement_hint": "near the other mech-companion Backdrop bullets, as a closer/more confrontational variant",
       "bookkeeping_note": "A mech-companion-style Backdrop bullet; see the combined note on c1-e11/c1-e27 about how many this batch adds if all are imported.",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.141Z"
     },
     {
       "id": "c1-e4",
@@ -38,7 +44,9 @@
       "source_image": "2026-09-01 12_46_17-G__Documents - File Explorer.png",
       "placement_hint": "near other field-helmet Headgear bullets (night-vision helmet, domed flight helmet)",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.478Z"
     },
     {
       "id": "c1-e5",
@@ -47,7 +55,9 @@
       "source_image": "2026-09-01 12_50_13-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
       "placement_hint": "near other lab/diagnostic-bay Backdrop bullets",
       "bookkeeping_note": null,
-      "notes": "Kept generic (no bust/exposure description carried over); glow color left unnamed per house rules."
+      "notes": "Kept generic (no bust/exposure description carried over); glow color left unnamed per house rules.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.146Z"
     },
     {
       "id": "c1-e6",
@@ -56,7 +66,9 @@
       "source_image": "2026-09-01 12_50_43-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
       "placement_hint": "near other besieged-skyline / warship Backdrop bullets",
       "bookkeeping_note": "Adds a weather-flagged Backdrop bullet.",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.150Z"
     },
     {
       "id": "c1-e7",
@@ -65,7 +77,9 @@
       "source_image": "2026-09-01 12_50_43-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
       "placement_hint": "near other heavy civilian work-jacket Outfit bullets",
       "bookkeeping_note": null,
-      "notes": "Same source image as c1-e6."
+      "notes": "Same source image as c1-e6.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.565Z"
     },
     {
       "id": "c1-e8",
@@ -74,7 +88,9 @@
       "source_image": "2026-09-01 12_52_27-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
       "placement_hint": "near other parked-vehicle Backdrop bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.154Z"
     },
     {
       "id": "c1-e9",
@@ -83,7 +99,9 @@
       "source_image": "2026-09-01 13_03_34-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
       "placement_hint": "near other backlit-ruin / rear-view vista Backdrop bullets",
       "bookkeeping_note": "Adds a weather-flagged Backdrop bullet.",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.158Z"
     },
     {
       "id": "c1-e10",
@@ -92,7 +110,9 @@
       "source_image": "2026-09-01 13_06_58-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
       "placement_hint": "near the existing zero-gravity EVA Backdrop entries, as a wounded/emergency variant",
       "bookkeeping_note": "generate-npc.md names eight zero-gravity Backdrop entries by type; this would be a ninth if imported.",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.162Z"
     },
     {
       "id": "c1-e11",
@@ -101,7 +121,9 @@
       "source_image": "2026-09-01 13_07_53-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
       "placement_hint": "near the other mech-companion Backdrop bullets and c1-e3/c1-e27",
       "bookkeeping_note": "Between c1-e3, c1-e11 and c1-e27, this batch alone offers three more mech-companion-style Backdrop candidates; generate-npc.md's Backdrop breakdown currently names only 'two mech-companion shots' and would need updating if several of these are imported together.",
-      "notes": "Pointed ears on the reference figure were dropped as an off-model fantasy trait; translated as a standard human NPC."
+      "notes": "Pointed ears on the reference figure were dropped as an off-model fantasy trait; translated as a standard human NPC.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.166Z"
     },
     {
       "id": "c1-e12",
@@ -110,7 +132,9 @@
       "source_image": "2026-09-01 13_08_27-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration - File Explorer.png",
       "placement_hint": "near other asteroid-field / debris Backdrop bullets",
       "bookkeeping_note": null,
-      "notes": "Reworded slightly from the fork's draft, which used \"{object}'s shoulder\" - a possessive built on {object} rather than the {possessive} placeholder."
+      "notes": "Reworded slightly from the fork's draft, which used \"{object}'s shoulder\" - a possessive built on {object} rather than the {possessive} placeholder.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.170Z"
     },
     {
       "id": "c1-e13",
@@ -119,7 +143,9 @@
       "source_image": "2026-09-01 13_25_29-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other bladed-weapon Gear bullets",
       "bookkeeping_note": null,
-      "notes": "Exposed midriff/outfit on the source not carried over; only the held weapon translated."
+      "notes": "Exposed midriff/outfit on the source not carried over; only the held weapon translated.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.439Z"
     },
     {
       "id": "c1-e14",
@@ -139,7 +165,9 @@
       "source_image": "2026-09-01 13_26_54-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other heavy/support-weapon Gear bullets",
       "bookkeeping_note": null,
-      "notes": "Outfit not restated separately given how exposed/form-fitting the reference reads."
+      "notes": "Outfit not restated separately given how exposed/form-fitting the reference reads.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.445Z"
     },
     {
       "id": "c1-e16",
@@ -148,7 +176,9 @@
       "source_image": "2026-09-01 13_28_42-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other visor-rig Headgear bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.483Z"
     },
     {
       "id": "c1-e17",
@@ -157,7 +187,9 @@
       "source_image": "2026-09-01 13_29_11-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other seated-in-a-vehicle-at-night Backdrop bullets",
       "bookkeeping_note": "Adds a weather-flagged Backdrop bullet.",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.174Z"
     },
     {
       "id": "c1-e18",
@@ -188,7 +220,9 @@
       "source_image": "2026-09-01 13_31_24-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other reclaimed-ruin / overgrown-alley Backdrop bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.178Z"
     },
     {
       "id": "c1-e21",
@@ -197,7 +231,9 @@
       "source_image": "2026-09-01 13_31_24-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other bulky civilian jacket-plus-pack Outfit bullets",
       "bookkeeping_note": null,
-      "notes": "Same source image as c1-e20."
+      "notes": "Same source image as c1-e20.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.570Z"
     },
     {
       "id": "c1-e22",
@@ -206,7 +242,9 @@
       "source_image": "2026-09-01 13_31_36-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other scuffed hardshell/plate-armor Outfit bullets, alongside c1-e34",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.574Z"
     },
     {
       "id": "c1-e23",
@@ -215,7 +253,9 @@
       "source_image": "2026-09-01 13_31_36-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other ruin/wreckage-interior Backdrop bullets",
       "bookkeeping_note": null,
-      "notes": "Same source image as c1-e22."
+      "notes": "Same source image as c1-e22.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.182Z"
     },
     {
       "id": "c1-e24",
@@ -224,7 +264,9 @@
       "source_image": "2026-09-01 13_32_03-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other integrated ear-piece Headgear bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.488Z"
     },
     {
       "id": "c1-e25",
@@ -233,7 +275,9 @@
       "source_image": "2026-09-01 13_32_03-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other cockpit-interior Backdrop bullets",
       "bookkeeping_note": null,
-      "notes": "Same source image as c1-e24."
+      "notes": "Same source image as c1-e24.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.186Z"
     },
     {
       "id": "c1-e26",
@@ -242,7 +286,9 @@
       "source_image": "2026-09-01 13_34_51-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other lounge/downtime Backdrop bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.190Z"
     },
     {
       "id": "c1-e27",
@@ -251,7 +297,9 @@
       "source_image": "2026-09-01 13_35_40-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other mech-companion Backdrop bullets - see note on c1-e3/c1-e11",
       "bookkeeping_note": "Adds a weather-flagged Backdrop bullet; see the combined mech-companion count note on c1-e11.",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.194Z"
     },
     {
       "id": "c1-e28",
@@ -260,7 +308,9 @@
       "source_image": "2026-09-01 13_36_17-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the existing hacker-den Backdrop bullet, as a background-only variant",
       "bookkeeping_note": "generate-npc.md names a single 'hacker den' Backdrop entry; this would be a second, background-only take on the same concept.",
-      "notes": "Overlaps c3-e22 and c4-e14, two other hacker-den candidates in this same run - a reviewer should probably pick one rather than importing all three."
+      "notes": "Overlaps c3-e22 and c4-e14, two other hacker-den candidates in this same run - a reviewer should probably pick one rather than importing all three.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.198Z"
     },
     {
       "id": "c1-e29",
@@ -269,7 +319,9 @@
       "source_image": "2026-09-01 13_36_49-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other visor/eyewear-rig Headgear bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.493Z"
     },
     {
       "id": "c1-e30",
@@ -278,7 +330,9 @@
       "source_image": "2026-09-01 13_37_03-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other rooftop-bar/balcony Backdrop bullets",
       "bookkeeping_note": "Adds a weather-flagged Backdrop bullet.",
-      "notes": "Outfit not restated as a separate entry given how form-fitting/exposed the reference reads; kept the bullet to scene and pose only."
+      "notes": "Outfit not restated as a separate entry given how form-fitting/exposed the reference reads; kept the bullet to scene and pose only.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.202Z"
     },
     {
       "id": "c1-e31",
@@ -287,7 +341,9 @@
       "source_image": "2026-09-01 13_38_30-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other heavy/exo-mounted weapon Gear bullets",
       "bookkeeping_note": null,
-      "notes": "Flags corrected from the fork's draft ('hands gun mil weapon'): the pod is worn on the shoulders rather than held, so hands/gun don't apply, while the explicitly holstered pistol earns sidearm per the Gear table's own comment."
+      "notes": "Flags corrected from the fork's draft ('hands gun mil weapon'): the pod is worn on the shoulders rather than held, so hands/gun don't apply, while the explicitly holstered pistol earns sidearm per the Gear table's own comment.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.450Z"
     },
     {
       "id": "c1-e32",
@@ -296,7 +352,9 @@
       "source_image": "2026-09-01 13_39_52-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other cockpit-interior Backdrop bullets, as a rain-soaked variant",
       "bookkeeping_note": "Adds a weather-flagged Backdrop bullet.",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.206Z"
     },
     {
       "id": "c1-e33",
@@ -316,7 +374,9 @@
       "source_image": "2026-09-01 13_41_40-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other scuffed hardshell/plate-armor Outfit bullets, alongside c1-e22",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.578Z"
     },
     {
       "id": "c1-e35",
@@ -325,7 +385,9 @@
       "source_image": "2026-09-01 13_41_40-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other desert/wreckage-field Backdrop bullets",
       "bookkeeping_note": "Adds a weather-flagged Backdrop bullet.",
-      "notes": "Same source image as c1-e34."
+      "notes": "Same source image as c1-e34.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.211Z"
     },
     {
       "id": "c1-e36",
@@ -334,7 +396,9 @@
       "source_image": "2026-09-01 13_42_07-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other headset/comm-piece Headgear bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.498Z"
     },
     {
       "id": "c1-e37",
@@ -343,7 +407,9 @@
       "source_image": "2026-09-01 13_42_07-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near other vehicle-interior Backdrop bullets",
       "bookkeeping_note": null,
-      "notes": "Same source image as c1-e36."
+      "notes": "Same source image as c1-e36.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.216Z"
     },
     {
       "id": "c1-e38",
@@ -352,7 +418,9 @@
       "source_image": "2026-09-01 13_42_31-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other rooftop-ledge / vertiginous Backdrop bullets",
       "bookkeeping_note": "Adds a weather-flagged Backdrop bullet.",
-      "notes": "Rendering style (photorealistic render) discarded per house rules; only staging and pose kept."
+      "notes": "Rendering style (photorealistic render) discarded per house rules; only staging and pose kept.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.221Z"
     },
     {
       "id": "c2-e1",
@@ -361,7 +429,9 @@
       "source_image": "2026-09-01 13_43_03-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other cockpit/cabin interior Backdrop bullets (\"a cramped cockpit lit only by instrument readouts\")",
       "bookkeeping_note": null,
-      "notes": "source image showed named alien species (blue-skinned, pointed-eared) among the passengers; stripped to a generic richly robed passenger to keep the table's human-neutral baseline intact."
+      "notes": "source image showed named alien species (blue-skinned, pointed-eared) among the passengers; stripped to a generic richly robed passenger to keep the table's human-neutral baseline intact.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.226Z"
     },
     {
       "id": "c2-e2",
@@ -370,7 +440,9 @@
       "source_image": "2026-09-01 13_43_14-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other cockpit-interior Backdrop bullets",
       "bookkeeping_note": null,
-      "notes": "subject's face is fully obscured by a sealed helmet, precedented by the existing EVA-helmet Backdrop entries."
+      "notes": "subject's face is fully obscured by a sealed helmet, precedented by the existing EVA-helmet Backdrop entries.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.230Z"
     },
     {
       "id": "c2-e3",
@@ -379,7 +451,9 @@
       "source_image": "2026-09-01 13_43_23-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "alongside the existing workbench/terminal Backdrop bullet (~line 1454) and the other mech-companion staging bullets",
       "bookkeeping_note": null,
-      "notes": "source had small demon-style horns on the subject; omitted as off-model fantasy detail, kept the terminal + mech-companion staging which is the genuinely new content."
+      "notes": "source had small demon-style horns on the subject; omitted as off-model fantasy detail, kept the terminal + mech-companion staging which is the genuinely new content.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.235Z"
     },
     {
       "id": "c2-e4",
@@ -388,7 +462,9 @@
       "source_image": "2026-09-01 13_43_29-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other bulky/retro headset entries (padded flight headset, monocular sensor rig)",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.503Z"
     },
     {
       "id": "c2-e5",
@@ -408,7 +484,9 @@
       "source_image": "2026-09-01 13_43_38-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the speeder-bike and muscle-car Backdrop bullets",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count in the ## Weather section comment and the roll-table enumeration in generate-npc.md.",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.239Z"
     },
     {
       "id": "c2-e7",
@@ -417,7 +495,9 @@
       "source_image": "2026-09-01 13_43_38-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other stencilled/patch field-jacket mil Outfit bullets",
       "bookkeeping_note": null,
-      "notes": "Overlaps c3-e26, a mustard-yellow flight suit staged as Outfit (she) + from a different source image in this same run."
+      "notes": "Overlaps c3-e26, a mustard-yellow flight suit staged as Outfit (she) + from a different source image in this same run.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.584Z"
     },
     {
       "id": "c2-e8",
@@ -426,7 +506,9 @@
       "source_image": "2026-09-01 13_43_59-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other starfield/nebula Backdrop bullets (planet-limb glow entry, ~line 1446)",
       "bookkeeping_note": null,
-      "notes": "same character/kit as c2-e6/c2-e7, shown here against a space backdrop instead of the desert."
+      "notes": "same character/kit as c2-e6/c2-e7, shown here against a space backdrop instead of the desert.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.243Z"
     },
     {
       "id": "c2-e9",
@@ -435,7 +517,9 @@
       "source_image": "2026-09-01 13_44_15-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other sniper/rifle Backdrop bullets (kneeling suppressed sniper rifle entry, ~line 1450)",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.247Z"
     },
     {
       "id": "c2-e10",
@@ -444,7 +528,9 @@
       "source_image": "2026-09-01 13_44_31-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the workbench/terminal Backdrop bullet and the window-wall skyline bullet (~line 1483)",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.251Z"
     },
     {
       "id": "c2-e11",
@@ -453,7 +539,9 @@
       "source_image": "2026-09-01 13_44_36-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the towering-mech low-angle Backdrop bullet (~line 1457)",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.255Z"
     },
     {
       "id": "c2-e12",
@@ -462,7 +550,9 @@
       "source_image": "2026-09-01 13_44_36-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other cropped-jacket/bare-midriff Outfit (she) entries",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.624Z"
     },
     {
       "id": "c2-e13",
@@ -471,7 +561,9 @@
       "source_image": "2026-09-01 13_45_11-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the \"pistol gripped level and aimed straight at the camera\" bullet (~line 1447)",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
-      "notes": "background companions wore stylised animal-motif full helmets in the source; kept as masked/helmeted figures rather than literal animal features."
+      "notes": "background companions wore stylised animal-motif full helmets in the source; kept as masked/helmeted figures rather than literal animal features.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.259Z"
     },
     {
       "id": "c2-e14",
@@ -480,7 +572,9 @@
       "source_image": "2026-09-01 13_45_58-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other dramatic foreshortened freefall Backdrop bullets",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
-      "notes": "no color named on the beams so it doesn't fight the rolled Accent."
+      "notes": "no color named on the beams so it doesn't fight the rolled Accent.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.263Z"
     },
     {
       "id": "c2-e15",
@@ -489,7 +583,9 @@
       "source_image": "2026-09-01 13_46_11-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near \"a cramped cockpit lit only by instrument readouts\" background bullet",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.267Z"
     },
     {
       "id": "c2-e16",
@@ -498,7 +594,9 @@
       "source_image": "2026-09-01 13_46_22-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other casual streetwear Outfit (she) entries (graffiti-tagged crop tee, open shirt)",
       "bookkeeping_note": null,
-      "notes": "skipped the Backdrop angle (leaning on a parked car at night) as a near-duplicate of the file's several existing muscle-car Backdrop bullets."
+      "notes": "skipped the Backdrop angle (leaning on a parked car at night) as a near-duplicate of the file's several existing muscle-car Backdrop bullets.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.629Z"
     },
     {
       "id": "c2-e17",
@@ -507,7 +605,9 @@
       "source_image": "2026-09-01 13_46_43-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the calibration-bay data-slate entry (~line 1480) and the rooftop meditation bullet",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
-      "notes": "omitted the small demon-style horns and floating halo-ring HUD element as off-model fantasy/decorative-UI details not translatable into the prompt."
+      "notes": "omitted the small demon-style horns and floating halo-ring HUD element as off-model fantasy/decorative-UI details not translatable into the prompt.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.272Z"
     },
     {
       "id": "c2-e18",
@@ -516,7 +616,9 @@
       "source_image": "2026-09-01 13_46_51-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the mech-flanked street bullet (~line 1469) and the mech-hangar background bullet",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.276Z"
     },
     {
       "id": "c2-e19",
@@ -525,7 +627,9 @@
       "source_image": "2026-09-01 13_48_34-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the goggles/visor Headgear entries",
       "bookkeeping_note": null,
-      "notes": "skipped an Outfit entry for the glowing-lined jacket as a near-duplicate of the existing \"black tactical jacket... interior lining faintly glowing\" bullet (~line 1203)."
+      "notes": "skipped an Outfit entry for the glowing-lined jacket as a near-duplicate of the existing \"black tactical jacket... interior lining faintly glowing\" bullet (~line 1203).",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.507Z"
     },
     {
       "id": "c2-e20",
@@ -534,7 +638,9 @@
       "source_image": "2026-09-01 13_49_38-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the \"immense flying superstructure eclipses the low sun\" background bullet (~line 1466)",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
-      "notes": "kept \"burning red city glow\" as scene-defining color per the existing exception (matches the file's \"dull amber beacons\"-style precedent) rather than a strippable single-source glow."
+      "notes": "kept \"burning red city glow\" as scene-defining color per the existing exception (matches the file's \"dull amber beacons\"-style precedent) rather than a strippable single-source glow.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.280Z"
     },
     {
       "id": "c2-e21",
@@ -554,7 +660,9 @@
       "source_image": "2026-09-01 13_50_23-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the workbench/terminal Backdrop bullet and other close tech-interface scenes",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.285Z"
     },
     {
       "id": "c2-e23",
@@ -563,7 +671,9 @@
       "source_image": "2026-09-01 13_50_40-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near \"a black jacket studded with spikes at the collar and shoulders\" (~line 1286)",
       "bookkeeping_note": null,
-      "notes": "skipped the Backdrop angle (walking toward viewer down a ruined alley) as a near-duplicate of existing walking-toward-viewer street bullets; skipped the katana as Gear since sheathed/crossed-katana bullets already exist."
+      "notes": "skipped the Backdrop angle (walking toward viewer down a ruined alley) as a near-duplicate of existing walking-toward-viewer street bullets; skipped the katana as Gear since sheathed/crossed-katana bullets already exist.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.634Z"
     },
     {
       "id": "c2-e24",
@@ -572,7 +682,9 @@
       "source_image": "2026-09-01 13_50_50-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the existing rear-view rooftop Backdrop bullet (~line 1459)",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.289Z"
     },
     {
       "id": "c2-e25",
@@ -581,7 +693,9 @@
       "source_image": "2026-09-01 13_51_12-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other mech-companion Backdrop bullets (~lines 1456-1457)",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.293Z"
     },
     {
       "id": "c2-e26",
@@ -590,7 +704,9 @@
       "source_image": "2026-09-01 13_52_23-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near \"standing atop the hull of a companion vessel in high orbit\" (~line 1481)",
       "bookkeeping_note": null,
-      "notes": "an earlier frame of the same scene (13_52_06) was treated as a duplicate and skipped."
+      "notes": "an earlier frame of the same scene (13_52_06) was treated as a duplicate and skipped.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.298Z"
     },
     {
       "id": "c2-e27",
@@ -599,7 +715,9 @@
       "source_image": "2026-09-01 13_54_06-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the mech-companion refinery/dusk Backdrop bullet (~line 1456)",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count.",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.303Z"
     },
     {
       "id": "c3-e1",
@@ -608,7 +726,9 @@
       "source_image": "2026-09-01 13_54_27-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the shrine/machine-cult and cybernetic-prosthetic Backdrop entries",
       "bookkeeping_note": null,
-      "notes": "Glow kept uncolored except the ambient golden haze of the crowd, which reads as scene lighting rather than a single Accent-fighting light source; hands described as prosthetic per existing Feature-table convention for cyborg limbs."
+      "notes": "Glow kept uncolored except the ambient golden haze of the crowd, which reads as scene lighting rather than a single Accent-fighting light source; hands described as prosthetic per existing Feature-table convention for cyborg limbs.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.307Z"
     },
     {
       "id": "c3-e2",
@@ -617,7 +737,9 @@
       "source_image": "2026-09-01 13_54_36-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other sensor/comms Headgear entries",
       "bookkeeping_note": null,
-      "notes": "Source image also showed rain and blue-lit hair, but those read as generic Backdrop/Weather material already well covered by the existing pool, so only the distinctive implant was kept."
+      "notes": "Source image also showed rain and blue-lit hair, but those read as generic Backdrop/Weather material already well covered by the existing pool, so only the distinctive implant was kept.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.512Z"
     },
     {
       "id": "c3-e3",
@@ -626,7 +748,9 @@
       "source_image": "2026-09-01 13_57_12-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other cockpit/mech-companion Backdrop entries",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count noted in the ## Weather section comment and generate-npc.md's roll-table enumeration",
-      "notes": "Source image had a real-world national flag patch on the jacket; genericized to an unnamed stitched unit patch since a real flag doesn't fit the setting."
+      "notes": "Source image had a real-world national flag patch on the jacket; genericized to an unnamed stitched unit patch since a real flag doesn't fit the setting.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.312Z"
     },
     {
       "id": "c3-e4",
@@ -635,7 +759,9 @@
       "source_image": "2026-09-01 13_57_12-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other full flight helmet Headgear entries",
       "bookkeeping_note": null,
-      "notes": "Companion entry to c3-e3, same source image, so the helmet can also be rolled independently of that specific Backdrop."
+      "notes": "Companion entry to c3-e3, same source image, so the helmet can also be rolled independently of that specific Backdrop.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.517Z"
     },
     {
       "id": "c3-e5",
@@ -644,7 +770,9 @@
       "source_image": "2026-09-01 13_57_22-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other neon-cityscape half-body Backdrop entries",
       "bookkeeping_note": null,
-      "notes": "The struts read ambiguously as either worn hardware or background machinery in the source; kept close to the source framing rather than guessing which."
+      "notes": "The struts read ambiguously as either worn hardware or background machinery in the source; kept close to the source framing rather than guessing which.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.317Z"
     },
     {
       "id": "c3-e6",
@@ -653,7 +781,9 @@
       "source_image": "2026-09-01 13_57_33-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the flying-superstructure and frontier-vista half-body Backdrop entries",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.322Z"
     },
     {
       "id": "c3-e7",
@@ -662,7 +792,9 @@
       "source_image": "2026-09-01 13_57_45-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the monocular sensor rig and comms earpiece Headgear entries",
       "bookkeeping_note": null,
-      "notes": "The source's glowing red cybernetic eye was skipped as an entry since the Eyes table already has a near-identical bullet."
+      "notes": "The source's glowing red cybernetic eye was skipped as an entry since the Eyes table already has a near-identical bullet.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.522Z"
     },
     {
       "id": "c3-e8",
@@ -671,7 +803,9 @@
       "source_image": "2026-09-01 13_57_59-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the existing parked-superbike Backdrop entry",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.326Z"
     },
     {
       "id": "c3-e9",
@@ -680,7 +814,9 @@
       "source_image": "2026-09-01 13_58_09-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "next to the other mech-hangar / mech-companion Backdrop bullets",
       "bookkeeping_note": null,
-      "notes": "nogear because the helmet already occupies one hand."
+      "notes": "nogear because the helmet already occupies one hand.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.330Z"
     },
     {
       "id": "c3-e10",
@@ -700,7 +836,9 @@
       "source_image": "2026-09-01 14_00_00-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the frontier-vista and ridge-overlook Backdrop entries",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.334Z"
     },
     {
       "id": "c3-e12",
@@ -720,7 +858,9 @@
       "source_image": "2026-09-01 14_01_52-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other black tactical jacket / bare-midriff Outfit (she) + entries",
       "bookkeeping_note": null,
-      "notes": "Holstered pistol from the source folded into the companion Backdrop entry instead of repeated here."
+      "notes": "Holstered pistol from the source folded into the companion Backdrop entry instead of repeated here.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.639Z"
     },
     {
       "id": "c3-e14",
@@ -729,7 +869,9 @@
       "source_image": "2026-09-01 14_01_52-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other low-gravity / off-world combat Backdrop entries",
       "bookkeeping_note": null,
-      "notes": "nogear because the pistol is already in hand; no weather since the surface is airless."
+      "notes": "nogear because the pistol is already in hand; no weather since the surface is airless.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.339Z"
     },
     {
       "id": "c3-e15",
@@ -738,7 +880,9 @@
       "source_image": "2026-09-01 14_02_01-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other cockpit-interior half-body Backdrop entries",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.344Z"
     },
     {
       "id": "c3-e16",
@@ -747,7 +891,9 @@
       "source_image": "2026-09-01 14_02_10-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the monocular sensor rig Headgear entry",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.526Z"
     },
     {
       "id": "c3-e17",
@@ -756,7 +902,9 @@
       "source_image": "2026-09-01 16_17_07-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other segmented-plating / glowing-seam Outfit (she) + entries",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.644Z"
     },
     {
       "id": "c3-e18",
@@ -765,7 +913,9 @@
       "source_image": "2026-09-01 16_17_07-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other battlefield/embers Backdrop entries",
       "bookkeeping_note": null,
-      "notes": "No weather flag - reads as an airless cratered surface, not open sky."
+      "notes": "No weather flag - reads as an airless cratered surface, not open sky.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.348Z"
     },
     {
       "id": "c3-e19",
@@ -774,7 +924,9 @@
       "source_image": "2026-09-01 16_19_08-G__Documents_Lancer TTRPG GM Hub_Assets_Unsorted Inspiration_batch2 - File Explo.png",
       "placement_hint": "near the other rooftop-balcony Backdrop entries",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.352Z"
     },
     {
       "id": "c3-e20",
@@ -783,7 +935,9 @@
       "source_image": "2026-09-01 17_50_10-Home and 1 more tab - File Explorer.png",
       "placement_hint": "near the other close-quarters action / powered-armor Backdrop entries",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.357Z"
     },
     {
       "id": "c3-e21",
@@ -792,7 +946,9 @@
       "source_image": "2026-09-01 17_50_22-Home and 1 more tab - File Explorer.png",
       "placement_hint": "near the other sensor-visor Headgear entries",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.531Z"
     },
     {
       "id": "c3-e22",
@@ -801,7 +957,9 @@
       "source_image": "2026-09-01 17_50_22-Home and 1 more tab - File Explorer.png",
       "placement_hint": "next to the existing hacker-den workbench Backdrop bullet",
       "bookkeeping_note": null,
-      "notes": "A distinct hacker-den staging from the existing workbench one - reclined/jacked-in rather than typing. Overlaps c1-e28 and c4-e14, two other hacker-den candidates in this run."
+      "notes": "A distinct hacker-den staging from the existing workbench one - reclined/jacked-in rather than typing. Overlaps c1-e28 and c4-e14, two other hacker-den candidates in this run.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.361Z"
     },
     {
       "id": "c3-e23",
@@ -810,7 +968,9 @@
       "source_image": "2026-09-01 17_50_47-Home and 1 more tab - File Explorer.png",
       "placement_hint": "near the other black bodysuit / glowing-seam Outfit (she) + entries",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.649Z"
     },
     {
       "id": "c3-e24",
@@ -830,7 +990,9 @@
       "source_image": "2026-09-01 17_50_56-Home and 1 more tab - File Explorer.png",
       "placement_hint": "near the padded flight headset Headgear entries",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.536Z"
     },
     {
       "id": "c3-e26",
@@ -839,7 +1001,9 @@
       "source_image": "2026-09-01 17_50_56-Home and 1 more tab - File Explorer.png",
       "placement_hint": "near the other flight-suit Outfit entries",
       "bookkeeping_note": null,
-      "notes": "Overlaps c2-e7, a mustard-yellow flight suit staged as a neutral mil Outfit from a different source image in this same run."
+      "notes": "Overlaps c2-e7, a mustard-yellow flight suit staged as a neutral mil Outfit from a different source image in this same run.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.653Z"
     },
     {
       "id": "c3-e27",
@@ -848,7 +1012,9 @@
       "source_image": "2026-09-01 17_51_11-Home and 1 more tab - File Explorer.png",
       "placement_hint": "near the other mech-companion Backdrop entries",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
-      "notes": "Mechanical hands already covered by existing Feature bullets, so not repeated as a separate entry here."
+      "notes": "Mechanical hands already covered by existing Feature bullets, so not repeated as a separate entry here.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.366Z"
     },
     {
       "id": "c3-e28",
@@ -857,7 +1023,9 @@
       "source_image": "2026-09-01 17_51_26-Home and 1 more tab - File Explorer.png",
       "placement_hint": "near the twin-thruster pack Gear entry",
       "bookkeeping_note": null,
-      "notes": "Source was a fanart 'cyber-angel' with a halo and revealing bikini-style top; only the mechanical wing hardware was kept as translatable content, everything else skipped as off-style/too exposed for this table's house style. No flags: worn rather than held, and not a weapon."
+      "notes": "Source was a fanart 'cyber-angel' with a halo and revealing bikini-style top; only the mechanical wing hardware was kept as translatable content, everything else skipped as off-style/too exposed for this table's house style. No flags: worn rather than held, and not a weapon.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.455Z"
     },
     {
       "id": "c3-e29",
@@ -866,7 +1034,9 @@
       "source_image": "2026-09-01 17_51_33-Home and 1 more tab - File Explorer.png",
       "placement_hint": "near the other ruined-city Backdrop entries",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.370Z"
     },
     {
       "id": "c3-e30",
@@ -886,7 +1056,9 @@
       "source_image": "2026-09-01 17_51_58-Home and 1 more tab - File Explorer.png",
       "placement_hint": "near the other bodyglove / mechanical-prosthetic Outfit (she) + entries",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.657Z"
     },
     {
       "id": "c3-e32",
@@ -895,7 +1067,9 @@
       "source_image": "2026-09-01 17_51_58-Home and 1 more tab - File Explorer.png",
       "placement_hint": "near the other neon-alley Backdrop entries",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.375Z"
     },
     {
       "id": "c3-e33",
@@ -915,7 +1089,9 @@
       "source_image": "2026-09-01 17_52_42-Home and 1 more tab - File Explorer.png",
       "placement_hint": "near the other rooftop/vehicle-perch Backdrop entries",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.381Z"
     },
     {
       "id": "c3-e35",
@@ -935,7 +1111,9 @@
       "source_image": "2026-09-01 17_52_51-Home and 1 more tab - File Explorer.png",
       "placement_hint": "near the other cropped-tank Outfit (she) + entries",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.661Z"
     },
     {
       "id": "c3-e37",
@@ -944,7 +1122,9 @@
       "source_image": "2026-09-01 17_52_51-Home and 1 more tab - File Explorer.png",
       "placement_hint": "near the other single-sidearm-in-hand Gear entries",
       "bookkeeping_note": null,
-      "notes": "Flags corrected from the fork's draft, which also carried 'sidearm'; the Gear table's comment is explicit that a pistol gripped or raised in the hands does not qualify for that flag, which is reserved for a holstered or openly worn one."
+      "notes": "Flags corrected from the fork's draft, which also carried 'sidearm'; the Gear table's comment is explicit that a pistol gripped or raised in the hands does not qualify for that flag, which is reserved for a holstered or openly worn one.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.461Z"
     },
     {
       "id": "c3-e38",
@@ -953,7 +1133,9 @@
       "source_image": "2026-09-01 17_53_01-Home and 1 more tab - File Explorer.png",
       "placement_hint": "near the existing bar-interior and fire-escape-alley Backdrop entries",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
-      "notes": "Source was a photoreal Japanese back-alley bar with no character in frame - staged as background-only, same as the other blurred-backdrop bullets."
+      "notes": "Source was a photoreal Japanese back-alley bar with no character in frame - staged as background-only, same as the other blurred-backdrop bullets.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.386Z"
     },
     {
       "id": "c4-e1",
@@ -962,7 +1144,9 @@
       "source_image": "776df30564cb841f06117770af29d639.jpg",
       "placement_hint": "next to the other neon-alley / fire-escape / transit-terminal Backdrop bullets",
       "bookkeeping_note": "adds one to the ~23 weather-flagged Backdrop count noted in the ## Weather section comment",
-      "notes": "glow left uncolored (cable runs, signage) so it doesn't fight the rolled Accent; the jacket's cable-strap detailing could alternately become an Outfit bullet if a reviewer prefers that table instead. Note this is the same artwork as c1-e1's source screenshot (2026-09-01 12_40_23-Greenshot.png) - a reviewer should import at most one of the two."
+      "notes": "glow left uncolored (cable runs, signage) so it doesn't fight the rolled Accent; the jacket's cable-strap detailing could alternately become an Outfit bullet if a reviewer prefers that table instead. Note this is the same artwork as c1-e1's source screenshot (2026-09-01 12_40_23-Greenshot.png) - a reviewer should import at most one of the two.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.391Z"
     },
     {
       "id": "c4-e2",
@@ -971,7 +1155,9 @@
       "source_image": "AB_Female Military Science Fiction Anime (195).jpeg",
       "placement_hint": "next to the other plate-carrier / chest-rig Outfit bullets",
       "bookkeeping_note": null,
-      "notes": "distinct from the existing plate-carrier/chest-rig bullets in being one integrated jumpsuit rather than separate top and trousers"
+      "notes": "distinct from the existing plate-carrier/chest-rig bullets in being one integrated jumpsuit rather than separate top and trousers",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.588Z"
     },
     {
       "id": "c4-e3",
@@ -980,7 +1166,9 @@
       "source_image": "2026-09-01 17_54_32-Home and 1 more tab - File Explorer.png",
       "placement_hint": "next to the other visor/sensor-rig Headgear bullets",
       "bookkeeping_note": null,
-      "notes": "source is a green-lit cyberpunk 'hacker den' scene with foliage - only the visor was pulled out; the scene itself is close enough to the existing hacker-den Backdrop bullet that it wasn't duplicated"
+      "notes": "source is a green-lit cyberpunk 'hacker den' scene with foliage - only the visor was pulled out; the scene itself is close enough to the existing hacker-den Backdrop bullet that it wasn't duplicated",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.541Z"
     },
     {
       "id": "c4-e4",
@@ -989,7 +1177,9 @@
       "source_image": "2026-09-01 17_54_44-Home and 1 more tab - File Explorer.png",
       "placement_hint": "next to the other visor/sensor-rig Headgear bullets",
       "bookkeeping_note": null,
-      "notes": "glow and color stripped from the source's red/cyan palette so it doesn't fight the rolled Accent"
+      "notes": "glow and color stripped from the source's red/cyan palette so it doesn't fight the rolled Accent",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.546Z"
     },
     {
       "id": "c4-e5",
@@ -998,7 +1188,9 @@
       "source_image": "2026-09-01 17_54_55-Home and 1 more tab - File Explorer.png",
       "placement_hint": "next to the other close-up / cyberpunk-skyline Backdrop bullets",
       "bookkeeping_note": null,
-      "notes": "the mechanical hand reads as a Feature (prosthetic) rather than a Backdrop element, but a reviewer could also lift it into a Feature bullet by hand"
+      "notes": "the mechanical hand reads as a Feature (prosthetic) rather than a Backdrop element, but a reviewer could also lift it into a Feature bullet by hand",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.397Z"
     },
     {
       "id": "c4-e6",
@@ -1007,7 +1199,9 @@
       "source_image": "2026-09-01 17_55_07-Home and 1 more tab - File Explorer.png",
       "placement_hint": "next to the two existing mech-companion Backdrop bullets",
       "bookkeeping_note": "adds a mech-companion-style Backdrop scene beyond the 'two mech-companion shots' named in generate-npc.md's Backdrop enumeration; also adds one to the ~23 weather-flagged Backdrop count. See also c1-e3/c1-e11/c1-e27 and c2-e25/c2-e27 - this run stages several such scenes and the enumeration should be recounted once, after the reviewer picks which to import.",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.402Z"
     },
     {
       "id": "c4-e7",
@@ -1027,7 +1221,9 @@
       "source_image": "2026-09-01 17_56_27-Home and 1 more tab - File Explorer.png",
       "placement_hint": "next to the other neon-skyline background-only Backdrop bullets",
       "bookkeeping_note": "adds one to the ~23 weather-flagged Backdrop count",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.408Z"
     },
     {
       "id": "c4-e9",
@@ -1036,7 +1232,9 @@
       "source_image": "2026-09-01 17_56_32-Home and 1 more tab - File Explorer.png",
       "placement_hint": "next to the other neon-skyline / transit Backdrop bullets",
       "bookkeeping_note": "adds one to the ~23 weather-flagged Backdrop count",
-      "notes": "circuitry/cybernetic jaw detail folded into the scene sentence rather than a separate Feature bullet"
+      "notes": "circuitry/cybernetic jaw detail folded into the scene sentence rather than a separate Feature bullet",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.412Z"
     },
     {
       "id": "c4-e10",
@@ -1045,7 +1243,9 @@
       "source_image": "2026-09-01 17_56_32-Home and 1 more tab - File Explorer.png",
       "placement_hint": "next to the other leather-jacket Outfit bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.593Z"
     },
     {
       "id": "c4-e11",
@@ -1054,7 +1254,9 @@
       "source_image": "2026-09-01 17_57_16-Home and 1 more tab - File Explorer.png",
       "placement_hint": "next to the other integrated visor/headset Headgear bullets",
       "bookkeeping_note": null,
-      "notes": "the source's wall of holographic city-map displays would make a decent Backdrop too, but it reads close to the existing 'operations room wall of tactical displays' bullet, so only the headpiece was pulled out"
+      "notes": "the source's wall of holographic city-map displays would make a decent Backdrop too, but it reads close to the existing 'operations room wall of tactical displays' bullet, so only the headpiece was pulled out",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.551Z"
     },
     {
       "id": "c4-e12",
@@ -1063,7 +1265,9 @@
       "source_image": "2026-09-01 17_57_40-Home and 1 more tab - File Explorer.png",
       "placement_hint": "next to the other padded-jacket / harness-strap Outfit bullets",
       "bookkeeping_note": null,
-      "notes": "color stripped (source is orange) since Outfit bullets generally avoid saturated colors that could fight the rolled Accent"
+      "notes": "color stripped (source is orange) since Outfit bullets generally avoid saturated colors that could fight the rolled Accent",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.598Z"
     },
     {
       "id": "c4-e13",
@@ -1083,7 +1287,9 @@
       "source_image": "2026-09-01 17_58_11-Home and 1 more tab - File Explorer.png",
       "placement_hint": "next to the existing hacker-den workbench Backdrop bullet",
       "bookkeeping_note": null,
-      "notes": "close in flavor to the existing 'leaning intently over a cluttered workbench... terminal code' bullet - included as a variant (a full monitor wall rather than one workbench screen) for the reviewer to weigh against it rather than as an outright duplicate; nogear matches the precedent on that existing bullet. Overlaps c1-e28 and c3-e22, two other hacker-den candidates in this run."
+      "notes": "close in flavor to the existing 'leaning intently over a cluttered workbench... terminal code' bullet - included as a variant (a full monitor wall rather than one workbench screen) for the reviewer to weigh against it rather than as an outright duplicate; nogear matches the precedent on that existing bullet. Overlaps c1-e28 and c3-e22, two other hacker-den candidates in this run.",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.418Z"
     },
     {
       "id": "c4-e15",
@@ -1092,7 +1298,9 @@
       "source_image": "2026-09-01 17_58_11-Home and 1 more tab - File Explorer.png",
       "placement_hint": "next to the other fitted-bodysuit Outfit bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.603Z"
     },
     {
       "id": "c4-e16",
@@ -1101,7 +1309,9 @@
       "source_image": "AB_Female Military Science Fiction Anime (197).jpeg",
       "placement_hint": "next to the other flight-suit / chest-rig Outfit bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.608Z"
     },
     {
       "id": "c4-e17",
@@ -1110,7 +1320,9 @@
       "source_image": "AB_Female Military Science Fiction Anime (198).jpeg",
       "placement_hint": "next to the other hardshell/composite armor Outfit bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.614Z"
     },
     {
       "id": "c4-e18",
@@ -1119,7 +1331,9 @@
       "source_image": "AB_Female Military Science Fiction Anime (198).jpeg",
       "placement_hint": "next to the other sealed-helmet-with-breather-mask Headgear bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.556Z"
     },
     {
       "id": "c4-e19",
@@ -1128,7 +1342,9 @@
       "source_image": "AB_Female Military Science Fiction Anime (198).jpeg",
       "placement_hint": "next to the other bullpup-carbine-held Gear bullets",
       "bookkeeping_note": null,
-      "notes": "close to the existing 'a bullpup service carbine held at a low ready in both hands, rail-mounted optic on top' bullet - a reviewer may consider it a duplicate"
+      "notes": "close to the existing 'a bullpup service carbine held at a low ready in both hands, rail-mounted optic on top' bullet - a reviewer may consider it a duplicate",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.467Z"
     },
     {
       "id": "c4-e20",
@@ -1137,7 +1353,9 @@
       "source_image": "AB_Female Military Science Fiction Anime (199).jpeg",
       "placement_hint": "next to the other powered exo-frame Outfit bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.619Z"
     },
     {
       "id": "c4-e21",
@@ -1146,7 +1364,9 @@
       "source_image": "AB_Female Military Science Fiction Anime (199).jpeg",
       "placement_hint": "next to the other full-face-visor Headgear bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.561Z"
     },
     {
       "id": "c4-e22",
@@ -1155,7 +1375,9 @@
       "source_image": "AB_Female Military Science Fiction Anime (199).jpeg",
       "placement_hint": "next to the other suppressed-rifle Gear bullets",
       "bookkeeping_note": null,
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.473Z"
     },
     {
       "id": "c4-e23",
@@ -1164,7 +1386,9 @@
       "source_image": "BT08.png",
       "placement_hint": "next to the other mech-hangar / mech-companion Backdrop bullets",
       "bookkeeping_note": "another mech-hangar-style Backdrop scene; see the combined recount note on c4-e6",
-      "notes": null
+      "notes": null,
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.423Z"
     },
     {
       "id": "c4-e24",
@@ -1173,7 +1397,9 @@
       "source_image": "BT09.png",
       "placement_hint": "next to the other mech-companion Backdrop bullets",
       "bookkeeping_note": "another mech-companion-style Backdrop scene; adds one to the ~23 weather-flagged Backdrop count. See the combined recount note on c4-e6.",
-      "notes": "nogear since the cigarette already occupies the hand, matching the precedent on the existing speeder-bike/cigarette Backdrop bullet"
+      "notes": "nogear since the cigarette already occupies the hand, matching the precedent on the existing speeder-bike/cigarette Backdrop bullet",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.428Z"
     },
     {
       "id": "c4-e25",
@@ -1182,7 +1408,9 @@
       "source_image": "BT10.png",
       "placement_hint": "next to the other snow / ceremonial Backdrop bullets",
       "bookkeeping_note": "adds one to the ~23 weather-flagged Backdrop count",
-      "notes": "a reviewer may want nogear here too, since the helmet already occupies one hand - left unflagged because the helmet is carried rather than wielded"
+      "notes": "a reviewer may want nogear here too, since the helmet already occupies one hand - left unflagged because the helmet is carried rather than wielded",
+      "imported": true,
+      "imported_at": "2026-09-02T04:30:37.434Z"
     }
   ],
   "skipped": [
