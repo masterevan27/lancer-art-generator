@@ -44,11 +44,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-COMFY_DIR = SCRIPT_DIR.parent
 
-WORKFLOW_DIR = COMFY_DIR / "Workflows" / "ComfyUI API runnable"
+WORKFLOW_DIR = SCRIPT_DIR / "workflows" / "api"
 
-DEFAULT_PROMPTS = COMFY_DIR / "Art Prompts" / "mech-catalogue-art-prompts.md"
+DEFAULT_PROMPTS = SCRIPT_DIR / "prompts" / "mech-catalogue-art-prompts.md"
 DEFAULT_WORKFLOW = WORKFLOW_DIR / "Lancer_Scene_Workflow_v1.json"
 DEFAULT_MANIFEST = SCRIPT_DIR / ".generated-manifest.json"
 

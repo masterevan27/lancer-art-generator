@@ -1,0 +1,13 @@
+# Python bytecode
+__pycache__/
+*.pyc
+
+# ComfyUI run logs (local state, regenerated per machine)
+.generated-manifest.json
+.generated-npcs.json
+
+# Local ComfyUI output, when COMFYUI_OUTPUT_DIR is unset
+output/
+
+# Staged trait candidates are a working folder; examples/ ships tracked.
+prompts/staged-imports/*.json

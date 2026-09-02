@@ -53,6 +53,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import os
 import random
 import re
 import sys
@@ -61,7 +62,6 @@ import urllib.parse
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-COMFY_DIR = SCRIPT_DIR.parent
 
 
 def _load_generator():
@@ -86,7 +86,7 @@ def _load_generator():
 
 art = _load_generator()
 
-DEFAULT_TABLES = COMFY_DIR / "Art Prompts" / "npc-generator-tables.md"
+DEFAULT_TABLES = SCRIPT_DIR / "prompts" / "npc-generator-tables.md"
 DEFAULT_MANIFEST = SCRIPT_DIR / ".generated-npcs.json"
 
 # Where ComfyUI's own output folder collects the raw renders, and also this
@@ -94,7 +94,11 @@ DEFAULT_MANIFEST = SCRIPT_DIR / ".generated-npcs.json"
 # runN folder rather than going straight into the Foundry token tree, so a
 # batch can be eyeballed before any of it is promoted there by hand.
 COMFY_PREFIX = "LancerNPCs"
-DEFAULT_OUTPUT_ROOT = Path(r"G:\Documents\ComfyUI\output") / COMFY_PREFIX
+# ComfyUI's output folder. Set COMFYUI_OUTPUT_DIR to point at a ComfyUI
+# install elsewhere; otherwise fall back to an output/ folder beside this
+# script, so a fresh clone works without configuration.
+_OUTPUT_ROOT = os.environ.get("COMFYUI_OUTPUT_DIR")
+DEFAULT_OUTPUT_ROOT = (Path(_OUTPUT_ROOT) if _OUTPUT_ROOT else SCRIPT_DIR / "output") / COMFY_PREFIX
 
 # Tables the prompt templates below require. Anything else in the markdown file
 # is ignored, so extra tables can be added for reference without breaking this.

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m py_compile *)",
+      "Bash(python generate-art.py --list)",
+      "Bash(python generate-npc.py --dry-run *)"
+    ]
+  }
+}
