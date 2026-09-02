@@ -85,13 +85,16 @@ passing both is an error rather than a silent precedence rule.
 
 `Backdrop` bullets carry the portrait's opening phrase as well as its scene,
 because the two have to agree — a dive at the camera cannot be staged inside "a
-half-body character portrait". Nine plain `A half-body character portrait`
-entries carry `x3`, which is 27 of the 43 weighted entries, and sixteen are
-scene-specific: eight zero-gravity (interior freefall — corridor dive, docking
-bay, access tube, cargo hold; exterior EVA — hull recline, airlock drift,
-orbital gantry, observation blister), a gunfight, a rooftop blade draw, a hacker
-den, two mech-companion shots, a neon rooftop balcony, a bombed-out doorway, and
-a frontier vista. Reweight the plain entries to shift the mix.
+half-body character portrait". Roughly a third of the bullets are plain
+`A half-body character portrait` background-only shots, most carrying `x3` so
+they take about half the weighted pool; the rest are scene-specific — a cluster
+of zero-gravity interiors and exterior EVA shots, mech-companion and hangar
+scenes, rooftops, ruined streets, cockpits, hacker dens and frontier vistas.
+Reweight the plain entries to shift the mix.
+
+These proportions drift every time bullets are imported, and the exact counts
+that used to sit in this paragraph were stale by more than half before anyone
+checked. Count the table rather than trusting a number written about it.
 
 The EVA entries add a slim harness over whatever `Outfit` was rolled, so a
 corporate blouse in hard vacuum stays coherent.
@@ -99,11 +102,12 @@ corporate blouse in hard vacuum stays coherent.
 `Weather` puts rain, snow, volcanic ash, embers, dust or fog into a portrait —
 one short sentence dropped in behind the backdrop. It is gated twice, because
 weather is only ever right in some of these shots. A Backdrop bullet has to
-carry the `weather` flag to take any at all, which the nine outdoor entries do
-and the hangars, cockpits, corridors and vacuum scenes do not; and the `Weather`
-table's own `clear` entries opt back out, weighted so about a third of outdoor
-portraits come up with nothing drifting in them. Net effect: roughly a quarter
-of portraits have weather in them.
+carry the `weather` flag to take any at all, which the outdoor and
+semi-outdoor entries do — a little over half the weighted pool — and the
+hangars, cockpits, corridors and vacuum scenes do not; and the `Weather`
+table's own `clear` entries opt back out, weighted so about a quarter of
+outdoor portraits come up with nothing drifting in them. Net effect: roughly
+two portraits in five have weather in them.
 
 The token never does. It renders on flat white so RMBG can cut it out, and
 falling snow would just be more to cut.
@@ -154,6 +158,21 @@ Two things learned the hard way, worth keeping if you add more:
   bolted on.
 - The opening phrase does real work. While it was hardcoded to "A half-body
   character portrait", no amount of scene wording produced a proper dive.
+
+Newer entries arrive through tooling rather than by hand, applying those same
+two edits. The `/npc-trait-import` skill
+(`.claude/skills/npc-trait-import/`) reads reference images and writes
+*candidate* bullets to `../Art Prompts/staged-imports/<timestamp>.json` — it
+never edits the tables file itself. The Import GUI (`import-gui-server`, part
+of the NHP Uplink repo and started by `StackLauncher.ps1`) then shows those
+candidates for review and appends the accepted ones, marking each `imported`
+in the staged file so it can't be imported twice.
+
+Two consequences worth knowing when you read a staged file: the importer
+appends each bullet as the **last** bullet in its section, so the
+`placement_hint` recorded alongside a candidate is advice for a human, not
+something the tool acts on; and it refuses a `table` whose `## heading`
+doesn't already exist rather than inventing one.
 
 ## Name the number
 

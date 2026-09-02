@@ -1509,19 +1509,19 @@ ignored — so notes like this one are safe to leave inline.
   Portrait only, and outdoors only. The token renders on flat white for
   background removal, so falling snow there would just be more for RMBG to cut
   out; and weather is only added to Backdrop entries carrying the 'weather'
-  flag, because rain inside a cockpit or in hard vacuum is nonsense. About
-  twenty-three backdrop bullets are flagged now, covering most of the outdoor
-  and semi-outdoor scenes - the street, the dropship door, the rooftops, the
-  frontier vista, the two mech-companion shots, the ruined city, the rail
-  platform, the fire-escape alley, the snow crash site, the
-  flying-superstructure skyline, the ridge vista, the rooftop meditation shot,
-  the rain-slicked mech-flanked street, the kaiju street ambush, the ruined
-  cathedral and the mech close-quarters kick.
+  flag, because rain inside a cockpit or in hard vacuum is nonsense. Most of
+  the outdoor and semi-outdoor scenes carry it - streets, rooftops, ruins,
+  ridges and vistas, the mech-companion shots - while the hangars, cockpits,
+  corridors, interiors and vacuum scenes do not.
+
+  Don't trust a count written here: this used to claim twenty-three flagged
+  bullets and had drifted to thirty-nine before anyone noticed. Count them
+  when the number matters.
 
   The 'clear' flag means the bullet contributes nothing to the prompt; its text
   exists only so the dossier has something to print. That is the dial for how
   often a flagged scene actually gets weather in it - as weighted here, about a
-  third of outdoor portraits come up clear.
+  quarter of outdoor portraits come up clear.
 
   Keep these to one short sentence. Both prompts already run close to Krea 2's
   512-token ceiling, and this sentence lands ahead of the palette and framing
