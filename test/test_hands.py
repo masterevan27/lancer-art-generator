@@ -8,7 +8,8 @@ the more theme-defining object.
 import random
 import unittest
 
-from test.helpers import FIXTURE_TABLES, bullets_for, load_generator, rendered
+from test.helpers import (FIXTURE_TABLES, REPO, bullets_for, load_generator,
+                          rendered)
 
 gen = load_generator()
 TABLES = gen.parse_tables(FIXTURE_TABLES)
@@ -19,9 +20,21 @@ def roll(seed, **overrides):
 
 
 def texts_with_hands(name):
-    """Flag-stripped texts of `name`'s bullets that occupy a hand."""
-    return {gen.split_flags(b)[0] for b in bullets_for(TABLES, name)
-            if "hands" in gen.split_flags(b)[1]}
+    """Rendered texts of `name`'s bullets that occupy a hand.
+
+    rendered(), not split_flags()[0]: roll_npc() hands back every value with
+    its pronoun placeholders already substituted, so a bullet reading
+    "{possessive} rifle held low across the chest" can never match a set built
+    from the raw text, and every membership test below would silently stop
+    covering it. The fixtures carry no placeholder-bearing Weapon or Gear
+    bullet today - 30 of the 56 live Weapon bullets and 3 of the 33 live Gear
+    ones do, so a fixture refreshed from live content would hollow these
+    tests out with no failure to show for it. _stance_texts below was fixed
+    the same way for the same reason.
+    """
+    return {text for b in bullets_for(TABLES, name)
+            if "hands" in gen.split_flags(b)[1]
+            for text in rendered(TABLES, name, b)}
 
 
 class TestHands(unittest.TestCase):
@@ -71,6 +84,57 @@ class TestHands(unittest.TestCase):
         # green whether or not the filter exists at all.
         self.assertTrue(checked, "no seed in range(300) rolled a hands "
                          "Weapon - this test checked nothing")
+
+
+class TestHandsPerRole(unittest.TestCase):
+    """Spec §6 asks for the hands sweep *per Role*, not only over seeds.
+
+    WEAPON_POLICY narrows the Weapon pool differently per role - a mil Role is
+    restricted to 'sidearm' bullets, Officials to pocketable ones with the
+    unarmed entries duplicated, Criminals to a pool with the armed ones
+    duplicated - so the pool the 'hands' filter has to defend is a different
+    pool for each. TestHands above rolls Role at random and therefore only
+    samples those tiers incidentally.
+
+    Measured against the live tables rather than the fixture, because the
+    fixture carries two Roles and neither is in WEAPON_POLICY: on the fixture
+    this sweep would be the seed sweep above with extra steps.
+    """
+
+    LIVE = gen.parse_tables(REPO / "prompts" / "npc-generator-tables.md")
+    # Modest on purpose - 22 live Roles times this is the whole cost, and the
+    # broad sweep over seeds is TestHands's job. This one is here to reach
+    # every pool WEAPON_POLICY can build, which needs breadth across Roles
+    # rather than depth within one.
+    SEEDS = 40
+
+    def _texts_with_hands(self, name):
+        return {text for b in bullets_for(self.LIVE, name)
+                if "hands" in gen.split_flags(b)[1]
+                for text in rendered(self.LIVE, name, b)}
+
+    def test_no_role_ever_pairs_two_hands_items(self):
+        armed = self._texts_with_hands("Weapon")
+        held = self._texts_with_hands("Gear")
+        self.assertTrue(armed, "live Weapon has no hands bullet")
+        self.assertTrue(held, "live Gear has no hands bullet")
+        hands_weapons = 0
+        for role in self.LIVE["Role"]:
+            for seed in range(self.SEEDS):
+                npc = gen.roll_npc(self.LIVE, random.Random(seed),
+                                   {"Role": role})
+                if npc["Weapon"] in armed:
+                    hands_weapons += 1
+                    self.assertNotIn(
+                        npc["Gear"], held,
+                        "%r seed %d: %r and %r both need hands"
+                        % (role, seed, npc["Weapon"], npc["Gear"]))
+        # Guard against vacuity the same way the seed sweeps do: with no
+        # hands Weapon rolled anywhere in the sweep the assertion above never
+        # ran, and this test would pass with the filter deleted.
+        self.assertTrue(hands_weapons, "no Role in the live tables rolled a "
+                        "hands Weapon in %d seeds - this test checked nothing"
+                        % self.SEEDS)
 
 
 class TestStanceReadsBothTables(unittest.TestCase):

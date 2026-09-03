@@ -41,8 +41,9 @@ templates at the bottom of this file.
 - **Gear**, **Weapon** and **Stance** bullets may end `|| hands`. On a Gear or
   Weapon entry that means the item occupies at least one hand or arm; on a
   Stance entry it means the pose needs both hands free. Stance is rolled
-  after Gear and filtered against it, so an NPC never ends up holding
-  something in both hands while standing with those hands in their pockets.
+  last, after Weapon and Gear alike, and filtered against the two of them
+  together, so an NPC never ends up holding something in both hands while
+  standing with those hands in their pockets.
   Tag any new bullet the same way — an untagged one is treated as hands-free.
 - **Weapon** and **Stance** bullets may also carry `|| gun`. On a Weapon
   entry that marks the item as an actual firearm held in hand; on a Stance
@@ -80,7 +81,9 @@ templates at the bottom of this file.
   `weather`, and never reaches the token at all.
 - **Role** bullets may end `|| mil`, marking that occupation as active-duty
   military or paramilitary — a soldier, pilot, medic, comms operator or the
-  like. It gates the Faction, Outfit and Gear rolls that follow it, because a
+  like. It gates the Faction, Outfit and Weapon rolls that follow it —
+  Faction and Outfit through the `civ`/`mil` split described next, Weapon
+  through `apply_weapon_policy()`. Gear is not Role-gated at all, because a
   civilian may carry any gear or weapon they like, including military-issue
   ones, but shouldn't turn up in a duty uniform, while a military NPC should
   almost always be in one and armed. **Faction** and **Outfit** bullets may
@@ -105,8 +108,10 @@ templates at the bottom of this file.
   least a holstered pistol, not just usually — with the pistol+rifle
   compound bullets weighted heavier so a rifle on top of it is the common
   case rather than the rare one. Outfit's `notac` keeps a handful of
-  elaborate or traditional outfits (a kimono, shrine robes) from ever
-  pairing with `mil`-flagged Gear.
+  elaborate or traditional outfits (a kimono, shrine robes) from pairing with
+  `mil`-flagged Weapon and Gear alike. On the Weapon side it is a preference
+  rather than a rule: the `sidearm` restriction above is applied first and
+  outranks it, so an elaborately dressed `mil` Role is still armed.
 
 A flag beginning `@` is a **theme tag** rather than a behavioural flag —
 `|| civ @neosamurai` reads as "civilian dress, belonging to the neosamurai
@@ -961,6 +966,14 @@ ignored — so notes like this one are safe to leave inline.
 
 ## Hair
 
+<!--
+  Placing the '{colour}' slot straight after an article - "a {colour} bob" -
+  makes the bullet depend on every ## Hair colour base starting with a
+  consonant, since nothing in the script turns that 'a' into 'an'; four
+  bullets in ## Hair (she) + already do, and the rule they rest on is
+  documented on the colour table below.
+-->
+
 - close-cropped {colour} hair
 - a shaved head with {colour} stubble and old surgical scarring at the temple
 - long {colour} hair pulled back in a practical braid
@@ -1383,8 +1396,11 @@ ignored — so notes like this one are safe to leave inline.
 
   A third flag, 'notac', marks an elaborate or traditional outfit - a kimono,
   shrine robes - that shouldn't turn up paired with tactical gear no matter
-  how the Gear roll would otherwise land. It drops every 'mil'-flagged Gear
-  bullet from the pool for that NPC. See the note on the Gear table below.
+  how the Weapon and Gear rolls would otherwise land. It drops every
+  'mil'-flagged bullet from both of those pools for that NPC - on Weapon only
+  where something is left afterwards, since a 'mil' Role's 'sidearm'
+  restriction runs first and being armed outranks the preference. See the
+  notes on the Weapon and Gear tables below.
 -->
 
 - a heavy work jacket over a stained undersuit, sleeves shoved to the elbow || civ

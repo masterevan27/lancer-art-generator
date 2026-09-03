@@ -48,6 +48,31 @@ class TestWeaponRoll(unittest.TestCase):
                 npc["Weapon"], "",
                 "seed %d: a mil Role rolled unarmed" % seed)
 
+    def test_a_mil_role_in_a_notac_outfit_is_still_armed(self):
+        """The guarantee outranks 'notac', which is only a preference.
+
+        Every 'sidearm' bullet is also flagged 'mil', so a 'notac' Outfit's
+        mil-strip run *before* apply_weapon_policy() empties the armed pool
+        and the policy's own 'or options' fallback then hands back the whole
+        table, weighted empty entry and all - measured at 210 unarmed rolls
+        in 300 against the live tables. roll_npc() runs the policy first for
+        exactly this reason; this pins the order.
+
+        Both traits are forced rather than rolled because the fixture's only
+        'notac' Outfit is also flagged 'civ', which filter_by_mil() drops for
+        a mil Role - so no pure roll reaches this pairing. An override still
+        reaches the mechanism: roll_npc() resolves a forced Outfit before the
+        Weapon roll precisely so its flags gate the pools that follow.
+        """
+        mil = "a Union marine soldier || mil"
+        notac = next(b for b in TABLES["Outfit"]
+                     if "notac" in gen.split_flags(b)[1])
+        for seed in range(300):
+            npc = roll(seed, Role=mil, Outfit=notac)
+            self.assertNotEqual(
+                npc["Weapon"], "",
+                "seed %d: a mil Role in a notac outfit rolled unarmed" % seed)
+
     def test_the_weapon_keeps_no_flag_segment(self):
         for seed in range(100):
             self.assertNotIn("||", roll(seed)["Weapon"])

@@ -12,7 +12,7 @@ omitted slot invites.
 """
 import unittest
 
-from test.helpers import load_generator
+from test.helpers import bullets_for, load_generator, rendered
 
 gen = load_generator()
 
@@ -37,6 +37,61 @@ class TestCarrySentence(unittest.TestCase):
 
     def test_neither_renders_nothing(self):
         self.assertEqual(gen.carry_sentence(FIELDS, "", ""), "")
+
+    def test_a_compound_weapon_is_listed_rather_than_chained(self):
+        """25 of the 56 live armament bullets already contain " and ".
+
+        Joined to the Gear with another " and " they read as one
+        unpunctuated three-item chain - "a sidearm at the hip and a slung
+        rifle and a data-slate" - on a majority of all rolls.
+        """
+        self.assertEqual(
+            gen.carry_sentence(
+                FIELDS, "a sidearm at the hip and a slung rifle",
+                "a data-slate"),
+            "She carries a sidearm at the hip and a slung rifle, "
+            "a data-slate. ")
+
+    def test_a_compound_gear_switches_the_join_too(self):
+        """The test above from the other side: either half can be compound."""
+        self.assertEqual(
+            gen.carry_sentence(FIELDS, "a katana",
+                               "a tool roll and a coil of cable"),
+            "She carries a katana, a tool roll and a coil of cable. ")
+
+    def test_a_compound_half_on_its_own_keeps_its_own_and(self):
+        """Nothing to join, so nothing to repunctuate."""
+        self.assertEqual(
+            gen.carry_sentence(FIELDS, "a sidearm at the hip and a slung rifle",
+                               ""),
+            "She carries a sidearm at the hip and a slung rifle. ")
+
+    def test_a_rolled_compound_weapon_never_chains_onto_the_gear(self):
+        """The same property through a full roll rather than a unit call.
+
+        The fixture carries one compound armament bullet for exactly this;
+        see the note above its '## Weapon' table.
+        """
+        import random
+        from test.helpers import FIXTURE_TABLES
+        tables = gen.parse_tables(FIXTURE_TABLES)
+        checked = 0
+        for seed in range(300):
+            npc = gen.roll_npc(tables, random.Random(seed))
+            if " and " not in npc["Weapon"] or not npc["Gear"]:
+                continue
+            for text in gen.build_prompts(npc):
+                # A 'nogear' backdrop drops the whole sentence from the
+                # portrait, so only look at the prompts that render it.
+                if npc["Weapon"] not in text:
+                    continue
+                checked += 1
+                self.assertIn(
+                    "%s, %s" % (npc["Weapon"], npc["Gear"]), text,
+                    "seed %d: a compound weapon was chained onto the gear "
+                    "with another 'and'" % seed)
+        self.assertTrue(checked, "no seed in range(300) rolled a compound "
+                        "weapon alongside gear - this test checked nothing")
 
     def test_no_prompt_ever_shows_a_doubled_space_or_stray_and(self):
         import random
@@ -76,6 +131,23 @@ class TestNogear(unittest.TestCase):
         return gen.roll_npc(self.tables, self.random.Random(seed),
                             {"Backdrop": self.nogear})
 
+    def _gear_texts(self, flag):
+        """Rendered texts of the Gear bullets carrying `flag`.
+
+        Two things this does that building the set from
+        `split_flags(b)[0]` over `variant_table(..., "she")` did not.
+        rendered() substitutes pronoun placeholders, which is what
+        npc["Gear"] comes back with already done - 3 of the 33 live Gear
+        bullets carry one, and a set built from the raw text can never match
+        them, so the assertions below would pass while covering nothing. And
+        bullets_for() reaches every per-pronoun variant table rather than
+        just the one a hardcoded "she" selects, so a bullet living only in a
+        '(he) +' variant is banned too.
+        """
+        return {text for b in bullets_for(self.tables, "Gear")
+                if flag in gen.split_flags(b)[1]
+                for text in rendered(self.tables, "Gear", b)}
+
     def test_the_portrait_omits_an_armed_npcs_weapon(self):
         # Pins the whole-sentence suppression, not just the weapon half: the
         # spec settles this the other way from a looser earlier draft - the
@@ -107,9 +179,7 @@ class TestNogear(unittest.TestCase):
         self.fail("no armed NPC in 100 rolls - the check asserted nothing")
 
     def test_no_hands_gear_survives_a_nogear_scene(self):
-        held = {gen.split_flags(b)[0]
-                for b in gen.variant_table(self.tables, "Gear", "she")
-                if "hands" in gen.split_flags(b)[1]}
+        held = self._gear_texts("hands")
         self.assertTrue(held, "fixture Gear has no hands bullet")
         for seed in range(100):
             self.assertNotIn(
@@ -125,9 +195,7 @@ class TestNogear(unittest.TestCase):
         notac_outfit = next(
             b for b in self.tables["Outfit"]
             if "notac" in gen.split_flags(b)[1])
-        mil_gear = {gen.split_flags(b)[0]
-                    for b in gen.variant_table(self.tables, "Gear", "she")
-                    if "mil" in gen.split_flags(b)[1]}
+        mil_gear = self._gear_texts("mil")
         self.assertTrue(mil_gear, "fixture Gear has no mil bullet")
         for seed in range(100):
             npc = gen.roll_npc(

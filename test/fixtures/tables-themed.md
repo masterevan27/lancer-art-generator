@@ -216,14 +216,23 @@ content for each theme or the pool-share assertion has nothing to measure.
 
 ## Weapon
 
+The two `@neosamurai` blades are deliberately not flagged `mil`: a traditional
+blade is not military-issue, and on a Weapon `mil` is read by nothing but the
+`notac` filter. All three `@neosamurai` Outfits carry `notac`, so the flag
+filtered that theme's own armament away whenever it wore its own clothes -
+realized share 0.265, against test_theme_visibility's 0.25 collapse floor.
+Running `apply_weapon_policy()` ahead of `notac` lifted that to 0.578 on its
+own; dropping the untrue flag takes it to 0.825. The blades keep `sidearm`,
+which is the flag the mil-Role armed guarantee reads.
+
 - x8 || none
 - a service pistol worn openly at the thigh || mil weapon simple sidearm
 - a holstered sidearm and a slung carbine || mil weapon sidearm
 - a compact sidearm at the chest rig || mil weapon simple sidearm
 - a marked ejection-seat sidearm holstered at the ribs || mil weapon simple sidearm @gundam
 - a squadron-issue carbine held at a low ready in both hands || mil weapon sidearm hands gun @gundam
-- a long single-edged blade worn edge-up at the waist || mil weapon sidearm @neosamurai
-- a short companion blade at the small of the back || mil weapon simple sidearm @neosamurai
+- a long single-edged blade worn edge-up at the waist || weapon sidearm @neosamurai
+- a short companion blade at the small of the back || weapon simple sidearm @neosamurai
 - a taped-together slug pistol shoved in the belt || mil weapon simple sidearm @scav
 
 ## Gear

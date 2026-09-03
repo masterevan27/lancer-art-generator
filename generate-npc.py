@@ -103,6 +103,14 @@ DEFAULT_OUTPUT_ROOT = (Path(_OUTPUT_ROOT) if _OUTPUT_ROOT else SCRIPT_DIR / "out
 
 # Tables the prompt templates below require. Anything else in the markdown file
 # is ignored, so extra tables can be added for reference without breaking this.
+#
+# The ORDER is load-bearing in four places, and roll_npc() reads each flag off
+# the earlier table on the assumption that it has already been rolled: Age
+# before Build ('figure'), Age before Hair colour ('older'), Role before
+# Faction, Outfit and Weapon, and Weapon before Gear (the 'hands' collision).
+# Each is explained at its own use site in roll_npc() rather than restated
+# here; reorder this list without reading those four comments and the filter
+# each one describes goes quietly dead.
 REQUIRED_TABLES = [
     "Given names", "Family names", "Callsigns", "Pronouns", "Theme", "Age",
     "Build", "Height", "Skin", "Hair", "Hair colour", "Eyes", "Feature",
@@ -654,6 +662,20 @@ def roll_npc(tables, rng, overrides=None):
             free = [x for x in options if "hands" not in split_flags(x)[1]]
             options = free or options      # never filter the pool down to nothing
 
+        # The Weapon policy runs BEFORE 'notac' below, and the order is
+        # load-bearing: being armed is a guarantee, 'notac' is only a
+        # preference, so the guarantee gets to pick the pool first. Run the
+        # other way round the 'notac' strip empties the pool of every bullet
+        # the mil-Role guarantee would have kept - every 'sidearm' bullet is
+        # also flagged 'mil' - and apply_weapon_policy's own 'or options'
+        # fallback then hands back the whole table, weighted empty entry
+        # included, so a mil Role in a notac outfit rolled unarmed on 7 rolls
+        # in 10. This way the policy narrows to the sidearms and 'notac's own
+        # fallback re-admits them rather than the reverse.
+        if name == "Weapon":
+            options = apply_weapon_policy(
+                options, ROLE_CATEGORIES.get(npc["Role"]), role_mil)
+
         # 'notac' applies to both halves of the old Gear table: an elaborate or
         # traditional outfit should pair with neither a military-issue rifle
         # nor a military-issue radio. Restricting only the Weapon would leave a
@@ -661,9 +683,6 @@ def roll_npc(tables, rng, overrides=None):
         if name in ("Weapon", "Gear") and outfit_notac:
             no_mil = [x for x in options if "mil" not in split_flags(x)[1]]
             options = no_mil or options
-        if name == "Weapon":
-            options = apply_weapon_policy(
-                options, ROLE_CATEGORIES.get(npc["Role"]), role_mil)
 
         # Rolled either way, so that forcing a trait does not shift the rest
         # of the run's random stream and change every NPC after it. The
@@ -993,7 +1012,16 @@ def carry_sentence(fields, weapon, gear):
     carried = [x for x in (weapon, gear) if x]
     if not carried:
         return ""
-    return "{Subject} {carry} %s. ".format(**fields) % " and ".join(carried)
+    # A comma, not another "and", when either half is already compound: 25 of
+    # the 56 live armament bullets read "a sidearm holstered at the hip and a
+    # service rifle slung across her chest", and joining that to the Gear with
+    # " and " again gives an unpunctuated "A and B and C" run-on on a majority
+    # of rolls. The comma makes the sentence the list it actually is - and a
+    # list is how the rest of both prompts already reads - while costing three
+    # characters less than " and " rather than more, which the token prompt's
+    # one-token margin cares about.
+    join = ", " if any(" and " in x for x in carried) else " and "
+    return "{Subject} {carry} %s. ".format(**fields) % join.join(carried)
 
 
 def build_prompts(npc):

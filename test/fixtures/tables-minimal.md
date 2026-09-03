@@ -72,8 +72,16 @@ Used by the test suite. Not used by the generator at runtime.
 - {Subject} {wear} a wide woven hat. || @alpha
 
 ## Weapon
+
+One armament bullet here is deliberately compound - it contains " and " of
+its own, the way 25 of the 56 live ones do - so that `carry_sentence()`'s
+comma join is reachable from a plain roll. Without it every rolled carry
+sentence has exactly two halves, and the "A and B and C" run-on that join
+exists to prevent cannot be produced at all.
+
 - x2 || none
 - a service pistol worn openly at the thigh || mil weapon simple sidearm
+- a holstered sidearm and a slung carbine || mil weapon sidearm
 - a long blade worn edge-up at the waist || mil weapon sidearm hands gun @alpha
 
 ## Gear
