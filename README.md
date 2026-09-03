@@ -73,7 +73,9 @@ python -m unittest discover test
 
 Tests load the generator by path (its hyphen makes it non-importable) and roll
 against `test/fixtures/tables-minimal.md` rather than the live tables, so
-authoring a bullet never breaks a test.
+authoring a bullet never breaks a test. The exception is the pair of guards on
+where a `@theme` tag may appear, which have to read the live tables file to say
+anything at all.
 
 ### Output location
 

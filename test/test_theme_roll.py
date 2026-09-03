@@ -10,6 +10,8 @@ per table and per theme, the set of bullets belonging to *some other* theme and
 assert the rolled value is never one of them. That works whether or not
 roll_npc() kept the flags.
 """
+import contextlib
+import io
 import pathlib
 import random
 import tempfile
@@ -122,14 +124,23 @@ class TestThemeRoll(unittest.TestCase):
     def test_the_cohesion_check_can_actually_fail(self):
         """Guard against the test above quietly asserting nothing.
 
-        It only bites if the fixture really does tag some bullets for a theme
+        It only bites on a table the fixture really does tag for some theme
         other than the one being rolled; a fixture edit that dropped those tags
-        would leave a green test that checks nothing at all.
+        would leave a green test that checks nothing at all. Asserted per
+        table rather than over all of them at once, because `any()` across
+        THEMED_TABLES stays green while five of the six go vacuous - one
+        untagged Outfit would be invisible.
+
+        Per table but not per theme: a table the fixture tags for one theme
+        only - Gear is '@alpha', Feature is '@beta' - has no foreign bullet
+        under that same theme, and demanding both would force every fixture
+        table to carry a bullet of every theme for no extra coverage.
         """
-        for theme in ("alpha", "beta"):
+        for name in gen.THEMED_TABLES:
             self.assertTrue(
-                any(foreign_bullets(name, theme) for name in gen.THEMED_TABLES),
-                "fixture has no bullets foreign to theme %r" % theme)
+                any(foreign_bullets(name, theme) for theme in ("alpha", "beta")),
+                "fixture tags no %s bullet for any theme, so the cohesion "
+                "check above asserts nothing about that table" % name)
 
     def test_theme_is_independent_of_role(self):
         """A pirate must be as likely to look alpha as any other role is."""
@@ -164,16 +175,16 @@ class TestThemeRoll(unittest.TestCase):
 
         roll_npc() re-splits after that paste, and every themed table has to be
         in that second pass as well as the first - Gear especially, whose first
-        split happens before the override is applied at all.
+        split happens before the override is applied at all. Stance is checked
+        alongside the six: it is not themed, but its rolled value is split in
+        that same block and its override was leaking flags for the same reason.
         """
-        for name in gen.THEMED_TABLES:
+        for name in gen.THEMED_TABLES + ("Stance",):
             flagged = [b for b in bullets_for(name) if gen.flags_for(name, b)]
-            # Feature is the one themed table the fixture leaves unflagged, so
-            # it has nothing to force; every other table must have material
-            # here, or this test has quietly stopped covering it.
+            # Every table here must have material to force, or this test has
+            # quietly stopped covering it.
             self.assertTrue(
-                flagged or name == "Feature",
-                "fixture has no flagged %s bullet to force" % name)
+                flagged, "fixture has no flagged %s bullet to force" % name)
             for bullet in flagged:
                 npc = roll(0, **{name: bullet})
                 for part in rendered_parts(name, npc[name]):
@@ -202,13 +213,55 @@ class TestThemeRoll(unittest.TestCase):
             gen.write_dossier(path, npc, 0, ("portrait", "token"), [])
             self.assertIn("| Theme | - |", path.read_text(encoding="utf-8"))
 
-    def test_no_pool_is_ever_starved(self):
-        """Every themed table must still yield a value for every theme."""
+    def test_every_themed_table_still_yields_a_value(self):
+        """A themed roll must never come back empty, whatever the theme.
+
+        A crash guard rather than a pool guard - it asserts only that a value
+        exists, not that the pool it came from stayed a reasonable size. The
+        actual no-starvation guarantee is
+        test_theme_inert.test_every_theme_still_rolls_a_full_pool, which
+        compares pool lengths.
+        """
         for theme in ("alpha", "beta"):
             for seed in range(100):
                 npc = roll(seed, Theme=theme)
                 for name in gen.THEMED_TABLES:
                     self.assertTrue(npc[name], "%s empty for %s" % (name, theme))
+
+
+class TestForcedThemeIsValidated(unittest.TestCase):
+    """`--set-trait Theme=` is checked against the Theme table, as Pronouns is.
+
+    An unknown theme used to resolve in silence to an all-neutral roll. The
+    empty string was worse: it is falsy, so roll_npc() rolled a real theme and
+    filtered every themed pool with it, and npc.update(overrides) then pasted
+    the empty string back over the record - a dossier claiming no theme for an
+    NPC that was themed, contradicting the dossier's own printed promise that
+    the seed reproduces the NPC exactly.
+    """
+
+    def force(self, value):
+        """main() with one forced Theme, its dry-run chatter swallowed."""
+        with contextlib.redirect_stdout(io.StringIO()):
+            return gen.main(["--dry-run", "--tables", str(FIXTURE_TABLES),
+                             "--set-trait", "Theme=%s" % value])
+
+    def test_an_unknown_theme_is_rejected(self):
+        with self.assertRaises(SystemExit) as caught:
+            self.force("typo")
+        message = str(caught.exception)
+        self.assertIn("no such theme", message)
+        # The available values are listed, the same as the Pronouns check does.
+        self.assertIn("alpha", message)
+        self.assertIn("beta", message)
+
+    def test_an_empty_theme_is_rejected(self):
+        with self.assertRaises(SystemExit) as caught:
+            self.force("")
+        self.assertIn("no such theme", str(caught.exception))
+
+    def test_a_theme_the_table_offers_is_accepted(self):
+        self.assertEqual(self.force("beta"), 0)
 
 
 if __name__ == "__main__":

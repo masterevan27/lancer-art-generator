@@ -43,6 +43,7 @@ Used by the test suite. Not used by the generator at runtime.
 
 ## Feature
 - a scar across one cheek
+- a line of chrome ports along one temple || @beta
 
 ## Demeanor
 - a flat stare
@@ -66,7 +67,7 @@ Used by the test suite. Not used by the generator at runtime.
 
 ## Gear
 - a battered data-slate || hands
-- a service pistol worn openly at the thigh || mil weapon simple sidearm
+- a service pistol worn openly at the thigh || mil weapon simple sidearm @alpha
 
 ## Accent
 - teal-green
