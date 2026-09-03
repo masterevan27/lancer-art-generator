@@ -452,8 +452,22 @@ their weights rise as the import skill fills them in.
 
 ## 10. Verification
 
-The generator has no test harness and this design does not add one; the checks
-are run directly and their output reported.
+**This design adds a test harness.** The generator has none today, which was
+tolerable while changes were small and local. It is not tolerable for this one:
+it reorders the roll sequence, splits two tables, adds eight flags, and gates
+every appearance table through a new axis. Every check listed below is an
+assertion over a large sample — which is a test suite whether or not it is
+written as one.
+
+The harness is `unittest` from the standard library, run with
+`python -m unittest discover test`. This keeps the repository's stdlib-only
+rule intact: no `pip install`, no `package.json`, no new dependency. The
+sibling `lancer-npc-import-gui` already tests this way with Node's stdlib
+runner, so the pattern is established across the pair.
+
+Tests load `generate-npc.py` by path (its hyphen makes it non-importable) and
+roll against a small fixture tables file, so they neither depend on the live
+content nor break every time a bullet is authored. The checks:
 
 - **Theme cohesion** — roll several hundred NPCs per theme and assert no NPC
   carries bullets tagged with a theme other than its own.
