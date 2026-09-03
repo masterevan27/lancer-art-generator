@@ -364,6 +364,28 @@ def filter_by_mil(options, mil):
     return plain or options
 
 
+def filter_by_theme(options, theme, name):
+    """A theme's own bullets plus the neutral pool; other themes' are dropped.
+
+    The neutral pool - every bullet carrying no '@' tag at all - is deliberately
+    reachable from every theme. Roughly 45% of this file's appearance bullets
+    are the campaign's plain worn-industrial look, and they belong in a
+    neosamurai NPC's wardrobe as much as anyone's: a woman in a kimono and a
+    woman in grey coveralls are both this setting.
+
+    Never filtered down to nothing, the same as every other filter here: a
+    tables file with no tags yet - which is exactly what this ships as - falls
+    back to the full pool rather than erroring.
+    """
+    if not theme:
+        return options
+    keep = [
+        x for x in options
+        if not themes_of(flags_for(name, x)) or theme in themes_of(flags_for(name, x))
+    ]
+    return keep or options
+
+
 def apply_gear_policy(options, category, mil):
     """Bias or filter the Gear roll to fit the NPC's Role.
 
