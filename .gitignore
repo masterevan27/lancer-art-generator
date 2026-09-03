@@ -11,3 +11,7 @@ output/
 
 # Staged trait candidates are a working folder; examples/ ships tracked.
 prompts/staged-imports/*.json
+
+# Agent scratch: worktrees and subagent-driven-development ledgers
+.claude/worktrees/
+.superpowers/
