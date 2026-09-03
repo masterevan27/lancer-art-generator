@@ -9,13 +9,18 @@ would leave the repository with nothing at all to say about where tags may
 legally go.
 
 The failure it guards is not hypothetical. Only the gated tables have their
-'||' segment stripped before the value is rendered - roll_npc() splits Hair,
-Feature, Headgear, Outfit and Gear, and split_backdrop() unpacks Backdrop.
-Skin, Eyes, Demeanor, Accent and Height are interpolated verbatim by
-build_prompts(), so '- chrome-inlaid irises || @cyberpunk' under '## Eyes'
-ships the literal text '|| @cyberpunk' to Krea and into the dossier. That is
-the same failure this branch already had to fix once, for Hair, Feature and
-Headgear.
+'||' segment stripped before the value is rendered, whichever splitter fits
+their shape: roll_npc() splits Hair, Feature, Headgear, Outfit and Weapon
+with split_flags() in its main loop, then separately unpacks Backdrop with
+split_backdrop() and Hair colour with split_hair_colour() - both three-
+segment tables that split_flags() would mis-parse, mistaking their third
+field's prose for flags. (Gear is split too, later in the function, but only
+because Stance is filtered against its 'hands' flag - Gear isn't one of the
+gated tables and carries no theme tags.) Skin, Eyes, Demeanor, Accent and
+Height are interpolated verbatim by build_prompts(), so
+'- chrome-inlaid irises || @cyberpunk' under '## Eyes' ships the literal text
+'|| @cyberpunk' to Krea and into the dossier. That is the same failure this
+branch already had to fix once, for Hair, Feature and Headgear.
 """
 import unittest
 

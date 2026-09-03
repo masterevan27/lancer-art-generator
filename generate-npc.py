@@ -137,9 +137,10 @@ def estimate_tokens(text):
     return int(len(text) / CHARS_PER_TOKEN)
 
 
-# Words a rolled Gear, Outfit, Headgear, Feature, Eyes or Backdrop-scene bullet
-# already uses when it describes something that would actually cast colored
-# light - a lit instrument panel, a glowing seam, a neon sign, a muzzle flash.
+# Words a rolled Weapon, Gear, Outfit, Headgear, Feature, Eyes or
+# Backdrop-scene bullet already uses when it describes something that would
+# actually cast colored light - a lit instrument panel, a glowing seam, a
+# neon sign, a muzzle flash.
 # The accent-glow sentences below only fire when at least one rolled bullet
 # matches, so the "faint {accent} glow" they describe always has something in
 # frame to have cast it, rather than landing on a scene with no light source
@@ -611,9 +612,10 @@ def roll_npc(tables, rng, overrides=None):
             options = grown or options     # never filter the pool down to nothing
 
         # Build is filtered against the Age roll, the same way Stance is
-        # filtered against Gear below. An Age bullet flagged 'young' is a
-        # teenager; the Build bullets flagged 'figure' describe an adult
-        # woman's - bust, hips, waist - and the two must never be combined.
+        # filtered against Weapon and Gear below. An Age bullet flagged
+        # 'young' is a teenager; the Build bullets flagged 'figure' describe
+        # an adult woman's - bust, hips, waist - and the two must never be
+        # combined.
         # Age precedes Build in REQUIRED_TABLES, so the flag is known by the
         # time this runs; keep it that way if the list is ever reordered.
         if name == "Build" and young:
@@ -632,10 +634,14 @@ def roll_npc(tables, rng, overrides=None):
         # Faction and Outfit are filtered against the Role roll the same way:
         # a Role flagged 'mil' excludes bullets flagged 'civ' and vice versa,
         # so a soldier doesn't turn up in a cropped tank top and a dockworker
-        # doesn't turn up in a dress uniform. Gear isn't filtered at all - a
-        # civilian may carry military gear same as anyone - just biased
-        # toward its 'mil'-flagged bullets when the Role calls for it. Role
-        # precedes all three in REQUIRED_TABLES, so role_mil is already known.
+        # doesn't turn up in a dress uniform. Weapon and Gear sit outside this
+        # civ/mil split entirely - a civilian may carry a military-issue
+        # weapon or piece of gear same as anyone. Weapon gets its own
+        # Role-driven bias instead, from apply_weapon_policy() below; Gear is
+        # filtered elsewhere in this same loop, just not by Role - by the
+        # Weapon roll's 'hands' flag, by 'notac', and by a 'nogear' Backdrop.
+        # Role precedes all three in REQUIRED_TABLES, so role_mil is already
+        # known.
         if name in ("Faction", "Outfit"):
             options = filter_by_mil(options, role_mil)
 

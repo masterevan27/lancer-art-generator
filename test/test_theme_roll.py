@@ -2,13 +2,14 @@
 
 The cohesion test below is the reason the whole feature exists, so it is worth
 saying how it is written. The obvious spelling - read the rolled value's own
-flags back with flags_for() and check the tag - is vacuous for Outfit and Gear,
-because roll_npc() strips the '||' segment off those two before returning
-(npc["Gear"], gear_flags = split_flags(...)), leaving no tag to read. Those are
-the two most theme-relevant tables in the feature, so instead we precompute,
-per table and per theme, the set of bullets belonging to *some other* theme and
-assert the rolled value is never one of them. That works whether or not
-roll_npc() kept the flags.
+flags back with flags_for() and check the tag - is vacuous for every themed
+table, because roll_npc() strips the '||' segment off each one before
+returning: Hair, Feature, Outfit, Headgear and Weapon via split_flags() in its
+main loop, Backdrop and Hair colour via their own three-segment splitters -
+leaving no tag on npc[name] to read. So instead we precompute, per table and
+per theme, the set of bullets belonging to *some other* theme and assert the
+rolled value is never one of them. That works whether or not roll_npc() kept
+the flags.
 """
 import contextlib
 import io
@@ -82,11 +83,11 @@ class TestThemeRoll(unittest.TestCase):
         other than the one being rolled; a fixture edit that dropped those tags
         would leave a green test that checks nothing at all. Asserted per
         table rather than over all of them at once, because `any()` across
-        THEMED_TABLES stays green while five of the six go vacuous - one
+        THEMED_TABLES stays green while six of the seven go vacuous - one
         untagged Outfit would be invisible.
 
         Per table but not per theme: a table the fixture tags for one theme
-        only - Gear is '@alpha', Feature is '@beta' - has no foreign bullet
+        only - Weapon is '@alpha', Feature is '@beta' - has no foreign bullet
         under that same theme, and demanding both would force every fixture
         table to carry a bullet of every theme for no extra coverage.
         """
@@ -114,7 +115,7 @@ class TestThemeRoll(unittest.TestCase):
 
         Every themed table's value goes straight into a Krea prompt and a
         dossier row, so 'a long braid || @neosamurai' would ship the tag to the
-        image model. Fails if any of the six loses its stripping.
+        image model. Fails if any of the seven loses its stripping.
         """
         for seed in range(100):
             npc = roll(seed)
@@ -127,11 +128,12 @@ class TestThemeRoll(unittest.TestCase):
     def test_a_forced_trait_does_not_smuggle_its_flags_back_in(self):
         """--set-trait pastes the raw bullet back over the split-out value.
 
-        roll_npc() re-splits after that paste, and every themed table has to be
-        in that second pass as well as the first - Gear especially, whose first
-        split happens before the override is applied at all. Stance is checked
-        alongside the six: it is not themed, but its rolled value is split in
-        that same block and its override was leaking flags for the same reason.
+        roll_npc() re-splits after that paste, and every themed table has to
+        be in that second pass as well as the first, since npc.update(overrides)
+        only runs after the whole roll loop has already completed its own
+        split. Stance is checked alongside the seven: it is not themed, but
+        its rolled value is split in that same block and its override was
+        leaking flags for the same reason.
         """
         for name in gen.THEMED_TABLES + ("Stance",):
             flagged = [b for b in bullets_for(TABLES, name) if gen.flags_for(name, b)]

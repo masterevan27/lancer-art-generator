@@ -327,8 +327,9 @@ and the other two follow; leave it off and nothing changes.
 
 The `young` flag also gates the **Build** roll. Build bullets flagged `figure`
 describe an adult woman's — bust, hips, waist, curves — and are dropped from the
-pool entirely when the age came up `young`, the same way `Gear` flagged `hands`
-drops the `Stance` entries that need both hands free. That filter is the reason
+pool entirely when the age came up `young`, the same way a `Weapon` or `Gear`
+bullet flagged `hands` drops the `Stance` entries that need both hands free.
+That filter is the reason
 the flag exists on `Age` rather than the wording simply being baked into the
 bullet: the two tables roll independently, so nothing else would stop an adult
 figure descriptor landing on a teenager. Six unflagged builds remain for a young
@@ -376,8 +377,8 @@ Drop whichever flag you didn't mean — a `figure` build with an unflagged adult
 
 Note that a pool filter shortens the list a draw is taken from, so a run that
 forces `Build` will not reproduce an unforced run's *other* NPCs at the same
-seed. That is true of every filter here — Age/Build, Gear/Stance, Role/Gear —
-and forcing a trait only makes it reachable sooner.
+seed. That is true of every filter here — Age/Build, Weapon+Gear/Stance,
+Role/Weapon — and forcing a trait only makes it reachable sooner.
 
 A forced Build is also unpacked the same way a rolled one is, so a pasted bullet
 keeps its `|| figure` suffix out of the image prompt. Before that, the flag went
