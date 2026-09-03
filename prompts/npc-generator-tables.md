@@ -26,7 +26,7 @@ bullet. Anything after the weight is used verbatim in the prompt, so write
 bullets as sentence fragments that read correctly when dropped into the
 templates at the bottom of this file.
 
-`||` splits a bullet into segments. Ten tables use it:
+`||` splits a bullet into segments. Eleven tables use it:
 
 - **Age** and **Build** bullets carry a paired flag. `|| young` on an Age entry
   is an NPC under twenty: it swaps the prompt's "a fully grown adult" opening
@@ -64,6 +64,17 @@ templates at the bottom of this file.
   contradict), and it also keeps the Gear roll itself off any bullet flagged
   `|| hands` — so a `hands`-flagged Gear bullet you add will never turn up
   paired with a `nogear` scene. The comment above that table has the rest.
+- **Hair colour** bullets carry three segments as well — the colour itself,
+  then an optional trailing clause, then optional flags. The first fills the
+  `{colour}` slot that every `## Hair` bullet carries, which is why colour and
+  cut are separate rolls: a new shade is one bullet here rather than a rewrite
+  of every cut. The second is for gradients, which read wrongly in adjective
+  position and correctly as a clause hung off the end of the whole cut phrase
+  — flat colours leave it empty. The only flag is `older`, which drops that
+  colour when the Age roll came up `young`, the same pairing `figure` has:
+  greying hair asserts an age the Age clause in the same prompt would
+  contradict. A colour with a flag but no trailing clause writes the middle
+  segment empty, `greying || || older`.
 - **Weather** bullets may end `|| clear`, meaning the bullet contributes nothing
   to the prompt. Weather only reaches a portrait whose Backdrop is flagged
   `weather`, and never reaches the token at all.
@@ -948,27 +959,27 @@ ignored — so notes like this one are safe to leave inline.
 
 ## Hair
 
-- close-cropped black hair
-- a shaved head with old surgical scarring at the temple
-- long dark hair pulled back in a practical braid
-- an untidy mop of curls
-- silver-grey hair cut short and severe
-- shoulder-length hair, half of it dyed a faded synthetic color
-- a tight coil of locs gathered at the nape
-- a slicked-back corporate cut, not one strand out of place
-- hair hacked off short and uneven, clearly self-cut
-- long hair worn loose and unkempt, shoved back out of the face
-- a high, tight topknot
-- greying hair tied back in a short tail
-- a wrapped headscarf with a few strands escaping at the temple
-- a choppy shoulder-length cut, dark with subtle magenta undertones
-- dark wavy hair caught mid-motion in the wind
-- a short choppy black cut, spiky and layered at the crown, long bangs falling loose across the brow
-- a wild untamed mane of hair, layered in heavy flicks that sweep back and outward, long strands falling either side of the face
-- long dark hair worn loose past the shoulders, a heavy fringe hanging over one eye and a single stray strand standing up at the crown
-- shoulder-length hair with a loose wave through it, swept back off the face and tucked behind one ear
-- loose hair falling past the shoulders and caught by the wind, a small metal clip holding one side back
-- long pale seafoam-green hair falling past the shoulders, cut with sharp jagged bangs across the brow
+- close-cropped {colour} hair
+- a shaved head with {colour} stubble and old surgical scarring at the temple
+- long {colour} hair pulled back in a practical braid
+- an untidy mop of {colour} curls
+- {colour} hair cut short and severe
+- shoulder-length {colour} hair, half of it dyed a faded synthetic color
+- a tight coil of {colour} locs gathered at the nape
+- a slicked-back {colour} corporate cut, not one strand out of place
+- {colour} hair hacked off short and uneven, clearly self-cut
+- long {colour} hair worn loose and unkempt, shoved back out of the face
+- a high, tight {colour} topknot
+- {colour} hair tied back in a short tail
+- a wrapped headscarf with a few {colour} strands escaping at the temple
+- a choppy shoulder-length {colour} cut
+- {colour} wavy hair caught mid-motion in the wind
+- a short choppy {colour} cut, spiky and layered at the crown, long bangs falling loose across the brow
+- a wild untamed mane of {colour} hair, layered in heavy flicks that sweep back and outward, long strands falling either side of the face
+- long {colour} hair worn loose past the shoulders, a heavy fringe hanging over one eye and a single stray strand standing up at the crown
+- shoulder-length {colour} hair with a loose wave through it, swept back off the face and tucked behind one ear
+- loose {colour} hair falling past the shoulders and caught by the wind, a small metal clip holding one side back
+- long {colour} hair falling past the shoulders, cut with sharp jagged bangs across the brow
 
 ## Hair (she) +
 
@@ -977,47 +988,47 @@ ignored — so notes like this one are safe to leave inline.
   woman can still roll any of the neutral cuts above.
 -->
 
-- long hair spilling loose over the shoulders in soft waves
-- an elaborate crown of braids pinned close to the head
-- a sleek dark bob cut level with the jaw
-- a long ponytail pulled through the back of a worn cap
-- hair swept up in a loose bun already falling apart
-- twin braids tied off with frayed cord
-- a short silver-white bob with long bangs swept across one eye
-- long white hair worn loose, a few strands falling across the face
-- long dark hair spilling well past the shoulders, pushed back off the brow
-- two-tone hair, dark over a bleached pale underlayer
-- a chin-length platinum cut with sharply angled bangs
-- long hair loose on one side and cropped short above the other ear
-- a heavy dark braid falling past the shoulder
-- fine ash-blonde hair cut level with the jaw
-- thick auburn hair pinned up off the collar
-- a short black bob with a single bright-streaked forelock
-- long pale silver-white hair fading to green at the tips
-- long dirty-blonde hair fading pale at the tips, cut with blunt bangs
-- a short blonde bob with a loose curling cowlick
-- a short black bob left deliberately choppy, the ends spiked and uneven, long bangs swept across one eye
-- a high ponytail tied off loose and messy, long strands left free either side of the face
-- hair worn poker-straight and very long, falling well past the waist, a long fringe swept down one side of the face
-- a pale chin-length bob with a straight-cut fringe
-- a lavender-grey bob swept low across one eye
-- a long teal double braid falling past the waist
-- black hair cut in a blunt chin-length bob with heavy straight bangs
-- a long twin-tail, loose strands pulled forward across one shoulder
-- a messy silver-lavender topknot, one side shaved close beneath it
-- a long single braid, loose strands escaping at the crown
-- hair gathered into twin space buns, loose strands falling free at the temples
-- a high ponytail in fiery orange-red fading to dark roots, choppy bangs falling across one eye
-- a pale lavender bob with a sharp side-swept fringe and a single streaked strand
-- a silver-white bob with a pair of small horn-shaped ornamental clips swept back at the temples
-- a red bob with a blunt fringe
-- twin high ponytails held back by the band of a chunky headset, a long fringe swept across one brow
-- twin high ponytails clipped at the base by a segmented mechanical binder, sweeping loose past the shoulders
-- shoulder-length pale mint-green hair, center-parted with a long face-framing fringe
-- dark hair swept back into a neat low bun, held with a single ornamental pin
-- hair swept up in a bun crowned with a floral hairpin ornament, loose strands and bangs falling forward across the brow
-- dark hair swept up into a high bun, secured with ornamental pins and a trailing ribbon
-- dark hair swept up, an ornamental flower and dangling metal pins gathered at the crown
+- long {colour} hair spilling loose over the shoulders in soft waves
+- an elaborate crown of {colour} braids pinned close to the head
+- a sleek {colour} bob cut level with the jaw
+- a long {colour} ponytail pulled through the back of a worn cap
+- {colour} hair swept up in a loose bun already falling apart
+- twin {colour} braids tied off with frayed cord
+- a short {colour} bob with long bangs swept across one eye
+- long {colour} hair worn loose, a few strands falling across the face
+- long {colour} hair spilling well past the shoulders, pushed back off the brow
+- {colour} hair
+- a chin-length {colour} cut with sharply angled bangs
+- long {colour} hair loose on one side and cropped short above the other ear
+- a heavy {colour} braid falling past the shoulder
+- fine {colour} hair cut level with the jaw
+- thick {colour} hair pinned up off the collar
+- a short {colour} bob with a single bright-streaked forelock
+- long {colour} hair
+- long {colour} hair, cut with blunt bangs
+- a short {colour} bob with a loose curling cowlick
+- a short {colour} bob left deliberately choppy, the ends spiked and uneven, long bangs swept across one eye
+- a high {colour} ponytail tied off loose and messy, long strands left free either side of the face
+- {colour} hair worn poker-straight and very long, falling well past the waist, a long fringe swept down one side of the face
+- a chin-length {colour} bob with a straight-cut fringe
+- a {colour} bob swept low across one eye
+- a long {colour} double braid falling past the waist
+- {colour} hair cut in a blunt chin-length bob with heavy straight bangs
+- a long {colour} twin-tail, loose strands pulled forward across one shoulder
+- a messy {colour} topknot, one side shaved close beneath it
+- a long single {colour} braid, loose strands escaping at the crown
+- {colour} hair gathered into twin space buns, loose strands falling free at the temples
+- a high {colour} ponytail, choppy bangs falling across one eye
+- a {colour} bob with a sharp side-swept fringe and a single streaked strand
+- a {colour} bob with a pair of small horn-shaped ornamental clips swept back at the temples
+- a {colour} bob with a blunt fringe
+- twin high {colour} ponytails held back by the band of a chunky headset, a long fringe swept across one brow
+- twin high {colour} ponytails clipped at the base by a segmented mechanical binder, sweeping loose past the shoulders
+- shoulder-length {colour} hair, center-parted with a long face-framing fringe
+- {colour} hair swept back into a neat low bun, held with a single ornamental pin
+- {colour} hair swept up in a bun crowned with a floral hairpin ornament, loose strands and bangs falling forward across the brow
+- {colour} hair swept up into a high bun, secured with ornamental pins and a trailing ribbon
+- {colour} hair swept up, an ornamental flower and dangling metal pins gathered at the crown
 
 ## Hair (he) +
 
@@ -1026,12 +1037,93 @@ ignored — so notes like this one are safe to leave inline.
   of the neutral cuts above.
 -->
 
-- sandy hair going prematurely white at the temples
-- a close fade with a longer sweep left on top
-- salt-and-pepper hair cropped close
-- a high-and-tight regulation cut, sidewalls shaved to the skin
-- a hairline well back at the temples, what is left kept clipped short
-- thick dark hair swept back off the brow, a shade too long for regulation
+- {colour} hair
+- a close {colour} fade with a longer sweep left on top
+- {colour} hair cropped close
+- a high-and-tight {colour} regulation cut, sidewalls shaved to the skin
+- a hairline well back at the temples, what is left of the {colour} hair kept clipped short
+- thick {colour} hair swept back off the brow, a shade too long for regulation
+
+## Hair colour
+
+<!--
+  Rolled separately from the cut, so colour varies independently and a new
+  shade is one bullet here rather than a rewrite of every cut.
+
+  THREE segments, not two: 'base || tail || flags', the same shape ## Backdrop
+  uses. The base fills the '{colour}' slot inside the rolled Hair bullet; the
+  optional tail is appended after the whole cut phrase, separated by a comma.
+  That is what makes gradients work - they read wrongly in adjective position
+  ("a sleek silver-white fading to green at the tips bob") and correctly as a
+  trailing clause ("a sleek silver-white bob cut level with the jaw, fading to
+  green at the tips"). Flat colours leave the tail empty.
+
+  A colour with flags but no tail writes its middle segment empty:
+  'greying || || older'. Slightly awkward, and the price of one table.
+
+  The 'older' flag drops that colour when the Age roll came up 'young',
+  mirroring the 'figure'/'young' pairing exactly. Greying hair asserts an age,
+  and rolling it onto a teenager contradicts the Age clause in the same prompt.
+
+  Write a base that reads correctly in adjective position, because that is
+  where most cuts put it - "close-cropped {colour} hair", "a sleek {colour}
+  bob". Anything that only works as a trailing clause belongs in the tail.
+
+  Start a base with a CONSONANT. Four Hair bullets put the slot straight after
+  an article - "a {colour} bob with a blunt fringe" - and nothing in the script
+  fixes 'a' to 'an', so a vowel-initial base renders "a auburn bob" into the
+  Krea prompt and the dossier. That is why the two shades here that would begin
+  with one are written "dark auburn" and "pale ash-blonde" rather than bare.
+  Qualify a new one the same way, or the failure is silent.
+
+  Weights keep the roster mostly naturalistic: this is a setting of soldiers
+  and technicians, so dyed and gradient shades should read as the striking one
+  in the room rather than the median. The plain browns, blacks and blondes
+  carry the heavy weights; the synthetic shades and the handful of entries
+  with a tail are single-weight and come up rarely.
+
+  A tail describes the ends or the underlayer of the hair, so it can strain
+  against a cut that has neither - a shaved head does not have tips to fade
+  at. Keeping the tails to five single-weight entries is what holds that
+  pairing down to about one NPC in a hundred; adding more, or weighting them
+  up, makes it common enough to need a flag rather than a weight.
+-->
+
+- x6 black
+- x4 jet black
+- x3 near-black
+- x6 dark brown
+- x4 dark
+- x4 brown
+- x3 light brown
+- x3 chestnut
+- x3 mousy brown
+- x2 warm reddish-brown
+- x3 pale ash-blonde
+- x3 sandy blonde
+- x2 honey-blonde
+- x2 dark blonde
+- x2 dirty-blonde
+- x3 dark auburn
+- x2 copper-red
+- dark red
+- x2 silver-grey
+- x2 white
+- platinum
+- silver-white
+- x2 greying || || older
+- x2 salt-and-pepper || || older
+- sandy || going prematurely white at the temples || older
+- teal
+- pale lavender
+- pale mint-green
+- pale seafoam-green
+- dusty pink
+- magenta-tinted black
+- two-tone || dark over a bleached pale underlayer
+- pale silver-white || fading to green at the tips
+- fiery orange-red || fading to dark roots
+- dirty-blonde || fading pale at the tips
 
 ## Eyes
 
