@@ -55,11 +55,15 @@ templates at the bottom of this file.
   weapon; naming it twice would just contradict itself if the two ever
   disagreed.
 - **Backdrop** bullets carry three segments: the shot's opening phrase, the
-  scene sentence, then optional flags. There are two: `nogear` drops the
-  "carries <Gear>" sentence for a scene that already puts something in the
-  subject's hands, and `weather` marks a scene as outdoors, so a Weather roll
-  can be dropped into it. A bullet may carry both — `|| nogear weather`. The
-  comment above that table has the rest.
+  scene sentence, then optional flags. There are two: `nogear` and `weather`,
+  and a bullet may carry both — `|| nogear weather`. `weather` marks a scene
+  as outdoors, so a Weather roll can be dropped into it. `nogear` marks a
+  scene that already puts something in the subject's hands, and has two
+  effects: it drops the whole merged Weapon+Gear "carries ..." sentence from
+  the portrait (the token keeps it, since the token has no scene to
+  contradict), and it also keeps the Gear roll itself off any bullet flagged
+  `|| hands` — so a `hands`-flagged Gear bullet you add will never turn up
+  paired with a `nogear` scene. The comment above that table has the rest.
 - **Weather** bullets may end `|| clear`, meaning the bullet contributes nothing
   to the prompt. Weather only reaches a portrait whose Backdrop is flagged
   `weather`, and never reaches the token at all.
@@ -1602,11 +1606,14 @@ ignored — so notes like this one are safe to leave inline.
   character portrait", and a zero-gravity pose over a rain-streaked street would
   be nonsense whichever opening it got.
 
-  A third '||' segment carries flags. The only one is 'nogear', which drops
-  the "carries <Gear>" sentence for scenes that already put a weapon in the
-  subject's hands - without it the gunfight and blade-draw scenes stacked a
-  rolled rifle on top of the weapons they hand out, and the NPC came out
-  carrying three.
+  A third '||' segment carries flags. The only one is 'nogear', for scenes
+  that already put something in the subject's hands - without it the
+  gunfight and blade-draw scenes stacked a rolled rifle on top of the weapons
+  they hand out, and the NPC came out carrying three. It drops the whole
+  merged Weapon+Gear "carries ..." sentence from the portrait only (the token
+  keeps it - it has no scene to contradict), and separately keeps the Gear
+  roll itself off any '|| hands' bullet, so a scene never ends up paired with
+  a Gear item it would visibly be fighting over the subject's hands.
 
   Writing zero-gravity entries: describe the BODY first - foreshortening, the
   arched back, the reaching arm, the trailing legs - and the room second.

@@ -725,6 +725,15 @@ def roll_npc(tables, rng, overrides=None):
     # pool - the one place in this function that does, and only because the
     # dependency runs backwards.
     #
+    # Stance above was already chosen from carried_flags computed before this
+    # re-roll runs, so a nogear scene is judged against the pre-re-roll Gear.
+    # That is only conservative today - the re-roll only narrows to non-hands
+    # bullets, and none of this fixture or the live table's non-hands Gear
+    # carries 'gun', so the "gun needs a gun-describing pose" pairing can't be
+    # broken by it. It would stop being safe if a non-hands 'gun' Gear bullet
+    # were ever added, since Stance would then be picked without knowing about
+    # it. Not restructured to fix this, since nothing reachable today needs it.
+    #
     # Read from overrides first, falling back to the rolled value - the same
     # pattern Pronouns and Theme use above. npc.update(overrides) hasn't run
     # yet at this point in the function, so a forced Backdrop (--set-trait, or
@@ -734,6 +743,13 @@ def roll_npc(tables, rng, overrides=None):
     if "nogear" in split_backdrop(effective_backdrop)[2] and "hands" in gear_flags:
         free = [x for x in variant_table(tables, "Gear", subject)
                 if "hands" not in split_flags(x)[1]]
+        # 'notac' applies here too, same as it does in the loop's own Gear
+        # roll above (see the comment there) - otherwise a kimono flagged
+        # 'notac' paired with a nogear scene could still re-roll onto a
+        # military-issue Gear bullet the loop would have screened out.
+        if outfit_notac:
+            civ = [x for x in free if "mil" not in split_flags(x)[1]]
+            free = civ or free      # never filter the pool down to nothing
         if free:
             npc["Gear"], gear_flags = split_flags(rng.choice(free))
 
@@ -901,9 +917,10 @@ def carry_sentence(fields, weapon, gear):
     or a doubled space.
 
     Both slots are genuinely optional: the Weapon table's weighted empty entry
-    produces an unarmed NPC, and a 'nogear' Backdrop suppresses the whole
-    sentence on the portrait - see build_prompts() - because the scene already
-    put one in their hands.
+    is what produces an unarmed NPC here. A 'nogear' Backdrop does not - it
+    never reaches this function with an empty weapon; it skips the call
+    entirely and blanks the portrait's whole sentence at the render site (see
+    build_prompts()) instead.
     """
     carried = [x for x in (weapon, gear) if x]
     if not carried:

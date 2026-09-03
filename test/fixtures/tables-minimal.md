@@ -60,6 +60,7 @@ Used by the test suite. Not used by the generator at runtime.
 - grey coveralls
 - lacquered plate || @alpha
 - a neon techwear jacket || @beta
+- an elaborate floral kimono || civ notac
 
 ## Headgear
 - {Subject} {is_are} bare-headed.
@@ -73,6 +74,7 @@ Used by the test suite. Not used by the generator at runtime.
 ## Gear
 - a battered data-slate || hands
 - a canvas tool roll at the hip
+- a hard-shelled tactical backpack || mil
 
 ## Accent
 - teal-green
