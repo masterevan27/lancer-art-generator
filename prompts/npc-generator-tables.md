@@ -34,8 +34,10 @@ templates at the bottom of this file.
   marks a build written in terms of an adult woman's figure — bust, hips, waist
   — and those bullets are dropped from the pool whenever the Age roll came up
   `young`, so the unflagged builds are what a late-teen NPC rolls from. Keep
-  enough of them to stay varied. Forcing both at once with `--set-trait` is an
-  error rather than a silent pairing.
+  enough of them to stay varied. The filter runs both ways: forcing a `figure`
+  Build with `--set-trait` drops the `young` bullets from the Age pool instead,
+  so an explicit build never collides with a randomly rolled teenager. Forcing
+  *both* into a contradiction is an error rather than a silent pairing.
 - **Gear** and **Stance** bullets may end `|| hands`. On a Gear entry that means
   the item occupies at least one hand or arm; on a Stance entry it means the
   pose needs both hands free. Stance is rolled after Gear and filtered against

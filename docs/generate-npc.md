@@ -238,23 +238,42 @@ Build roll rather than pasted over the result, and it takes the flag inline:
 python generate-npc.py --set-trait Age="in her late teens, sixteen or seventeen || young"
 ```
 
-Forcing `Build` is checked against that same flag rather than waved through. The
-pool filter above only screens the bullets the roll draws from, so a forced
-Build walked straight past it; the pairing is re-tested after the overrides are
-applied, where the `Age` flag is known whether it was rolled or forced. This
-combination stops before anything is queued:
+Forcing `Build` runs the pairing in the other direction. A build flagged
+`figure` describes an adult woman's, so when you force one and leave `Age` to
+the roll, it is the **Age pool that yields**: the `young` bullets are dropped
+before it is drawn, exactly as `figure` builds are dropped when the age came up
+`young`. An explicit choice of build shouldn't abort the run because the dice
+handed it a teenager.
+
+```bash
+python generate-npc.py --set-trait Build="slender but full-busted, with a clearly defined waist || figure"
+```
+
+That rolls an adult age every time, and queues normally.
+
+Forcing *both* into a contradiction is still an error, because two explicit
+choices that disagree are a mistake worth reporting rather than silently
+resolving in favour of one of them. This combination stops before anything is
+queued:
 
 ```bash
 python generate-npc.py --set-trait Age="in her late teens, sixteen or seventeen || young" --set-trait Build="slender but full-busted, with a clearly defined waist || figure"
 ```
 
 ```
---set-trait Build: a bullet flagged 'figure' describes an adult woman's build
-and must not be combined with an Age flagged 'young'. Drop one of the two flags.
+--set-trait Age and --set-trait Build disagree: a bullet flagged 'figure'
+describes an adult woman's build and must not be combined with an Age flagged
+'young'. Force only one of the two and the other will roll to match, or drop a
+flag.
 ```
 
 Drop whichever flag you didn't mean — a `figure` build with an unflagged adult
 `Age` is fine, and so is a `young` age with any of the six unflagged builds.
+
+Note that a pool filter shortens the list a draw is taken from, so a run that
+forces `Build` will not reproduce an unforced run's *other* NPCs at the same
+seed. That is true of every filter here — Age/Build, Gear/Stance, Role/Gear —
+and forcing a trait only makes it reachable sooner.
 
 A forced Build is also unpacked the same way a rolled one is, so a pasted bullet
 keeps its `|| figure` suffix out of the image prompt. Before that, the flag went
@@ -435,7 +454,8 @@ below:
   Three things *are* checked, because each one used to fail quietly in a way
   that looked like it had worked: naming the same table twice (an error naming
   both values, rather than the last one silently winning), a `figure` Build
-  forced onto a `young` Age, and — not an error, just a silent no-op worth
+  forced onto a `young` Age *when both were forced* (force just one and the
+  other's pool narrows to match), and — not an error, just a silent no-op worth
   knowing about — a forced `Weather` whose Backdrop lacks the `weather` flag.
 
 Always `--dry-run` a group before committing to it. Each NPC is three ComfyUI

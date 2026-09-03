@@ -467,6 +467,15 @@ def roll_npc(tables, rng, overrides=None):
     forced_age = (overrides or {}).get("Age")
     forced_role = (overrides or {}).get("Role")
     forced_outfit = (overrides or {}).get("Outfit")
+    forced_build = (overrides or {}).get("Build")
+
+    # Build gates a roll in the other direction to the three above: a forced
+    # build flagged 'figure' describes an adult woman's, so it constrains the
+    # *Age* roll rather than being constrained by it. Known before the loop for
+    # the same reason - Age is rolled first.
+    forced_figure = (
+        forced_build is not None and "figure" in split_flags(forced_build)[1]
+    )
 
     npc = {"Pronouns": pronouns}
     young = False
@@ -476,6 +485,16 @@ def roll_npc(tables, rng, overrides=None):
         if name in ("Pronouns", "Stance"):
             continue
         options = variant_table(tables, name, subject)
+
+        # The Age/Build pairing runs both ways. When the Build was forced
+        # to a bullet flagged 'figure' and the Age is being rolled, it is the
+        # Age pool that yields: an explicit choice of build shouldn't collide
+        # with a random teenager and abort the run. Forcing both at once still
+        # raises further down, since two explicit choices that contradict each
+        # other are a mistake worth reporting rather than silently resolving.
+        if name == "Age" and forced_figure and forced_age is None:
+            grown = [x for x in options if "young" not in split_flags(x)[1]]
+            options = grown or options     # never filter the pool down to nothing
 
         # Build is filtered against the Age roll, the same way Stance is
         # filtered against Gear below. An Age bullet flagged 'young' is a
@@ -509,8 +528,12 @@ def roll_npc(tables, rng, overrides=None):
         if name == "Gear":
             options = apply_gear_policy(options, ROLE_CATEGORIES.get(npc["Role"]), role_mil)
 
-        # Rolled either way, so that forcing a trait does not shift the rest of
-        # the run's random stream and change every NPC after it.
+        # Rolled either way, so that forcing a trait does not shift the rest
+        # of the run's random stream and change every NPC after it. The
+        # exception is a forced trait that *filters* a later pool - the
+        # Age/Build pairing above, and the Gear and Stance filters below -
+        # since a shorter pool draws differently. Those already behaved this
+        # way for a rolled trait; forcing one just makes it reachable sooner.
         value = rng.choice(options)
         if name == "Age" and forced_age is not None:
             value = forced_age
@@ -559,15 +582,18 @@ def roll_npc(tables, rng, overrides=None):
     npc["Outfit"] = split_flags(npc["Outfit"])[0]
 
     # Build needs the same unpacking, and for a second reason beyond tidiness:
-    # the young/figure filter above only screens the *rolled* pool, so a forced
-    # Build walks straight past it. Re-check the pairing here, where the Age
-    # flag is known whether it was rolled or forced.
+    # the pool filters above only screen a *rolled* pool, so a pair of forced
+    # traits walks straight past both of them. Re-check the pairing here, where
+    # each flag is known whether it was rolled or forced. Only the both-forced
+    # case can still reach this: a forced Build narrows the Age roll and a
+    # forced Age narrows the Build roll, so either one alone resolves quietly.
     build, build_flags = split_flags(npc["Build"])
     if young and "figure" in build_flags:
         raise SystemExit(
-            "--set-trait Build: a bullet flagged 'figure' describes an adult "
-            "woman's build and must not be combined with an Age flagged "
-            "'young'. Drop one of the two flags."
+            "--set-trait Age and --set-trait Build disagree: a bullet flagged "
+            "'figure' describes an adult woman's build and must not be "
+            "combined with an Age flagged 'young'. Force only one of the two "
+            "and the other will roll to match, or drop a flag."
         )
     npc["Build"] = build
 
