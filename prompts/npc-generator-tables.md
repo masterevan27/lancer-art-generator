@@ -1963,6 +1963,21 @@ ignored — so notes like this one are safe to leave inline.
 
 ## Stance
 
+<!--
+  TOKEN ONLY. The portrait takes its pose from Backdrop; this table reaches
+  only the token, which renders on flat white so the RMBG pass can cut it to a
+  transparent PNG for dropping onto a battlemap.
+
+  So a bullet here may describe the BODY and nothing else. No ground, no
+  ledge, no wall, no furniture, no weather, no props that are not held in a
+  hand. A pose may crouch, kneel or sit - it simply must not sit on anything.
+
+  This is not a style preference. Generation runs at CFG 1.0 with no negative
+  prompt, so the template's trailing "no environment" cannot argue a noun back
+  out of the image: a rolled "raised ledge" put a visible platform under the
+  figure and a second person on it. test_stance_content.py enforces the rule.
+-->
+
 - standing in a relaxed, watchful stance, weight settled evenly on both feet
 - standing squared and formal, hands clasped behind the back || hands
 - standing with arms folded, weight shifted onto one hip || hands
@@ -1986,16 +2001,16 @@ ignored — so notes like this one are safe to leave inline.
 - standing in a slow half-bow, one hand pressed flat against the chest
 - standing with both arms raised overhead, a long board gripped in both hands and braced across the back of the shoulders like a yoke || hands
 - sitting cross-legged in a formal meditative pose, palms pressed together at the chest, segmented mechanical arms folded still || hands
-- leaning down into open machinery from above, braced on one forearm and reaching in with the other hand || hands
-- crouched low and coiled on a raised ledge, weight braced forward on one arm, ready to spring || hands
+- leaning forward and down, braced on one forearm, the other hand reaching toward something out of frame || hands
+- crouched low and coiled, weight braced forward on one arm, ready to spring || hands
 - leaning low into a forward sprint, {possessive} braid whipped back and one arm driving down
-- crouched low on one knee, gripping a blade planted point-down and ready to spring || hands
+- crouched low on one knee, both hands wrapped around an upright blade, ready to spring || hands
 - standing in profile with head bowed slightly, one hand resting on a sheathed blade at the hip || hands
 - caught in a dynamic overhead swing, both hands driving a blade down in a decisive arc, cloak and sash ribbons whipped by the motion || hands
 - kneeling formally with both hands folded around an upright hilt held back against one shoulder || hands
 - kneeling in profile with head bowed low, hands stilled in {possessive} lap
-- walking straight toward the viewer with {possessive} weapon raised over one shoulder, cloak snapping back in the rising heat || hands
-- raising {possessive} weapon high overhead in both hands, mid-swing, hair whipped wild by the wind and snow || hands
+- walking straight toward the viewer with {possessive} weapon raised over one shoulder, cloak snapping back behind {object} || hands
+- raising {possessive} weapon high overhead in both hands, mid-swing, hair whipped wild by the motion || hands
 - sitting cross-legged with one elbow propped on a knee, chin resting in that hand, gazing out in quiet thought
 - standing tense with both hands crossed at the hip, one gripping the hilt of {possessive} sheathed weapon, poised to draw || hands
 - crouched low on the balls of the feet, one fist raised in a guarded ready stance, weight coiled forward || hands
@@ -2026,7 +2041,7 @@ ignored — so notes like this one are safe to leave inline.
 - standing with {possessive} head tilted slightly, one hand trailing loose at {possessive} thigh
 - standing with {possessive} back to the viewer and one hand set on the hip, looking back over {possessive} shoulder
 - standing with one hip kicked out, one hand brushing a loose strand of hair back near {possessive} temple, the other resting low on {possessive} belt
-- sitting back with both hands laced behind {possessive} head, elbows out, utterly at ease || hands
+- standing with both hands laced behind {possessive} head, elbows out, utterly at ease || hands
 
 ## Prompt templates
 
