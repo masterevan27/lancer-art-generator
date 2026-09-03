@@ -189,11 +189,34 @@ no `hands` item on either side, and is unaffected.
 
 | Filter | Rule |
 |---|---|
-| **`nogear` Backdrop** | Suppresses the **Weapon** — the scene already puts one in their hands, which is what the flag has always meant — and restricts `Gear` to non-`hands` bullets, since the scene occupies them. Reuses §3.1's machinery with the scene standing in for a `hands` weapon. 45 of 205 Backdrop bullets carry it. |
+| **`nogear` Backdrop** | Two separate effects, and they are not symmetric — see below. 45 of 205 Backdrop bullets carry it. |
 | **Stance** | Filtered against the **combined** `hands`/`gun` flags of Weapon and Gear. |
 | **`notac` Outfit** | Applies to **both** tables. Applying it only to Weapon would leave a kimono carrying a tactical assault pack. |
 | **`older` Hair colour** | Dropped when Age is `young`. |
 | **Theme** | Gates `Weapon`, not `Gear`. |
+
+**`nogear` in detail.** Today the flag suppresses the carry sentence on the
+**portrait only** — `build_prompts()` passes `gear_line=""` to the portrait
+when it is set, and passes `carrying` to the token unconditionally. That
+asymmetry is correct and is kept: the flag exists because the *backdrop scene*
+already puts something in the subject's hands, and the token has no backdrop
+at all, just flat white and a rolled Stance. Post-split it keeps behaving that
+way — the portrait omits the whole merged carry sentence, the token still
+renders it.
+
+Its second effect is new and applies at roll time, so it reaches both prompts:
+**`Gear` is restricted to non-`hands` bullets when the Backdrop is `nogear`**,
+because a scene that occupies the subject's hands contradicts a thermos held in
+one of them. This reuses §3.1's machinery with the scene standing in for a
+`hands` weapon. It is a roll-time filter rather than a render-time suppression
+because the NPC carries one set of objects, and both prompts must agree about
+what those objects are.
+
+`has_light_source()` must also learn `npc["Weapon"]`. It currently reads Gear,
+Outfit, Headgear, Feature and Eyes to decide whether an accent glow belongs in
+the prompt, and a glowing energy blade is exactly the kind of source it exists
+to catch — leaving Weapon out would silently drop the accent line for the most
+likely lit object an NPC carries.
 
 `GEAR_POLICY` is renamed `WEAPON_POLICY` and reads `Weapon`;
 `apply_gear_policy()` becomes `apply_weapon_policy()`. The Officials and
