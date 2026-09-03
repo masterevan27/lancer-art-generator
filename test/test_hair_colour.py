@@ -2,10 +2,11 @@
 import random
 import unittest
 
-from test.helpers import FIXTURE_TABLES, load_generator
+from test.helpers import FIXTURE_TABLES, REPO, bullets_for, load_generator
 
 gen = load_generator()
 TABLES = gen.parse_tables(FIXTURE_TABLES)
+LIVE = gen.parse_tables(REPO / "prompts" / "npc-generator-tables.md")
 
 
 def roll(seed, **overrides):
@@ -34,7 +35,16 @@ class TestSplitHairColour(unittest.TestCase):
 
 class TestHairColourRoll(unittest.TestCase):
     def test_no_rolled_hair_keeps_an_unresolved_slot(self):
-        """The guard on Task 7's 68-bullet hand-edit."""
+        """A roll completes, and its Hair comes back with no brace left in it.
+
+        Weaker than it looks, and worth saying so. roll_npc()'s placeholder
+        loop catches format()'s KeyError and re-raises SystemExit, so a
+        surviving '{colour}' aborts the roll before the assertion below can
+        see it - what this really pins is that 200 rolls from the fixture all
+        resolve rather than exiting. The inverse property, that a live Hair
+        bullet still *carries* a slot to resolve, fails silently and is
+        guarded separately by TestTheLiveHairBulletsKeepTheirSlot.
+        """
         for seed in range(200):
             self.assertNotIn("{", roll(seed)["Hair"])
 
@@ -62,6 +72,31 @@ class TestHairColourRoll(unittest.TestCase):
 
     def test_hair_colour_is_themed(self):
         self.assertIn("Hair colour", gen.THEMED_TABLES)
+
+
+class TestTheLiveHairBulletsKeepTheirSlot(unittest.TestCase):
+    """Every live '## Hair' bullet still carries a '{colour}' slot.
+
+    The actual guard on the 68-bullet hand-edit that split colour out of the
+    cut, and the one failure in this feature that raises nothing: a bullet
+    that lost its slot rolls a head with no colour at all, ships a prompt that
+    leaves the shade to the image model, and passes every other test in the
+    suite. That is the state the split existed to end, so it gets a test of
+    its own rather than being inferred from a fixture roll.
+
+    Walks the per-pronoun variant keys as well as the base table - see
+    helpers.table_keys(). Half the live Hair bullets sit in 'Hair (she) +' and
+    'Hair (he) +', and checking LIVE["Hair"] alone would miss them.
+    """
+
+    def test_every_live_hair_bullet_carries_a_colour_slot(self):
+        bullets = bullets_for(LIVE, "Hair")
+        self.assertTrue(bullets, "live file has no Hair bullets to check")
+        for bullet in bullets:
+            self.assertIn(
+                "{colour}", bullet,
+                "this '## Hair' bullet has no '{colour}' slot, so it would "
+                "roll colourless hair and nothing would raise: %r" % bullet)
 
 
 if __name__ == "__main__":

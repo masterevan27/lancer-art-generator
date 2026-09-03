@@ -85,15 +85,23 @@ def colour_forms(tables, core):
     because the comparisons these feed are set membership against a rolled
     value: a form this misses is a form the cohesion checks stop covering.
 
+    Drawn through bullets_for() rather than tables["Hair colour"], because
+    roll_npc() rolls the colour through variant_table(), which is generic over
+    every table and picks up a 'Hair colour (she) +' the moment one is
+    authored - the live file already uses that idiom for Hair itself. Reading
+    the base key alone would under-produce silently, and in the direction that
+    shrinks the banned sets the cohesion tests are built from.
+
     Returns the slot untouched when the tables carry no '## Hair colour' at
-    all, rather than raising on a bare index - not every caller's fixture has
-    one. Nothing can be rolled from such a file either (roll_npc() would fail
-    on the missing key long before), so an unfilled slot is the truthful
-    answer: no colour exists for that cut to appear in.
+    all, rather than raising - not every caller's fixture has one, and
+    table_keys() answers an absent table with an empty list. Nothing can be
+    rolled from such a file either (roll_npc() would fail on the missing key
+    long before), so an unfilled slot is the truthful answer: no colour exists
+    for that cut to appear in.
     """
     gen = load_generator()
     out = set()
-    for bullet in tables.get("Hair colour", ()):
+    for bullet in bullets_for(tables, "Hair colour"):
         base, tail, _ = gen.split_hair_colour(bullet)
         filled = core.replace("{colour}", base)
         out.add("%s, %s" % (filled, tail) if tail else filled)

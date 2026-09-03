@@ -683,11 +683,17 @@ def roll_npc(tables, rng, overrides=None):
         # already had its flags stripped right here - re-splitting it there
         # would just split plain text and get nothing back.
         #
-        # Backdrop is the one themed table still absent: its '||' separates
-        # three fields rather than two and is parsed by split_backdrop
-        # downstream, which is where its flags are read. Gear is absent for
-        # an unrelated reason - its own flags gate the Stance roll further
-        # down, so it is split there instead.
+        # Two themed tables are deliberately absent, for one shared reason:
+        # Backdrop and Hair colour each separate three fields with '||' rather
+        # than two, so split_flags() would take the third table's prose - a
+        # Backdrop's scene, a Hair colour's tail - for flags and throw it
+        # away. Each is unpacked by its own splitter instead, Backdrop by
+        # split_backdrop() downstream in build_prompts() and write_dossier(),
+        # Hair colour by split_hair_colour() further down this function. A
+        # newly themed table belongs in the list below only if its bullets are
+        # the ordinary two-segment shape. Gear is absent for an unrelated
+        # reason - its own flags gate the Stance roll further down, so it is
+        # split there instead.
         if name in ("Age", "Build", "Role", "Faction", "Outfit",
                     "Hair", "Feature", "Headgear", "Weapon"):
             value, flags = split_flags(value)
