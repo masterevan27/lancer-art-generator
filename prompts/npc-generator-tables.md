@@ -2083,24 +2083,23 @@ nearby to cast it.
 
 ### Token (1024x1280, then RMBG to a transparent PNG)
 
-> A full-body character illustration of **{ROLE}**, **{AGE}**, facing the
+> A full-body character illustration of **{ROLE}**, **{MATURITY}** **{GENDER}**
+> **{AGE}**, rendered in a detailed painterly illustration style with fine
+> grain texture, clean linework and halftone dot shading worked into the
+> shadows, moody cinematic lighting on the figure. {SUBJECT} is facing the
 > viewer, the whole figure in frame from the top of {POSSESSIVE} head to the
-> soles of {POSSESSIVE} plain modern boots, no leg wraps or puttees, with clear empty
-> space above and below, rendered in a
-> detailed painterly illustration style with fine grain texture and clean linework,
-> halftone dot shading worked into the shadows, moody cinematic lighting on the
-> figure. {SUBJECT} is **{BUILD}**, with
-> **{TRAITS}** **{SKIN}**, **{HAIR}**, and **{EYES}**, and **{FEATURE}**, wearing **{OUTFIT}**,
-> **{FACTION}**. {POSSESSIVE} face carries **{DEMEANOR}**. {SUBJECT} carries
-> **{GEAR}**. {SUBJECT} is
-> **{STANCE}**, both feet in frame, the pose natural and unforced.
-> **{GLOW_LINE}** The background alone
-> is a solid flat plain white, no texture, no
-> gradient, no shadow, no environment. Centered composition, dramatic lighting,
-> isolated character illustration, clean silhouette. Painterly illustration throughout with
-> visible brushwork, heavy fine grain texture over every surface, and dense
-> halftone dot screentone worked deep into the shadows, matching the same painterly
-> rendering as the portrait shot.
+> soles of {POSSESSIVE} plain modern boots, no leg wraps or puttees, with clear
+> empty space above and below, in realistic adult proportions roughly seven to
+> eight heads tall. {SUBJECT} is **{HEIGHT}**, **{BUILD}**, with **{TRAITS}**
+> **{SKIN}**, **{HAIR}**, **{EYES}**, and **{FEATURE}**, wearing **{OUTFIT}**,
+> **{FACTION}**, the clothing following the shape of that frame. **{HEADGEAR}**
+> {POSSESSIVE} face carries **{DEMEANOR}**. {SUBJECT} carries **{GEAR}**.
+> {SUBJECT} is **{STANCE}**, both feet in frame, the pose natural and
+> unforced. **{GLOW_LINE}** The background alone is a solid flat plain white,
+> no texture, no gradient, no shadow, no environment. Centered composition,
+> dramatic lighting, isolated character illustration, clean silhouette,
+> painterly brushwork with heavy grain and dense halftone screentone worked
+> into every shadow.
 
 `{GLOW_LINE}` here is "Keep the palette restrained — greys, olive drab and
 rust — with a single **{GLOW}** glow the only saturated color.", gated the
