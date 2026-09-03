@@ -63,6 +63,20 @@ rolling for it, since a single bullet in a pool of thirty rarely comes up. Full
 documentation, including worked examples for rolling a whole group of related NPCs:
 [`docs/generate-npc.md`](docs/generate-npc.md).
 
+### Tests
+
+Standard library `unittest`, no dependencies:
+
+```
+python -m unittest discover test
+```
+
+Tests load the generator by path (its hyphen makes it non-importable) and roll
+against `test/fixtures/tables-minimal.md` rather than the live tables, so
+authoring a bullet never breaks a test. The exception is the pair of guards on
+where a `@theme` tag may appear, which have to read the live tables file to say
+anything at all.
+
 ### Output location
 
 Both scripts write renders under ComfyUI's own output folder. Set

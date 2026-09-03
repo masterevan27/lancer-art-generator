@@ -1,0 +1,85 @@
+# Minimal fixture tables
+
+Used by the test suite. Not used by the generator at runtime.
+
+## Theme
+- x2 alpha
+- beta
+
+## Given names
+- Test
+
+## Family names
+- Subject
+
+## Callsigns
+- Fixture
+
+## Pronouns
+- she/her/her/woman
+- they/them/their/person
+
+## Age
+- in {possessive} thirties
+- in {possessive} late teens || young
+
+## Build
+- lean and wiry
+- full-figured through the hips || figure
+
+## Height
+- of average height
+
+## Skin
+- pale skin
+
+## Hair
+- a short crop
+- a long braid || @alpha
+- a shaved head || @beta
+
+## Eyes
+- grey eyes
+
+## Feature
+- a scar across one cheek
+- a line of chrome ports along one temple || @beta
+
+## Demeanor
+- a flat stare
+
+## Role
+- a dockworker
+- a Union marine soldier || mil
+
+## Faction
+- unaligned and freelance
+- in dress uniform || mil
+
+## Outfit
+- grey coveralls
+- lacquered plate || @alpha
+- a neon techwear jacket || @beta
+
+## Headgear
+- {Subject} {is_are} bare-headed.
+- {Subject} {wear} a wide woven hat. || @alpha
+
+## Gear
+- a battered data-slate || hands
+- a service pistol worn openly at the thigh || mil weapon simple sidearm @alpha
+
+## Accent
+- teal-green
+
+## Backdrop
+- A half-body character portrait || Behind {object} is a plain wall.
+- A character portrait || {Subject} {is_are} in a temple courtyard. || weather @alpha
+
+## Weather
+- in steady rain
+- || clear
+
+## Stance
+- standing squarely
+- {possessive} hands in {possessive} pockets || hands

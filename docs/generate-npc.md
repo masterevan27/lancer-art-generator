@@ -48,9 +48,9 @@ verbatim, so an NPC you like can be re-rolled or hand-edited later.
 ## The roll tables
 
 `prompts/npc-generator-tables.md` holds the tables — names, callsigns,
-pronouns, age, build, skin, hair, eyes, distinguishing feature, demeanor, role,
-faction, outfit, headgear, gear, accent color, portrait backdrop, portrait
-weather, token stance.
+pronouns, theme, age, build, skin, hair, eyes, distinguishing feature,
+demeanor, role, faction, outfit, headgear, gear, accent color, portrait
+backdrop, portrait weather, token stance.
 Every `##` heading is a table and every `-` bullet under it is one option, so
 adding options needs no code change.
 
@@ -132,6 +132,56 @@ eligible and the weather opted out, and `none - the rolled scene is indoors or
 in vacuum` when the backdrop was never eligible. That second line is how you
 spot a forced `Weather` that was gated out rather than one that simply came up
 clear.
+
+## Theme
+
+Every NPC rolls one **Theme** — the visual world they come from — before any
+appearance table, and that theme gates Hair, Feature, Outfit, Headgear, Gear
+and Backdrop. It is what makes a rolled NPC read as one coherent character
+instead of a bag of independently-rolled traits.
+
+A rolled theme opens its own `@`-tagged bullets **plus every untagged one**,
+and excludes bullets tagged with a different theme. Once bullets are tagged,
+the intended mix is roughly 45% of the appearance bullets in the tables file
+carrying no tag at all; that neutral pool is the campaign's plain
+worn-industrial look and is reachable from every theme, so a neosamurai NPC in
+grey coveralls stays entirely possible.
+
+**As shipped, no bullet carries an `@` tag yet.** `filter_by_theme` and
+`apply_theme_share` both fall back to the full, untouched pool whenever there
+is nothing tagged to filter or balance against, so today Theme rolls and is
+recorded on the dossier but does not yet change which Hair, Feature, Outfit,
+Headgear, Gear or Backdrop bullets get drawn — that starts once a tagging pass
+adds `@theme` flags to bullets in `prompts/npc-generator-tables.md`.
+
+Because a thin theme would otherwise drown in that neutral pool once tagging
+lands, its own bullets are duplicated until they hold `THEME_SHARE` (0.6) of
+the pool. The multiplier is computed per table from the real pool sizes, so it
+self-corrects as content is authored.
+
+`THEME_SHARE` is a **target share of the pool as it stands before the civ/mil
+and gear-policy filters narrow it** — not a guarantee about the value actually
+drawn. `apply_theme_share` runs first and those filters run after it, dropping
+tagged and neutral bullets at different rates, so the realized share comes out
+*higher* than the nominal one whenever a theme correlates with what they keep:
+measured against a nominal 0.6, an all-civilian theme on a civilian role
+realized 0.72 and an all-military one on a military role 0.83. That is left as
+it is on purpose. Running `apply_theme_share` last instead would let a theme's
+tagged weapons re-inflate past the `unarmed * 5` bias in
+`GEAR_POLICY["Officials"]` and arm officials roughly 60% of the time, so the
+ordering is a real trade rather than an oversight — one for Phase 2 to settle
+with the measurement in hand.
+
+**Theme is independent of Role.** A pirate is as likely to look neosamurai as
+cyberpunk — that independence is a requirement, not an oversight. Role still
+governs whether they are uniformed and what they carry; the two compose, so a
+soldier rolled neosamurai gets that theme's *uniformed* bullets.
+
+Pin a whole group to one look with `--set-trait Theme=neosamurai`. The value is
+checked against the `Theme` table and an unknown one is an error listing what is
+available, the same as `--set-trait Pronouns=`: a typo used to roll all-neutral
+in silence, and an empty value was worse still — a theme was rolled and used to
+filter every pool, then overwritten with nothing on the dossier.
 
 ## Where the entries came from
 

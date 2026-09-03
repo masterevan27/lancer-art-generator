@@ -53,6 +53,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import math
 import os
 import random
 import re
@@ -103,10 +104,23 @@ DEFAULT_OUTPUT_ROOT = (Path(_OUTPUT_ROOT) if _OUTPUT_ROOT else SCRIPT_DIR / "out
 # Tables the prompt templates below require. Anything else in the markdown file
 # is ignored, so extra tables can be added for reference without breaking this.
 REQUIRED_TABLES = [
-    "Given names", "Family names", "Callsigns", "Pronouns", "Age", "Build",
-    "Height", "Skin", "Hair", "Eyes", "Feature", "Demeanor", "Role", "Faction",
-    "Outfit", "Headgear", "Gear", "Accent", "Backdrop", "Weather", "Stance",
+    "Given names", "Family names", "Callsigns", "Pronouns", "Theme", "Age",
+    "Build", "Height", "Skin", "Hair", "Eyes", "Feature", "Demeanor", "Role",
+    "Faction", "Outfit", "Headgear", "Gear", "Accent", "Backdrop", "Weather",
+    "Stance",
 ]
+
+# The tables a rolled Theme gates. Everything else - names, age, build, height,
+# skin, eyes, accent, weather, stance - describes the person or the moment
+# rather than the visual world they come from, and stays untouched by theme.
+# Phase 2 adds "Hair colour" here when that table exists, and swaps "Gear" for
+# "Weapon": the design spec's axis table (§2) has Theme governing Outfit,
+# Headgear, Hair, Hair colour, Weapon, Backdrop and Feature, and pointedly not
+# Gear. Gear is on this list today only because it is still the pre-split pool
+# that holds the armament - once §4.1 splits the katanas and rifles out into
+# "Weapon", what is left of Gear is data-slates, tool bags and thermoses, which
+# the spec does not treat as theme-defining.
+THEMED_TABLES = ("Hair", "Feature", "Outfit", "Headgear", "Gear", "Backdrop")
 
 # Krea 2 conditions on at most 512 tokens and silently truncates the rest, so a
 # prompt that runs long loses its tail - which is where the palette, the flat
@@ -213,6 +227,13 @@ GEAR_POLICY = {
     "Officials": "restricted",
     "Criminals": "armed_bias",
 }
+
+# How much of a themed roll should come from that theme's own bullets rather
+# than from the neutral pool. A theme that is merely *opened* is not *visible*:
+# with a dozen tagged bullets against a neutral floor of nearly two hundred, a
+# themed NPC would roll neutral almost every time and the theme would never be
+# seen. Raise it for a stronger house style, lower it for more variety.
+THEME_SHARE = 0.6
 
 # Generation workflows chosen by gender rather than by flag, keyed the same way
 # GENDER_TRAITS is: women render through their own checkpoint stack, and any
@@ -364,6 +385,66 @@ def filter_by_mil(options, mil):
     return plain or options
 
 
+def filter_by_theme(options, theme, name):
+    """A theme's own bullets plus the neutral pool; other themes' are dropped.
+
+    The neutral pool - every bullet carrying no '@' tag at all - is deliberately
+    reachable from every theme. Roughly 45% of this file's appearance bullets
+    are the campaign's plain worn-industrial look, and they belong in a
+    neosamurai NPC's wardrobe as much as anyone's: a woman in a kimono and a
+    woman in grey coveralls are both this setting.
+
+    Never filtered down to nothing, the same as every other filter here: a
+    tables file with no tags yet - which is exactly what this ships as - falls
+    back to the full pool rather than erroring.
+    """
+    if not theme:
+        return options
+    keep = [
+        x for x in options
+        if not themes_of(flags_for(name, x)) or theme in themes_of(flags_for(name, x))
+    ]
+    return keep or options
+
+
+def apply_theme_share(options, theme, name, share=THEME_SHARE):
+    """Duplicate the theme's own bullets until they hold `share` of the pool.
+
+    The multiplier is computed from the actual pool sizes rather than fixed, so
+    it self-corrects as content is authored: a theme with 56 outfits barely
+    needs duplicating, one with 11 needs a lot. A thin theme therefore still
+    reads as itself - at the cost of repeating within a run, which its low
+    weight in the Theme table already makes uncommon.
+
+    `share` is a target for the pool *as it reaches this function*, not a
+    promise about the value finally drawn. roll_npc() calls this first and then
+    narrows the result further - filter_by_mil(), the 'notac' filter,
+    apply_gear_policy() - and those later filters drop tagged and neutral
+    bullets at different rates, so the realized share runs above the nominal
+    one whenever they correlate with the theme. Measured against THEME_SHARE
+    at 0.6: an all-civilian theme on a civilian Role realized 0.72, an
+    all-military one on a military Role 0.83. Deliberately left as it is;
+    reordering the filters trades this for a worse problem (a theme's tagged
+    weapons re-inflating past GEAR_POLICY's unarmed bias), and that trade is
+    Phase 2's to make with the measurement in hand.
+
+    Untouched when there is nothing to balance: no theme, no tagged bullets, or
+    no neutral ones. Duplication only ever adds entries, so every bullet in the
+    pool stays reachable.
+    """
+    if not theme:
+        return options
+    tagged = [x for x in options if theme in themes_of(flags_for(name, x))]
+    neutral = [x for x in options if not themes_of(flags_for(name, x))]
+    if not tagged or not neutral:
+        return options
+
+    # Want tagged*n / (tagged*n + neutral) >= share, so
+    # n >= share*neutral / ((1 - share) * tagged).
+    n = math.ceil(share * len(neutral) / ((1 - share) * len(tagged)))
+    return tagged * max(1, n) + neutral
+
+
 def apply_gear_policy(options, category, mil):
     """Bias or filter the Gear roll to fit the NPC's Role.
 
@@ -477,14 +558,30 @@ def roll_npc(tables, rng, overrides=None):
         forced_build is not None and "figure" in split_flags(forced_build)[1]
     )
 
-    npc = {"Pronouns": pronouns}
+    # Theme is rolled before every appearance table it gates, for the same
+    # reason Pronouns is: the roll that selects between pools has to happen
+    # before those pools are drawn from. It is deliberately NOT gated on Role -
+    # a pirate should be as likely to look neosamurai as cyberpunk - so nothing
+    # here reads npc["Role"].
+    theme = (overrides or {}).get("Theme") or rng.choice(tables["Theme"])
+
+    npc = {"Pronouns": pronouns, "Theme": theme}
     young = False
     role_mil = False
     outfit_notac = False
     for name in REQUIRED_TABLES:
-        if name in ("Pronouns", "Stance"):
+        if name in ("Pronouns", "Theme", "Stance"):
             continue
         options = variant_table(tables, name, subject)
+
+        # Theme gates every appearance table: its own tagged bullets plus the
+        # neutral pool, with the tagged ones weighted up so the theme is
+        # actually visible rather than merely available. Applied first, so the
+        # civ/mil and policy filters below narrow within the theme rather than
+        # across it - which is what lets a soldier be neosamurai in uniform.
+        if name in THEMED_TABLES:
+            options = filter_by_theme(options, theme, name)
+            options = apply_theme_share(options, theme, name)
 
         # The Age/Build pairing runs both ways. When the Build was forced
         # to a bullet flagged 'figure' and the Age is being rolled, it is the
@@ -541,10 +638,19 @@ def roll_npc(tables, rng, overrides=None):
             value = forced_role
         if name == "Outfit" and forced_outfit is not None:
             value = forced_outfit
-        # Backdrop's '||' separates three fields rather than two and is
-        # parsed by split_backdrop, and Gear's flags are read further down,
-        # so neither can be split in passing here.
-        if name in ("Age", "Build", "Role", "Faction", "Outfit"):
+        # Whatever is left of a bullet is rendered straight into a prompt and
+        # a dossier, so its flag segment comes off here. Hair, Feature and
+        # Headgear are in this list because Theme tags them: the moment a
+        # bullet reads 'a long braid || @neosamurai', the tag would otherwise
+        # be shipped to the image model as part of the hairstyle.
+        #
+        # Two themed tables are still absent, both deliberately. Backdrop's
+        # '||' separates three fields rather than two and is parsed by
+        # split_backdrop downstream, which is where its flags are read; Gear's
+        # flags gate the Stance roll further down, so it is split there
+        # instead.
+        if name in ("Age", "Build", "Role", "Faction", "Outfit",
+                    "Hair", "Feature", "Headgear"):
             value, flags = split_flags(value)
             if name == "Age":
                 young = "young" in flags
@@ -580,6 +686,18 @@ def roll_npc(tables, rng, overrides=None):
     npc["Role"] = split_flags(npc["Role"])[0]
     npc["Faction"] = split_flags(npc["Faction"])[0]
     npc["Outfit"] = split_flags(npc["Outfit"])[0]
+    # The themed tables need it too, and Gear along with them: its split above
+    # happens before this update, so --set-trait Gear='a rifle || hands gun'
+    # would otherwise reach the prompt with its flags still attached.
+    npc["Hair"] = split_flags(npc["Hair"])[0]
+    npc["Feature"] = split_flags(npc["Feature"])[0]
+    npc["Headgear"] = split_flags(npc["Headgear"])[0]
+    npc["Gear"] = split_flags(npc["Gear"])[0]
+    # Stance for the same reason as Gear, and not because Stance is themed -
+    # it isn't. Its rolled value was split above (rng.choice(stances)[0]), so
+    # only a --set-trait Stance='... || hands' override still carries flags,
+    # and without this they would reach the token prompt.
+    npc["Stance"] = split_flags(npc["Stance"])[0]
 
     # Build needs the same unpacking, and for a second reason beyond tidiness:
     # the pool filters above only screen a *rolled* pool, so a pair of forced
@@ -663,6 +781,34 @@ def split_backdrop(bullet):
     shot, scene = parts[0], parts[1]
     flags = tuple(f for f in parts[2].split() if f) if len(parts) > 2 else ()
     return shot, scene, flags
+
+
+def themes_of(flags):
+    """The '@theme' tags among a bullet's flags, with the '@' stripped.
+
+    Theme tags share the '||' flag segment with the behavioural flags rather
+    than getting a field of their own, because every consumer of this file -
+    split_flags(), the npc-trait-import skill, the Import GUI's bullet editor -
+    already parses that segment. The '@' prefix is what tells the two apart.
+
+    An '@' token is invisible to the behavioural flag checks elsewhere in this
+    module, which all test for a specific literal ('hands', 'civ', 'figure'),
+    so split_flags() needs no change to coexist with these.
+    """
+    return frozenset(f[1:] for f in flags if f.startswith("@") and len(f) > 1)
+
+
+def flags_for(name, bullet):
+    """A bullet's flag tuple, whichever '||' shape its table uses.
+
+    Backdrop bullets carry three segments and keep their flags in the third,
+    so a two-segment Backdrop has no flags at all - its second segment is the
+    scene. Every other table keeps flags in the second segment. Reading the
+    last segment blindly would mistake a Backdrop's scene text for flags.
+    """
+    if name == "Backdrop":
+        return split_backdrop(bullet)[2]
+    return split_flags(bullet)[1]
 
 
 def weather_sentence(npc):
@@ -784,6 +930,9 @@ def write_dossier(path, npc, seed, prompts, images):
         ("Callsign", npc["Callsigns"]),
         ("Pronouns", npc["Pronouns"]),
         ("Reads as", npc["_pronouns"]["gender"]),
+        # .get rather than [...], so regenerating an NPC from a manifest entry
+        # written before Theme existed still writes a dossier rather than raising.
+        ("Theme", npc.get("Theme", "-")),
         ("Role", npc["Role"]),
         ("Affiliation", npc["Faction"]),
         ("Age", npc["Age"]),
@@ -930,6 +1079,7 @@ def parse_args(argv=None):
                            "gates every gendered variant table along with it")
     roll.add_argument("--set-trait", action="append", default=[], metavar="Table=value",
                       help="force one rolled trait, e.g. --set-trait Role='a field medic' "
+                           "or --set-trait Theme=neosamurai to pin a whole group to one look "
                            "(repeatable; table names are the markdown headings)")
 
     gen = p.add_argument_group("generation")
@@ -1278,6 +1428,21 @@ def main(argv=None):
             raise SystemExit(
                 "--set-trait Pronouns=%r: no such subject in the Pronouns table. "
                 "Available: %s" % (args.overrides["Pronouns"], ", ".join(sorted(known)))
+            )
+
+    # Same check, same shape, for the same class of mistake: a forced Theme the
+    # table doesn't offer used to resolve in silence to an all-neutral roll.
+    # The empty string is the sharper case - it is falsy, so roll_npc() rolls a
+    # real theme and filters every themed pool with it, and then
+    # npc.update(overrides) pastes the empty value back over the record. The
+    # dossier would report no theme for an NPC that was themed, contradicting
+    # the line it prints promising that this seed reproduces this NPC exactly.
+    if "Theme" in args.overrides:
+        known = sorted(set(tables["Theme"]))
+        if args.overrides["Theme"] not in known:
+            raise SystemExit(
+                "--set-trait Theme=%r: no such theme in the Theme table. "
+                "Available: %s" % (args.overrides["Theme"], ", ".join(known))
             )
 
     base_seed = args.seed if args.seed is not None else random.randint(0, 2 ** 32 - 1)
