@@ -49,13 +49,30 @@ conventions, and the pronoun placeholders. As of this writing the flags are:
 | `clear` | Weather | Contributes nothing to the prompt. |
 | `young` | Age | NPC under twenty; swaps the adult clauses. |
 | `figure` | Build | Written in terms of an adult woman's figure; dropped when Age rolled `young`. |
+| `@<theme>` | Hair, Feature, Outfit, Headgear, Gear, Backdrop — **and nowhere else** | A *theme tag*, not a behavioural flag: the bullet belongs to that visual world. Untagged is neutral and reachable from every theme. See the trap below before using one. |
+
+Run `python -c "import importlib.util,sys,pathlib;s=importlib.util.spec_from_file_location('g','generate-npc.py');m=importlib.util.module_from_spec(s);sys.modules['g']=m;s.loader.exec_module(m);print(sorted(set(m.parse_tables(pathlib.Path('prompts/npc-generator-tables.md'))['Theme'])))"`
+to get the live list of theme names. Never invent one — a misspelled theme is
+matched literally, belongs to no theme, and quietly excludes the bullet from
+every roll but its own typo.
 
 **Treat that table as a mirror that has already gone stale once, not as the
 spec.** It previously omitted `weapon`, `simple`, `sidearm` and `notac`
 entirely, and a run trusting it emitted wrong flags. Diff it against the file
 every run and fix this skill if they disagree.
 
-Two flag traps worth stating outright, because both have been gotten wrong:
+**Flags the design specifies that do NOT exist yet — do not emit these.**
+`docs/superpowers/specs/2026-09-03-themed-npc-generation-design.md` §7 lists
+`older`, `bulk`, `enclosed`, `sealed`, `vacuum` and `mechown`/`mechwork`/
+`mechnear`, and §4 splits `Gear` into Gear + `Weapon` and `Hair` into Hair +
+`Hair colour`. **None of that has landed.** Those tables don't exist and no
+filter reads those flags, so emitting one now produces a bullet that is
+silently ignored — or, on a table that is never split, one that renders the
+flag as literal prompt text. Add them to this skill in the same change that
+adds them to the generator, not before. The theme tag above is the only part
+of that design currently live.
+
+Three flag traps worth stating outright, because each has been gotten wrong:
 
 - **`sidearm` means holstered or worn, never gripped.** The Gear comment is
   explicit: "A bullet gripped or raised in the hands doesn't count, even if
@@ -64,6 +81,29 @@ Two flag traps worth stating outright, because both have been gotten wrong:
 - **`hands`/`gun` describe the hands, not the hardware.** A shoulder-mounted
   pod or a slung rifle is `mil weapon` with no `hands`/`gun` — those two are
   for what the subject is actually holding.
+- **A theme tag is the one flag where over-tagging is the failure mode.**
+  Every other flag here is safer applied than omitted. Theme tags invert
+  that. The design rests on roughly **45% of appearance bullets staying
+  untagged**: that neutral pool is the campaign's plain worn-industrial look
+  and is what every theme draws from, so a `@neosamurai` NPC can still turn
+  up in grey coveralls. Tag a bullet only when it would look *wrong* in
+  another theme's NPC — lacquered plate, a horned kabuto, glowing data
+  ports. A tag on a plain jacket doesn't enrich a theme, it shrinks the
+  neutral floor for all eight. **When in doubt, leave it neutral**; a
+  reviewer can add a tag in one keystroke and will never notice a missing
+  one.
+
+  Two further rules, both silent when broken:
+
+  - **The tag is read on six tables only** — `Hair`, `Feature`, `Outfit`,
+    `Headgear`, `Gear`, `Backdrop`. On any other table it does nothing, and
+    on `Skin`, `Eyes`, `Demeanor`, `Accent`, `Height` and the name tables it
+    is *worse* than nothing: those are never split on `||`, so a bullet
+    reading `- chrome-inlaid irises || @cyberpunk` ships the literal text
+    `|| @cyberpunk` to the image model and prints it in the dossier.
+  - **A bullet may carry more than one tag** (`|| civ @cyberpunk @gundam`)
+    and is then reachable from either — the right move for genuinely
+    cross-over hardware, and better than picking one arbitrarily.
 
 The pronoun placeholders are
 `{Subject}`/`{subject}`/`{object}`/`{possessive}`/`{Possessive}`/`{is_are}`/
@@ -318,23 +358,41 @@ against the file you just wrote and fix anything they surface:
    matched exactly including any variant suffix. The importer refuses
    anything else.
 3. **Every flag is in §0's table.** Unknown flags fail quietly forever.
-4. **Every `{placeholder}` is in the allowed set**, with no `{Object}` and no
+4. **Every `@theme` tag names a real theme** from the live `## Theme` table
+   (get the list with the one-liner in §0), **and sits on one of the six
+   tables that read it** — `Hair`, `Feature`, `Outfit`, `Headgear`, `Gear`,
+   `Backdrop`, counting variant suffixes (`Outfit (she) +` reads tags;
+   `Eyes (she) +` does not). Both failures are silent at render time, and the
+   second renders the tag as literal prompt text.
+5. **The run did not over-tag.** Count the tagged candidates against the
+   untagged ones for the six themed tables. If most of this run's appearance
+   candidates carry a tag, stop and re-read the over-tagging trap in §0 —
+   that ratio is backwards, and the fix is to drop tags, not to justify them.
+   Report the ratio in §8 either way.
+6. **Every `{placeholder}` is in the allowed set**, with no `{Object}` and no
    `{object}'s`.
-5. **Every `source_image` exists on disk**, compared against a real directory
+7. **Every `source_image` exists on disk**, compared against a real directory
    listing — this catches both truncation and invention.
-6. **Every input image is accounted for** in `entries` or `skipped`, with no
+8. **Every input image is accounted for** in `entries` or `skipped`, with no
    image referenced that isn't in the run.
-7. **`id`s are unique.**
+9. **`id`s are unique.**
 
-A short script is the fast way to do all seven; if the run was small enough
+A short script is the fast way to do all nine; if the run was small enough
 to eyeball, eyeball it. Report what you checked, not just that you checked.
 
 ## 8. Tell the user what you staged
 
 After writing the file, summarize in chat: how many candidates, which tables
 they target, how many images were skipped and why (in categories, not one
-line per image), and the file path — so the user knows a review step is
-waiting without needing to open the JSON to check.
+line per image), **the theme-tag ratio from §7.5** (how many of this run's
+six-table appearance candidates carry a tag, and which themes), and the file
+path — so the user knows a review step is waiting without needing to open the
+JSON to check.
+
+State the tag ratio even when it is zero. A run that tagged nothing is a
+perfectly good run — the neutral pool is load-bearing — but the user is the
+one deciding when a theme has enough content to raise its weight, and they
+can only do that if every run says what it contributed.
 
 Surface anything the reviewer would otherwise discover the hard way:
 candidates that overlap each other or an existing bullet, judgment calls you
