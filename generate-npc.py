@@ -665,6 +665,34 @@ def split_backdrop(bullet):
     return shot, scene, flags
 
 
+def themes_of(flags):
+    """The '@theme' tags among a bullet's flags, with the '@' stripped.
+
+    Theme tags share the '||' flag segment with the behavioural flags rather
+    than getting a field of their own, because every consumer of this file -
+    split_flags(), the npc-trait-import skill, the Import GUI's bullet editor -
+    already parses that segment. The '@' prefix is what tells the two apart.
+
+    An '@' token is invisible to the behavioural flag checks elsewhere in this
+    module, which all test for a specific literal ('hands', 'civ', 'figure'),
+    so split_flags() needs no change to coexist with these.
+    """
+    return frozenset(f[1:] for f in flags if f.startswith("@") and len(f) > 1)
+
+
+def flags_for(name, bullet):
+    """A bullet's flag tuple, whichever '||' shape its table uses.
+
+    Backdrop bullets carry three segments and keep their flags in the third,
+    so a two-segment Backdrop has no flags at all - its second segment is the
+    scene. Every other table keeps flags in the second segment. Reading the
+    last segment blindly would mistake a Backdrop's scene text for flags.
+    """
+    if name == "Backdrop":
+        return split_backdrop(bullet)[2]
+    return split_flags(bullet)[1]
+
+
 def weather_sentence(npc):
     """The weather sentence this NPC's portrait gets, or '' for none.
 
