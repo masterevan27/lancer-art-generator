@@ -420,13 +420,18 @@ def apply_theme_share(options, theme, name, share=THEME_SHARE):
     promise about the value finally drawn. roll_npc() calls this first and then
     narrows the result further - filter_by_mil(), the 'notac' filter,
     apply_gear_policy() - and those later filters drop tagged and neutral
-    bullets at different rates, so the realized share runs above the nominal
-    one whenever they correlate with the theme. Measured against THEME_SHARE
-    at 0.6: an all-civilian theme on a civilian Role realized 0.72, an
-    all-military one on a military Role 0.83. Deliberately left as it is;
-    reordering the filters trades this for a worse problem (a theme's tagged
-    weapons re-inflating past GEAR_POLICY's unarmed bias), and that trade is
-    Phase 2's to make with the measurement in hand.
+    bullets at different rates, so the realized share drifts by however much
+    they correlate with the theme. It drifts BOTH ways, and down is the
+    direction that bites: measured against THEME_SHARE at 0.6, a
+    military-leaning theme's Gear realized 0.76, while a theme whose only
+    tagged Outfit is 'civ' realized 0.36 on that table, because filter_by_mil
+    drops that bullet outright for a military Role. A theme authored entirely
+    on one side of the civ/mil split is invisible to roles on the other side
+    whatever `share` says - see `python -m test.theme_visibility`.
+
+    Deliberately left as it is; reordering the filters trades this for a worse
+    problem (a theme's tagged weapons re-inflating past GEAR_POLICY's unarmed
+    bias), and that trade is Phase 2's to make with the measurement in hand.
 
     Untouched when there is nothing to balance: no theme, no tagged bullets, or
     no neutral ones. Duplication only ever adds entries, so every bullet in the

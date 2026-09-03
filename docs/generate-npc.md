@@ -162,15 +162,28 @@ self-corrects as content is authored.
 `THEME_SHARE` is a **target share of the pool as it stands before the civ/mil
 and gear-policy filters narrow it** — not a guarantee about the value actually
 drawn. `apply_theme_share` runs first and those filters run after it, dropping
-tagged and neutral bullets at different rates, so the realized share comes out
-*higher* than the nominal one whenever a theme correlates with what they keep:
-measured against a nominal 0.6, an all-civilian theme on a civilian role
-realized 0.72 and an all-military one on a military role 0.83. That is left as
-it is on purpose. Running `apply_theme_share` last instead would let a theme's
-tagged weapons re-inflate past the `unarmed * 5` bias in
-`GEAR_POLICY["Officials"]` and arm officials roughly 60% of the time, so the
-ordering is a real trade rather than an oversight — one for Phase 2 to settle
-with the measurement in hand.
+tagged and neutral bullets at different rates, so the realized share drifts
+from the nominal one by however much a theme's tags correlate with what those
+filters keep. **It drifts in both directions**, and downward is the direction
+that matters:
+
+```
+python -m test.theme_visibility --tables test/fixtures/tables-themed.md
+```
+
+On that fixture, against a nominal 0.6, a military-leaning theme's Gear
+realized 0.76 while a thin theme's Outfit realized **0.36** — its single
+tagged Outfit bullet is `civ`, so `filter_by_mil` drops it outright for a
+military Role and the theme vanishes for half that theme's NPCs. A theme
+authored entirely in one of `civ`/`mil` is therefore invisible to roles on the
+other side, no matter what `THEME_SHARE` says. Give a theme bullets on both
+sides of that split, or accept that it only reads on half the roster.
+
+The ordering is left as it is on purpose. Running `apply_theme_share` last
+instead would let a theme's tagged weapons re-inflate past the `unarmed * 5`
+bias in `GEAR_POLICY["Officials"]` and arm officials roughly 60% of the time,
+so it is a real trade rather than an oversight — one for Phase 2 to settle,
+now that the measurement exists to settle it with.
 
 **Theme is independent of Role.** A pirate is as likely to look neosamurai as
 cyberpunk — that independence is a requirement, not an oversight. Role still

@@ -17,56 +17,15 @@ import random
 import tempfile
 import unittest
 
-from test.helpers import FIXTURE_TABLES, load_generator
+from test.helpers import (
+    FIXTURE_TABLES, bullets_for, core_of, foreign_texts, load_generator)
 
 gen = load_generator()
 TABLES = gen.parse_tables(FIXTURE_TABLES)
 
-# Every pronoun set the fixture can roll, so a bullet's placeholders can be
-# filled the same way roll_npc() fills them - see core_of() below.
-PRONOUN_SETS = [gen.pronoun_fields(p) for p in TABLES["Pronouns"]]
-
 
 def roll(seed, **overrides):
     return gen.roll_npc(TABLES, random.Random(seed), overrides or None)
-
-
-def core_of(name, bullet):
-    """A bullet reduced to the part that survives into the rolled NPC.
-
-    Flags come off - Backdrop keeps them in a third segment, every other table
-    in a second - so a rolled value and the fixture bullet it came from compare
-    equal even for the tables roll_npc() strips flags from. Backdrop keeps both
-    its shot and its scene, since two scenes can share a shot phrase.
-    """
-    if name == "Backdrop":
-        shot, scene, _ = gen.split_backdrop(bullet)
-        return "%s || %s" % (shot, scene)
-    return gen.split_flags(bullet)[0]
-
-
-def rendered(name, bullet):
-    """Every string one fixture bullet can appear as once an NPC is rolled.
-
-    roll_npc() substitutes pronoun placeholders into every value it returns, so
-    "{Subject} {wear} a wide woven hat." comes back as "She wears a wide woven
-    hat." Expanding the fixture side against all pronoun sets is what lets the
-    comparison be a plain set membership test.
-    """
-    core = core_of(name, bullet)
-    if "{" not in core:
-        return {core}
-    return {core.format(**fields) for fields in PRONOUN_SETS}
-
-
-def bullets_for(name):
-    """A table's bullets, including its per-pronoun variant tables."""
-    return [
-        bullet
-        for key, options in TABLES.items()
-        if key == name or key.startswith("%s (" % name)
-        for bullet in options
-    ]
 
 
 def rendered_parts(name, value):
@@ -86,16 +45,11 @@ def rendered_parts(name, value):
 def foreign_bullets(name, theme):
     """Rendered bullets of `name` that belong to a theme other than `theme`.
 
-    A bullet reachable under this theme as well - untagged, or tagged with this
-    theme too - is subtracted back out, so a table that happens to repeat the
-    same text under two themes cannot produce a false failure.
+    Thin wrapper binding the shared helper to this module's fixture, so the
+    tests below read the way they did before the helper moved into
+    test/helpers.py to be shared with the visibility measurement.
     """
-    foreign, allowed = set(), set()
-    for bullet in bullets_for(name):
-        tags = gen.themes_of(gen.flags_for(name, bullet))
-        (foreign if tags and theme not in tags else allowed).update(
-            rendered(name, bullet))
-    return foreign - allowed
+    return foreign_texts(TABLES, name, theme)
 
 
 class TestThemeRoll(unittest.TestCase):
@@ -180,7 +134,7 @@ class TestThemeRoll(unittest.TestCase):
         that same block and its override was leaking flags for the same reason.
         """
         for name in gen.THEMED_TABLES + ("Stance",):
-            flagged = [b for b in bullets_for(name) if gen.flags_for(name, b)]
+            flagged = [b for b in bullets_for(TABLES, name) if gen.flags_for(name, b)]
             # Every table here must have material to force, or this test has
             # quietly stopped covering it.
             self.assertTrue(

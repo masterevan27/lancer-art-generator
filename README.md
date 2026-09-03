@@ -73,9 +73,22 @@ python -m unittest discover test
 
 Tests load the generator by path (its hyphen makes it non-importable) and roll
 against `test/fixtures/tables-minimal.md` rather than the live tables, so
-authoring a bullet never breaks a test. The exception is the pair of guards on
-where a `@theme` tag may appear, which have to read the live tables file to say
+authoring a bullet never breaks a test. The exceptions are the guards on where
+a `@theme` tag may appear, which have to read the live tables file to say
 anything at all.
+
+Theme visibility is measured rather than asserted, because the number is a
+property of the content and the content is authored over time:
+
+```
+python -m test.theme_visibility                  # the live tables
+python -m test.theme_visibility --tables test/fixtures/tables-themed.md
+```
+
+That prints, per theme and per gated table, how much content the theme has and
+how often a rolled NPC of that theme actually got one of its bullets rather
+than a neutral one. Run it while tagging to watch a theme come up. It reports
+zeroes today, which is the correct pre-tagging baseline.
 
 ### Output location
 
