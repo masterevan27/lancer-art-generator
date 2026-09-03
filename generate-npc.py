@@ -511,7 +511,7 @@ def apply_theme_share(options, theme, name, share=THEME_SHARE):
     return tagged * max(1, n) + neutral
 
 
-def apply_weapon_policy(options, category, mil):
+def apply_weapon_policy(options, category, mil, unarmed=False):
     """Bias or filter the Weapon roll to fit the NPC's Role.
 
     Three tiers, layered on top of filter_by_mil's civ/mil split:
@@ -542,6 +542,15 @@ def apply_weapon_policy(options, category, mil):
     happens for a tables file with no 'weapon'/'sidearm' flags to duplicate
     or filter on.
     """
+    # --unarmed disarms who it can, not everyone. A mil Role's sidearm is a
+    # setting guarantee and a Criminal's armament is most of what makes them
+    # read as one; the flag exists to empty ordinary civilians' hands. Placed
+    # first so the intent is visible before the tiers it overrides, though the
+    # mil guard below would reach the same answer either way.
+    if unarmed and not mil and category != "Criminals":
+        disarmed = [x for x in options if "weapon" not in split_flags(x)[1]]
+        return disarmed or options
+
     if mil:
         armed = [x for x in options if "sidearm" in split_flags(x)[1]]
         return armed or options
@@ -606,7 +615,7 @@ def pronoun_fields(pronouns):
     }
 
 
-def roll_npc(tables, rng, overrides=None):
+def roll_npc(tables, rng, overrides=None, unarmed=False):
     """One NPC as a flat dict of trait -> rolled text."""
     # Pronouns first: every other table may have a per-pronoun variant, so the
     # roll that selects between them has to happen before the rest.
@@ -725,7 +734,7 @@ def roll_npc(tables, rng, overrides=None):
         # fallback re-admits them rather than the reverse.
         if name == "Weapon":
             options = apply_weapon_policy(
-                options, ROLE_CATEGORIES.get(npc["Role"]), role_mil)
+                options, ROLE_CATEGORIES.get(npc["Role"]), role_mil, unarmed)
 
         # 'notac' applies to both halves of the old Gear table: an elaborate or
         # traditional outfit should pair with neither a military-issue rifle
@@ -808,7 +817,21 @@ def roll_npc(tables, rng, overrides=None):
     # in their pockets, which is the pairing this filter exists to stop.
     carried_flags = weapon_flags + gear_flags
     stances = [split_flags(x) for x in variant_table(tables, "Stance", subject)]
-    if "gun" not in carried_flags:
+    # Two flags, one hierarchy. 'armed' marks a pose that references a weapon
+    # of any kind - a blade held, a hilt gripped, a weapon raised overhead;
+    # 'gun' marks the narrower case of a firearm being handled. An NPC whose
+    # Weapon roll came up empty can wear neither, or the prompt poses them
+    # brandishing something no earlier sentence names. Before 'armed' existed
+    # only 'gun' was gated, so seven melee poses could land on an unarmed
+    # figure - rare on a plain roll, routine under --unarmed.
+    #
+    # The unarmed bullet is identified by its 'none' flag, which used to be an
+    # inert marker and is now load-bearing; the Weapon table's comment says so.
+    if "none" in weapon_flags:
+        disarmed = [x for x in stances
+                    if "armed" not in x[1] and "gun" not in x[1]]
+        stances = disarmed or stances      # never filter the pool down to nothing
+    elif "gun" not in carried_flags:
         unarmed = [x for x in stances if "gun" not in x[1]]
         stances = unarmed or stances       # never filter the pool down to nothing
     if "hands" in carried_flags:
@@ -1345,6 +1368,10 @@ def parse_args(argv=None):
                       help="force one rolled trait, e.g. --set-trait Role='a field medic' "
                            "or --set-trait Theme=neosamurai to pin a whole group to one look "
                            "(repeatable; table names are the markdown headings)")
+    roll.add_argument("--unarmed", action="store_true",
+                      help="roll every NPC unarmed, except military Roles and "
+                           "Criminals - a soldier's sidearm and a pirate's "
+                           "armament are what make them read as one")
 
     gen = p.add_argument_group("generation")
     gen.add_argument("--workflow", type=Path, default=art.DEFAULT_WORKFLOW,
@@ -1415,6 +1442,7 @@ def parse_args(argv=None):
                 ("--count", args.count != 1), ("--seed", args.seed is not None),
                 ("--name", bool(args.name)), ("--pronouns", bool(args.pronouns)),
                 ("--set-trait", bool(args.set_trait)),
+                ("--unarmed", args.unarmed),
             ) if given
         ]
         if conflicting:
@@ -1719,7 +1747,7 @@ def main(argv=None):
     rolled = []
     for n in range(args.count):
         seed = base_seed + n
-        npc = roll_npc(tables, random.Random(seed), overrides)
+        npc = roll_npc(tables, random.Random(seed), overrides, args.unarmed)
         rolled.append((seed, npc, build_prompts(npc)))
 
     print("%s: %d tables, %d NPC(s) rolled from base seed %d" % (

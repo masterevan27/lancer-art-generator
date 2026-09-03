@@ -45,16 +45,20 @@ templates at the bottom of this file.
   together, so an NPC never ends up holding something in both hands while
   standing with those hands in their pockets.
   Tag any new bullet the same way — an untagged one is treated as hands-free.
-- **Weapon** and **Stance** bullets may also carry `|| gun`. On a Weapon
-  entry that marks the item as an actual firearm held in hand; on a Stance
-  entry it marks a pose that describes aiming, firing or otherwise handling
-  a weapon — one the Weapon roll has to supply, so a gun pose is never
-  rolled for an NPC whose Weapon roll came up empty or something pocketable.
-  A bullet can carry both flags at once, `|| hands gun`. Stance poses that
-  reference a weapon do so generically — "raising it", "sighting down it" —
-  since the Weapon line earlier in the prompt has already named the specific
-  weapon; naming it twice would just contradict itself if the two ever
-  disagreed.
+- **Weapon** and **Stance** bullets may also carry `|| gun`, and a **Stance**
+  bullet may separately carry `|| armed`. On a Weapon entry `gun` marks the
+  item as an actual firearm held in hand. On a Stance entry the two form a
+  hierarchy: `armed` marks a pose that references a weapon of any kind — a
+  blade held, a hilt gripped, a weapon raised overhead — while `gun` marks
+  the narrower case of a firearm specifically being aimed, fired or otherwise
+  handled. Both read off the Weapon roll: an NPC whose Weapon came up empty
+  drops both `armed` and `gun` poses, one whose Weapon is a non-firearm
+  weapon drops only `gun` and keeps `armed` reachable, and one whose Weapon
+  is a firearm reaches both. A bullet can carry both flags at once,
+  `|| hands gun`. Stance poses that reference a weapon do so generically —
+  "raising it", "sighting down it" — since the Weapon line earlier in the
+  prompt has already named the specific weapon; naming it twice would just
+  contradict itself if the two ever disagreed.
 - **Backdrop** bullets carry three segments: the shot's opening phrase, the
   scene sentence, then optional flags. There are two: `nogear` and `weather`,
   and a bullet may carry both — `|| nogear weather`. `weather` marks a scene
@@ -1578,13 +1582,17 @@ ignored — so notes like this one are safe to leave inline.
   every theme's armament used to land on everyone.
 
   The 'x30 || none' entry is an empty bullet: split_flags() parses it to text
-  '' with flags ('none',), so it contributes nothing to the prompt - 'none' is
-  a literal marker flag that nothing reads. It keeps an unarmed NPC the common
-  case, and it keeps the average prompt short, since most NPCs then render no
-  weapon phrase at all. Its weight is the dial for how armed the setting feels
-  - raise it for a quieter one. A 'mil' Role never reaches it:
-  apply_weapon_policy() restricts that pool to 'sidearm'-flagged bullets,
-  which this is not.
+  '' with flags ('none',), so it contributes nothing to the prompt. It keeps
+  an unarmed NPC the common case, and it keeps the average prompt short, since
+  most NPCs then render no weapon phrase at all. Its weight is the dial for
+  how armed the setting feels - raise it for a quieter one. A 'mil' Role never
+  reaches it: apply_weapon_policy() restricts that pool to 'sidearm'-flagged
+  bullets, which this is not.
+
+  'none' is also read directly, by the Stance filter in roll_npc(): once the
+  Weapon roll lands on this bullet, a pose that names a weapon - flagged
+  'armed' or 'gun' - is no longer reachable, so an unarmed NPC is never posed
+  brandishing something the prompt never named.
 
   That weight is the baseline. On top of it, apply_weapon_policy() gives every
   non-military Role a 'civilian' tier that stacks further copies of this entry
@@ -2011,15 +2019,15 @@ ignored — so notes like this one are safe to leave inline.
 - leaning forward and down, braced on one forearm, the other hand reaching toward something out of frame || hands
 - crouched low and coiled, weight braced forward on one arm, ready to spring || hands
 - leaning low into a forward sprint, {possessive} braid whipped back and one arm driving down
-- crouched low on one knee, both hands wrapped around an upright blade, ready to spring || hands
-- standing in profile with head bowed slightly, one hand resting on a sheathed blade at the hip || hands
-- caught in a dynamic overhead swing, both hands driving a blade down in a decisive arc, cloak and sash ribbons whipped by the motion || hands
-- kneeling formally with both hands folded around an upright hilt held back against one shoulder || hands
+- crouched low on one knee, both hands wrapped around an upright blade, ready to spring || hands armed
+- standing in profile with head bowed slightly, one hand resting on a sheathed blade at the hip || hands armed
+- caught in a dynamic overhead swing, both hands driving a blade down in a decisive arc, cloak and sash ribbons whipped by the motion || hands armed
+- kneeling formally with both hands folded around an upright hilt held back against one shoulder || hands armed
 - kneeling in profile with head bowed low, hands stilled in {possessive} lap
-- walking straight toward the viewer with {possessive} weapon raised over one shoulder, cloak snapping back behind {object} || hands
-- raising {possessive} weapon high overhead in both hands, mid-swing, hair whipped wild by the motion || hands
+- walking straight toward the viewer with {possessive} weapon raised over one shoulder, cloak snapping back behind {object} || hands armed
+- raising {possessive} weapon high overhead in both hands, mid-swing, hair whipped wild by the motion || hands armed
 - sitting cross-legged with one elbow propped on a knee, chin resting in that hand, gazing out in quiet thought
-- standing tense with both hands crossed at the hip, one gripping the hilt of {possessive} sheathed weapon, poised to draw || hands
+- standing tense with both hands crossed at the hip, one gripping the hilt of {possessive} sheathed weapon, poised to draw || hands armed
 - crouched low on the balls of the feet, one fist raised in a guarded ready stance, weight coiled forward || hands
 
 ## Stance (she) +
