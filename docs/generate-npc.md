@@ -133,6 +133,31 @@ in vacuum` when the backdrop was never eligible. That second line is how you
 spot a forced `Weather` that was gated out rather than one that simply came up
 clear.
 
+## Theme
+
+Every NPC rolls one **Theme** — the visual world they come from — before any
+appearance table, and that theme gates Hair, Feature, Outfit, Headgear, Gear
+and Backdrop. It is what makes a rolled NPC read as one coherent character
+instead of a bag of independently-rolled traits.
+
+A rolled theme opens its own `@`-tagged bullets **plus every untagged one**,
+and excludes bullets tagged with a different theme. Roughly 45% of the
+appearance bullets in the tables file carry no tag at all; that neutral pool is
+the campaign's plain worn-industrial look and is reachable from every theme, so
+a neosamurai NPC in grey coveralls stays entirely possible.
+
+Because a thin theme would otherwise drown in that neutral pool, its own
+bullets are duplicated until they hold `THEME_SHARE` (0.6) of the pool. The
+multiplier is computed per table from the real pool sizes, so it self-corrects
+as content is authored.
+
+**Theme is independent of Role.** A pirate is as likely to look neosamurai as
+cyberpunk — that independence is a requirement, not an oversight. Role still
+governs whether they are uniformed and what they carry; the two compose, so a
+soldier rolled neosamurai gets that theme's *uniformed* bullets.
+
+Pin a whole group to one look with `--set-trait Theme=neosamurai`.
+
 ## Where the entries came from
 
 Many were reverse-engineered from authored prompts already on this machine, read
