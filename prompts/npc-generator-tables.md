@@ -89,6 +89,15 @@ templates at the bottom of this file.
   Outfit's `notac` keeps a handful of elaborate or traditional outfits (a
   kimono, shrine robes) from ever pairing with `mil`-flagged Gear.
 
+A flag beginning `@` is a **theme tag** rather than a behavioural flag —
+`|| civ @neosamurai` reads as "civilian dress, belonging to the neosamurai
+look". The `Theme` table is rolled once per NPC before any appearance table,
+and a rolled theme opens its own tagged bullets plus every **untagged** one,
+excluding bullets tagged with a different theme. A bullet may carry more than
+one tag and is then reachable from either. An untagged bullet is neutral and
+reachable from every theme — most bullets in this file are, and should stay
+that way; tag only what is strongly of one look.
+
 Flags are matched literally and an unrecognized one is ignored rather than
 reported, so `|| Figure` or `|| hand` reads as no flag at all — which fails
 quietly in the render rather than loudly at the console. Copy the spelling from
@@ -769,6 +778,38 @@ ignored — so notes like this one are safe to leave inline.
 
 - she/her/her/woman
 - he/him/his/man
+
+## Theme
+
+<!--
+  The visual world this NPC comes from, rolled once and honoured by every
+  appearance table. This is what makes a rolled NPC read as one coherent
+  character rather than a bag of independently-rolled traits.
+
+  A bullet here is a bare name; appearance bullets refer to it with an '@'
+  prefix in their flag segment - '|| civ @neosamurai'. A rolled theme opens
+  its own tagged bullets plus every untagged one, and excludes the rest.
+
+  Theme is deliberately independent of Role: a pirate is as likely to look
+  neosamurai as cyberpunk. Do not gate one on the other.
+
+  Weights start proportional to how much content each theme has, so a thin
+  theme is rare rather than repetitive. Raise a weight as you author more -
+  it needs no code change. The intended end state is roughly equal weights.
+
+  There is deliberately no 'grounded' entry: the untagged bullets throughout
+  this file already are the worn-industrial Lancer look, and they serve as the
+  neutral floor every theme draws from rather than competing as a ninth theme.
+-->
+
+- x6 gundam
+- x6 tactical
+- x6 neosamurai
+- x4 cyberpunk
+- x2 neogothic
+- grimdark
+- corporate
+- scav
 
 ## Age
 
