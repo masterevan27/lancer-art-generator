@@ -620,10 +620,19 @@ def roll_npc(tables, rng, overrides=None):
             value = forced_role
         if name == "Outfit" and forced_outfit is not None:
             value = forced_outfit
-        # Backdrop's '||' separates three fields rather than two and is
-        # parsed by split_backdrop, and Gear's flags are read further down,
-        # so neither can be split in passing here.
-        if name in ("Age", "Build", "Role", "Faction", "Outfit"):
+        # Whatever is left of a bullet is rendered straight into a prompt and
+        # a dossier, so its flag segment comes off here. Hair, Feature and
+        # Headgear are in this list because Theme tags them: the moment a
+        # bullet reads 'a long braid || @neosamurai', the tag would otherwise
+        # be shipped to the image model as part of the hairstyle.
+        #
+        # Two themed tables are still absent, both deliberately. Backdrop's
+        # '||' separates three fields rather than two and is parsed by
+        # split_backdrop downstream, which is where its flags are read; Gear's
+        # flags gate the Stance roll further down, so it is split there
+        # instead.
+        if name in ("Age", "Build", "Role", "Faction", "Outfit",
+                    "Hair", "Feature", "Headgear"):
             value, flags = split_flags(value)
             if name == "Age":
                 young = "young" in flags
@@ -659,6 +668,13 @@ def roll_npc(tables, rng, overrides=None):
     npc["Role"] = split_flags(npc["Role"])[0]
     npc["Faction"] = split_flags(npc["Faction"])[0]
     npc["Outfit"] = split_flags(npc["Outfit"])[0]
+    # The themed tables need it too, and Gear along with them: its split above
+    # happens before this update, so --set-trait Gear='a rifle || hands gun'
+    # would otherwise reach the prompt with its flags still attached.
+    npc["Hair"] = split_flags(npc["Hair"])[0]
+    npc["Feature"] = split_flags(npc["Feature"])[0]
+    npc["Headgear"] = split_flags(npc["Headgear"])[0]
+    npc["Gear"] = split_flags(npc["Gear"])[0]
 
     # Build needs the same unpacking, and for a second reason beyond tidiness:
     # the pool filters above only screen a *rolled* pool, so a pair of forced

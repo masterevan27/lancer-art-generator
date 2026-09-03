@@ -10,7 +10,9 @@ per table and per theme, the set of bullets belonging to *some other* theme and
 assert the rolled value is never one of them. That works whether or not
 roll_npc() kept the flags.
 """
+import pathlib
 import random
+import tempfile
 import unittest
 
 from test.helpers import FIXTURE_TABLES, load_generator
@@ -63,6 +65,20 @@ def bullets_for(name):
         if key == name or key.startswith("%s (" % name)
         for bullet in options
     ]
+
+
+def rendered_parts(name, value):
+    """The parts of a rolled value that reach a prompt or a dossier.
+
+    Everything but Backdrop is rendered whole, so the whole value has to be
+    flag-free. Backdrop is the exception by design: it keeps all three of its
+    segments, and split_backdrop() unpacks the two that get rendered from the
+    flags that do not.
+    """
+    if name == "Backdrop":
+        shot, scene, _ = gen.split_backdrop(value)
+        return [shot, scene]
+    return [value]
 
 
 def foreign_bullets(name, theme):
@@ -128,9 +144,63 @@ class TestThemeRoll(unittest.TestCase):
             self.assertGreater(alpha, 0.45, "role %r skews low on alpha" % role)
             self.assertLess(alpha, 0.85, "role %r skews high on alpha" % role)
 
+    def test_no_themed_value_keeps_its_flag_segment(self):
+        """A theme tag must never be rendered as part of the trait it tags.
+
+        Every themed table's value goes straight into a Krea prompt and a
+        dossier row, so 'a long braid || @neosamurai' would ship the tag to the
+        image model. Fails if any of the six loses its stripping.
+        """
+        for seed in range(100):
+            npc = roll(seed)
+            for name in gen.THEMED_TABLES:
+                for part in rendered_parts(name, npc[name]):
+                    self.assertNotIn(
+                        "||", part,
+                        "seed %d: %s kept its flags: %r" % (seed, name, npc[name]))
+
+    def test_a_forced_trait_does_not_smuggle_its_flags_back_in(self):
+        """--set-trait pastes the raw bullet back over the split-out value.
+
+        roll_npc() re-splits after that paste, and every themed table has to be
+        in that second pass as well as the first - Gear especially, whose first
+        split happens before the override is applied at all.
+        """
+        for name in gen.THEMED_TABLES:
+            flagged = [b for b in bullets_for(name) if gen.flags_for(name, b)]
+            # Feature is the one themed table the fixture leaves unflagged, so
+            # it has nothing to force; every other table must have material
+            # here, or this test has quietly stopped covering it.
+            self.assertTrue(
+                flagged or name == "Feature",
+                "fixture has no flagged %s bullet to force" % name)
+            for bullet in flagged:
+                npc = roll(0, **{name: bullet})
+                for part in rendered_parts(name, npc[name]):
+                    self.assertNotIn(
+                        "||", part,
+                        "forced %s kept its flags: %r" % (name, npc[name]))
+
     def test_theme_reaches_the_dossier(self):
+        """The rendered dossier carries a Theme row, and its '-' fallback.
+
+        write_dossier() reads npc.get("Theme", "-") rather than npc["Theme"] so
+        that regenerating an NPC from a manifest entry written before Theme
+        existed still writes a dossier instead of raising. Both branches are
+        pinned here; asserting only that roll_npc() returns the key would let
+        that fallback regress unnoticed.
+        """
         npc = roll(0)
-        self.assertIn("Theme", npc)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp) / "dossier.md"
+
+            gen.write_dossier(path, npc, 0, ("portrait", "token"), [])
+            self.assertIn(
+                "| Theme | %s |" % npc["Theme"], path.read_text(encoding="utf-8"))
+
+            del npc["Theme"]        # a manifest entry written before Theme existed
+            gen.write_dossier(path, npc, 0, ("portrait", "token"), [])
+            self.assertIn("| Theme | - |", path.read_text(encoding="utf-8"))
 
     def test_no_pool_is_ever_starved(self):
         """Every themed table must still yield a value for every theme."""
