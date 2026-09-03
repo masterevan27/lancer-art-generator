@@ -53,6 +53,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import math
 import os
 import random
 import re
@@ -213,6 +214,13 @@ GEAR_POLICY = {
     "Officials": "restricted",
     "Criminals": "armed_bias",
 }
+
+# How much of a themed roll should come from that theme's own bullets rather
+# than from the neutral pool. A theme that is merely *opened* is not *visible*:
+# with a dozen tagged bullets against a neutral floor of nearly two hundred, a
+# themed NPC would roll neutral almost every time and the theme would never be
+# seen. Raise it for a stronger house style, lower it for more variety.
+THEME_SHARE = 0.6
 
 # Generation workflows chosen by gender rather than by flag, keyed the same way
 # GENDER_TRAITS is: women render through their own checkpoint stack, and any
@@ -384,6 +392,32 @@ def filter_by_theme(options, theme, name):
         if not themes_of(flags_for(name, x)) or theme in themes_of(flags_for(name, x))
     ]
     return keep or options
+
+
+def apply_theme_share(options, theme, name, share=THEME_SHARE):
+    """Duplicate the theme's own bullets until they hold `share` of the pool.
+
+    The multiplier is computed from the actual pool sizes rather than fixed, so
+    it self-corrects as content is authored: a theme with 56 outfits barely
+    needs duplicating, one with 11 needs a lot. A thin theme therefore still
+    reads as itself - at the cost of repeating within a run, which its low
+    weight in the Theme table already makes uncommon.
+
+    Untouched when there is nothing to balance: no theme, no tagged bullets, or
+    no neutral ones. Duplication only ever adds entries, so every bullet in the
+    pool stays reachable.
+    """
+    if not theme:
+        return options
+    tagged = [x for x in options if theme in themes_of(flags_for(name, x))]
+    neutral = [x for x in options if not themes_of(flags_for(name, x))]
+    if not tagged or not neutral:
+        return options
+
+    # Want tagged*n / (tagged*n + neutral) >= share, so
+    # n >= share*neutral / ((1 - share) * tagged).
+    n = math.ceil(share * len(neutral) / ((1 - share) * len(tagged)))
+    return tagged * max(1, n) + neutral
 
 
 def apply_gear_policy(options, category, mil):
