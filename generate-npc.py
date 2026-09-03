@@ -231,12 +231,27 @@ ROLE_CATEGORIES = {
 UNCATEGORIZED_ROLE = "Other"
 
 # The Weapon-roll policy each ROLE_CATEGORIES bucket gets, layered on top of
-# the mil/civ split - see apply_weapon_policy(). A category with no entry
-# here rolls Weapon exactly as it always has: no filter, no bias.
+# the mil/civ split - see apply_weapon_policy().
 WEAPON_POLICY = {
     "Officials": "restricted",
     "Criminals": "armed_bias",
 }
+
+# What a non-mil Role gets when WEAPON_POLICY names no policy for it. It used
+# to be "none at all", which meant seven civilian Roles - dockworker, chief
+# mechanic, maintenance technician, freelance salvager, bar owner, data
+# courier, scavenger-priest - rolled the raw pool and came out armed 65% of
+# the time. Weapon sits outside the civ/mil filter by design (a civilian may
+# carry a military-issue weapon), so nothing else was holding them back.
+# A default rather than seven more WEAPON_POLICY entries, so a civilian Role
+# added to the Role table later is covered without a second edit here.
+DEFAULT_WEAPON_POLICY = "civilian"
+
+# How many extra copies of the unarmed bullets the civilian tier stacks into
+# the pool. The live table is 86 weighted entries, 30 of them unarmed; three
+# extra copies makes it 176 with 120 unarmed, or 68%. This is the dial for how
+# armed ordinary civilians feel - raise it for a quieter setting.
+CIVILIAN_UNARMED_COPIES = 3
 
 # Trait names that have changed, old -> new. --regen-manifest rebuilds an NPC
 # from a stored traits dict rather than re-rolling, so an entry written before
@@ -517,15 +532,21 @@ def apply_weapon_policy(options, category, mil):
       - WEAPON_POLICY['Criminals'] ("armed_bias"): usually carrying something.
         'weapon'-flagged bullets are duplicated into the pool, the same
         trick this function used to reserve for a mil Role alone.
+      - Every other non-mil category ("civilian", DEFAULT_WEAPON_POLICY):
+        unarmed bullets are duplicated CIVILIAN_UNARMED_COPIES times so an
+        ordinary Role - anything not named in WEAPON_POLICY, which is most
+        of them - is unarmed more often than not rather than defaulting to
+        the raw, mostly-armed pool.
 
-    Any other category - or a tables file with no 'weapon'/'sidearm' flags at
-    all - rolls Weapon exactly as before: untouched.
+    Untouched is no longer reachable through category at all; it now only
+    happens for a tables file with no 'weapon'/'sidearm' flags to duplicate
+    or filter on.
     """
     if mil:
         armed = [x for x in options if "sidearm" in split_flags(x)[1]]
         return armed or options
 
-    policy = WEAPON_POLICY.get(category)
+    policy = WEAPON_POLICY.get(category, DEFAULT_WEAPON_POLICY)
     if policy == "restricted":
         pocketable = [
             x for x in options
@@ -536,6 +557,9 @@ def apply_weapon_policy(options, category, mil):
     if policy == "armed_bias":
         tagged = [x for x in options if "weapon" in split_flags(x)[1]]
         return options + tagged * 4 if tagged else options
+    if policy == "civilian":
+        unarmed = [x for x in options if "weapon" not in split_flags(x)[1]]
+        return options + unarmed * CIVILIAN_UNARMED_COPIES if unarmed else options
     return options
 
 

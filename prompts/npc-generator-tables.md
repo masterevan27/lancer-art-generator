@@ -1586,6 +1586,13 @@ ignored — so notes like this one are safe to leave inline.
   apply_weapon_policy() restricts that pool to 'sidearm'-flagged bullets,
   which this is not.
 
+  That weight is the baseline. On top of it, apply_weapon_policy() gives every
+  non-military Role a 'civilian' tier that stacks further copies of this entry
+  into the pool - CIVILIAN_UNARMED_COPIES in generate-npc.py - because without
+  it an ordinary dockworker came out armed two rolls in three. Weapon sits
+  outside the civ/mil filter on purpose, so nothing else was holding a
+  civilian back from the military bullets here.
+
   Flags here: 'weapon' (an actual weapon), 'simple' (small and pocketable),
   'sidearm' (includes a holstered or openly worn pistol - the guaranteed-armed
   baseline for a mil Role), 'gun' (an actual firearm held in hand), 'hands'
