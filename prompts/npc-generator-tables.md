@@ -1448,45 +1448,97 @@ ignored — so notes like this one are safe to leave inline.
 - a sleeveless dark lamellar armor bodice with a red cord sash, plate segments hanging low over dark leggings, {possessive} shoulders left bare || civ notac
 - a dark kimono patterned with pale plum blossoms, a crimson underlayer glimpsed at the collar and wide sleeves || civ notac
 
-## Gear
+## Weapon
 
 <!--
-  '|| mil' marks an actual weapon or piece of military-issue equipment - see
-  the note on it near the top of this file.
+  What the NPC is armed with, rolled separately from Gear so a mechanic can
+  carry a tool bag AND a holstered sidearm - one combined roll could only ever
+  yield one of the two.
 
-  Three more flags layer on top of it, all read by apply_gear_policy() in the
-  script rather than by filter_by_mil():
+  A weapon is the most theme-defining object a figure carries, which is why
+  this table is theme-gated and Gear is not: one undifferentiated pool is why
+  every theme's armament used to land on everyone.
 
-  - 'weapon' marks a bullet as an actual weapon - a firearm, a blade, a
-    polearm - as opposed to equipment that just happens to be 'mil' (a radio,
-    a backpack, magazine pouches with nothing on the hip to fill them). This
-    is what GEAR_POLICY's Officials and Criminals tiers key off: Officials
-    almost never roll a 'weapon' bullet at all, Criminals are biased toward
-    rolling one.
-  - 'simple' marks a 'weapon' bullet as small and pocketable - a knife, a
-    single holstered or worn pistol - as opposed to something that reads as
-    a real armament: a rifle, a katana drawn, twin pistols raised. This is
-    the tier an armed Official is allowed to roll.
-  - 'sidearm' marks a bullet that explicitly includes a holstered or openly
-    worn pistol, alone or paired with a slung primary weapon (a rifle, a
-    carbine). A mil-flagged Role's Gear roll is restricted to this set - see
-    apply_gear_policy() - so "always at least a holstered pistol" is a
-    guarantee about the bullet's text, not a weighting. A bullet gripped or
-    raised in the hands doesn't count, even if it's a single pistol: that's
-    reachable by everyone including a mil Role, just not part of the
-    guaranteed baseline.
+  The 'x30 || none' entry is an empty bullet: split_flags() parses it to text
+  '' with flags ('none',), so it contributes nothing to the prompt - 'none' is
+  a literal marker flag that nothing reads. It keeps an unarmed NPC the common
+  case, and it keeps the average prompt short, since most NPCs then render no
+  weapon phrase at all. Its weight is the dial for how armed the setting feels
+  - raise it for a quieter one. A 'mil' Role never reaches it:
+  apply_weapon_policy() restricts that pool to 'sidearm'-flagged bullets,
+  which this is not.
 
-  A civilian (unflagged) Role rolls this table exactly as before - none of
-  the three flags do anything without GEAR_POLICY or a mil Role in play.
+  Flags here: 'weapon' (an actual weapon), 'simple' (small and pocketable),
+  'sidearm' (includes a holstered or openly worn pistol - the guaranteed-armed
+  baseline for a mil Role), 'gun' (an actual firearm held in hand), 'hands'
+  (occupies at least one hand), 'mil' (military-issue).
 -->
 
-- a battered data-slate tucked under one arm || hands
-- a heavy multitool holstered at the hip
+- x30 || none
 - a sidearm holstered high on a chest rig || mil weapon simple sidearm
 - a bullpup service carbine slung muzzle-down across {possessive} chest on its sling || mil weapon
 - a bullpup service carbine held at a low ready in both hands, rail-mounted optic on top || hands gun mil weapon
 - a katana with a colored glowing accent along its edge slung over {possessive} shoulder || mil weapon
 - a katana with a colored glowing accent along its edge held in {possessive} hands || hands mil weapon
+- a service pistol worn openly at the thigh || mil weapon simple sidearm
+- a compact sidearm holstered at the hip and a utility belt of pouches at the waist || mil weapon simple sidearm
+- a sheathed katana crossed against {possessive} back alongside a second, shorter blade || mil weapon
+- a suppressed precision rifle with a rail-mounted optic, slung muzzle-up over one shoulder, one hand resting on the sling at {possessive} chest || hands gun mil weapon
+- an AK-pattern assault rifle with a distinctive curved magazine held across {possessive} body || hands gun mil weapon
+- a suppressed short-barrelled carbine carried muzzle-down in one hand || hands gun mil weapon
+- a drop-leg holster rig and magazine pouches strapped down one thigh || mil weapon simple sidearm
+- a sidearm gripped and raised in both hands, sighted dead level at the viewer || hands gun mil weapon simple
+- an oversized rail cannon gripped and leveled at the viewer with both hands, a thick barrel shroud and boxy under-slung magazine || hands gun mil weapon
+- twin sidearms held akimbo, one arm thrust forward and the other braced out to the side || hands gun mil weapon
+- a service rifle held loosely in both hands at an easy, unhurried low ready || hands gun mil weapon
+- twin sidearms held low and loose in both hands, muzzles angled down at {possessive} sides || hands gun mil weapon
+- a long polearm banded in trailing red cord, planted butt-down and held upright in one hand || hands mil weapon
+- a long suppressed sniper rifle with a scope, its stock stencilled with a small painted tally number, slung across {possessive} back || mil weapon
+- a pair of oversized clawed gauntlets, a single sensor node glowing in each palm || hands mil weapon
+- x4 a sidearm holstered at the hip and a service rifle slung muzzle-down across {possessive} chest || mil weapon sidearm
+- x3 a service pistol worn openly at the thigh and a bullpup carbine slung across {possessive} back || mil weapon sidearm
+- x3 a holstered sidearm and a suppressed carbine slung muzzle-down over one shoulder || mil weapon sidearm
+- a plain combat knife sheathed at the hip || weapon simple
+- a folding push-dagger tucked into a boot sheath || weapon simple
+- a compact hold-out pistol tucked into a shoulder rig, mostly hidden under a jacket || weapon simple
+- a slim single-edged blade held low and reversed at {possessive} side || hands mil weapon
+- a massive twin-barreled support cannon carried braced against {possessive} hip || hands gun mil weapon
+- a heavy shoulder-mounted weapon pod worn like a backpack, twin barrels rising above {possessive} head, a sidearm holstered at {possessive} hip || mil weapon sidearm
+- a compact sidearm gripped low and loose in one hand || hands gun mil weapon simple
+- a bullpup service rifle with an under-barrel attachment held at a low ready in both hands || hands gun mil weapon
+- a suppressed marksman rifle with an extended barrel held low in one hand || hands gun mil weapon
+- a katana half-drawn from its sheath at the hip, {possessive} free hand steadying the scabbard || hands mil weapon
+- twin sheathed swords worn crosswise at the hip, tasseled cords hanging from the hilts || mil weapon
+- a sheathed katana carried loose in one hand, hanging point-down at {possessive} side || hands mil weapon
+- a sheathed katana worn at the hip, {possessive} hand resting loose on the hilt || weapon
+- a katana gripped and raised overhead in both hands mid-swing || hands weapon
+- a katana held drawn low in one hand, its point trailing near the ground || hands weapon
+- a katana held drawn across the body, a bundle of additional sheathed blades and a small demonic mask hanging at {possessive} hip || hands weapon
+- a bundle of sheathed blades bound together with cord at {possessive} hip || weapon
+- twin katanas, one gripped loose in each hand and lowered at {possessive} sides || hands weapon
+- a sheathed katana at {possessive} hip, one hand gripping the hilt, poised to draw || hands weapon
+- a pair of blades hovering motionless in the air to either side, faint markings etched along them || weapon
+- an oversized two-handed blade held low in one hand, its point trailing near the ground, a second shorter sword sheathed at {possessive} hip || hands weapon
+- a sheathed katana crossed against {possessive} back alongside a second blade drawn and gripped in {possessive} hand, its edge glowing faintly || hands mil weapon
+- a katana held upright close to {possessive} shoulder, its blade bared and ready || hands mil weapon
+- a sheathed katana rested up over one shoulder, gripped loosely by the scabbard in one hand || hands mil weapon
+- twin sheathed swords worn crossed at {possessive} hip, hilts angled outward || mil weapon
+- a katana held up close to {possessive} face, its blade angled back and ready in one hand || hands mil weapon
+
+## Gear
+
+<!--
+  '|| mil' marks a piece of military-issue equipment - see the note on it
+  near the top of this file.
+
+  Gear is equipment only now: tools, cases, packs, the odds and ends a figure
+  has in hand or slung over a shoulder. Armament - anything that reads as a
+  weapon - lives in '## Weapon', rolled separately; see that table's comment
+  for its flags.
+-->
+
+- a battered data-slate tucked under one arm || hands
+- a heavy multitool holstered at the hip
 - a coil of cabling and diagnostic leads slung across the body
 - a scarred pilot helmet carried in the crook of one elbow || hands
 - a compact rebreather clipped at the collar
@@ -1502,66 +1554,22 @@ ignored — so notes like this one are safe to leave inline.
 - a folded jacket slung over one forearm || hands
 - a sheaf of stamped requisition forms || hands
 - a dented thermos of something long gone cold || hands
-- a service pistol worn openly at the thigh || mil weapon simple sidearm
 - a folded maintenance drone perched dormant on one shoulder
-- a compact sidearm holstered at the hip and a utility belt of pouches at the waist || mil weapon simple sidearm
-- a sheathed katana crossed against {possessive} back alongside a second, shorter blade || mil weapon
-- a suppressed precision rifle with a rail-mounted optic, slung muzzle-up over one shoulder, one hand resting on the sling at {possessive} chest || hands gun mil weapon
 - a battered leather-bound ledger tucked in a breast pocket, worn soft from handling
-- an AK-pattern assault rifle with a distinctive curved magazine held across {possessive} body || hands gun mil weapon
 - a loaded tactical backpack slung from one shoulder || mil
-- a suppressed short-barrelled carbine carried muzzle-down in one hand || hands gun mil weapon
 - a hard-shelled assault pack worn high on the back, its straps cinched across the chest || mil
-- a drop-leg holster rig and magazine pouches strapped down one thigh || mil weapon simple sidearm
 - a compact field radio in a chest pouch, its stub antenna angled up past {possessive} shoulder || mil
 - a slab-sided equipment case clipped to the harness at {possessive} hip
-- a sidearm gripped and raised in both hands, sighted dead level at the viewer || hands gun mil weapon simple
-- an oversized rail cannon gripped and leveled at the viewer with both hands, a thick barrel shroud and boxy under-slung magazine || hands gun mil weapon
-- twin sidearms held akimbo, one arm thrust forward and the other braced out to the side || hands gun mil weapon
-- a service rifle held loosely in both hands at an easy, unhurried low ready || hands gun mil weapon
-- twin sidearms held low and loose in both hands, muzzles angled down at {possessive} sides || hands gun mil weapon
 - a compact twin-thruster pack strapped across {possessive} back, its vents lit with a colored glow
 - a folded oilpaper parasol held in one hand, its tip braced against the ground || hands
 - a small pale fox cradled against the chest in both arms || hands
 - a lacquered walking stick gripped in one hand, weight braced into it || hands
-- a long polearm banded in trailing red cord, planted butt-down and held upright in one hand || hands mil weapon
-- a long suppressed sniper rifle with a scope, its stock stencilled with a small painted tally number, slung across {possessive} back || mil weapon
 - a fist-sized holographic sphere hovering just above one open palm, its surface a shifting lattice of glowing fracture-lines and readouts
 - a translucent holographic data-sheet held up in both hands, dense scrolling text glowing across its surface || hands
-- a pair of oversized clawed gauntlets, a single sensor node glowing in each palm || hands mil weapon
-- x4 a sidearm holstered at the hip and a service rifle slung muzzle-down across {possessive} chest || mil weapon sidearm
-- x3 a service pistol worn openly at the thigh and a bullpup carbine slung across {possessive} back || mil weapon sidearm
-- x3 a holstered sidearm and a suppressed carbine slung muzzle-down over one shoulder || mil weapon sidearm
-- a plain combat knife sheathed at the hip || weapon simple
-- a folding push-dagger tucked into a boot sheath || weapon simple
-- a compact hold-out pistol tucked into a shoulder rig, mostly hidden under a jacket || weapon simple
 - a cracked-open slate bristling with jack cables and cracking tools, plainly meant for breaking into things it shouldn't || hands
-- a slim single-edged blade held low and reversed at {possessive} side || hands mil weapon
-- a massive twin-barreled support cannon carried braced against {possessive} hip || hands gun mil weapon
-- a heavy shoulder-mounted weapon pod worn like a backpack, twin barrels rising above {possessive} head, a sidearm holstered at {possessive} hip || mil weapon sidearm
 - a pair of articulated mechanical wing extensions mounted at the shoulders, each feather-like segment tipped with a small lit sensor lens
-- a compact sidearm gripped low and loose in one hand || hands gun mil weapon simple
-- a bullpup service rifle with an under-barrel attachment held at a low ready in both hands || hands gun mil weapon
-- a suppressed marksman rifle with an extended barrel held low in one hand || hands gun mil weapon
-- a katana half-drawn from its sheath at the hip, {possessive} free hand steadying the scabbard || hands mil weapon
 - a small pendant amulet glowing softly at the throat
-- twin sheathed swords worn crosswise at the hip, tasseled cords hanging from the hilts || mil weapon
-- a sheathed katana carried loose in one hand, hanging point-down at {possessive} side || hands mil weapon
-- a sheathed katana worn at the hip, {possessive} hand resting loose on the hilt || weapon
 - an old-fashioned lantern glowing warm, carried by its handle in one hand || hands
-- a katana gripped and raised overhead in both hands mid-swing || hands weapon
-- a katana held drawn low in one hand, its point trailing near the ground || hands weapon
-- a katana held drawn across the body, a bundle of additional sheathed blades and a small demonic mask hanging at {possessive} hip || hands weapon
-- a bundle of sheathed blades bound together with cord at {possessive} hip || weapon
-- twin katanas, one gripped loose in each hand and lowered at {possessive} sides || hands weapon
-- a sheathed katana at {possessive} hip, one hand gripping the hilt, poised to draw || hands weapon
-- a pair of blades hovering motionless in the air to either side, faint markings etched along them || weapon
-- an oversized two-handed blade held low in one hand, its point trailing near the ground, a second shorter sword sheathed at {possessive} hip || hands weapon
-- a sheathed katana crossed against {possessive} back alongside a second blade drawn and gripped in {possessive} hand, its edge glowing faintly || hands mil weapon
-- a katana held upright close to {possessive} shoulder, its blade bared and ready || hands mil weapon
-- a sheathed katana rested up over one shoulder, gripped loosely by the scabbard in one hand || hands mil weapon
-- twin sheathed swords worn crossed at {possessive} hip, hilts angled outward || mil weapon
-- a katana held up close to {possessive} face, its blade angled back and ready in one hand || hands mil weapon
 
 ## Accent
 
