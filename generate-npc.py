@@ -300,19 +300,28 @@ PORTRAIT_TEMPLATE = (
 # that in the position a diffusion model weights hardest. Removing them bought
 # back the headroom the Weapon slot needed - see
 # docs/superpowers/specs/2026-09-03-phase-2-structural-splits-design.md §4.
+# The opening sentence asserts FRAMING only - the whole body in shot, at
+# realistic proportions. It used to open "standing at full height", which also
+# asserted a pose, and that fought {stance} on every crouching, kneeling or
+# sitting bullet: the prompt claimed both at once and the model answered by
+# rendering both, one standing figure and one crouched. The pose is {stance}'s
+# job alone. "both boots planted and fully visible" went the same way - it is
+# false for every non-standing bullet - and "the arms free" contradicted any
+# pose braced on an arm. What replaces them says only what is true of every
+# pose in the table: the feet are in frame and the pose is not rigid.
 TOKEN_TEMPLATE = (
     "A full-body character illustration of {role}, {maturity} {gender} {age}, "
     "rendered in a detailed painterly illustration style with fine grain texture, clean "
     "linework and halftone dot shading worked into the shadows, moody cinematic lighting "
     "on the figure. {Subject} {is_are} "
-    "standing at full height facing the viewer, entire body visible from the top of "
+    "facing the viewer, the whole figure in frame from the top of "
     "{possessive} head to the soles of {possessive} plain modern boots, no leg wraps or "
     "puttees, with clear empty space above and below, in realistic adult proportions "
     "roughly seven to eight heads tall. "
     "{Subject} {is_are} {height}, {build}, with {traits}{skin}, {hair}, {eyes}, and {feature}, wearing "
     "{outfit}, {faction}, the clothing following the shape of that frame. {headgear} "
     "{Possessive} face carries {demeanor}. {gear_line}{Subject} {is_are} {stance}, both "
-    "boots planted and fully visible, the pose relaxed and natural with the arms free. "
+    "feet in frame, the pose natural and unforced. "
     "{accent_line} The background alone is a solid flat plain white, no "
     "texture, no gradient, no shadow, no environment. Centered composition, dramatic "
     "lighting, isolated character illustration, clean silhouette, painterly brushwork "

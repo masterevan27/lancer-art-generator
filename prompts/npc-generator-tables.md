@@ -2083,8 +2083,8 @@ nearby to cast it.
 
 ### Token (1024x1280, then RMBG to a transparent PNG)
 
-> A full-body character illustration of **{ROLE}**, **{AGE}**, standing at full
-> adult height and facing the viewer, entire body visible from the top of {POSSESSIVE} head to the
+> A full-body character illustration of **{ROLE}**, **{AGE}**, facing the
+> viewer, the whole figure in frame from the top of {POSSESSIVE} head to the
 > soles of {POSSESSIVE} plain modern boots, no leg wraps or puttees, with clear empty
 > space above and below, rendered in a
 > detailed painterly illustration style with fine grain texture and clean linework,
@@ -2093,9 +2093,8 @@ nearby to cast it.
 > **{TRAITS}** **{SKIN}**, **{HAIR}**, and **{EYES}**, and **{FEATURE}**, wearing **{OUTFIT}**,
 > **{FACTION}**. {POSSESSIVE} face carries **{DEMEANOR}**. {SUBJECT} carries
 > **{GEAR}**. {SUBJECT} is
-> **{STANCE}**, both boots planted and fully visible, {POSSESSIVE} face toward the
-> viewer — a relaxed, natural pose with the arms free, not a rigid attention
-> stance with the hands pinned at the sides. **{GLOW_LINE}** The background alone
+> **{STANCE}**, both feet in frame, the pose natural and unforced.
+> **{GLOW_LINE}** The background alone
 > is a solid flat plain white, no texture, no
 > gradient, no shadow, no environment. Centered composition, dramatic lighting,
 > isolated character illustration, clean silhouette. Painterly illustration throughout with
@@ -2120,6 +2119,12 @@ boot tops, the same kind of drift the Age table fights with an explicit "fully
 grown adult". Outfit bullets that specify their own footwear (the knee boots,
 thigh-high boots and so on in `Outfit (she) +`) still win, since they land
 later in the prompt and are far more specific.
+
+The opening sentence asserts framing, not pose. It used to read "standing at
+full height", which fought the rolled Stance on every crouching, kneeling or
+sitting bullet - the prompt asserted standing and crouching at once and the
+render came back with two figures. Stance owns the pose; this sentence owns
+the framing, and the two no longer overlap.
 
 The `even lighting` / flat-background phrasing this used to carry was flattening
 the whole render toward a clean cel-shaded look rather than just the background —
