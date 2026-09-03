@@ -28,28 +28,29 @@ context for someone else (or a later pass) to insert it correctly.
 
 Before writing anything, read `## How the script reads this file` at the top
 of `npc-generator-tables.md` in full, **and the HTML comment above whichever
-tables you're writing into** — the Gear and Outfit comments carry flag rules
-that the top-of-file section only summarizes.
+tables you're writing into** — the Weapon, Gear, Outfit and Hair colour
+comments carry flag rules that the top-of-file section only summarizes.
 
 That file is the authoritative spec for `xN` weights, the `||` flag
 conventions, and the pronoun placeholders. As of this writing the flags are:
 
 | Flag | Tables | Meaning |
 | --- | --- | --- |
-| `hands` | Gear, Stance | Gear: occupies at least one hand/arm. Stance: pose needs both hands free. |
-| `gun` | Gear, Stance | Gear: an actual firearm *held in hand*. Stance: a pose that aims/fires/handles a weapon. |
-| `mil` | Role, Faction, Outfit, Gear | Issued uniform / military-issue equipment. Dropped for a civilian Role. |
+| `hands` | Gear, Weapon, Stance | Gear/Weapon: occupies at least one hand/arm. Stance: pose needs both hands free. |
+| `gun` | Weapon, Stance | Weapon: an actual firearm *held in hand*. Stance: a pose that aims/fires/handles a weapon. |
+| `mil` | Role, Faction, Outfit, Weapon, Gear | Issued uniform / military-issue equipment. Dropped for a civilian Role. |
 | `civ` | Faction, Outfit | Plainly civilian dress. Dropped for a `mil` Role. |
-| `weapon` | Gear | An actual weapon, as opposed to equipment that merely *is* `mil` (a radio, a pack). |
-| `simple` | Gear | A `weapon` small and pocketable — a knife, one holstered pistol. |
-| `sidearm` | Gear | A bullet that explicitly includes a **holstered or openly worn** pistol. |
-| `notac` | Outfit | Elaborate/traditional dress that must never pair with `mil` Gear. |
+| `weapon` | Weapon | An actual weapon, as opposed to equipment that merely *is* `mil` (a radio, a pack). |
+| `simple` | Weapon | A `weapon` small and pocketable — a knife, one holstered pistol. |
+| `sidearm` | Weapon | A bullet that explicitly includes a **holstered or openly worn** pistol. |
+| `notac` | Outfit | Elaborate/traditional dress that must never pair with `mil`-flagged Weapon or Gear. |
 | `nogear` | Backdrop | The scene already puts something in the subject's hands. |
 | `weather` | Backdrop | Outdoors, so a Weather roll can land in it. |
 | `clear` | Weather | Contributes nothing to the prompt. |
 | `young` | Age | NPC under twenty; swaps the adult clauses. |
 | `figure` | Build | Written in terms of an adult woman's figure; dropped when Age rolled `young`. |
-| `@<theme>` | Hair, Feature, Outfit, Headgear, Gear, Backdrop — **and nowhere else** | A *theme tag*, not a behavioural flag: the bullet belongs to that visual world. Untagged is neutral and reachable from every theme. See the trap below before using one. |
+| `older` | Hair colour | An age-linked colour (greying, salt-and-pepper); dropped when the Age roll came up `young`, the same pairing `figure` has with Build. |
+| `@<theme>` | Hair, Hair colour, Feature, Outfit, Headgear, Weapon, Backdrop — **and nowhere else** | A *theme tag*, not a behavioural flag: the bullet belongs to that visual world. Untagged is neutral and reachable from every theme. `Gear` is deliberately not on this list — it split away from `Weapon` precisely because it isn't theme-defining. See the trap below before using one. |
 
 Run `python -c "import importlib.util,sys,pathlib;s=importlib.util.spec_from_file_location('g','generate-npc.py');m=importlib.util.module_from_spec(s);sys.modules['g']=m;s.loader.exec_module(m);print(sorted(set(m.parse_tables(pathlib.Path('prompts/npc-generator-tables.md'))['Theme'])))"`
 to get the live list of theme names. Never invent one — a misspelled theme is
@@ -63,21 +64,24 @@ every run and fix this skill if they disagree.
 
 **Flags the design specifies that do NOT exist yet — do not emit these.**
 `docs/superpowers/specs/2026-09-03-themed-npc-generation-design.md` §7 lists
-`older`, `bulk`, `enclosed`, `sealed`, `vacuum` and `mechown`/`mechwork`/
-`mechnear`, and §4 splits `Gear` into Gear + `Weapon` and `Hair` into Hair +
-`Hair colour`. **None of that has landed.** Those tables don't exist and no
-filter reads those flags, so emitting one now produces a bullet that is
-silently ignored — or, on a table that is never split, one that renders the
-flag as literal prompt text. Add them to this skill in the same change that
-adds them to the generator, not before. The theme tag above is the only part
-of that design currently live.
+`bulk`, `enclosed`, `sealed`, `vacuum` and `mechown`/`mechwork`/`mechnear`.
+**None of that has landed.** Those tables/flags don't exist and no filter
+reads them, so emitting one now produces a bullet that is silently ignored —
+or, on a table that is never split, one that renders the flag as literal
+prompt text. Add them to this skill in the same change that adds them to the
+generator, not before. `older`, and the `Gear`→`Gear`+`Weapon` and
+`Hair`→`Hair`+`Hair colour` splits §4 of that design called for, have already
+landed — they're documented in the flag table above and in §0/§4 below, not
+on this not-yet-landed list.
 
 Three flag traps worth stating outright, because each has been gotten wrong:
 
-- **`sidearm` means holstered or worn, never gripped.** The Gear comment is
-  explicit: "A bullet gripped or raised in the hands doesn't count, even if
-  it's a single pistol." It's the guaranteed-armed baseline for `mil` Roles,
-  so mis-tagging it puts an unarmed-looking bullet in that pool.
+- **`sidearm` means holstered or worn, never gripped.** The Weapon comment is
+  explicit that it only covers a "holstered or openly worn" pistol — a
+  bullet gripped or raised in the hands doesn't count, even if it's a single
+  pistol. It's the guaranteed-armed baseline for `mil` Roles (`Weapon`'s pool
+  is restricted to `sidearm`-flagged bullets for a `mil` Role), so
+  mis-tagging it puts an unarmed-looking bullet in that pool.
 - **`hands`/`gun` describe the hands, not the hardware.** A shoulder-mounted
   pod or a slung rifle is `mil weapon` with no `hands`/`gun` — those two are
   for what the subject is actually holding.
@@ -95,12 +99,19 @@ Three flag traps worth stating outright, because each has been gotten wrong:
 
   Two further rules, both silent when broken:
 
-  - **The tag is read on six tables only** — `Hair`, `Feature`, `Outfit`,
-    `Headgear`, `Gear`, `Backdrop`. On any other table it does nothing, and
-    on `Skin`, `Eyes`, `Demeanor`, `Accent`, `Height` and the name tables it
-    is *worse* than nothing: those are never split on `||`, so a bullet
-    reading `- chrome-inlaid irises || @cyberpunk` ships the literal text
-    `|| @cyberpunk` to the image model and prints it in the dossier.
+  - **The tag is read on seven tables only** — `Hair`, `Hair colour`,
+    `Feature`, `Outfit`, `Headgear`, `Weapon`, `Backdrop`. `Weapon` **is**
+    themed; `Gear` **is not** — it split away from `Weapon` specifically
+    because equipment (data-slates, tool bags, thermoses) isn't what makes a
+    figure read as one visual world, armament is. A `@theme` tag on a `Gear`
+    bullet doesn't crash anything (`Gear` bullets are split on `||`, so it
+    lands in the flag segment) — it's just silently ignored as an
+    unrecognized flag, the same as any other typo'd flag, and the bullet
+    stays reachable from every theme regardless of the tag. On `Skin`,
+    `Eyes`, `Demeanor`, `Accent`, `Height` and the name tables a tag is
+    *worse* than silently ignored: those are never split on `||` at all, so
+    a bullet reading `- chrome-inlaid irises || @cyberpunk` ships the literal
+    text `|| @cyberpunk` to the image model and prints it in the dossier.
   - **A bullet may carry more than one tag** (`|| civ @cyberpunk @gundam`)
     and is then reachable from either — the right move for genuinely
     cross-over hardware, and better than picking one arbitrarily.
@@ -110,6 +121,39 @@ The pronoun placeholders are
 `{carry}`/`{wear}`/`{gender}`. There is no `{Object}`, and no possessive
 built on `{object}` — write `{possessive} shoulder`, never `{object}'s
 shoulder`.
+
+`Hair colour` has its own placeholder-like slot and its own three-segment
+shape: `base || tail || flags` — the same `base || scene || flags` shape
+`Backdrop` uses, not the two-segment `text || flags` most other tables use.
+The `base` fills a `{colour}` token that every `## Hair` bullet carries
+exactly once (`"a sleek {colour} bob cut level with the jaw"`); the optional
+`tail` is appended as a trailing clause after the whole rolled cut, which is
+what lets a gradient read correctly (`"fading to green at the tips"` reads
+wrongly stuffed in front of the noun, correctly hung off the end). A colour
+with flags but no tail still writes the middle segment, empty: `greying || ||
+older`. Two things to get right if you ever author a `Hair colour` base
+through this skill, both silent failures in the render if missed:
+
+- **Start the base with a consonant.** Four `## Hair` bullets place
+  `{colour}` immediately after the article "a" — `"a {colour} bob with a
+  blunt fringe"` and three siblings. Nothing in the script fixes "a" to
+  "an", so a vowel-initial base like `auburn` or `ash-blonde` renders as
+  "**a** auburn bob" in both the image prompt and the dossier. The existing
+  table dodges this by qualifying the base itself — `dark auburn`, `pale
+  ash-blonde` — rather than leaving it bare. Do the same for any new
+  vowel-initial shade; this is the one warning about it that lives outside
+  the tables file's own `## Hair colour` comment, and the import path is
+  exactly how a new colour is likely to arrive.
+- **Reserve tails for cuts that suit them.** A tail like `fading to green at
+  the tips` reads fine on long hair and oddly on a very short one —
+  `"close-cropped {colour} hair, fading to green at the tips"` describes tips
+  that a close crop doesn't have. `Hair colour` and `Hair` roll independently
+  with no flag pairing them yet (that's Phase 3 work), so nothing stops a
+  tail landing on a short cut. It's rare overall — about one roll in a
+  hundred — but the male `Hair` pool skews shorter than the female one, so a
+  tail is roughly five times more exposed to that mismatch on a male NPC than
+  a female one. Keep new tails few, and prefer them for colours that read
+  well on long hair.
 
 **Unrecognized flags fail silently** (matched literally, ignored if unknown),
 while an unlisted placeholder raises a hard error. So a typo'd flag reaches a
@@ -170,10 +214,11 @@ subagents, but hold these lines, all of which have failed in practice:
 | --- | --- | --- |
 | A wide scene/environment, with or without the subject doing something in it | **Backdrop** | Portrait only. If the subject is actively posed against the scene (leaning, fighting, kneeling), stage the whole shot as one `{Subject} {is_are} ...` sentence rather than a blurred-background phrase. |
 | A body pose with no particular environment, meant for the full-body token | **Stance** | Token only — no scene, no lighting, just the pose. |
-| A weapon, tool, or carried item | **Gear** | Tag `hands`/`gun`/`mil`/`weapon`/`simple`/`sidearm` as applicable — see the flag traps in §0. |
+| A weapon — held, slung, holstered or worn | **Weapon** | Tag `hands`/`gun`/`mil`/`weapon`/`simple`/`sidearm` as applicable — see the flag traps in §0. |
+| A tool, pack, or other carried item that isn't a weapon | **Gear** | Tag `hands`/`mil` only — `gun`/`weapon`/`simple`/`sidearm` moved to `Weapon` with the split and no longer apply here. |
 | A garment, armor, or full kit | **Outfit** (or `Outfit (she) +` if the cut only reads on a woman's figure) | Tag `civ`/`mil`. |
 | A helmet, hood, hat, or headset | **Headgear** (or `Headgear (she) +`) | Full sentence: `{Subject} {wear} ...`. |
-| A hairstyle/cut visible on its own (not tucked under headgear) | **Hair** (or `Hair (she) +` / `Hair (he) +` if the cut only reads on one gender) | Noun phrase only — no flags, no sentence. If headgear covers all but a fringe or a couple of strands, it's fine to note that (existing bullets do), but the cut itself is still what gets recorded. |
+| A hairstyle/cut visible on its own (not tucked under headgear) | **Hair** (or `Hair (she) +` / `Hair (he) +` if the cut only reads on one gender) | Noun phrase with exactly one `{colour}` placeholder standing in for the shade — no literal color word, no flags. If headgear covers all but a fringe or a couple of strands, it's fine to note that (existing bullets do), but the cut itself is still what gets recorded. A distinctive *shade* seen in the image (not just the cut) is a separate `Hair colour` candidate — see the note on that table's shape in §0. |
 | A distinctive facial expression / mood on the subject | **Demeanor** (or `Demeanor (she) +`) | Noun phrase describing the look, not the backstory behind it — "a wry, crooked grin," not "someone who's seen a lot." |
 | An insignia, unit livery, or faction-defining look | **Faction** | Short phrase starting "in ..." or similar. |
 | A distinctive glow/neon color with nothing else new | **Accent** | Just the color name — see the palette rule below before adding one. |
@@ -240,13 +285,24 @@ the image will not fit this file. Apply all of these:
   in the subject's hands, so the template doesn't also hand them a rolled
   Gear item on top of it.
 - **Stance**: `<participial phrase, third person> || [hands] [gun]`
-- **Gear**: `<noun phrase, may use {possessive}> || [hands] [gun] [mil] [weapon] [simple] [sidearm]`
+- **Weapon**: `<noun phrase, may use {possessive}> || [hands] [gun] [mil] [weapon] [simple] [sidearm]`
   A held weapon is `hands gun mil weapon` (+ `simple` if pocketable); a worn
   or slung one drops `hands gun`; only a holstered/worn pistol earns
   `sidearm`. Re-read the §0 traps before tagging.
+- **Gear**: `<noun phrase, may use {possessive}> || [hands] [mil]`
+  Equipment only — data-slates, tool bags, radios, packs, anything that
+  doesn't read as a weapon. No `gun`/`weapon`/`simple`/`sidearm` here; those
+  flags live on `Weapon` now.
 - **Outfit**: `<noun phrase clause> || [civ] [mil] [notac]`
 - **Headgear**: `{Subject} {wear} <full sentence>.` (no flags)
-- **Hair**: `<noun phrase>` (no flags, no placeholders — dropped straight into `{HAIR}` alongside Skin and Eyes)
+- **Hair**: `<noun phrase, exactly one {colour}>` (no flags — dropped straight
+  into `{hair}` alongside `{skin}` and `{eyes}` in the prompt template, with
+  the rolled `Hair colour` filling the `{colour}` slot first; see the shape
+  note in §0 before writing one of these)
+- **Hair colour**: `<base, consonant-initial> || [tail] || [older]` — the
+  `base` fills the cut's `{colour}` slot, the optional `tail` is a trailing
+  clause for gradients, and `older` is the only flag. See the consonant and
+  tail traps in §0 before adding a shade.
 - **Demeanor**: `<noun phrase>` (no flags, no placeholders — dropped straight into "{POSSESSIVE} face carries **{DEMEANOR}**")
 - **Faction**: `<short phrase, usually starting "in ..."> || [civ] [mil]`
 - **Accent**: `<color name only>`, e.g. `dull rust-orange`
@@ -359,16 +415,17 @@ against the file you just wrote and fix anything they surface:
    anything else.
 3. **Every flag is in §0's table.** Unknown flags fail quietly forever.
 4. **Every `@theme` tag names a real theme** from the live `## Theme` table
-   (get the list with the one-liner in §0), **and sits on one of the six
-   tables that read it** — `Hair`, `Feature`, `Outfit`, `Headgear`, `Gear`,
-   `Backdrop`, counting variant suffixes (`Outfit (she) +` reads tags;
-   `Eyes (she) +` does not). Both failures are silent at render time, and the
-   second renders the tag as literal prompt text.
+   (get the list with the one-liner in §0), **and sits on one of the seven
+   tables that read it** — `Hair`, `Hair colour`, `Feature`, `Outfit`,
+   `Headgear`, `Weapon`, `Backdrop` (**not** `Gear`), counting variant
+   suffixes (`Outfit (she) +` reads tags; `Eyes (she) +` does not). Both
+   failures are silent at render time, and the second renders the tag as
+   literal prompt text.
 5. **The run did not over-tag.** Count the tagged candidates against the
-   untagged ones for the six themed tables. If most of this run's appearance
-   candidates carry a tag, stop and re-read the over-tagging trap in §0 —
-   that ratio is backwards, and the fix is to drop tags, not to justify them.
-   Report the ratio in §8 either way.
+   untagged ones for the seven themed tables. If most of this run's
+   appearance candidates carry a tag, stop and re-read the over-tagging trap
+   in §0 — that ratio is backwards, and the fix is to drop tags, not to
+   justify them. Report the ratio in §8 either way.
 6. **Every `{placeholder}` is in the allowed set**, with no `{Object}` and no
    `{object}'s`.
 7. **Every `source_image` exists on disk**, compared against a real directory
@@ -376,8 +433,19 @@ against the file you just wrote and fix anything they surface:
 8. **Every input image is accounted for** in `entries` or `skipped`, with no
    image referenced that isn't in the run.
 9. **`id`s are unique.**
+10. **Every `Hair` candidate's bullet contains exactly one `{colour}`.** Zero
+    means the base cut can never take a rolled shade; more than one means the
+    same shade gets substituted twice and the second copy is very likely
+    wrong once the placeholder logic fills it in.
+11. **Every `Hair colour` candidate's flags sit in the third segment**, not
+    the second. `Hair colour` is `base || tail || flags` — the same shape as
+    `Backdrop`, not the `text || flags` shape most other tables use — so a
+    flag like `older` written as `base || older` lands in the *tail* and is
+    read as gradient prose, not as a flag. A colour with a flag but no tail
+    still needs the empty middle segment: `greying || || older`, never
+    `greying || older`.
 
-A short script is the fast way to do all nine; if the run was small enough
+A short script is the fast way to do all eleven; if the run was small enough
 to eyeball, eyeball it. Report what you checked, not just that you checked.
 
 ## 8. Tell the user what you staged

@@ -48,9 +48,9 @@ verbatim, so an NPC you like can be re-rolled or hand-edited later.
 ## The roll tables
 
 `prompts/npc-generator-tables.md` holds the tables — names, callsigns,
-pronouns, theme, age, build, skin, hair, eyes, distinguishing feature,
-demeanor, role, faction, outfit, headgear, gear, accent color, portrait
-backdrop, portrait weather, token stance.
+pronouns, theme, age, build, skin, hair, hair colour, eyes, distinguishing
+feature, demeanor, role, faction, outfit, headgear, weapon, gear, accent
+color, portrait backdrop, portrait weather, token stance.
 Every `##` heading is a table and every `-` bullet under it is one option, so
 adding options needs no code change.
 
@@ -136,9 +136,9 @@ clear.
 ## Theme
 
 Every NPC rolls one **Theme** — the visual world they come from — before any
-appearance table, and that theme gates Hair, Feature, Outfit, Headgear, Gear
-and Backdrop. It is what makes a rolled NPC read as one coherent character
-instead of a bag of independently-rolled traits.
+appearance table, and that theme gates Hair, Hair colour, Feature, Outfit,
+Headgear, Weapon and Backdrop. It is what makes a rolled NPC read as one
+coherent character instead of a bag of independently-rolled traits.
 
 A rolled theme opens its own `@`-tagged bullets **plus every untagged one**,
 and excludes bullets tagged with a different theme. Once bullets are tagged,
@@ -150,9 +150,10 @@ grey coveralls stays entirely possible.
 **As shipped, no bullet carries an `@` tag yet.** `filter_by_theme` and
 `apply_theme_share` both fall back to the full, untouched pool whenever there
 is nothing tagged to filter or balance against, so today Theme rolls and is
-recorded on the dossier but does not yet change which Hair, Feature, Outfit,
-Headgear, Gear or Backdrop bullets get drawn — that starts once a tagging pass
-adds `@theme` flags to bullets in `prompts/npc-generator-tables.md`.
+recorded on the dossier but does not yet change which Hair, Hair colour,
+Feature, Outfit, Headgear, Weapon or Backdrop bullets get drawn — that starts
+once a tagging pass adds `@theme` flags to bullets in
+`prompts/npc-generator-tables.md`.
 
 Because a thin theme would otherwise drown in that neutral pool once tagging
 lands, its own bullets are duplicated until they hold `THEME_SHARE` (0.6) of
@@ -180,10 +181,10 @@ other side, no matter what `THEME_SHARE` says. Give a theme bullets on both
 sides of that split, or accept that it only reads on half the roster.
 
 The ordering is left as it is on purpose. Running `apply_theme_share` last
-instead would let a theme's tagged weapons re-inflate past the `unarmed * 5`
-bias in `GEAR_POLICY["Officials"]` and arm officials roughly 60% of the time,
-so it is a real trade rather than an oversight — one for Phase 2 to settle,
-now that the measurement exists to settle it with.
+instead would let a theme's tagged Weapon bullets re-inflate past the
+`unarmed * 5` bias in `WEAPON_POLICY["Officials"]` and arm officials roughly
+60% of the time, so it is a real trade rather than an oversight — one for
+Phase 2 to settle, now that the measurement exists to settle it with.
 
 **Theme is independent of Role.** A pirate is as likely to look neosamurai as
 cyberpunk — that independence is a requirement, not an oversight. Role still
@@ -195,6 +196,44 @@ checked against the `Theme` table and an unknown one is an error listing what is
 available, the same as `--set-trait Pronouns=`: a typo used to roll all-neutral
 in silence, and an empty value was worse still — a theme was rolled and used to
 filter every pool, then overwritten with nothing on the dossier.
+
+## Weapon and Gear
+
+An NPC rolls **both**, so a mechanic can carry a tool bag *and* a holstered
+sidearm — one combined roll could only ever yield one of the two.
+
+`Weapon` is theme-gated and `Gear` is not. A weapon is the most theme-defining
+object a figure carries, and one undifferentiated pool is why every theme's
+armament used to land on everyone. What is left of `Gear` after the split is
+data-slates, tool bags and thermoses, which no theme owns.
+
+`Weapon` is rolled **first**, and `Gear` yields to it: a weapon that occupies
+the hands drops the equipment that also needs one. Roughly a fifth of NPCs
+would otherwise hold an impossibility — a parasol in one hand and a katana
+raised in both.
+
+The `Weapon` table's heavily weighted empty entry keeps an unarmed NPC the
+common case. A `mil` Role never reaches it: `apply_weapon_policy` restricts
+that pool to `sidearm`-flagged bullets, so the "always armed" guarantee is
+stronger after the split than before it.
+
+## Hair colour
+
+Cut and colour roll separately, so a new shade is one bullet rather than a
+rewrite of every cut.
+
+`Hair colour` is a **three-segment** table — `base || tail || flags` — like
+`Backdrop`. The base fills a `{colour}` slot inside the rolled cut; the
+optional tail is appended after the whole phrase. That is what lets gradients
+work, since they read wrongly in adjective position and correctly as a
+trailing clause:
+
+    "a sleek {colour} bob cut level with the jaw"
+      + "silver-white || fading to green at the tips"
+      -> "a sleek silver-white bob cut level with the jaw, fading to green at the tips"
+
+A colour flagged `older` — greying, salt-and-pepper — is dropped when the Age
+roll came up `young`, mirroring the `figure`/`young` pairing exactly.
 
 ## Where the entries came from
 

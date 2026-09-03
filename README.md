@@ -90,6 +90,14 @@ how often a rolled NPC of that theme actually got one of its bullets rather
 than a neutral one. Run it while tagging to watch a theme come up. It reports
 zeroes today, which is the correct pre-tagging baseline.
 
+Prompt length is measured too, against Krea 2's 512-token ceiling — a prompt
+that runs long silently loses its tail, which is where the palette and the
+flat-white background instruction live:
+
+```
+python -m test.prompt_budget
+```
+
 ### Output location
 
 Both scripts write renders under ComfyUI's own output folder. Set
