@@ -1711,6 +1711,11 @@ ignored — so notes like this one are safe to leave inline.
   restrained frame - not a design accent, which is what the old name implied.
   Only reached when something rolled for this NPC could actually cast it; see
   has_light_source() in generate-npc.py.
+
+  Entries name a HUE, never a light-emitting phenomenon. Both templates wrap
+  the value as "{glow} glow", so "electric blue" came out as arcing
+  electricity and "neon cyan" pulled neon tubing into frame. Say the shade -
+  "vivid cobalt blue" - and let the template supply the glow.
 -->
 
 - teal-green
@@ -1721,9 +1726,9 @@ ignored — so notes like this one are safe to leave inline.
 - deep violet
 - brass-gold
 - crimson-red
-- electric blue
+- vivid cobalt blue
 - magenta-pink
-- neon cyan
+- bright cyan
 
 ## Backdrop
 
