@@ -34,9 +34,14 @@ Used by the test suite. Not used by the generator at runtime.
 - pale skin
 
 ## Hair
-- a short crop
-- a long braid || @alpha
-- a shaved head || @beta
+- a short {colour} crop
+- a long {colour} braid || @alpha
+- a shaved head, {colour} at the stubble || @beta
+
+## Hair colour
+- black
+- greying || || older
+- silver-white || fading to green at the tips || @alpha
 
 ## Eyes
 - grey eyes

@@ -94,30 +94,46 @@ exactly the interaction worth measuring.
 
 ## Hair
 
-- a short crop
-- a long loose braid
-- hair shaved at one side
-- a blunt fringe cut straight
-- shoulder-length and unstyled
-- a tight practical bun
-- cropped close at the neck
-- a side-parted sweep
-- flat hair pushed back by a headset
-- a low ponytail
-- wind-tangled to one side
-- a plain center part
-- close-cropped with a faint scar line through it
-- hair tucked behind both ears
-- damp hair pushed off the forehead
-- a pilot's flattened undercut, helmet-pressed at the crown || @gundam
-- hair cropped to a sensor-jack line behind one ear || @gundam
-- a short crop under a flight-cap ring || @gundam
-- neat regulation-short hair, parted hard || @gundam
-- a squadron buzz with a single dyed stripe || @gundam
-- a high topknot bound in dark cord || @neosamurai
-- long hair gathered into a lacquered clasp || @neosamurai
-- a shaved crown with a single trailing tail || @neosamurai
-- self-cut and uneven, hacked short with a blade || @scav
+- a short {colour} crop
+- a long loose {colour} braid
+- {colour} hair shaved at one side
+- a blunt {colour} fringe cut straight
+- shoulder-length {colour} hair, unstyled
+- a tight practical {colour} bun
+- {colour} hair cropped close at the neck
+- a side-parted {colour} sweep
+- flat {colour} hair pushed back by a headset
+- a low {colour} ponytail
+- {colour} hair wind-tangled to one side
+- a plain {colour} center part
+- close-cropped {colour} hair with a faint scar line through it
+- {colour} hair tucked behind both ears
+- damp {colour} hair pushed off the forehead
+- a pilot's flattened {colour} undercut, helmet-pressed at the crown || @gundam
+- {colour} hair cropped to a sensor-jack line behind one ear || @gundam
+- a short {colour} crop under a flight-cap ring || @gundam
+- neat regulation-short {colour} hair, parted hard || @gundam
+- a {colour} squadron buzz with a single dyed stripe || @gundam
+- a high {colour} topknot bound in dark cord || @neosamurai
+- long {colour} hair gathered into a lacquered clasp || @neosamurai
+- a shaved crown with a single trailing {colour} tail || @neosamurai
+- self-cut and uneven {colour} hair, hacked short with a blade || @scav
+
+## Hair colour
+
+Three segments, like `## Backdrop`: base, an optional tail appended after the
+whole cut phrase, then flags. Tagged for all three themes because
+`Hair colour` is in `THEMED_TABLES`, and every themed table here has to carry
+content for each theme or the pool-share assertion has nothing to measure.
+
+- black
+- dark brown
+- sandy blonde
+- greying || || older
+- salt-and-pepper || going white at the temples || older
+- pale silver-white || fading to green at the tips || @gundam
+- lacquer-black || shot through with a single red streak || @neosamurai
+- bleached straw-blonde || dark at the roots || @scav
 
 ## Feature
 

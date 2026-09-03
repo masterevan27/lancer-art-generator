@@ -74,6 +74,32 @@ def pronoun_sets(tables):
     return [gen.pronoun_fields(p) for p in tables["Pronouns"]]
 
 
+def colour_forms(tables, core):
+    """`core` with its '{colour}' slot filled, once per Hair colour bullet.
+
+    A Hair bullet's colour is rolled from a table of its own, so the strings
+    one cut can appear as are the cross product of the cut and every colour -
+    and where a colour carries a tail, roll_npc() appends that tail after the
+    whole cut phrase, so the tail form is a second string the same pair
+    produces. Both are reproduced here rather than the slot being stripped,
+    because the comparisons these feed are set membership against a rolled
+    value: a form this misses is a form the cohesion checks stop covering.
+
+    Returns the slot untouched when the tables carry no '## Hair colour' at
+    all, rather than raising on a bare index - not every caller's fixture has
+    one. Nothing can be rolled from such a file either (roll_npc() would fail
+    on the missing key long before), so an unfilled slot is the truthful
+    answer: no colour exists for that cut to appear in.
+    """
+    gen = load_generator()
+    out = set()
+    for bullet in tables.get("Hair colour", ()):
+        base, tail, _ = gen.split_hair_colour(bullet)
+        filled = core.replace("{colour}", base)
+        out.add("%s, %s" % (filled, tail) if tail else filled)
+    return out or {core}
+
+
 def rendered(tables, name, bullet):
     """Every string one bullet can appear as once an NPC is rolled.
 
@@ -81,11 +107,27 @@ def rendered(tables, name, bullet):
     "{Subject} {wear} a wide woven hat." comes back as "She wears a wide woven
     hat." Expanding the source side against all pronoun sets is what lets a
     comparison against a rolled value be a plain set membership test.
+
+    The colour slot is expanded first, in that same order: roll_npc() resolves
+    '{colour}' before its pronoun pass, so a tail carrying a placeholder of its
+    own is still rendered.
     """
     core = core_of(name, bullet)
     if "{" not in core:
         return {core}
-    return {core.format(**fields) for fields in pronoun_sets(tables)}
+    cores = colour_forms(tables, core) if "{colour}" in core else {core}
+    out = set()
+    for text in cores:
+        if "{colour}" in text:
+            # No '## Hair colour' to fill it - see colour_forms(). Handing the
+            # slot to str.format below would only turn a missing table into a
+            # KeyError about pronouns.
+            out.add(text)
+        elif "{" not in text:
+            out.add(text)
+        else:
+            out |= {text.format(**fields) for fields in pronoun_sets(tables)}
+    return out
 
 
 def _partition_by_theme(tables, name, theme):

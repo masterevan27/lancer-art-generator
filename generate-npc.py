@@ -105,7 +105,8 @@ DEFAULT_OUTPUT_ROOT = (Path(_OUTPUT_ROOT) if _OUTPUT_ROOT else SCRIPT_DIR / "out
 # is ignored, so extra tables can be added for reference without breaking this.
 REQUIRED_TABLES = [
     "Given names", "Family names", "Callsigns", "Pronouns", "Theme", "Age",
-    "Build", "Height", "Skin", "Hair", "Eyes", "Feature", "Demeanor", "Role",
+    "Build", "Height", "Skin", "Hair", "Hair colour", "Eyes", "Feature",
+    "Demeanor", "Role",
     "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Accent", "Backdrop",
     "Weather", "Stance",
 ]
@@ -115,9 +116,12 @@ REQUIRED_TABLES = [
 # rather than the visual world they come from, and stays untouched by theme.
 # Gear is deliberately absent: what is left of it after the Weapon split is
 # data-slates, tool bags and thermoses, which no theme owns. Weapon is here
-# because armament is the most theme-defining object a figure carries.
-# Phase 2 adds "Hair colour" when that table exists.
-THEMED_TABLES = ("Hair", "Feature", "Outfit", "Headgear", "Weapon", "Backdrop")
+# because armament is the most theme-defining object a figure carries. Hair
+# colour is here beside the cut: a theme that owns a silhouette owns its
+# palette too, and a colour tagged for one theme should be as unreachable from
+# another as a hairstyle is.
+THEMED_TABLES = ("Hair", "Hair colour", "Feature", "Outfit", "Headgear",
+                 "Weapon", "Backdrop")
 
 # Krea 2 conditions on at most 512 tokens and silently truncates the rest, so a
 # prompt that runs long loses its tail - which is where the palette, the flat
@@ -614,6 +618,15 @@ def roll_npc(tables, rng, overrides=None):
             plain = [x for x in options if "figure" not in split_flags(x)[1]]
             options = plain or options     # never filter the pool down to nothing
 
+        # An 'older' colour - greying, salt-and-pepper - asserts an age, so it
+        # must not land on a teenager: the Age clause earlier in the same
+        # prompt would contradict it. Age precedes Hair colour in
+        # REQUIRED_TABLES, so the flag is already known. Same shape as the
+        # Build/'figure' pairing above.
+        if name == "Hair colour" and young:
+            plain = [x for x in options if "older" not in flags_for(name, x)]
+            options = plain or options     # never filter the pool down to nothing
+
         # Faction and Outfit are filtered against the Role roll the same way:
         # a Role flagged 'mil' excludes bullets flagged 'civ' and vice versa,
         # so a soldier doesn't turn up in a cropped tank top and a dockworker
@@ -774,6 +787,25 @@ def roll_npc(tables, rng, overrides=None):
     # and without this they would reach the token prompt.
     npc["Stance"] = split_flags(npc["Stance"])[0]
 
+    # Hair carries a '{colour}' slot rather than the template joining the two,
+    # because the colour's position differs per bullet - "close-cropped
+    # {colour} hair" against "a sleek {colour} bob cut level with the jaw" -
+    # and no single join rule serves both. The tail goes after the whole cut
+    # phrase, which is the only position a gradient reads correctly in.
+    #
+    # Hair colour is absent from the re-strip block above because split_flags()
+    # is the wrong splitter for it: it would take the tail for flags and throw
+    # the tail away. Its own three-segment split runs here instead, which
+    # strips a forced bullet's flags for the same reason that block exists.
+    # After npc.update(overrides), so a forced Hair colour is honoured, and
+    # before the placeholder loop below, so that loop never meets an
+    # unresolved '{colour}' and reports it as a bad pronoun.
+    base, tail, _ = split_hair_colour(npc["Hair colour"])
+    npc["Hair colour"] = base
+    npc["Hair"] = npc["Hair"].replace("{colour}", base)
+    if tail:
+        npc["Hair"] = "%s, %s" % (npc["Hair"], tail)
+
     # Build needs the same unpacking, and for a second reason beyond tidiness:
     # the pool filters above only screen a *rolled* pool, so a pair of forced
     # traits walks straight past both of them. Re-check the pairing here, where
@@ -863,6 +895,25 @@ def split_backdrop(bullet):
     return shot, scene, flags
 
 
+def split_hair_colour(bullet):
+    """A Hair colour bullet carries the base, an optional tail, and flags.
+
+    Three segments, the same shape split_backdrop() uses, and for the same
+    reason: two of them are prose that reaches the prompt and the third is
+    flags. The base fills the '{colour}' slot inside the rolled Hair bullet;
+    the tail is appended after the whole cut phrase.
+
+    That split exists because a gradient reads wrongly in adjective position -
+    "a sleek silver-white fading to green at the tips bob" - and correctly as a
+    trailing clause. A flat colour leaves the tail empty and reads inline.
+    """
+    parts = [p.strip() for p in bullet.split("||")]
+    base = parts[0]
+    tail = parts[1] if len(parts) > 1 else ""
+    flags = tuple(f for f in parts[2].split() if f) if len(parts) > 2 else ()
+    return base, tail, flags
+
+
 def themes_of(flags):
     """The '@theme' tags among a bullet's flags, with the '@' stripped.
 
@@ -881,13 +932,16 @@ def themes_of(flags):
 def flags_for(name, bullet):
     """A bullet's flag tuple, whichever '||' shape its table uses.
 
-    Backdrop bullets carry three segments and keep their flags in the third,
-    so a two-segment Backdrop has no flags at all - its second segment is the
-    scene. Every other table keeps flags in the second segment. Reading the
-    last segment blindly would mistake a Backdrop's scene text for flags.
+    Backdrop and Hair colour both carry three segments and keep their flags in
+    the third, so a two-segment bullet of either has no flags at all - its
+    second segment is prose. Every other table keeps flags in the second
+    segment. Reading the last segment blindly would mistake a Backdrop's scene
+    or a Hair colour's tail for flags.
     """
     if name == "Backdrop":
         return split_backdrop(bullet)[2]
+    if name == "Hair colour":
+        return split_hair_colour(bullet)[2]
     return split_flags(bullet)[1]
 
 
