@@ -113,7 +113,13 @@ REQUIRED_TABLES = [
 # The tables a rolled Theme gates. Everything else - names, age, build, height,
 # skin, eyes, accent, weather, stance - describes the person or the moment
 # rather than the visual world they come from, and stays untouched by theme.
-# Phase 2 adds "Weapon" and "Hair colour" here when those tables exist.
+# Phase 2 adds "Hair colour" here when that table exists, and swaps "Gear" for
+# "Weapon": the design spec's axis table (§2) has Theme governing Outfit,
+# Headgear, Hair, Hair colour, Weapon, Backdrop and Feature, and pointedly not
+# Gear. Gear is on this list today only because it is still the pre-split pool
+# that holds the armament - once §4.1 splits the katanas and rifles out into
+# "Weapon", what is left of Gear is data-slates, tool bags and thermoses, which
+# the spec does not treat as theme-defining.
 THEMED_TABLES = ("Hair", "Feature", "Outfit", "Headgear", "Gear", "Backdrop")
 
 # Krea 2 conditions on at most 512 tokens and silently truncates the rest, so a
@@ -410,6 +416,18 @@ def apply_theme_share(options, theme, name, share=THEME_SHARE):
     reads as itself - at the cost of repeating within a run, which its low
     weight in the Theme table already makes uncommon.
 
+    `share` is a target for the pool *as it reaches this function*, not a
+    promise about the value finally drawn. roll_npc() calls this first and then
+    narrows the result further - filter_by_mil(), the 'notac' filter,
+    apply_gear_policy() - and those later filters drop tagged and neutral
+    bullets at different rates, so the realized share runs above the nominal
+    one whenever they correlate with the theme. Measured against THEME_SHARE
+    at 0.6: an all-civilian theme on a civilian Role realized 0.72, an
+    all-military one on a military Role 0.83. Deliberately left as it is;
+    reordering the filters trades this for a worse problem (a theme's tagged
+    weapons re-inflating past GEAR_POLICY's unarmed bias), and that trade is
+    Phase 2's to make with the measurement in hand.
+
     Untouched when there is nothing to balance: no theme, no tagged bullets, or
     no neutral ones. Duplication only ever adds entries, so every bullet in the
     pool stays reachable.
@@ -675,6 +693,11 @@ def roll_npc(tables, rng, overrides=None):
     npc["Feature"] = split_flags(npc["Feature"])[0]
     npc["Headgear"] = split_flags(npc["Headgear"])[0]
     npc["Gear"] = split_flags(npc["Gear"])[0]
+    # Stance for the same reason as Gear, and not because Stance is themed -
+    # it isn't. Its rolled value was split above (rng.choice(stances)[0]), so
+    # only a --set-trait Stance='... || hands' override still carries flags,
+    # and without this they would reach the token prompt.
+    npc["Stance"] = split_flags(npc["Stance"])[0]
 
     # Build needs the same unpacking, and for a second reason beyond tidiness:
     # the pool filters above only screen a *rolled* pool, so a pair of forced
@@ -1405,6 +1428,21 @@ def main(argv=None):
             raise SystemExit(
                 "--set-trait Pronouns=%r: no such subject in the Pronouns table. "
                 "Available: %s" % (args.overrides["Pronouns"], ", ".join(sorted(known)))
+            )
+
+    # Same check, same shape, for the same class of mistake: a forced Theme the
+    # table doesn't offer used to resolve in silence to an all-neutral roll.
+    # The empty string is the sharper case - it is falsy, so roll_npc() rolls a
+    # real theme and filters every themed pool with it, and then
+    # npc.update(overrides) pastes the empty value back over the record. The
+    # dossier would report no theme for an NPC that was themed, contradicting
+    # the line it prints promising that this seed reproduces this NPC exactly.
+    if "Theme" in args.overrides:
+        known = sorted(set(tables["Theme"]))
+        if args.overrides["Theme"] not in known:
+            raise SystemExit(
+                "--set-trait Theme=%r: no such theme in the Theme table. "
+                "Available: %s" % (args.overrides["Theme"], ", ".join(known))
             )
 
     base_seed = args.seed if args.seed is not None else random.randint(0, 2 ** 32 - 1)

@@ -159,12 +159,29 @@ lands, its own bullets are duplicated until they hold `THEME_SHARE` (0.6) of
 the pool. The multiplier is computed per table from the real pool sizes, so it
 self-corrects as content is authored.
 
+`THEME_SHARE` is a **target share of the pool as it stands before the civ/mil
+and gear-policy filters narrow it** — not a guarantee about the value actually
+drawn. `apply_theme_share` runs first and those filters run after it, dropping
+tagged and neutral bullets at different rates, so the realized share comes out
+*higher* than the nominal one whenever a theme correlates with what they keep:
+measured against a nominal 0.6, an all-civilian theme on a civilian role
+realized 0.72 and an all-military one on a military role 0.83. That is left as
+it is on purpose. Running `apply_theme_share` last instead would let a theme's
+tagged weapons re-inflate past the `unarmed * 5` bias in
+`GEAR_POLICY["Officials"]` and arm officials roughly 60% of the time, so the
+ordering is a real trade rather than an oversight — one for Phase 2 to settle
+with the measurement in hand.
+
 **Theme is independent of Role.** A pirate is as likely to look neosamurai as
 cyberpunk — that independence is a requirement, not an oversight. Role still
 governs whether they are uniformed and what they carry; the two compose, so a
 soldier rolled neosamurai gets that theme's *uniformed* bullets.
 
-Pin a whole group to one look with `--set-trait Theme=neosamurai`.
+Pin a whole group to one look with `--set-trait Theme=neosamurai`. The value is
+checked against the `Theme` table and an unknown one is an error listing what is
+available, the same as `--set-trait Pronouns=`: a typo used to roll all-neutral
+in silence, and an empty value was worse still — a theme was rolled and used to
+filter every pool, then overwritten with nothing on the dossier.
 
 ## Where the entries came from
 
