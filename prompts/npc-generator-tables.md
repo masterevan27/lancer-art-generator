@@ -908,6 +908,7 @@ ignored — so notes like this one are safe to leave inline.
 - long dark hair worn loose past the shoulders, a heavy fringe hanging over one eye and a single stray strand standing up at the crown
 - shoulder-length hair with a loose wave through it, swept back off the face and tucked behind one ear
 - loose hair falling past the shoulders and caught by the wind, a small metal clip holding one side back
+- long pale seafoam-green hair falling past the shoulders, cut with sharp jagged bangs across the brow
 
 ## Hair (she) +
 
@@ -949,6 +950,14 @@ ignored — so notes like this one are safe to leave inline.
 - a high ponytail in fiery orange-red fading to dark roots, choppy bangs falling across one eye
 - a pale lavender bob with a sharp side-swept fringe and a single streaked strand
 - a silver-white bob with a pair of small horn-shaped ornamental clips swept back at the temples
+- a red bob with a blunt fringe
+- twin high ponytails held back by the band of a chunky headset, a long fringe swept across one brow
+- twin high ponytails clipped at the base by a segmented mechanical binder, sweeping loose past the shoulders
+- shoulder-length pale mint-green hair, center-parted with a long face-framing fringe
+- dark hair swept back into a neat low bun, held with a single ornamental pin
+- hair swept up in a bun crowned with a floral hairpin ornament, loose strands and bangs falling forward across the brow
+- dark hair swept up into a high bun, secured with ornamental pins and a trailing ribbon
+- dark hair swept up, an ornamental flower and dangling metal pins gathered at the crown
 
 ## Hair (he) +
 
@@ -1107,11 +1116,28 @@ ignored — so notes like this one are safe to leave inline.
 - {Subject} {wear} a segmented white cybernetic headpiece clamped over the crown and one temple, faint cable jacks seated at the jaw.
 - {Subject} {wear} a sealed tactical helmet with a smoked visor and an integrated breather mask, a coiled comms cable trailing from the jaw.
 - {Subject} {wear} a smooth blue-visored full-face helmet with a hood drawn up over it, a scarf wound loose at the throat.
+- {Subject} {wear} a flat wide-brimmed lacquered hat crowned with a bird skull and trailing feathers, the brim throwing {possessive} face into shadow.
+- {Subject} {wear} a bulky mechanical diagnostic rig clamped over the crown of {possessive} head, thick cabling trailing down to jacks at the collar, a status light lit at the side.
+- {Subject} {wear} a sleek angular powered helmet with raised sensor fins and a full dark visor down, a single braid of hair falling free beneath it.
+- {Subject} {wear} thin rectangular glasses framing sharp eyes.
+- {Subject} {wear} a sleek mechanical half-mask sealed over the nose and mouth, a small lens node mounted at the temple.
+- {Subject} {wear} a close-fitted respirator mask across the lower face beneath narrow tactical eyewear.
+- {Subject} {wear} a horned kabuto-style helmet with a trailing neck guard, its crest catching the last light.
+- {Subject} {wear} a wide flat lacquered hat rimmed in gold, a single red tassel hanging from the brim.
+- {Subject} {wear} a horned kabuto helmet with a scowling mempo faceplate, eyes lit with a faint red glow.
+- {Subject} {wear} a wide woven hat trimmed with small curved horns and hanging tassels, a segmented mechanical mask sealed over the nose and mouth beneath it, a faint accent light glowing at the seam.
+- {Subject} {wear} a wide straw hat trimmed with small hanging bells and a tattered red ribbon at the crown, rain streaming off the brim.
+- {Subject} {wear} a broad ceremonial hat strung with hanging tasseled bells, an antler-like crest rising from the crown.
+- {Subject} {wear} a broad woven hat bristling with jagged spikes at the crown, its brim battered and weathered.
+- {Subject} {wear} a broad dark hat trimmed with hanging chain ornaments and a feather crest, the brim shadowing {possessive} eyes.
+- {Subject} {wear} a wide straw hat over a patterned cloth headband tied at the brow.
 
 ## Headgear (she) +
 
 - x2 {Subject} {wear} a slim hairband holding the hair back off {possessive} face.
 - {Subject} {wear} a wide fabric band knotted at the back of {possessive} head, hair gathered behind it.
+- {Subject} {wear} a slim glowing accent band swept back through {possessive} hair like a hairband.
+- {Subject} {wear} a wide woven hat, thin red-framed glasses catching the light and a long-stemmed pipe held between {possessive} lips.
 
 ## Demeanor
 
@@ -1129,6 +1155,9 @@ ignored — so notes like this one are safe to leave inline.
 - a weary, faintly amused resignation
 - a flicker of impatience barely held in check
 - an appraising look, frankly sizing you up
+- a hushed, grief-stricken stillness, eyes closed
+- a hard, narrow-eyed glare, fixed and unblinking
+- a face streaked with tears, jaw held tight against it
 
 ## Demeanor (she) +
 
@@ -1139,6 +1168,8 @@ ignored — so notes like this one are safe to leave inline.
 - a cool, composed poise that does not invite argument
 - a narrow-eyed, studious focus, lips slightly parted mid-read
 - a lazy, half-lidded stare around a lit cigarette, faintly unimpressed
+- a startled, wide-eyed alertness, lips parted as if caught mid-thought
+- a level, appraising stare held around a cigarette clenched between the teeth
 
 ## Role
 
@@ -1272,6 +1303,23 @@ ignored — so notes like this one are safe to leave inline.
 - a navy flight jumpsuit under a cropped tactical vest loaded with chest pouches, a sidearm holstered at the hip || mil
 - a segmented composite tactical armor suit with actuated knee joints and a compact backpack module, worn over an olive combat shirt || mil
 - a sleek black powered tactical exo-suit with segmented plating at the knees and shoulders, a long dark half-cape trailing from one shoulder || mil
+- segmented dark armor pauldrons over a hooded travel robe, striped forearm wraps and small ornamental tassels at the shoulder
+- a sleek angular powered armor suit with an oversized intake-vented backpack module, warning stencils and exposed cabling trailing from the shoulder || mil
+- heavy segmented composite armor with a large stencilled unit number across the shoulder plate, status lights lit along the collar || mil
+- a white flight jacket with a stencilled red-and-black shoulder patch marking a service unit || mil
+- a mottled camouflage jacket worn open over a plain dark tee stencilled with a bold unit number, cargo trousers and fingerless tactical gloves || mil
+- a sealed high-collared armored bodysuit with heavy pauldron-style shoulder plating and integrated sensor housings at each shoulder
+- a fitted dark tactical bodysuit segmented with rust-orange trim plating at the joints and collar, a long weathered rust-colored cape trailing from one shoulder
+- segmented crimson-lacquered armor plates over a floral-patterned quilted robe, tasseled cords trailing from one shoulder and a wrapped bundle slung across the back || civ notac
+- full lacquered samurai armor in dark green and black with segmented shoulder pauldrons over a trailing hakama-style skirt, ornamental tassels at the waist || civ notac
+- dark samurai robes with a long crimson cloak trailing from the shoulders, one leg bared and banded with tattooed markings || civ notac
+- a tattered dark robe hanging open at the chest, its hems torn and trailing loose || civ notac
+- a dark robe with a pale patterned collar, red fingerless gloves laced to the wrist || civ notac
+- a dark patterned robe with a bright orange underlining, a string of prayer beads wound at one wrist || civ notac
+- ragged wrapped cloth bindings over bare limbs, one wrist bound in worn bandaging, feet bare in simple woven sandals || civ notac
+- a dark robe traced with gold embroidered trim, a purple sash knotted at the waist and small tassels hanging loose || civ notac
+- a dark kimono cinched with a wide white sash tied in a full bow at the back || civ notac
+- a fringed pleated mantle draped over the shoulders and swagged with hanging chain loops, worn over a dark strapped underlayer || civ notac
 
 ## Outfit (she) +
 
@@ -1336,6 +1384,17 @@ ignored — so notes like this one are safe to leave inline.
 - a mustard-yellow flight suit with padded shoulder patches and a wide belted utility harness, sleeves rolled to reveal a lighter underlayer, a weathered grey scarf knotted loosely at the throat
 - a glossy black bodysuit with a short pleated skirt panel at the hip, one arm sheathed in an articulated mechanical gauntlet running to the shoulder, over knee-high boots
 - a cropped olive tank top with a patch pocket at the chest, twin red armbands worn above the elbow
+- a lacquered single pauldron over a fitted dark robe with an embroidered high collar, tasseled cords hanging from the shoulder, a wide sash cinched at the waist || civ notac
+- a fitted halter-neck tank top with a high choker collar, one bare shoulder crossed by a thin strap || civ
+- a cropped bomber-style jacket zipped only at the chest over a fitted sports top and briefs, midriff and legs bare, wrists wrapped in tape || civ
+- a fitted red-and-white segmented plate armor suit cut low across the chest, articulated joints at the shoulders and knees
+- a sleek black tactical bodysuit with segmented dark red armor plating across one shoulder and arm, fingerless gloves and knee-high boots || civ
+- a tattered black cloak like torn wings draped from the shoulders over a wrapped cropped top, buckled utility straps cinched at the waist and one armored bracer laced to the forearm || civ
+- a fitted dark leather bodice cut low at the chest over a long dark wrap skirt, faint red markings tracing down one bared arm || civ
+- a partial lacquered pauldron and vambrace worn over a cropped underlayer baring the midriff, small red tassels trailing from the shoulder plate || civ notac
+- a white-and-black lacquered armor harness baring the midriff, fitted white trousers tucked into patterned boots || civ notac
+- a sleeveless dark lamellar armor bodice with a red cord sash, plate segments hanging low over dark leggings, {possessive} shoulders left bare || civ notac
+- a dark kimono patterned with pale plum blossoms, a crimson underlayer glimpsed at the collar and wide sleeves || civ notac
 
 ## Gear
 
@@ -1432,6 +1491,25 @@ ignored — so notes like this one are safe to leave inline.
 - a compact sidearm gripped low and loose in one hand || hands gun mil weapon simple
 - a bullpup service rifle with an under-barrel attachment held at a low ready in both hands || hands gun mil weapon
 - a suppressed marksman rifle with an extended barrel held low in one hand || hands gun mil weapon
+- a katana half-drawn from its sheath at the hip, {possessive} free hand steadying the scabbard || hands mil weapon
+- a small pendant amulet glowing softly at the throat
+- twin sheathed swords worn crosswise at the hip, tasseled cords hanging from the hilts || mil weapon
+- a sheathed katana carried loose in one hand, hanging point-down at {possessive} side || hands mil weapon
+- a sheathed katana worn at the hip, {possessive} hand resting loose on the hilt || weapon
+- an old-fashioned lantern glowing warm, carried by its handle in one hand || hands
+- a katana gripped and raised overhead in both hands mid-swing || hands weapon
+- a katana held drawn low in one hand, its point trailing near the ground || hands weapon
+- a katana held drawn across the body, a bundle of additional sheathed blades and a small demonic mask hanging at {possessive} hip || hands weapon
+- a bundle of sheathed blades bound together with cord at {possessive} hip || weapon
+- twin katanas, one gripped loose in each hand and lowered at {possessive} sides || hands weapon
+- a sheathed katana at {possessive} hip, one hand gripping the hilt, poised to draw || hands weapon
+- a pair of blades hovering motionless in the air to either side, faint markings etched along them || weapon
+- an oversized two-handed blade held low in one hand, its point trailing near the ground, a second shorter sword sheathed at {possessive} hip || hands weapon
+- a sheathed katana crossed against {possessive} back alongside a second blade drawn and gripped in {possessive} hand, its edge glowing faintly || hands mil weapon
+- a katana held upright close to {possessive} shoulder, its blade bared and ready || hands mil weapon
+- a sheathed katana rested up over one shoulder, gripped loosely by the scabbard in one hand || hands mil weapon
+- twin sheathed swords worn crossed at {possessive} hip, hilts angled outward || mil weapon
+- a katana held up close to {possessive} face, its blade angled back and ready in one hand || hands mil weapon
 
 ## Accent
 
@@ -1618,6 +1696,43 @@ ignored — so notes like this one are safe to leave inline.
 - A character portrait || {Subject} {is_are} standing on a raised gantry platform beside the crouched bulk of a towering war-machine filling a dim maintenance bay, its single optic sensor lit and a heavy cannon barrel angled down past {object}, faded unit markings stencilled across its scarred armor plating, stacked crates and hazard placards cluttering the shadowed bay floor below.
 - A character portrait || {Subject} {is_are} sitting atop the broad missile-pod shoulder of an idle war-machine, a cigarette smoking forgotten in one hand, looking out over a muddy grey wasteland toward a distant radio mast, the machine's hull marked with a faded heraldic shield insignia and streaked with rain. || nogear weather
 - A character portrait || {Subject} {is_are} walking down a wide ceremonial ramp through falling snow, a combat helmet held loosely in one hand at {possessive} side, faction banners snapping either side and hooded onlookers lining the way, the hulking silhouette of a towering war-machine looming backlit behind {object} in the drifting snow and haze. || weather
+- A character portrait || {Subject} {is_are} standing in profile, a colossal crow-like beast looming close behind {possessive} shoulder, its single eye burning with a saturated glow in the gloom - beyond {object} a ruined stone courtyard fades into rubble and haze. || weather
+- A close character portrait || {Subject} {is_are} seen in profile close beside the angular head of {possessive} companion mech, its optics burning twin points in the dark, a stencilled shoulder patch marking {possessive} flight jacket - beyond them a hazy blue-lit hangar recedes into the dark.
+- A dynamic character portrait || {Subject} {is_are} walking straight toward the viewer down a dim shipboard corridor, a pistol held low and loose in one hand, a second armed companion keeping pace just behind {possessive} shoulder - pipework and hazard striping line the walls to either side, receding into a hazy blue light. || nogear
+- A character portrait seen from behind || {Subject} {is_are} standing atop a snow-dusted rooftop unit, hair streaming in the wind, a sheathed blade held loose at {possessive} side, a small cat perched watchful nearby - below {object} a dense neon-lit high-rise cityscape glows through drifting snow. || nogear weather
+- A dramatic low-angle character portrait || {Subject} {is_are} standing at street level as a canyon of soaring high-rises rises sheer on every side, towering signage in unfamiliar characters glowing through drifting rain overhead. || weather
+- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} weightless in freefall, both arms flung wide overhead and twin long braids drifting loose in the air, {possessive} body arched back in strong foreshortening - beyond {object} the dark hull of a starship interior glints with scattered debris and drifting light.
+- A dynamic, low-angle character portrait || {Subject} {is_are} leaning far out over the drop, one hand locked around a strut and {possessive} body braced forward, gazing straight down through a vast light-streaked shaft at a glittering neon cityscape far below.
+- A character portrait || {Subject} {is_are} sitting perched on the folded knee of a crouched companion mech, one hand resting easy against its armored plating as its head looms close alongside {object}, twin optics glowing steady - beyond {object} a dense city skyline spreads out below in the fading dusk light. || weather
+- A dynamic character portrait seen from behind || {Subject} {is_are} balanced on the tip of a rooftop antenna mast high above the city, one leg braced and bent, a long coat billowing wide in the wind - far below {object} a dense high-rise skyline glitters with countless warning lights through the downpour. || weather
+- A character portrait || {Subject} {is_are} sitting perched on a rooftop ledge, one leg drawn up and a lit cigarette held near {possessive} mouth, gazing out over a vast river-split cityscape glowing under a deep orange sunset. || nogear weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a plant-filled loft apartment with a domed window overlooking a rain-streaked neon high-rise skyline, candlelight and string lights glowing warm across cluttered bookshelves. || weather
+- A half-body character portrait || Behind {object}, out of focus, is a fog-bound harbor skyline of towering high-rises, an elevated highway curving low over dark water and a blocky industrial platform lit from beneath. || weather
+- A dynamic, low-angle character portrait || {Subject} {is_are} crouched low on a rain-slicked rooftop platform, one hand gripping a glowing energy blade planted point-down and weight braced forward, ready to spring - behind {object} a dense neon-lit cyberpunk skyline rises through drifting haze, a colossal holographic face glowing between the towers and small hovercraft drifting past in the middle distance. || nogear weather
+- A character portrait || {Subject} {is_are} gazing up through a viewport in quiet wonder, tubing and cabling trailing from {possessive} suit collar to a bulky comms headset clamped over the ears - beyond the glass a planet's cloud-swirled surface curves away below and a scatter of distant moons hangs in the black.
+- A character portrait || {Subject} {is_are} reclined against the fairing of a parked speeder bike, one arm draped along the windscreen and chin propped in {possessive} hand - behind {object} a neon-lit street glows in smeared bursts of color through the haze. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-slicked old-town street lined with lantern-lit shopfronts and parked bicycles, a cherry blossom tree overhanging the road and a distant illuminated tower glowing hazy through the mist. || weather
+- A character portrait || {Subject} {is_are} standing in heavy rain at the center of a narrow street, flanked on both sides by towering high-rises plastered with glowing neon signage in unfamiliar characters. || weather
+- A character portrait || {Subject} {is_are} standing in profile amid a cherry blossom grove at dusk, petals drifting thick through the air around {object} - the trees glow warm pink and gold in the fading light. || weather
+- A character portrait || {Subject} {is_are} standing in heavy rain, glancing back over one shoulder from beneath a wide straw hat, a lit lantern raised in one hand - behind {object} a rain-streaked cityscape of weathered high-rises and faded signage fades into the downpour. || nogear weather
+- A dynamic, silhouetted character portrait || {Subject} {is_are} caught mid-swing on a rocky bluff, driving a blade down in a decisive two-handed arc as sparks scatter from the strike, {possessive} cloak and sash ribbons whipped by the motion - behind {object} a massive sun burns low behind hazy mountains and a still lake below. || nogear weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a towering domed tower rising against a hazy dusk sky, two silhouetted figures paused in a lit doorway below. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a paper-screened room with the sliding doors thrown open onto a night sky thick with stars and a drifting nebula.
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a windswept plain of pale grass, a second blade planted upright in the ground nearby, its hilt trailing dark streamers. || weather
+- A dynamic character portrait || {Subject} {is_are} walking straight toward the viewer through the burning gate of a hillside shrine, flames engulfing the structure and lantern posts to either side, embers drifting across the smouldering ground underfoot. || nogear weather
+- A character portrait || {Subject} {is_are} standing wide-legged with twin blades held loose at {possessive} sides - behind {object} a massive torii gate frames a huge glowing moon low on the horizon, rocky windswept terrain falling away into mist, hung paper talismans stirring to either side. || nogear weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a fog-wrapped hillside town of wooden gatehouses and lit braziers, a sprawling tiered castle rising misty on the ridge above. || weather
+- A character portrait || {Subject} {is_are} sitting on a wet rocky shoreline in heavy rain, one elbow propped on a knee - behind {object} a flat grey expanse of water fades into mist. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a mist-shrouded ruin lit by a single stone lantern, a pale spectral face hovering faint in the gloom. || weather
+- A dynamic character portrait || {Subject} {is_are} gripping a drawn blade low in both hands, {possessive} robe torn open at the chest and trailing loose in the wind, thick mist coiling around {possessive} legs - behind {object} a total eclipse burns a thin ring of light around a blacked-out sun, its glow diffusing through the haze. || nogear weather
+- A character portrait || {Subject} {is_are} sitting cross-legged beneath a towering maple in full red autumn leaf, fallen petals scattering across the ground around {object} - beyond {object} a weathered shrine's timber eaves rise beside the tree and pale mountains fade into a clear sky. || weather
+- A character portrait || {Subject} {is_are} standing in profile with a cigarette held loosely between {possessive} lips, gripping two sheathed blades low at {possessive} hip - behind {object} the fogged silhouette of a ruined industrial structure looms half-lost in the mist. || nogear weather
+- A character portrait || {Subject} {is_are} standing with arms crossed against the wind, hair lifted loose and small birds startled into flight around {object} - behind {object} a golden field of tall grass sways beneath a hazy sky. || weather
+- A character portrait seen from behind || {Subject} {is_are} standing at the edge of flooded paddy fields at dusk, a sheathed sword resting at {possessive} hip, gazing out over the water - power lines and utility poles cut across the hazy sky beyond {object}. || nogear weather
+- A character portrait seen from behind || {Subject} {is_are} walking away through drifting fog and bamboo toward a distant pagoda silhouette, a sheathed blade at {possessive} hip - the temple's tiered roofline fades into the mist ahead. || nogear weather
+- A dramatic low-angle character portrait || {Subject} {is_are} standing atop a rocky summit in full armor, a sheathed blade held point-down at {possessive} side, drifting red leaves swirling past - behind {object} an enormous full moon fills the sky through a wreath of storm cloud. || nogear weather
+- A character portrait || {Subject} {is_are} standing before a weathered torii gate at night, armor catching the pale light, a scatter of vivid red flowers spread across the ground around {object} - mist pools low between bare trees and a hooded figure waits distant among aged grave markers behind {object}. || weather
+- A close character portrait || {Subject} {is_are} sitting with head bowed, a sheathed sword held loose across {possessive} lap, petals drifting thick through the air around {object} - beside {object} a second blade stands planted upright, a small paper talisman glowing faintly at its hilt. || nogear weather
 
 ## Weather
 
@@ -1687,6 +1802,17 @@ ignored — so notes like this one are safe to leave inline.
 - sitting cross-legged in a formal meditative pose, palms pressed together at the chest, segmented mechanical arms folded still || hands
 - leaning down into open machinery from above, braced on one forearm and reaching in with the other hand || hands
 - crouched low and coiled on a raised ledge, weight braced forward on one arm, ready to spring || hands
+- leaning low into a forward sprint, {possessive} braid whipped back and one arm driving down
+- crouched low on one knee, gripping a blade planted point-down and ready to spring || hands
+- standing in profile with head bowed slightly, one hand resting on a sheathed blade at the hip || hands
+- caught in a dynamic overhead swing, both hands driving a blade down in a decisive arc, cloak and sash ribbons whipped by the motion || hands
+- kneeling formally with both hands folded around an upright hilt held back against one shoulder || hands
+- kneeling in profile with head bowed low, hands stilled in {possessive} lap
+- walking straight toward the viewer with {possessive} weapon raised over one shoulder, cloak snapping back in the rising heat || hands
+- raising {possessive} weapon high overhead in both hands, mid-swing, hair whipped wild by the wind and snow || hands
+- sitting cross-legged with one elbow propped on a knee, chin resting in that hand, gazing out in quiet thought
+- standing tense with both hands crossed at the hip, one gripping the hilt of {possessive} sheathed weapon, poised to draw || hands
+- crouched low on the balls of the feet, one fist raised in a guarded ready stance, weight coiled forward || hands
 
 ## Stance (she) +
 
