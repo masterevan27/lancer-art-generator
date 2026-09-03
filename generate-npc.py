@@ -260,12 +260,19 @@ PORTRAIT_TEMPLATE = (
     "into every shadow."
 )
 
+# The painterly style is asserted twice - once opening, once closing - and not
+# four times. Two further restatements used to sit in the middle ("the same
+# fine grain and visible brushwork as a close-up portrait", "matching the same
+# painterly rendering as the portrait shot"); both existed to stop the token
+# drifting from the portrait's look, and the closing tag block already says
+# that in the position a diffusion model weights hardest. Removing them bought
+# back the headroom the Weapon slot needed - see
+# docs/superpowers/specs/2026-09-03-phase-2-structural-splits-design.md §4.
 TOKEN_TEMPLATE = (
     "A full-body character illustration of {role}, {maturity} {gender} {age}, "
     "rendered in a detailed painterly illustration style with fine grain texture, clean "
     "linework and halftone dot shading worked into the shadows, moody cinematic lighting "
-    "on the figure. {Possessive} face carries the same fine grain and visible brushwork "
-    "as a close-up portrait, not simplified or cel-shaded. {Subject} {is_are} "
+    "on the figure. {Subject} {is_are} "
     "standing at full height facing the viewer, entire body visible from the top of "
     "{possessive} head to the soles of {possessive} plain modern boots, no leg wraps or "
     "puttees, with clear empty space above and below, in realistic adult proportions "
@@ -277,8 +284,7 @@ TOKEN_TEMPLATE = (
     "{accent_line} The background alone is a solid flat plain white, no "
     "texture, no gradient, no shadow, no environment. Centered composition, dramatic "
     "lighting, isolated character illustration, clean silhouette, painterly brushwork "
-    "with heavy grain and dense halftone screentone worked into every shadow, matching "
-    "the same painterly rendering as the portrait shot."
+    "with heavy grain and dense halftone screentone worked into every shadow."
 )
 
 # The two forms {accent_line} takes, gated on has_light_source() - see there
