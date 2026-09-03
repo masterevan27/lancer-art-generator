@@ -104,10 +104,17 @@ DEFAULT_OUTPUT_ROOT = (Path(_OUTPUT_ROOT) if _OUTPUT_ROOT else SCRIPT_DIR / "out
 # Tables the prompt templates below require. Anything else in the markdown file
 # is ignored, so extra tables can be added for reference without breaking this.
 REQUIRED_TABLES = [
-    "Given names", "Family names", "Callsigns", "Pronouns", "Age", "Build",
-    "Height", "Skin", "Hair", "Eyes", "Feature", "Demeanor", "Role", "Faction",
-    "Outfit", "Headgear", "Gear", "Accent", "Backdrop", "Weather", "Stance",
+    "Given names", "Family names", "Callsigns", "Pronouns", "Theme", "Age",
+    "Build", "Height", "Skin", "Hair", "Eyes", "Feature", "Demeanor", "Role",
+    "Faction", "Outfit", "Headgear", "Gear", "Accent", "Backdrop", "Weather",
+    "Stance",
 ]
+
+# The tables a rolled Theme gates. Everything else - names, age, build, height,
+# skin, eyes, accent, weather, stance - describes the person or the moment
+# rather than the visual world they come from, and stays untouched by theme.
+# Phase 2 adds "Weapon" and "Hair colour" here when those tables exist.
+THEMED_TABLES = ("Hair", "Feature", "Outfit", "Headgear", "Gear", "Backdrop")
 
 # Krea 2 conditions on at most 512 tokens and silently truncates the rest, so a
 # prompt that runs long loses its tail - which is where the palette, the flat
@@ -533,14 +540,30 @@ def roll_npc(tables, rng, overrides=None):
         forced_build is not None and "figure" in split_flags(forced_build)[1]
     )
 
-    npc = {"Pronouns": pronouns}
+    # Theme is rolled before every appearance table it gates, for the same
+    # reason Pronouns is: the roll that selects between pools has to happen
+    # before those pools are drawn from. It is deliberately NOT gated on Role -
+    # a pirate should be as likely to look neosamurai as cyberpunk - so nothing
+    # here reads npc["Role"].
+    theme = (overrides or {}).get("Theme") or rng.choice(tables["Theme"])
+
+    npc = {"Pronouns": pronouns, "Theme": theme}
     young = False
     role_mil = False
     outfit_notac = False
     for name in REQUIRED_TABLES:
-        if name in ("Pronouns", "Stance"):
+        if name in ("Pronouns", "Theme", "Stance"):
             continue
         options = variant_table(tables, name, subject)
+
+        # Theme gates every appearance table: its own tagged bullets plus the
+        # neutral pool, with the tagged ones weighted up so the theme is
+        # actually visible rather than merely available. Applied first, so the
+        # civ/mil and policy filters below narrow within the theme rather than
+        # across it - which is what lets a soldier be neosamurai in uniform.
+        if name in THEMED_TABLES:
+            options = filter_by_theme(options, theme, name)
+            options = apply_theme_share(options, theme, name)
 
         # The Age/Build pairing runs both ways. When the Build was forced
         # to a bullet flagged 'figure' and the Age is being rolled, it is the
@@ -868,6 +891,9 @@ def write_dossier(path, npc, seed, prompts, images):
         ("Callsign", npc["Callsigns"]),
         ("Pronouns", npc["Pronouns"]),
         ("Reads as", npc["_pronouns"]["gender"]),
+        # .get rather than [...], so regenerating an NPC from a manifest entry
+        # written before Theme existed still writes a dossier rather than raising.
+        ("Theme", npc.get("Theme", "-")),
         ("Role", npc["Role"]),
         ("Affiliation", npc["Faction"]),
         ("Age", npc["Age"]),
@@ -1014,6 +1040,7 @@ def parse_args(argv=None):
                            "gates every gendered variant table along with it")
     roll.add_argument("--set-trait", action="append", default=[], metavar="Table=value",
                       help="force one rolled trait, e.g. --set-trait Role='a field medic' "
+                           "or --set-trait Theme=neosamurai to pin a whole group to one look "
                            "(repeatable; table names are the markdown headings)")
 
     gen = p.add_argument_group("generation")
