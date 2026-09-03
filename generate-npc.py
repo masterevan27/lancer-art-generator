@@ -106,21 +106,18 @@ DEFAULT_OUTPUT_ROOT = (Path(_OUTPUT_ROOT) if _OUTPUT_ROOT else SCRIPT_DIR / "out
 REQUIRED_TABLES = [
     "Given names", "Family names", "Callsigns", "Pronouns", "Theme", "Age",
     "Build", "Height", "Skin", "Hair", "Eyes", "Feature", "Demeanor", "Role",
-    "Faction", "Outfit", "Headgear", "Gear", "Accent", "Backdrop", "Weather",
-    "Stance",
+    "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Accent", "Backdrop",
+    "Weather", "Stance",
 ]
 
 # The tables a rolled Theme gates. Everything else - names, age, build, height,
 # skin, eyes, accent, weather, stance - describes the person or the moment
 # rather than the visual world they come from, and stays untouched by theme.
-# Phase 2 adds "Hair colour" here when that table exists, and swaps "Gear" for
-# "Weapon": the design spec's axis table (§2) has Theme governing Outfit,
-# Headgear, Hair, Hair colour, Weapon, Backdrop and Feature, and pointedly not
-# Gear. Gear is on this list today only because it is still the pre-split pool
-# that holds the armament - once §4.1 splits the katanas and rifles out into
-# "Weapon", what is left of Gear is data-slates, tool bags and thermoses, which
-# the spec does not treat as theme-defining.
-THEMED_TABLES = ("Hair", "Feature", "Outfit", "Headgear", "Gear", "Backdrop")
+# Gear is deliberately absent: what is left of it after the Weapon split is
+# data-slates, tool bags and thermoses, which no theme owns. Weapon is here
+# because armament is the most theme-defining object a figure carries.
+# Phase 2 adds "Hair colour" when that table exists.
+THEMED_TABLES = ("Hair", "Feature", "Outfit", "Headgear", "Weapon", "Backdrop")
 
 # Krea 2 conditions on at most 512 tokens and silently truncates the rest, so a
 # prompt that runs long loses its tail - which is where the palette, the flat
@@ -220,10 +217,10 @@ ROLE_CATEGORIES = {
 }
 UNCATEGORIZED_ROLE = "Other"
 
-# The Gear-roll policy each ROLE_CATEGORIES bucket gets, layered on top of the
-# mil/civ split - see apply_gear_policy(). A category with no entry here rolls
-# Gear exactly as it always has: no filter, no bias.
-GEAR_POLICY = {
+# The Weapon-roll policy each ROLE_CATEGORIES bucket gets, layered on top of
+# the mil/civ split - see apply_weapon_policy(). A category with no entry
+# here rolls Weapon exactly as it always has: no filter, no bias.
+WEAPON_POLICY = {
     "Officials": "restricted",
     "Criminals": "armed_bias",
 }
@@ -425,7 +422,7 @@ def apply_theme_share(options, theme, name, share=THEME_SHARE):
     `share` is a target for the pool *as it reaches this function*, not a
     promise about the value finally drawn. roll_npc() calls this first and then
     narrows the result further - filter_by_mil(), the 'notac' filter,
-    apply_gear_policy() - and those later filters drop tagged and neutral
+    apply_weapon_policy() - and those later filters drop tagged and neutral
     bullets at different rates, so the realized share drifts by however much
     they correlate with the theme. It drifts BOTH ways, and down is the
     direction that bites: measured against THEME_SHARE at 0.6, a
@@ -436,8 +433,9 @@ def apply_theme_share(options, theme, name, share=THEME_SHARE):
     whatever `share` says - see `python -m test.theme_visibility`.
 
     Deliberately left as it is; reordering the filters trades this for a worse
-    problem (a theme's tagged weapons re-inflating past GEAR_POLICY's unarmed
-    bias), and that trade is Phase 2's to make with the measurement in hand.
+    problem (a theme's tagged weapons re-inflating past WEAPON_POLICY's
+    unarmed bias), and that trade is Phase 2's to make with the measurement
+    in hand.
 
     Untouched when there is nothing to balance: no theme, no tagged bullets, or
     no neutral ones. Duplication only ever adds entries, so every bullet in the
@@ -456,8 +454,8 @@ def apply_theme_share(options, theme, name, share=THEME_SHARE):
     return tagged * max(1, n) + neutral
 
 
-def apply_gear_policy(options, category, mil):
-    """Bias or filter the Gear roll to fit the NPC's Role.
+def apply_weapon_policy(options, category, mil):
+    """Bias or filter the Weapon roll to fit the NPC's Role.
 
     Three tiers, layered on top of filter_by_mil's civ/mil split:
 
@@ -469,23 +467,23 @@ def apply_gear_policy(options, category, mil):
         bullets outweigh the pistol-only ones, which is the "usually a rifle
         too" half of the brief. Never filtered to nothing: an untagged
         tables file falls back to the full pool rather than erroring.
-      - GEAR_POLICY['Officials'] ("restricted"): these almost never carry
+      - WEAPON_POLICY['Officials'] ("restricted"): these almost never carry
         anything dangerous, and never anything but a pocketable weapon when
         they do. Bullets flagged 'weapon' are dropped unless also flagged
         'simple', then the unarmed bullets are duplicated heavily so an
         armed roll stays rare rather than impossible.
-      - GEAR_POLICY['Criminals'] ("armed_bias"): usually carrying something.
+      - WEAPON_POLICY['Criminals'] ("armed_bias"): usually carrying something.
         'weapon'-flagged bullets are duplicated into the pool, the same
         trick this function used to reserve for a mil Role alone.
 
     Any other category - or a tables file with no 'weapon'/'sidearm' flags at
-    all - rolls Gear exactly as before: untouched.
+    all - rolls Weapon exactly as before: untouched.
     """
     if mil:
         armed = [x for x in options if "sidearm" in split_flags(x)[1]]
         return armed or options
 
-    policy = GEAR_POLICY.get(category)
+    policy = WEAPON_POLICY.get(category)
     if policy == "restricted":
         pocketable = [
             x for x in options
@@ -624,17 +622,16 @@ def roll_npc(tables, rng, overrides=None):
         if name in ("Faction", "Outfit"):
             options = filter_by_mil(options, role_mil)
 
-        # An Outfit flagged 'notac' - an elaborate or traditional civilian
-        # dress like a kimono or shrine robes - shouldn't be paired with
-        # military-styled gear, so the Gear pool drops every 'mil'-flagged
-        # bullet whenever one is rolled. Outfit precedes Gear in
-        # REQUIRED_TABLES, so outfit_notac is already known by the time this
-        # runs.
-        if name == "Gear" and outfit_notac:
+        # 'notac' applies to both halves of the old Gear table: an elaborate or
+        # traditional outfit should pair with neither a military-issue rifle
+        # nor a military-issue radio. Restricting only the Weapon would leave a
+        # kimono carrying a tactical assault pack.
+        if name in ("Weapon", "Gear") and outfit_notac:
             no_mil = [x for x in options if "mil" not in split_flags(x)[1]]
             options = no_mil or options
-        if name == "Gear":
-            options = apply_gear_policy(options, ROLE_CATEGORIES.get(npc["Role"]), role_mil)
+        if name == "Weapon":
+            options = apply_weapon_policy(
+                options, ROLE_CATEGORIES.get(npc["Role"]), role_mil)
 
         # Rolled either way, so that forcing a trait does not shift the rest
         # of the run's random stream and change every NPC after it. The
@@ -680,6 +677,7 @@ def roll_npc(tables, rng, overrides=None):
     # Stance that describes aiming or firing a weapon needs the Gear roll to
     # have actually come up a firearm, or the pose has nothing in hand to back
     # it up.
+    npc["Weapon"], weapon_flags = split_flags(npc["Weapon"])
     npc["Gear"], gear_flags = split_flags(npc["Gear"])
     stances = [split_flags(x) for x in variant_table(tables, "Stance", subject)]
     if "gun" not in gear_flags:
@@ -703,6 +701,7 @@ def roll_npc(tables, rng, overrides=None):
     npc["Hair"] = split_flags(npc["Hair"])[0]
     npc["Feature"] = split_flags(npc["Feature"])[0]
     npc["Headgear"] = split_flags(npc["Headgear"])[0]
+    npc["Weapon"] = split_flags(npc["Weapon"])[0]
     npc["Gear"] = split_flags(npc["Gear"])[0]
     # Stance for the same reason as Gear, and not because Stance is themed -
     # it isn't. Its rolled value was split above (rng.choice(stances)[0]), so
@@ -754,19 +753,22 @@ def split_flags(bullet):
     """'a rifle held in her hands || hands' -> the text, and its flags.
 
     Same '||' convention Backdrop uses, for tables whose bullets are a single
-    phrase. On Gear/Stance the flags are 'hands', meaning the entry occupies at
-    least one hand (on Gear) or needs both of them free (on Stance), and 'gun',
-    meaning the entry is an actual firearm held in hand (on Gear) or a pose that
-    describes aiming, firing or otherwise handling one (on Stance) - a bullet
-    can carry both at once, '|| hands gun'. Gear may also carry 'mil', marking
-    an actual weapon or piece of military-issue equipment, and 'weapon',
-    'simple' or 'sidearm', read by apply_gear_policy() rather than
-    filter_by_mil() - see the tables file for what each one means. Age and
-    Build reuse the same split for their own unrelated flags, 'young' and
-    'figure', and so do Role ('mil', an active-duty military or paramilitary
-    occupation), Faction/Outfit ('civ' or 'mil', filtered against the Role
-    flag - see filter_by_mil()) and Outfit's own 'notac' (read by
-    apply_gear_policy() to keep tactical Gear off a handful of outfits).
+    phrase. On Gear/Weapon/Stance the flags are 'hands', meaning the entry
+    occupies at least one hand or arm (on Gear or Weapon) or needs both of
+    them free (on Stance), and 'gun', meaning the entry is an actual firearm
+    held in hand (on Weapon) or a pose that describes aiming, firing or
+    otherwise handling one (on Stance) - a bullet can carry both at once,
+    '|| hands gun'. Gear and Weapon both may also carry 'mil', marking an
+    actual weapon or piece of military-issue equipment (equipment on a Gear
+    entry, an actual issued weapon on a Weapon entry). Weapon alone also
+    carries 'weapon', 'simple' or 'sidearm', read by apply_weapon_policy()
+    rather than filter_by_mil() - see the tables file for what each one
+    means. Age and Build reuse the same split for their own unrelated flags,
+    'young' and 'figure', and so do Role ('mil', an active-duty military or
+    paramilitary occupation), Faction/Outfit ('civ' or 'mil', filtered
+    against the Role flag - see filter_by_mil()) and Outfit's own 'notac'
+    (read in roll_npc() to keep tactical Weapon and Gear off a handful of
+    outfits).
     """
     text, _, rest = bullet.partition("||")
     return text.strip(), tuple(f for f in rest.split() if f)
@@ -860,6 +862,7 @@ def build_prompts(npc):
         "headgear": npc["Headgear"],
         "faction": npc["Faction"],
         "demeanor": npc["Demeanor"],
+        "weapon": npc["Weapon"],
         "gear": npc["Gear"],
         "accent": npc["Accent"],
         "shot": shot,
@@ -879,7 +882,8 @@ def build_prompts(npc):
     # instrument panel, a muzzle flash - only reaches the portrait, since the
     # token has no backdrop at all, just flat white.
     equipped_glow = has_light_source(
-        npc["Gear"], npc["Outfit"], npc["Headgear"], npc["Feature"], npc["Eyes"])
+        npc["Weapon"], npc["Gear"], npc["Outfit"], npc["Headgear"],
+        npc["Feature"], npc["Eyes"])
     portrait_glow = equipped_glow or has_light_source(scene)
 
     portrait_fields = dict(
@@ -956,6 +960,7 @@ def write_dossier(path, npc, seed, prompts, images):
         ("Demeanor", npc["Demeanor"]),
         ("Wearing", npc["Outfit"]),
         ("Carrying", npc["Gear"]),
+        ("Armed with", npc.get("Weapon", "-") or "unarmed"),
         ("Accent color", npc["Accent"]),
         ("Portrait shot", split_backdrop(npc["Backdrop"])[0]),
         ("Portrait scene", split_backdrop(npc["Backdrop"])[1]),

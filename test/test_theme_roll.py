@@ -175,11 +175,18 @@ class TestThemeRoll(unittest.TestCase):
         actual no-starvation guarantee is
         test_theme_inert.test_every_theme_still_rolls_a_full_pool, which
         compares pool lengths.
+
+        Weapon is exempt: its weighted empty entry ('|| none') rolling to ''
+        is the unarmed case, a real value rather than a crash - see
+        test_weapon.test_an_unarmed_npc_is_possible, which pins it as
+        reachable whether or not a theme is in play.
         """
         for theme in ("alpha", "beta"):
             for seed in range(100):
                 npc = roll(seed, Theme=theme)
                 for name in gen.THEMED_TABLES:
+                    if name == "Weapon":
+                        continue
                     self.assertTrue(npc[name], "%s empty for %s" % (name, theme))
 
 

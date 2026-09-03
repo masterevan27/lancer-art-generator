@@ -65,9 +65,14 @@ Used by the test suite. Not used by the generator at runtime.
 - {Subject} {is_are} bare-headed.
 - {Subject} {wear} a wide woven hat. || @alpha
 
+## Weapon
+- x2 || none
+- a service pistol worn openly at the thigh || mil weapon simple sidearm
+- a long blade worn edge-up at the waist || mil weapon sidearm hands @alpha
+
 ## Gear
 - a battered data-slate || hands
-- a service pistol worn openly at the thigh || mil weapon simple sidearm @alpha
+- a canvas tool roll at the hip
 
 ## Accent
 - teal-green

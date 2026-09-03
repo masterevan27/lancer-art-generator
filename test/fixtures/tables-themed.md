@@ -198,6 +198,18 @@ exactly the interaction worth measuring.
 - {Subject} {wear} a scowling mempo faceplate under a low brim. || @neosamurai
 - {Subject} {wear} a cracked visor held on with tape and wire. || @scav
 
+## Weapon
+
+- x8 || none
+- a service pistol worn openly at the thigh || mil weapon simple sidearm
+- a holstered sidearm and a slung carbine || mil weapon sidearm
+- a compact sidearm at the chest rig || mil weapon simple sidearm
+- a marked ejection-seat sidearm holstered at the ribs || mil weapon simple sidearm @gundam
+- a squadron-issue carbine held at a low ready in both hands || mil weapon sidearm hands gun @gundam
+- a long single-edged blade worn edge-up at the waist || mil weapon sidearm @neosamurai
+- a short companion blade at the small of the back || mil weapon simple sidearm @neosamurai
+- a taped-together slug pistol shoved in the belt || mil weapon simple sidearm @scav
+
 ## Gear
 
 - a battered data-slate || hands
@@ -212,18 +224,11 @@ exactly the interaction worth measuring.
 - a spool of tape around one wrist
 - a hand scanner on a lanyard
 - a rolled tarp under one arm || hands
-- a service pistol worn openly at the thigh || mil weapon simple sidearm
-- a holstered sidearm and a slung carbine || mil weapon sidearm
-- a compact sidearm at the chest rig || mil weapon simple sidearm
-- a marked ejection-seat sidearm holstered at the ribs || mil weapon simple sidearm @gundam
 - a flight checklist board strapped to one thigh || @gundam
 - a helmet carried under one arm, cable trailing || hands @gundam
 - a launch-crew signal wand held low || hands @gundam
 - a sealed avionics case at the hip || @gundam
-- a long single-edged blade worn edge-up at the waist || mil weapon sidearm @neosamurai
-- a short companion blade tucked at the small of the back || mil weapon simple sidearm @neosamurai
 - a wrapped bundle carried across both arms || hands @neosamurai
-- a taped-together slug pistol shoved in the belt || mil weapon simple sidearm @scav
 
 ## Backdrop
 
