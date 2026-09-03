@@ -150,10 +150,9 @@ through this skill, both silent failures in the render if missed:
   that a close crop doesn't have. `Hair colour` and `Hair` roll independently
   with no flag pairing them yet (that's Phase 3 work), so nothing stops a
   tail landing on a short cut. It's rare overall — about one roll in a
-  hundred — but the male `Hair` pool skews shorter than the female one, so a
-  tail is roughly five times more exposed to that mismatch on a male NPC than
-  a female one. Keep new tails few, and prefer them for colours that read
-  well on long hair.
+  hundred — but a male NPC is meaningfully more likely to hit it than a
+  female one: the male `Hair` pool is both smaller and skews shorter. Keep
+  new tails few, and prefer them for colours that read well on long hair.
 
 **Unrecognized flags fail silently** (matched literally, ignored if unknown),
 while an unlisted placeholder raises a hard error. So a typo'd flag reaches a

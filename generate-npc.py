@@ -429,12 +429,14 @@ def apply_theme_share(options, theme, name, share=THEME_SHARE):
     apply_weapon_policy() - and those later filters drop tagged and neutral
     bullets at different rates, so the realized share drifts by however much
     they correlate with the theme. It drifts BOTH ways, and down is the
-    direction that bites: measured against THEME_SHARE at 0.6, a
-    military-leaning theme's Gear realized 0.76, while a theme whose only
-    tagged Outfit is 'civ' realized 0.36 on that table, because filter_by_mil
-    drops that bullet outright for a military Role. A theme authored entirely
-    on one side of the civ/mil split is invisible to roles on the other side
-    whatever `share` says - see `python -m test.theme_visibility`.
+    direction that bites: on test/fixtures/tables-themed.md, measured against
+    THEME_SHARE at 0.6, the military-leaning gundam theme's Weapon realized
+    0.710, while scav's only tagged Outfit is 'civ' and realized 0.328 on that
+    table, because filter_by_mil drops that bullet outright for a military
+    Role. A theme authored entirely on one side of the civ/mil split is
+    invisible to roles on the other side whatever `share` says - see
+    `python -m test.theme_visibility --tables test/fixtures/tables-themed.md`
+    for current figures rather than trusting these.
 
     Deliberately left as it is; reordering the filters trades this for a worse
     problem (a theme's tagged weapons re-inflating past WEAPON_POLICY's

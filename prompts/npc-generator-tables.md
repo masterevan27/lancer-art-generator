@@ -117,16 +117,18 @@ one tag and is then reachable from either. An untagged bullet is neutral and
 reachable from every theme — most bullets in this file are, and should stay
 that way; tag only what is strongly of one look.
 
-A theme tag is read on **six tables and six only**: `Hair`, `Feature`,
-`Outfit`, `Headgear`, `Gear` and `Backdrop`. Anywhere else it does nothing —
-the theme filter never looks at that table — and on the tables whose bullets
-carry no `||` segment at all, it is worse than nothing: `Skin`, `Eyes`,
-`Demeanor`, `Accent`, `Height` and the name tables are never split, so their
-text is dropped into the prompt exactly as written. A bullet reading
-`- chrome-inlaid irises || @cyberpunk` under `## Eyes` would ship the literal
-text `|| @cyberpunk` to the image model and print it in the dossier. Tag one of
-the six, or leave the bullet neutral; `test/test_theme_tag_placement.py` fails
-the moment a tag lands anywhere else.
+A theme tag is read on **seven tables and seven only**: `Hair`, `Hair
+colour`, `Feature`, `Outfit`, `Headgear`, `Weapon` and `Backdrop`. `Gear` is
+deliberately not one of them - it split away from `Weapon` because it isn't
+theme-defining. Anywhere else it does nothing — the theme filter never looks
+at that table — and on the tables whose bullets carry no `||` segment at all,
+it is worse than nothing: `Skin`, `Eyes`, `Demeanor`, `Accent`, `Height` and
+the name tables are never split, so their text is dropped into the prompt
+exactly as written. A bullet reading `- chrome-inlaid irises || @cyberpunk`
+under `## Eyes` would ship the literal text `|| @cyberpunk` to the image model
+and print it in the dossier. Tag one of the seven, or leave the bullet
+neutral; `test/test_theme_tag_placement.py` fails the moment a tag lands
+anywhere else.
 
 Flags are matched literally and an unrecognized one is ignored rather than
 reported, so `|| Figure` or `|| hand` reads as no flag at all — which fails

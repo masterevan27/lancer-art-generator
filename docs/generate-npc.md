@@ -172,13 +172,15 @@ that matters:
 python -m test.theme_visibility --tables test/fixtures/tables-themed.md
 ```
 
-On that fixture, against a nominal 0.6, a military-leaning theme's Gear
-realized 0.76 while a thin theme's Outfit realized **0.36** — its single
-tagged Outfit bullet is `civ`, so `filter_by_mil` drops it outright for a
-military Role and the theme vanishes for half that theme's NPCs. A theme
+On that fixture, against a nominal 0.6, `gundam` — the military-leaning theme
+— has its `Weapon` realize 0.710, while `scav`'s `Outfit` realizes **0.328**:
+its single tagged Outfit bullet is `civ`, so `filter_by_mil` drops it outright
+for a military Role and the theme vanishes for half that theme's NPCs. A theme
 authored entirely in one of `civ`/`mil` is therefore invisible to roles on the
 other side, no matter what `THEME_SHARE` says. Give a theme bullets on both
-sides of that split, or accept that it only reads on half the roster.
+sides of that split, or accept that it only reads on half the roster. These
+numbers move as the fixture or the fixed-seed sample count changes — rerun the
+command above for the current figures rather than trusting these.
 
 The ordering is left as it is on purpose. Running `apply_theme_share` last
 instead would let a theme's tagged Weapon bullets re-inflate past the
