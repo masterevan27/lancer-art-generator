@@ -48,9 +48,9 @@ verbatim, so an NPC you like can be re-rolled or hand-edited later.
 ## The roll tables
 
 `prompts/npc-generator-tables.md` holds the tables — names, callsigns,
-pronouns, age, build, skin, hair, eyes, distinguishing feature, demeanor, role,
-faction, outfit, headgear, gear, accent color, portrait backdrop, portrait
-weather, token stance.
+pronouns, theme, age, build, skin, hair, eyes, distinguishing feature,
+demeanor, role, faction, outfit, headgear, gear, accent color, portrait
+backdrop, portrait weather, token stance.
 Every `##` heading is a table and every `-` bullet under it is one option, so
 adding options needs no code change.
 
@@ -141,15 +141,23 @@ and Backdrop. It is what makes a rolled NPC read as one coherent character
 instead of a bag of independently-rolled traits.
 
 A rolled theme opens its own `@`-tagged bullets **plus every untagged one**,
-and excludes bullets tagged with a different theme. Roughly 45% of the
-appearance bullets in the tables file carry no tag at all; that neutral pool is
-the campaign's plain worn-industrial look and is reachable from every theme, so
-a neosamurai NPC in grey coveralls stays entirely possible.
+and excludes bullets tagged with a different theme. Once bullets are tagged,
+the intended mix is roughly 45% of the appearance bullets in the tables file
+carrying no tag at all; that neutral pool is the campaign's plain
+worn-industrial look and is reachable from every theme, so a neosamurai NPC in
+grey coveralls stays entirely possible.
 
-Because a thin theme would otherwise drown in that neutral pool, its own
-bullets are duplicated until they hold `THEME_SHARE` (0.6) of the pool. The
-multiplier is computed per table from the real pool sizes, so it self-corrects
-as content is authored.
+**As shipped, no bullet carries an `@` tag yet.** `filter_by_theme` and
+`apply_theme_share` both fall back to the full, untouched pool whenever there
+is nothing tagged to filter or balance against, so today Theme rolls and is
+recorded on the dossier but does not yet change which Hair, Feature, Outfit,
+Headgear, Gear or Backdrop bullets get drawn — that starts once a tagging pass
+adds `@theme` flags to bullets in `prompts/npc-generator-tables.md`.
+
+Because a thin theme would otherwise drown in that neutral pool once tagging
+lands, its own bullets are duplicated until they hold `THEME_SHARE` (0.6) of
+the pool. The multiplier is computed per table from the real pool sizes, so it
+self-corrects as content is authored.
 
 **Theme is independent of Role.** A pirate is as likely to look neosamurai as
 cyberpunk — that independence is a requirement, not an oversight. Role still
