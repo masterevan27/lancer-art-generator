@@ -578,6 +578,8 @@ def roll_npc(tables, rng, overrides=None):
     young = False
     role_mil = False
     outfit_notac = False
+    weapon_hands = False
+    weapon_flags = ()
     for name in REQUIRED_TABLES:
         if name in ("Pronouns", "Theme", "Stance"):
             continue
@@ -622,6 +624,15 @@ def roll_npc(tables, rng, overrides=None):
         if name in ("Faction", "Outfit"):
             options = filter_by_mil(options, role_mil)
 
+        # A weapon that occupies the hands rules out equipment that also needs
+        # one. Weapon precedes Gear in REQUIRED_TABLES so this flag is already
+        # known, the same way Role precedes Faction and Outfit. Gear is what
+        # yields: the weapon is the more theme-defining object, and dropping a
+        # thermos costs nothing.
+        if name == "Gear" and weapon_hands:
+            free = [x for x in options if "hands" not in split_flags(x)[1]]
+            options = free or options      # never filter the pool down to nothing
+
         # 'notac' applies to both halves of the old Gear table: an elaborate or
         # traditional outfit should pair with neither a military-issue rifle
         # nor a military-issue radio. Restricting only the Weapon would leave a
@@ -650,15 +661,22 @@ def roll_npc(tables, rng, overrides=None):
         # a dossier, so its flag segment comes off here. Hair, Feature and
         # Headgear are in this list because Theme tags them: the moment a
         # bullet reads 'a long braid || @neosamurai', the tag would otherwise
-        # be shipped to the image model as part of the hairstyle.
+        # be shipped to the image model as part of the hairstyle. Weapon is
+        # here for the same theme-tag reason, and also so weapon_hands is
+        # known in time to filter Gear below - Weapon precedes Gear in
+        # REQUIRED_TABLES. weapon_flags is kept around too (not just the
+        # 'hands' bit) because the Stance filter further down needs the
+        # 'gun' flag as well, and by the time that runs npc["Weapon"] has
+        # already had its flags stripped right here - re-splitting it there
+        # would just split plain text and get nothing back.
         #
-        # Two themed tables are still absent, both deliberately. Backdrop's
-        # '||' separates three fields rather than two and is parsed by
-        # split_backdrop downstream, which is where its flags are read; Gear's
-        # flags gate the Stance roll further down, so it is split there
-        # instead.
+        # Backdrop is the one themed table still absent: its '||' separates
+        # three fields rather than two and is parsed by split_backdrop
+        # downstream, which is where its flags are read. Gear is absent for
+        # an unrelated reason - its own flags gate the Stance roll further
+        # down, so it is split there instead.
         if name in ("Age", "Build", "Role", "Faction", "Outfit",
-                    "Hair", "Feature", "Headgear"):
+                    "Hair", "Feature", "Headgear", "Weapon"):
             value, flags = split_flags(value)
             if name == "Age":
                 young = "young" in flags
@@ -666,24 +684,37 @@ def roll_npc(tables, rng, overrides=None):
                 role_mil = "mil" in flags
             if name == "Outfit":
                 outfit_notac = "notac" in flags
+            if name == "Weapon":
+                weapon_hands = "hands" in flags
+                weapon_flags = flags
         npc[name] = value
 
     npc["_young"] = young
 
-    # Stance is rolled last, and filtered against the Gear roll. The two tables
-    # are otherwise independent, which produced NPCs standing with their hands
-    # pushed into their pockets while holding a rifle in both hands. Gear that
-    # occupies a hand rules out the stances that need both of them free, and a
-    # Stance that describes aiming or firing a weapon needs the Gear roll to
-    # have actually come up a firearm, or the pose has nothing in hand to back
-    # it up.
-    npc["Weapon"], weapon_flags = split_flags(npc["Weapon"])
+    # Stance is rolled last, and filtered against the Weapon and Gear rolls.
+    # The tables are otherwise independent, which produced NPCs standing with
+    # their hands pushed into their pockets while holding a rifle in both
+    # hands. A carried item that occupies a hand rules out the stances that
+    # need both of them free, and a Stance that describes aiming or firing a
+    # weapon needs the roll to have actually come up a firearm, or the pose
+    # has nothing in hand to back it up.
+    #
+    # npc["Weapon"] was already split above, in the loop - Weapon precedes
+    # Gear in REQUIRED_TABLES, so its flags had to come off before Gear's
+    # 'hands' filter could run. Gear is split here instead, same as before.
     npc["Gear"], gear_flags = split_flags(npc["Gear"])
+
+    # Stance is filtered against the combined flags of both carried tables.
+    # Splitting Weapon out of Gear moved every 'gun' bullet with it, so reading
+    # gear_flags alone would make gun poses permanently unreachable - and a
+    # figure holding a rifle in both hands could still be posed with both hands
+    # in their pockets, which is the pairing this filter exists to stop.
+    carried_flags = weapon_flags + gear_flags
     stances = [split_flags(x) for x in variant_table(tables, "Stance", subject)]
-    if "gun" not in gear_flags:
+    if "gun" not in carried_flags:
         unarmed = [x for x in stances if "gun" not in x[1]]
         stances = unarmed or stances       # never filter the pool down to nothing
-    if "hands" in gear_flags:
+    if "hands" in carried_flags:
         free = [x for x in stances if "hands" not in x[1]]
         stances = free or stances          # never filter the pool down to nothing
     npc["Stance"] = rng.choice(stances)[0]

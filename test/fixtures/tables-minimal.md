@@ -68,7 +68,7 @@ Used by the test suite. Not used by the generator at runtime.
 ## Weapon
 - x2 || none
 - a service pistol worn openly at the thigh || mil weapon simple sidearm
-- a long blade worn edge-up at the waist || mil weapon sidearm hands @alpha
+- a long blade worn edge-up at the waist || mil weapon sidearm hands gun @alpha
 
 ## Gear
 - a battered data-slate || hands
@@ -88,3 +88,4 @@ Used by the test suite. Not used by the generator at runtime.
 ## Stance
 - standing squarely
 - {possessive} hands in {possessive} pockets || hands
+- {possessive} weapon raised and sighted down the barrel || gun
