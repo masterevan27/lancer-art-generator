@@ -27,7 +27,9 @@ LIVE = gen.parse_tables(REPO / "prompts" / "npc-generator-tables.md")
 
 class TestThemeTagPlacement(unittest.TestCase):
     def test_no_ungated_table_carries_a_theme_tag(self):
-        """'@' tags belong only on the six tables a rolled Theme gates.
+        """'@' tags belong only on the seven tables a rolled Theme gates -
+        Hair, Hair colour, Feature, Outfit, Headgear, Weapon, Backdrop
+        (THEMED_TABLES).
 
         Scoped to REQUIRED_TABLES and their per-pronoun variants - the tables
         the generator actually rolls from. A '## Heading' the script never
