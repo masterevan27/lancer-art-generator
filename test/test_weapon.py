@@ -23,6 +23,18 @@ class TestWeaponRoll(unittest.TestCase):
             any(roll(s)["Weapon"] == "" for s in range(100)),
             "no roll in 100 came up unarmed - the empty entry is unreachable")
 
+    def test_an_armed_npc_is_possible(self):
+        """The other direction of the same guarantee: the pool isn't starved.
+
+        Nothing else pins this outside the mil path -
+        test_a_mil_role_is_never_unarmed only covers a mil Role. A regression
+        that collapsed the non-mil Weapon pool down to the empty entry would
+        otherwise leave the whole suite green.
+        """
+        self.assertTrue(
+            any(roll(s)["Weapon"] != "" for s in range(100)),
+            "no roll in 100 came up armed - the weapon pool has been starved")
+
     def test_a_mil_role_is_never_unarmed(self):
         """apply_weapon_policy restricts a mil pool to 'sidearm' bullets.
 

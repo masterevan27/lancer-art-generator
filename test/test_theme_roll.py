@@ -176,18 +176,21 @@ class TestThemeRoll(unittest.TestCase):
         test_theme_inert.test_every_theme_still_rolls_a_full_pool, which
         compares pool lengths.
 
-        Weapon is exempt: its weighted empty entry ('|| none') rolling to ''
-        is the unarmed case, a real value rather than a crash - see
-        test_weapon.test_an_unarmed_npc_is_possible, which pins it as
-        reachable whether or not a theme is in play.
+        Weapon is exempt from the truthiness check, not from the key lookup:
+        its weighted empty entry ('|| none') rolling to '' is the unarmed
+        case, a real value rather than a crash. test_weapon.py owns that
+        guarantee in both directions - test_an_unarmed_npc_is_possible pins
+        that '' is reachable, test_an_armed_npc_is_possible pins that a real
+        weapon is too - so this test only needs to keep checking that the key
+        exists at all, the same as every other themed table.
         """
         for theme in ("alpha", "beta"):
             for seed in range(100):
                 npc = roll(seed, Theme=theme)
                 for name in gen.THEMED_TABLES:
-                    if name == "Weapon":
-                        continue
-                    self.assertTrue(npc[name], "%s empty for %s" % (name, theme))
+                    value = npc[name]
+                    if name != "Weapon":
+                        self.assertTrue(value, "%s empty for %s" % (name, theme))
 
 
 class TestForcedThemeIsValidated(unittest.TestCase):

@@ -843,6 +843,13 @@ def weather_sentence(npc):
 def build_prompts(npc):
     """The portrait and token prompt text for one rolled NPC."""
     shot, scene, flags = split_backdrop(npc["Backdrop"])
+    # .get, not npc["Weapon"]: --regen-manifest rebuilds npc from a stored
+    # traits dict, and every entry written before this phase has no Weapon
+    # key at all. Unlike the Height backfill above in regen_from_manifest,
+    # this needs no warning - a pre-Weapon manifest entry describes an NPC
+    # that genuinely had no weapon, so '' reproduces it exactly rather than
+    # papering over a loss.
+    weapon = npc.get("Weapon", "")
     fields = dict(npc["_pronouns"])
     fields.update({
         "role": npc["Role"],
@@ -862,7 +869,7 @@ def build_prompts(npc):
         "headgear": npc["Headgear"],
         "faction": npc["Faction"],
         "demeanor": npc["Demeanor"],
-        "weapon": npc["Weapon"],
+        "weapon": weapon,
         "gear": npc["Gear"],
         "accent": npc["Accent"],
         "shot": shot,
@@ -882,7 +889,7 @@ def build_prompts(npc):
     # instrument panel, a muzzle flash - only reaches the portrait, since the
     # token has no backdrop at all, just flat white.
     equipped_glow = has_light_source(
-        npc["Weapon"], npc["Gear"], npc["Outfit"], npc["Headgear"],
+        weapon, npc["Gear"], npc["Outfit"], npc["Headgear"],
         npc["Feature"], npc["Eyes"])
     portrait_glow = equipped_glow or has_light_source(scene)
 

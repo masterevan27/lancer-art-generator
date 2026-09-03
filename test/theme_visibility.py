@@ -12,7 +12,7 @@ zero baseline, run it during tagging to see each theme come up.
 
 Why a measurement is needed at all, rather than trusting THEME_SHARE:
 apply_theme_share() computes its multiplier and then filter_by_mil() and
-apply_gear_policy() narrow the pool further, so the share a roll actually draws
+apply_weapon_policy() narrow the pool further, so the share a roll actually draws
 at is not the share that was targeted. Measured on realistic pool shapes the
 realized figure ran 0.72 and 0.83 against a nominal 0.60. Which direction it
 moves depends on how the tags correlate with the civ/mil split, so it cannot be

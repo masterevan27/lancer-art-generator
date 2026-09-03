@@ -5,7 +5,7 @@ assertion - every theme clears THEME_SHARE in every table - is false, and
 provably so: `python -m test.theme_visibility --tables
 test/fixtures/tables-themed.md` reports scav/Outfit at 0.36 against a target
 of 0.60. That is not a bug in apply_theme_share(). It is filter_by_mil() and
-apply_gear_policy() narrowing the pool *after* the weighting was computed, so
+apply_weapon_policy() narrowing the pool *after* the weighting was computed, so
 the share a roll actually draws at is not the share that was targeted.
 
 So the assertions here split the claim in two:

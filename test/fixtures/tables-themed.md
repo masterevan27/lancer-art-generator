@@ -16,7 +16,7 @@ apply_theme_share() exists. A theme that reads as itself on one bullet is the
 hard case; if the measurement can see that, it can see anything.
 
 Both a `civ` and a `mil` Role are here on purpose. `filter_by_mil()` and
-`apply_gear_policy()` narrow a pool *after* the theme weighting is applied, so
+`apply_weapon_policy()` narrow a pool *after* the theme weighting is applied, so
 the realized share diverges from THEME_SHARE by an amount that depends on how
 tags correlate with the civ/mil split. A fixture with only civilians would hide
 exactly the interaction worth measuring.

@@ -79,7 +79,7 @@ templates at the bottom of this file.
   weapon on a Weapon entry, since every bullet in that table already reads
   as one.
 
-  Three more flags, plus one on Outfit, are read by `apply_gear_policy()`
+  Three more flags, plus one on Outfit, are read by `apply_weapon_policy()`
   rather than by the civ/mil split above — see the comments on the Weapon
   and Outfit tables themselves for the full detail: `weapon` (an actual
   weapon, as opposed to equipment that's merely `mil`), `simple` (a `weapon`
