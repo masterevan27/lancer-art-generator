@@ -105,3 +105,4 @@ exists to prevent cannot be produced at all.
 - standing squarely
 - {possessive} hands in {possessive} pockets || hands
 - {possessive} weapon raised and sighted down the barrel || gun
+- one hand resting on a sheathed blade at the hip || armed
