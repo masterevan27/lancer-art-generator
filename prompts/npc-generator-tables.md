@@ -127,7 +127,7 @@ colour`, `Feature`, `Outfit`, `Headgear`, `Weapon` and `Backdrop`. `Gear` is
 deliberately not one of them - it split away from `Weapon` because it isn't
 theme-defining. Anywhere else it does nothing — the theme filter never looks
 at that table — and on the tables whose bullets carry no `||` segment at all,
-it is worse than nothing: `Skin`, `Eyes`, `Demeanor`, `Accent`, `Height` and
+it is worse than nothing: `Skin`, `Eyes`, `Demeanor`, `Glow colour`, `Height` and
 the name tables are never split, so their text is dropped into the prompt
 exactly as written. A bullet reading `- chrome-inlaid irises || @cyberpunk`
 under `## Eyes` would ship the literal text `|| @cyberpunk` to the image model
@@ -1498,8 +1498,8 @@ ignored — so notes like this one are safe to leave inline.
   a woman in grey coveralls is entirely normal and should stay possible.
 
   The armored-bodyglove entries deliberately name no glow color: the palette
-  sentence in the template already makes the rolled Accent the only saturated
-  color, so "glowing seam lines" picks it up instead of fighting it.
+  sentence in the template already makes the rolled Glow colour the only
+  saturated color, so "glowing seam lines" picks it up instead of fighting it.
 -->
 
 - x2 a flight suit tailored close through the bust, waist and hips, the front zip run down past the sternum
@@ -1689,9 +1689,14 @@ ignored — so notes like this one are safe to leave inline.
 - a small pendant amulet glowing softly at the throat
 - an old-fashioned lantern glowing warm, carried by its handle in one hand || hands
 
-## Accent
+## Glow colour
 
-<!-- The single saturated glow color in an otherwise restrained frame. -->
+<!--
+  The single saturated colour of the one light source in an otherwise
+  restrained frame - not a design accent, which is what the old name implied.
+  Only reached when something rolled for this NPC could actually cast it; see
+  has_light_source() in generate-npc.py.
+-->
 
 - teal-green
 - x2 amber
@@ -2037,7 +2042,7 @@ they live in `generate-npc.py` — editing them here changes nothing.
 > **{BUILD}**, with **{TRAITS}** **{SKIN}**, **{HAIR}**, and **{EYES}**, and **{FEATURE}**,
 > wearing **{OUTFIT}**, **{FACTION}**. **{HEADGEAR}** {POSSESSIVE} face carries
 > **{DEMEANOR}**. {SUBJECT} carries
-> **{GEAR}**. **{BACKDROP}** **{WEATHER}** **{ACCENT_LINE}** Shallow depth of field, square
+> **{GEAR}**. **{BACKDROP}** **{WEATHER}** **{GLOW_LINE}** Shallow depth of field, square
 > framing, high detail, atmospheric sci-fi character portrait. Painterly illustration
 > throughout with visible brushwork, heavy fine grain texture over every surface, and
 > dense halftone dot screentone worked deep into the shadows.
@@ -2057,9 +2062,9 @@ entry restage the whole shot, swapping "a half-body character portrait" for "a
 dynamic, dramatically foreshortened character portrait" and putting the subject
 in freefall, without a separate pose table to keep in sync.
 
-`{ACCENT_LINE}` is "A faint **{ACCENT}** glow falls across one side of
+`{GLOW_LINE}` is "A faint **{GLOW}** glow falls across one side of
 {POSSESSIVE} face against warm dim ambient light on the other. Keep the palette
-restrained — greys, olive drab and rust — with **{ACCENT}** as the only
+restrained — greys, olive drab and rust — with **{GLOW}** as the only
 saturated color in the frame." _only_ when something rolled for this NPC would
 actually cast that glow — a lit instrument panel, neon signage, a muzzle flash
 in the Backdrop scene, or a glowing/lit detail in Gear, Outfit, Headgear,
@@ -2068,8 +2073,8 @@ text of those fields against a short list of light-implying words (`glow`,
 `lit`, `neon`, `lantern`, `beacon`, `readout`, `monitor`, `display`, `screen`,
 `flame`, `ember`, `burning`, `instrument`, `holographic`, `headlamp`, `glaring`,
 `muzzle flash`) — deliberately excluding plain daylight words like `sun`, since
-natural light doesn't motivate an arbitrary saturated accent color either. When
-nothing matches, `{ACCENT_LINE}` falls back to "Keep the palette restrained —
+natural light doesn't motivate an arbitrary saturated glow color either. When
+nothing matches, `{GLOW_LINE}` falls back to "Keep the palette restrained —
 greys, olive drab and rust, with no stray saturated color." instead of
 inventing a source for a color that has nothing to shine from — which used to
 happen on plenty of rolls (a dim mech hangar, a dropship bay door against a
@@ -2090,7 +2095,7 @@ nearby to cast it.
 > **{GEAR}**. {SUBJECT} is
 > **{STANCE}**, both boots planted and fully visible, {POSSESSIVE} face toward the
 > viewer — a relaxed, natural pose with the arms free, not a rigid attention
-> stance with the hands pinned at the sides. **{ACCENT_LINE}** The background alone
+> stance with the hands pinned at the sides. **{GLOW_LINE}** The background alone
 > is a solid flat plain white, no texture, no
 > gradient, no shadow, no environment. Centered composition, dramatic lighting,
 > isolated character illustration, clean silhouette. Painterly illustration throughout with
@@ -2098,13 +2103,15 @@ nearby to cast it.
 > halftone dot screentone worked deep into the shadows, matching the same painterly
 > rendering as the portrait shot.
 
-`{ACCENT_LINE}` here is "Keep the palette restrained — greys, olive drab and
-rust — with a single **{ACCENT}** glow the only saturated color.", gated the
+`{GLOW_LINE}` here is "Keep the palette restrained — greys, olive drab and
+rust — with a single **{GLOW}** glow the only saturated color.", gated the
 same way as the portrait's — except the token has no backdrop at all (it's
 flat white for RMBG), so only an equipped source counts: something glowing or
 lit in the rolled Gear, Outfit, Headgear, Feature or Eyes. No match falls back
-to "Keep the palette restrained — greys, olive drab and rust, with no stray
-saturated color." See the portrait section above for the word list.
+to the same string as the portrait's no-glow case above - both share the one
+`GLOW_NONE` constant in `generate-npc.py` rather than each keeping their own
+copy of an identical sentence. See the portrait section above for the word
+list.
 
 The token template names the footwear outright - "plain modern boots, no leg
 wraps or puttees" - because with nothing said about them the campaign's
@@ -2116,7 +2123,7 @@ later in the prompt and are far more specific.
 
 The `even lighting` / flat-background phrasing this used to carry was flattening
 the whole render toward a clean cel-shaded look rather than just the background —
-`{ACCENT}` aside, the token came out visibly less painterly than the portrait even
+`{GLOW}` aside, the token came out visibly less painterly than the portrait even
 though both prompts asserted the same style words. Scoping "no texture, no
 gradient" to "the background alone" and giving the figure its own "moody
 cinematic lighting" / "dramatic lighting" cue keeps the flat cutout background

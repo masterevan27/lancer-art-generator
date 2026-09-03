@@ -16,7 +16,7 @@ split_backdrop() and Hair colour with split_hair_colour() - both three-
 segment tables that split_flags() would mis-parse, mistaking their third
 field's prose for flags. (Gear is split too, later in the function, but only
 because Stance is filtered against its 'hands' flag - Gear isn't one of the
-gated tables and carries no theme tags.) Skin, Eyes, Demeanor, Accent and
+gated tables and carries no theme tags.) Skin, Eyes, Demeanor, Glow colour and
 Height are interpolated verbatim by build_prompts(), so
 '- chrome-inlaid irises || @cyberpunk' under '## Eyes' ships the literal text
 '|| @cyberpunk' to Krea and into the dossier. That is the same failure this

@@ -68,7 +68,7 @@ exactly the interaction worth measuring.
 
 - a flat stare
 
-## Accent
+## Glow colour
 
 - teal-green
 

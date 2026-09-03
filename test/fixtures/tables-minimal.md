@@ -89,7 +89,7 @@ exists to prevent cannot be produced at all.
 - a canvas tool roll at the hip
 - a hard-shelled tactical backpack || mil
 
-## Accent
+## Glow colour
 - teal-green
 
 ## Backdrop

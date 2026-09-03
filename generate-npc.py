@@ -115,12 +115,12 @@ REQUIRED_TABLES = [
     "Given names", "Family names", "Callsigns", "Pronouns", "Theme", "Age",
     "Build", "Height", "Skin", "Hair", "Hair colour", "Eyes", "Feature",
     "Demeanor", "Role",
-    "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Accent", "Backdrop",
+    "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Glow colour", "Backdrop",
     "Weather", "Stance",
 ]
 
 # The tables a rolled Theme gates. Everything else - names, age, build, height,
-# skin, eyes, accent, weather, stance - describes the person or the moment
+# skin, eyes, glow colour, weather, stance - describes the person or the moment
 # rather than the visual world they come from, and stays untouched by theme.
 # Gear is deliberately absent: what is left of it after the Weapon split is
 # data-slates, tool bags and thermoses, which no theme owns. Weapon is here
@@ -149,12 +149,12 @@ def estimate_tokens(text):
 # Backdrop-scene bullet already uses when it describes something that would
 # actually cast colored light - a lit instrument panel, a glowing seam, a
 # neon sign, a muzzle flash.
-# The accent-glow sentences below only fire when at least one rolled bullet
-# matches, so the "faint {accent} glow" they describe always has something in
+# The glow-colour sentences below only fire when at least one rolled bullet
+# matches, so the "faint {glow} glow" they describe always has something in
 # frame to have cast it, rather than landing on a scene with no light source
 # at all (a mech hangar in shadow, a dropship bay door against a plain sky).
 # Deliberately excludes plain daylight/dusk words like "sun" or "sunlit" -
-# natural light doesn't motivate an arbitrary saturated accent color either.
+# natural light doesn't motivate an arbitrary saturated glow color either.
 LIGHT_SOURCE_WORDS = re.compile(
     r"\b(glow\w*|lit|lighting|lights?|neon|lanterns?|beacons?|readouts?|"
     r"monitors?|displays?|screens?|flames?|embers?|burning|instruments?|"
@@ -238,6 +238,28 @@ WEAPON_POLICY = {
     "Criminals": "armed_bias",
 }
 
+# Trait names that have changed, old -> new. --regen-manifest rebuilds an NPC
+# from a stored traits dict rather than re-rolling, so an entry written before
+# a rename still carries the old key and would otherwise KeyError in
+# build_prompts(). Same situation the npc.get("Weapon", "") and
+# npc.get("Theme", "-") reads elsewhere in this file handle inline; factored
+# out here because a rename is mechanical and a table of names is easier to
+# extend than another scattered .get.
+LEGACY_TRAIT_NAMES = {
+    "Accent": "Glow colour",
+}
+
+
+def migrate_traits(traits):
+    """A stored manifest trait dict brought forward to current table names."""
+    out = dict(traits)
+    for old, new in LEGACY_TRAIT_NAMES.items():
+        if old in out:
+            value = out.pop(old)
+            out.setdefault(new, value)
+    return out
+
+
 # How much of a themed roll should come from that theme's own bullets rather
 # than from the neutral pool. A theme that is merely *opened* is not *visible*:
 # with a dozen tagged bullets against a neutral floor of nearly two hundred, a
@@ -299,23 +321,19 @@ TOKEN_TEMPLATE = (
 
 # The two forms {accent_line} takes, gated on has_light_source() - see there
 # for why. The "with" case keeps the original wording verbatim; the "without"
-# case drops the accent color entirely rather than inventing a source for it.
-ACCENT_PORTRAIT = (
-    "A faint {accent} glow falls across one side of {possessive} face against "
+# case drops the glow colour entirely rather than inventing a source for it.
+GLOW_PORTRAIT = (
+    "A faint {glow} glow falls across one side of {possessive} face against "
     "warm dim ambient light on the other. Keep the palette restrained - greys, "
-    "olive drab and rust - with {accent} the only saturated color in the frame."
+    "olive drab and rust - with {glow} the only saturated color in the frame."
 )
-ACCENT_PORTRAIT_NONE = (
+GLOW_NONE = (
     "Keep the palette restrained - greys, olive drab and rust, with no stray "
     "saturated color."
 )
-ACCENT_TOKEN = (
+GLOW_TOKEN = (
     "Keep the palette restrained - greys, olive drab and rust - with a single "
-    "{accent} glow the only saturated color."
-)
-ACCENT_TOKEN_NONE = (
-    "Keep the palette restrained - greys, olive drab and rust, with no stray "
-    "saturated color."
+    "{glow} glow the only saturated color."
 )
 
 
@@ -1055,7 +1073,7 @@ def build_prompts(npc):
         "demeanor": npc["Demeanor"],
         "weapon": weapon,
         "gear": npc["Gear"],
-        "accent": npc["Accent"],
+        "glow": npc["Glow colour"],
         "shot": shot,
         "backdrop": scene,
         "stance": npc["Stance"],
@@ -1067,7 +1085,7 @@ def build_prompts(npc):
     # str.format does a single pass and would leave any nested placeholder raw.
     carrying = carry_sentence(fields, weapon, npc["Gear"])
 
-    # The accent glow only belongs in the prompt when something rolled for
+    # The glow colour only belongs in the prompt when something rolled for
     # this NPC would actually cast it. Equipped sources (something worn or
     # carried) apply to both shots; the backdrop's own light - a neon sign, an
     # instrument panel, a muzzle flash - only reaches the portrait, since the
@@ -1085,10 +1103,10 @@ def build_prompts(npc):
     # rolled Stance, so nothing there contradicts what the NPC carries.
     portrait_fields = dict(
         fields, gear_line="" if "nogear" in flags else carrying,
-        accent_line=(ACCENT_PORTRAIT if portrait_glow else ACCENT_PORTRAIT_NONE).format(**fields))
+        accent_line=(GLOW_PORTRAIT if portrait_glow else GLOW_NONE).format(**fields))
     token_fields = dict(
         fields, gear_line=carrying,
-        accent_line=(ACCENT_TOKEN if equipped_glow else ACCENT_TOKEN_NONE).format(**fields))
+        accent_line=(GLOW_TOKEN if equipped_glow else GLOW_NONE).format(**fields))
 
     prompts = (PORTRAIT_TEMPLATE.format(**portrait_fields),
                TOKEN_TEMPLATE.format(**token_fields))
@@ -1158,7 +1176,7 @@ def write_dossier(path, npc, seed, prompts, images):
         ("Wearing", npc["Outfit"]),
         ("Carrying", npc["Gear"]),
         ("Armed with", npc.get("Weapon", "-") or "unarmed"),
-        ("Accent color", npc["Accent"]),
+        ("Glow colour", npc["Glow colour"]),
         ("Portrait shot", split_backdrop(npc["Backdrop"])[0]),
         ("Portrait scene", split_backdrop(npc["Backdrop"])[1]),
         ("Portrait weather", weather_sentence(npc) or (
@@ -1492,7 +1510,7 @@ def regenerate_one(args):
     if entry is None:
         raise SystemExit("--regen-id %r: no such entry in %s" % (args.regen_id, args.regen_manifest))
 
-    npc = dict(entry["traits"])
+    npc = migrate_traits(entry["traits"])
     npc["_pronouns"] = pronoun_fields(npc["Pronouns"])
     if "young" not in entry:
         print("! %s has no recorded 'young' flag (written by an older version of this script) - "
