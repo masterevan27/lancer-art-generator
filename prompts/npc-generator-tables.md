@@ -26,7 +26,7 @@ bullet. Anything after the weight is used verbatim in the prompt, so write
 bullets as sentence fragments that read correctly when dropped into the
 templates at the bottom of this file.
 
-`||` splits a bullet into segments. Nine tables use it:
+`||` splits a bullet into segments. Ten tables use it:
 
 - **Age** and **Build** bullets carry a paired flag. `|| young` on an Age entry
   is an NPC under twenty: it swaps the prompt's "a fully grown adult" opening
@@ -38,21 +38,22 @@ templates at the bottom of this file.
   Build with `--set-trait` drops the `young` bullets from the Age pool instead,
   so an explicit build never collides with a randomly rolled teenager. Forcing
   *both* into a contradiction is an error rather than a silent pairing.
-- **Gear** and **Stance** bullets may end `|| hands`. On a Gear entry that means
-  the item occupies at least one hand or arm; on a Stance entry it means the
-  pose needs both hands free. Stance is rolled after Gear and filtered against
-  it, so an NPC never ends up holding a rifle in both hands while standing with
-  those hands in their pockets. Tag any new bullet the same way — an untagged
-  one is treated as hands-free.
-- The same two tables may also carry `|| gun`. On a Gear entry that marks the
-  item as an actual firearm held in hand; on a Stance entry it marks a pose
-  that describes aiming, firing or otherwise handling a weapon — one the Gear
-  roll has to supply, so a gun pose is never rolled for an NPC whose Gear came
-  up a data-slate or a multitool. A bullet can carry both flags at once,
-  `|| hands gun`. Stance poses that reference a weapon do so generically —
-  "raising it", "sighting down it" — since the Gear line earlier in the prompt
-  has already named the specific weapon; naming it twice would just contradict
-  itself if the two ever disagreed.
+- **Gear**, **Weapon** and **Stance** bullets may end `|| hands`. On a Gear or
+  Weapon entry that means the item occupies at least one hand or arm; on a
+  Stance entry it means the pose needs both hands free. Stance is rolled
+  after Gear and filtered against it, so an NPC never ends up holding
+  something in both hands while standing with those hands in their pockets.
+  Tag any new bullet the same way — an untagged one is treated as hands-free.
+- **Weapon** and **Stance** bullets may also carry `|| gun`. On a Weapon
+  entry that marks the item as an actual firearm held in hand; on a Stance
+  entry it marks a pose that describes aiming, firing or otherwise handling
+  a weapon — one the Weapon roll has to supply, so a gun pose is never
+  rolled for an NPC whose Weapon roll came up empty or something pocketable.
+  A bullet can carry both flags at once, `|| hands gun`. Stance poses that
+  reference a weapon do so generically — "raising it", "sighting down it" —
+  since the Weapon line earlier in the prompt has already named the specific
+  weapon; naming it twice would just contradict itself if the two ever
+  disagreed.
 - **Backdrop** bullets carry three segments: the shot's opening phrase, the
   scene sentence, then optional flags. There are two: `nogear` drops the
   "carries <Gear>" sentence for a scene that already puts something in the
@@ -65,29 +66,32 @@ templates at the bottom of this file.
 - **Role** bullets may end `|| mil`, marking that occupation as active-duty
   military or paramilitary — a soldier, pilot, medic, comms operator or the
   like. It gates the Faction, Outfit and Gear rolls that follow it, because a
-  civilian may carry any gear they like, including military-issue weapons, but
-  shouldn't turn up in a duty uniform, while a military NPC should almost
-  always be in one and armed. **Faction** and **Outfit** bullets may in turn
-  carry `|| civ` or `|| mil`: `civ` reads as plainly civilian dress and is
-  dropped from the pool for a `mil` Role, `mil` reads as an actual issued
-  uniform and is dropped for a civilian (unflagged) Role instead. A bullet with
-  neither flag is neutral and reachable either way — most Outfit entries stay
-  this way, the same as a build or gear item with no flag at all. **Gear**
-  bullets may also carry `|| mil`, marking an actual weapon or piece of
-  military-issue equipment.
+  civilian may carry any gear or weapon they like, including military-issue
+  ones, but shouldn't turn up in a duty uniform, while a military NPC should
+  almost always be in one and armed. **Faction** and **Outfit** bullets may
+  in turn carry `|| civ` or `|| mil`: `civ` reads as plainly civilian dress
+  and is dropped from the pool for a `mil` Role, `mil` reads as an actual
+  issued uniform and is dropped for a civilian (unflagged) Role instead. A
+  bullet with neither flag is neutral and reachable either way — most Outfit
+  entries stay this way, the same as a build or gear item with no flag at
+  all. **Gear** and **Weapon** bullets may also carry `|| mil`, marking the
+  item as military-issue — equipment on a Gear entry, an actual issued
+  weapon on a Weapon entry, since every bullet in that table already reads
+  as one.
 
-  Three more flags on Gear, plus one on Outfit, are read by
-  `apply_gear_policy()` rather than by the civ/mil split above — see the
-  comments on the Gear and Outfit tables themselves for the full detail:
-  `weapon` (an actual weapon, as opposed to equipment that's merely `mil`),
-  `simple` (a `weapon` small and pocketable enough for a role that should
-  rarely be armed), and `sidearm` (a bullet that explicitly includes a
-  holstered or worn pistol). A `mil` Role's Gear roll is now restricted to
-  `sidearm`-flagged bullets — always armed with at least a holstered pistol,
-  not just usually — with the pistol+rifle compound bullets weighted heavier
-  so a rifle on top of it is the common case rather than the rare one.
-  Outfit's `notac` keeps a handful of elaborate or traditional outfits (a
-  kimono, shrine robes) from ever pairing with `mil`-flagged Gear.
+  Three more flags, plus one on Outfit, are read by `apply_gear_policy()`
+  rather than by the civ/mil split above — see the comments on the Weapon
+  and Outfit tables themselves for the full detail: `weapon` (an actual
+  weapon, as opposed to equipment that's merely `mil`), `simple` (a `weapon`
+  small and pocketable enough for a role that should rarely be armed), and
+  `sidearm` (a bullet that explicitly includes a holstered or worn pistol).
+  All three now live on `## Weapon`, not `## Gear`. A `mil` Role's Weapon
+  roll is restricted to `sidearm`-flagged bullets — always armed with at
+  least a holstered pistol, not just usually — with the pistol+rifle
+  compound bullets weighted heavier so a rifle on top of it is the common
+  case rather than the rare one. Outfit's `notac` keeps a handful of
+  elaborate or traditional outfits (a kimono, shrine robes) from ever
+  pairing with `mil`-flagged Gear.
 
 A flag beginning `@` is a **theme tag** rather than a behavioural flag —
 `|| civ @neosamurai` reads as "civilian dress, belonging to the neosamurai
