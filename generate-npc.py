@@ -719,6 +719,24 @@ def roll_npc(tables, rng, overrides=None):
         stances = free or stances          # never filter the pool down to nothing
     npc["Stance"] = rng.choice(stances)[0]
 
+    # A 'nogear' backdrop has the subject's hands full of whatever the scene
+    # handed them, so a thermos held in one of them contradicts the picture.
+    # Backdrop is rolled after Gear, so this re-rolls rather than filtering a
+    # pool - the one place in this function that does, and only because the
+    # dependency runs backwards.
+    #
+    # Read from overrides first, falling back to the rolled value - the same
+    # pattern Pronouns and Theme use above. npc.update(overrides) hasn't run
+    # yet at this point in the function, so a forced Backdrop (--set-trait, or
+    # a test's override dict) would otherwise be invisible here and this
+    # filter would key off the random roll it was meant to replace.
+    effective_backdrop = (overrides or {}).get("Backdrop", npc["Backdrop"])
+    if "nogear" in split_backdrop(effective_backdrop)[2] and "hands" in gear_flags:
+        free = [x for x in variant_table(tables, "Gear", subject)
+                if "hands" not in split_flags(x)[1]]
+        if free:
+            npc["Gear"], gear_flags = split_flags(rng.choice(free))
+
     npc.update(overrides or {})
     npc["Age"] = split_flags(npc["Age"])[0]   # the override still carries its flag
     # Same reason as Age: a --set-trait override for any of these pastes the
@@ -814,10 +832,12 @@ def split_backdrop(bullet):
     cannot be staged inside a half-body portrait, and a zero-gravity pose over a
     rain-streaked street would be nonsense either way.
 
-    The one flag is 'nogear': an action scene that already puts a weapon in the
-    subject's hands suppresses the "{Subject} {carry} {gear}" sentence, which
-    otherwise arms them a second time from the Gear roll - a rolled rifle on top
-    of the two blades the rooftop scene hands out.
+    The one flag is 'nogear': an action scene that already put something in the
+    subject's hands suppresses the merged carry sentence on the portrait (see
+    carry_sentence() and build_prompts()), which otherwise arms them a second
+    time from the Weapon/Gear rolls - a rolled rifle on top of the two blades
+    the rooftop scene hands out. It also restricts Gear, at roll time in
+    roll_npc(), to bullets that leave the hands free.
     """
     parts = [p.strip() for p in bullet.split("||")]
     if len(parts) == 1:
@@ -871,6 +891,26 @@ def weather_sentence(npc):
     return "" if "clear" in flags else text
 
 
+def carry_sentence(fields, weapon, gear):
+    """The single sentence naming whatever the NPC is holding.
+
+    One sentence rather than two, because two would repeat "{Subject} {carry}"
+    on every armed NPC for no added clarity - and the token prompt has no
+    tokens to spare for it. Returns "" when there is nothing to say, so the
+    template's slot collapses cleanly rather than leaving an orphaned period
+    or a doubled space.
+
+    Both slots are genuinely optional: the Weapon table's weighted empty entry
+    produces an unarmed NPC, and a 'nogear' Backdrop suppresses the whole
+    sentence on the portrait - see build_prompts() - because the scene already
+    put one in their hands.
+    """
+    carried = [x for x in (weapon, gear) if x]
+    if not carried:
+        return ""
+    return "{Subject} {carry} %s. ".format(**fields) % " and ".join(carried)
+
+
 def build_prompts(npc):
     """The portrait and token prompt text for one rolled NPC."""
     shot, scene, flags = split_backdrop(npc["Backdrop"])
@@ -912,7 +952,7 @@ def build_prompts(npc):
 
     # Built from the same fields and inserted already-substituted, since
     # str.format does a single pass and would leave any nested placeholder raw.
-    carrying = "{Subject} {carry} {gear}. ".format(**fields)
+    carrying = carry_sentence(fields, weapon, npc["Gear"])
 
     # The accent glow only belongs in the prompt when something rolled for
     # this NPC would actually cast it. Equipped sources (something worn or
@@ -924,6 +964,12 @@ def build_prompts(npc):
         npc["Feature"], npc["Eyes"])
     portrait_glow = equipped_glow or has_light_source(scene)
 
+    # 'nogear' means the backdrop scene already put something in the subject's
+    # hands, so the merged carry sentence is dropped from the PORTRAIT
+    # entirely - not just the weapon half of it, since the scene contradicts
+    # equipment held in one hand exactly as much as it contradicts a weapon.
+    # The token keeps it: it has no backdrop at all, just flat white and a
+    # rolled Stance, so nothing there contradicts what the NPC carries.
     portrait_fields = dict(
         fields, gear_line="" if "nogear" in flags else carrying,
         accent_line=(ACCENT_PORTRAIT if portrait_glow else ACCENT_PORTRAIT_NONE).format(**fields))

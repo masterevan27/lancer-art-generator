@@ -80,6 +80,7 @@ Used by the test suite. Not used by the generator at runtime.
 ## Backdrop
 - A half-body character portrait || Behind {object} is a plain wall.
 - A character portrait || {Subject} {is_are} in a temple courtyard. || weather @alpha
+- A character portrait || {Subject} {is_are} firing a sidearm down a corridor. || nogear
 
 ## Weather
 - in steady rain
