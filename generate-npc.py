@@ -1047,6 +1047,44 @@ def workflow_for(args, npc):
     return args.gender_workflows.get(npc["_pronouns"]["gender"], args.workflow)
 
 
+def resolve_recorded_workflow(entry, npc, args):
+    """The workflow a stored manifest entry was rendered through, still on disk.
+
+    The manifest records an absolute path, so every entry written before this
+    repository was split out of the campaign hub names a location that no
+    longer exists. Rather than fail the regen, fall back to the copy this
+    repository packages under the same filename - the graphs moved with the
+    split, so the basename still identifies the right one. The substitution is
+    reported rather than swallowed: regenerating through a *different* workflow
+    than the original would quietly stop reproducing the original art.
+    """
+    recorded = entry.get("workflow")
+    if not recorded:
+        # No entry this script has ever written is missing the field, but a
+        # hand-edited manifest could be - pick what a fresh roll of this NPC
+        # would use rather than dying on a KeyError traceback.
+        fallback = workflow_for(args, npc)
+        print("! entry records no workflow - falling back to %s" % fallback,
+              file=sys.stderr)
+        return fallback
+
+    path = Path(recorded)
+    if path.exists():
+        return path
+
+    packaged = art.WORKFLOW_DIR / path.name
+    if packaged.exists():
+        print("! recorded workflow path is stale (%s)\n"
+              "  resolved by name to %s" % (path, packaged), file=sys.stderr)
+        return packaged
+
+    raise SystemExit(
+        "Workflow not found: %s\n"
+        "  and no workflow of that name is packaged here either: %s"
+        % (path, packaged)
+    )
+
+
 def load_workflows(args, rolled):
     """Load and validate one template per workflow the roll actually needs.
 
@@ -1111,12 +1149,10 @@ def regenerate_one(args):
     folder = Path(folder_path)
     stem = _safe(npc["name"])
     slug = art._slug(npc["name"])
-    workflow_path = Path(entry["workflow"])
 
     print("regenerating %s  \"%s\"  seed=%d -> %s" % (npc["name"], npc["Callsigns"], seed, folder))
 
-    if not workflow_path.exists():
-        raise SystemExit("Workflow not found: %s" % workflow_path)
+    workflow_path = resolve_recorded_workflow(entry, npc, args)
     template = art.load_api_workflow(workflow_path)
     try:
         slots = art.locate_slots(template)
