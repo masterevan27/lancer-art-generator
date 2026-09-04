@@ -29,11 +29,11 @@
     {
       "id": "e1",
       "table": "Backdrop",
-      "bullet": "A character portrait || {Subject} {is_are} standing atop the hull of a companion vessel in high orbit, a cropped tactical jacket patched at the shoulder catching the thin light, looking back over one shoulder - beyond {object} a planet's night side curves away below, its cities burning in scattered threads of light against the dark.",
+      "bullet": "A character portrait || {Subject} {is_are} standing atop the hull of a companion vessel in high orbit, sealed inside an EVA pressure suit and helmet, a cropped mission patch at the shoulder catching the thin light through the visor, looking back over one shoulder - beyond {object} a planet's night side curves away below, its cities burning in scattered threads of light against the dark.",
       "source_image": "2026-08-31 23_34_10-...png",
       "placement_hint": "next to the other exterior/vacuum Backdrop entries (the EVA-harness zero-g shots)",
       "bookkeeping_note": null,
-      "notes": "Standing rather than zero-g, so no EVA-harness note needed; not flagged weather since orbit has no rain/snow to roll.",
+      "notes": "Standing rather than zero-g, so no EVA-harness note needed; not flagged weather since orbit has no rain/snow to roll. Reworded after this run to seal the figure in a pressure suit: the scene is vacuum, and a jacket in orbit reads wrong.",
       "imported": true,
       "imported_at": "2026-09-01T05:07:51.558Z"
     },
@@ -50,19 +50,19 @@
     },
     {
       "id": "e3",
-      "table": "Gear",
-      "bullet": "a long suppressed sniper rifle with a scope, its stock stencilled with a small painted tally number, slung across {possessive} back || mil",
+      "table": "Weapon",
+      "bullet": "a long suppressed sniper rifle with a scope, its stock stencilled with a small painted tally number, slung across {possessive} back || mil weapon",
       "source_image": "2026-08-31 23_34_45-...png",
-      "placement_hint": "next to the other suppressed/precision rifle Gear entries",
+      "placement_hint": "next to the other suppressed/precision rifle Weapon entries",
       "bookkeeping_note": null,
-      "notes": null,
+      "notes": "Staged as a Gear candidate. Armament split out of ## Gear into a ## Weapon table of its own after this run, taking the 'weapon'/'gun'/'simple'/'sidearm' flags with it; that is where this bullet lives.",
       "imported": true,
       "imported_at": "2026-09-01T05:07:51.579Z"
     },
     {
       "id": "e4",
       "table": "Headgear",
-      "bullet": "{Subject} {wear} a sleek integrated visor plate curving back over one ear, thin cable jacks seated at the jaw and temple, a faint accent light glowing along its edge.",
+      "bullet": "{Subject} {wear} a sleek integrated visor plate curving back over one ear, thin cable jacks seated at the jaw and temple, a faint accent light glowing along its edge. || hardtech",
       "source_image": "2026-08-31 23_35_11-...png",
       "placement_hint": "next to the monocular sensor rig and sleek mechanical headset piece entries",
       "bookkeeping_note": null,
@@ -73,11 +73,11 @@
     {
       "id": "e5",
       "table": "Hair (she) +",
-      "bullet": "a pale chin-length bob with a straight-cut fringe",
+      "bullet": "a chin-length {colour} bob with a straight-cut fringe",
       "source_image": "2026-08-31 23_35_11-...png",
       "placement_hint": "near the other short silver-white/platinum bob entries",
       "bookkeeping_note": null,
-      "notes": null,
+      "notes": "Staged with the shade written into the cut. Colour was lifted out of every ## Hair bullet into a ## Hair colour table of its own after this run, so the cut carries a {colour} slot for it instead.",
       "imported": true,
       "imported_at": "2026-09-01T05:07:51.571Z"
     },
@@ -117,18 +117,18 @@
     {
       "id": "e9",
       "table": "Hair (she) +",
-      "bullet": "a lavender-grey bob swept low across one eye",
+      "bullet": "a {colour} bob swept low across one eye",
       "source_image": "2026-08-31 23_35_52-...png",
       "placement_hint": "near the other two-tone/pale bob entries",
       "bookkeeping_note": null,
-      "notes": null,
+      "notes": "Staged with the shade written into the cut. Colour was lifted out of every ## Hair bullet into a ## Hair colour table of its own after this run, so the cut carries a {colour} slot for it instead.",
       "imported": true,
       "imported_at": "2026-09-01T05:07:51.591Z"
     },
     {
       "id": "e10",
       "table": "Headgear",
-      "bullet": "{Subject} {wear} a bulky visored rig clamped down over the eyes, a stub antenna and a cluster of cable jacks rising from the crown, a single indicator light glowing beneath the visor's edge.",
+      "bullet": "{Subject} {wear} a bulky visored rig clamped down over the eyes, a stub antenna and a cluster of cable jacks rising from the crown, a single indicator light glowing beneath the visor's edge. || hardtech",
       "source_image": "2026-08-31 23_39_05-...png",
       "placement_hint": "next to the night-vision helmet and monocular sensor rig entries",
       "bookkeeping_note": null,
@@ -150,11 +150,22 @@
     {
       "id": "e12",
       "table": "Hair (she) +",
-      "bullet": "a long teal double braid falling past the waist",
+      "bullet": "a long {colour} double braid falling past the waist",
       "source_image": "2026-08-31 23_44_05-...png",
       "placement_hint": "near the other long-braid entries",
       "bookkeeping_note": null,
-      "notes": null,
+      "notes": "Staged with the shade written into the cut. Colour was lifted out of every ## Hair bullet into a ## Hair colour table of its own after this run, so the cut carries a {colour} slot for it instead.",
+      "imported": true,
+      "imported_at": "2026-09-01T05:07:51.602Z"
+    },
+    {
+      "id": "e12-colour",
+      "table": "Hair colour",
+      "bullet": "teal",
+      "source_image": "2026-08-31 23_44_05-...png",
+      "placement_hint": "with the other dyed and synthetic shades at the end of the table, below the weighted naturalistic ones",
+      "bookkeeping_note": null,
+      "notes": "The shade the cut above named, which became a bullet of its own when ## Hair colour split off after this run. Rolling it back onto that cut reconstructs the line as staged.",
       "imported": true,
       "imported_at": "2026-09-01T05:07:51.602Z"
     },
@@ -216,11 +227,11 @@
     {
       "id": "e18",
       "table": "Hair (she) +",
-      "bullet": "black hair cut in a blunt chin-length bob with heavy straight bangs",
+      "bullet": "{colour} hair cut in a blunt chin-length bob with heavy straight bangs",
       "source_image": "2026-08-31 23_53_02-...png",
       "placement_hint": "near the other blunt-bob entries",
       "bookkeeping_note": null,
-      "notes": null,
+      "notes": "Staged with the shade written into the cut. Colour was lifted out of every ## Hair bullet into a ## Hair colour table of its own after this run, so the cut carries a {colour} slot for it instead.",
       "imported": true,
       "imported_at": "2026-09-01T05:07:51.626Z"
     },
@@ -249,11 +260,11 @@
     {
       "id": "e21",
       "table": "Hair (she) +",
-      "bullet": "a long twin-tail, loose strands pulled forward across one shoulder",
+      "bullet": "a long {colour} twin-tail, loose strands pulled forward across one shoulder",
       "source_image": "2026-08-31 23_54_31-...png",
       "placement_hint": "near the twin-braids entry",
       "bookkeeping_note": null,
-      "notes": null,
+      "notes": "Staged with the shade written into the cut. Colour was lifted out of every ## Hair bullet into a ## Hair colour table of its own after this run, so the cut carries a {colour} slot for it instead.",
       "imported": true,
       "imported_at": "2026-09-01T05:07:51.639Z"
     },
@@ -282,7 +293,7 @@
     {
       "id": "e24",
       "table": "Headgear",
-      "bullet": "{Subject} {wear} a sleek pilot's helmet with a curved visor, faint HUD readouts scrolling across the inside of the glass and a stencilled call-sign plate set at the jaw.",
+      "bullet": "{Subject} {wear} a sleek pilot's helmet with a curved visor, faint HUD readouts scrolling across the inside of the glass and a stencilled call-sign plate set at the jaw. || hardtech",
       "source_image": "2026-08-31 23_55_39-...png",
       "placement_hint": "next to the full flight helmet in scuffed pale grey-white entry",
       "bookkeeping_note": null,
@@ -315,11 +326,11 @@
     {
       "id": "e27",
       "table": "Hair (she) +",
-      "bullet": "a messy silver-lavender topknot, one side shaved close beneath it",
+      "bullet": "a messy {colour} topknot, one side shaved close beneath it",
       "source_image": "2026-08-31 23_57_19-...png",
       "placement_hint": "near the other loose-bun and shaved-side entries",
       "bookkeeping_note": null,
-      "notes": null,
+      "notes": "Staged with the shade written into the cut. Colour was lifted out of every ## Hair bullet into a ## Hair colour table of its own after this run, so the cut carries a {colour} slot for it instead.",
       "imported": true,
       "imported_at": "2026-09-01T05:07:51.675Z"
     },
@@ -336,12 +347,12 @@
     },
     {
       "id": "e29",
-      "table": "Gear",
-      "bullet": "a pair of oversized clawed gauntlets, a single sensor node glowing in each palm || hands mil",
+      "table": "Weapon",
+      "bullet": "a pair of oversized clawed gauntlets, a single sensor node glowing in each palm || hands mil weapon",
       "source_image": "2026-08-31 23_58_01-...png",
-      "placement_hint": "near the compact armored gauntlet Feature entry and the heavy multitool Gear entry",
+      "placement_hint": "near the other worn close-combat armament in Weapon; the compact armored gauntlet under Feature is the related non-weapon entry",
       "bookkeeping_note": null,
-      "notes": null,
+      "notes": "Staged as a Gear candidate. Armament split out of ## Gear into a ## Weapon table of its own after this run, taking the 'weapon'/'gun'/'simple'/'sidearm' flags with it; that is where this bullet lives.",
       "imported": true,
       "imported_at": "2026-09-01T05:07:51.687Z"
     },
@@ -381,11 +392,11 @@
     {
       "id": "e33",
       "table": "Hair (she) +",
-      "bullet": "a long single braid, loose strands escaping at the crown",
+      "bullet": "a long single {colour} braid, loose strands escaping at the crown",
       "source_image": "2026-09-01 00_02_31-...png",
       "placement_hint": "near the heavy dark braid entry",
       "bookkeeping_note": null,
-      "notes": null,
+      "notes": "Staged with the shade written into the cut. Colour was lifted out of every ## Hair bullet into a ## Hair colour table of its own after this run, so the cut carries a {colour} slot for it instead.",
       "imported": true,
       "imported_at": "2026-09-01T05:07:51.707Z"
     },
@@ -414,11 +425,11 @@
     {
       "id": "e36",
       "table": "Hair (she) +",
-      "bullet": "hair gathered into twin space buns, loose strands falling free at the temples",
+      "bullet": "{colour} hair gathered into twin space buns, loose strands falling free at the temples",
       "source_image": "2026-09-01 00_34_15-...png",
       "placement_hint": "near the elaborate crown-of-braids entry",
       "bookkeeping_note": null,
-      "notes": null,
+      "notes": "Staged with the shade written into the cut. Colour was lifted out of every ## Hair bullet into a ## Hair colour table of its own after this run, so the cut carries a {colour} slot for it instead.",
       "imported": true,
       "imported_at": "2026-09-01T05:07:51.716Z"
     }

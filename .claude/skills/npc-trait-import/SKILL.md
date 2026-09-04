@@ -1,6 +1,6 @@
 ---
 name: npc-trait-import
-description: Extract Backdrop scenes, Stance poses, Gear/weapons, Outfit, Headgear, Hair, Demeanor (facial expression), Faction, Glow colour and Glow placement entries from reference images and stage them as importable candidate entries in a timestamped JSON file, for later selective review/import into npc-generator-tables.md (by the import webpage or by hand) rather than editing that file directly. Use whenever the user shares one or more reference images (pasted inline or given as file paths) from this Lancer campaign's ComfyUI/Krea pipeline and asks to add, extract, stage, or import backdrops, scenes, poses, gear, weapons, outfits, headgear, hairstyles, expressions, or where a glow or rim light falls "from these" or "in our house style" into the NPC generator.
+description: Extract Backdrop scenes, Stance poses, Weapon and Gear items, Outfit, Headgear, Hair, Hair colour, Feature, Demeanor (facial expression), Faction, Glow colour and Glow placement entries from reference images and stage them as importable candidate entries in a timestamped JSON file, for later selective review/import into npc-generator-tables.md (by the import webpage or by hand) rather than editing that file directly. Use whenever the user shares one or more reference images (pasted inline or given as file paths) from this Lancer campaign's ComfyUI/Krea pipeline and asks to add, extract, stage, or import backdrops, scenes, poses, weapons, gear, outfits, headgear, hairstyles, hair colours, scars or prosthetics, expressions, or where a glow or rim light falls "from these" or "in our house style" into the NPC generator.
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 argument-hint: [image paths or a directory, or omit to use images already shown in the conversation]
 model: sonnet
@@ -221,13 +221,14 @@ subagents, but hold these lines, all of which have failed in practice:
 | What the image shows | Table | Notes |
 | --- | --- | --- |
 | A wide scene/environment, with or without the subject doing something in it | **Backdrop** | Portrait only. If the subject is actively posed against the scene (leaning, fighting, kneeling), stage the whole shot as one `{Subject} {is_are} ...` sentence rather than a blurred-background phrase. |
-| A body pose with no particular environment, meant for the full-body token | **Stance** | Token only — no scene, no lighting, just the pose. Tag `hands` if the pose needs both hands free, `armed` if it references a weapon at all, `gun` if it specifically aims or fires one. An untagged pose is treated as hands-free and weaponless, so a raised blade left untagged will turn up on an unarmed NPC. |
+| A body pose with no particular environment, meant for the full-body token | **Stance** | Token only, and that means **the body and nothing else** — no ground, ledge, wall, furniture, weather or props that aren't in a hand. A pose may crouch, kneel or sit; it must not sit *on* anything. See the trap in §4. Tag `hands` if the pose needs both hands free, `armed` if it references a weapon at all, `gun` if it specifically aims or fires one. An untagged pose is treated as hands-free and weaponless, so a raised blade left untagged will turn up on an unarmed NPC. |
 | A weapon — held, slung, holstered or worn | **Weapon** | Tag `hands`/`gun`/`mil`/`weapon`/`simple`/`sidearm` as applicable — see the flag traps in §0. |
 | A tool, pack, or other carried item that isn't a weapon | **Gear** | Tag `hands`/`mil` only — `gun`/`weapon`/`simple`/`sidearm` moved to `Weapon` with the split and no longer apply here. |
 | A garment, armor, or full kit | **Outfit** (or `Outfit (she) +` if the cut only reads on a woman's figure) | Tag `civ`/`mil`, plus `notac` if it is elaborate or traditional and `dressy` if it is finery. The two are not the same — see the flag table. |
 | A helmet, hood, hat, or headset | **Headgear** (or `Headgear (she) +`) | Full sentence: `{Subject} {wear} ...`. Tag `hardtech` if it is a helmet, visor rig, sensor or comms hardware, a breather mask or a cybernetic piece; leave soft hats, hoods, plain eyewear and the traditional register unflagged. |
 | A hairstyle/cut visible on its own (not tucked under headgear) | **Hair** (or `Hair (she) +` / `Hair (he) +` if the cut only reads on one gender) | Noun phrase with exactly one `{colour}` placeholder standing in for the shade — no literal color word, no flags. If headgear covers all but a fringe or a couple of strands, it's fine to note that (existing bullets do), but the cut itself is still what gets recorded. A distinctive *shade* seen in the image (not just the cut) is a separate `Hair colour` candidate — see the note on that table's shape in §0. |
 | A distinctive facial expression / mood on the subject | **Demeanor** (or `Demeanor (she) +`) | Noun phrase describing the look, not the backstory behind it — "a wry, crooked grin," not "someone who's seen a lot." |
+| A scar, tattoo, prosthetic, implant or other mark carried on the body | **Feature** (or `Feature (she) +` / `Feature (he) +`) | Noun phrase, no behavioural flags — but it *is* one of the seven themed tables, so a mark strongly of one look may carry a `@theme` tag. Distinct from `Demeanor`, which is the expression, and from `Headgear`, which is worn and removable: a cybernetic optic wired into the face is a Feature, a visor strapped over the eyes is Headgear. |
 | An insignia, unit livery, or faction-defining look | **Faction** | `name || visual || flags` — the name is dossier-only; the visual is the only part that reaches the prompt, and it must describe fabric, tailoring, insignia or patina, **never a garment category** (that loses to `Outfit` every time). Tag `palette` if the faction asserts colours of its own, `dressy` if the livery is ceremonial. See §4 for the full shape. |
 | A distinctive glow/neon color with nothing else new | **Glow colour** | Just the color name — see the palette-strip rule below before adding one. |
 | A distinctive *placement* of the glow — rim light from behind, colour pooling on the ground, a haze hanging in the air | **Glow placement** | Portrait only. The predicate of "A faint {glow} glow ___", so it starts with a verb and never names the colour. Tag `scene` only if the light lands out in the environment rather than on the figure. |
@@ -299,6 +300,20 @@ the image will not fit this file. Apply all of these:
   fired, and a pose aiming a rifle two-handed is `hands armed gun`. Leaving a
   weapon-referencing pose untagged is silent — it stays reachable by an NPC
   who rolled no weapon, and the prompt then describes a blade nobody has.
+
+  **The pose may name the body and nothing else.** This table reaches only
+  the token, which renders on flat white so the background can be cut to a
+  transparent PNG — so no ground, ledge, wall, furniture, machinery, weather
+  or props that aren't held in a hand. Crouching, kneeling and sitting are
+  all fine; sitting *on* something is not. This is not a style preference:
+  generation runs at CFG 1.0 with no negative prompt, so the template's
+  trailing "no environment" cannot argue a noun back out of the image, and a
+  rolled "raised ledge" put a visible platform and a second person into the
+  token. A reference image always has a floor and usually a room — describe
+  what the body is doing and drop the rest. `test/test_stance_content.py`
+  fails on a bullet that keeps it, but only once the entry is imported, which
+  is too late; catch it here. Six bullets staged before this rule was written
+  had to be reworded after import.
 - **Weapon**: `<noun phrase, may use {possessive}> || [hands] [gun] [mil] [weapon] [simple] [sidearm]`
   A held weapon is `hands gun mil weapon` (+ `simple` if pocketable); a worn
   or slung one drops `hands gun`; only a holstered/worn pistol earns
@@ -323,6 +338,11 @@ the image will not fit this file. Apply all of these:
   clause for gradients, and `older` is the only flag. See the consonant and
   tail traps in §0 before adding a shade.
 - **Demeanor**: `<noun phrase>` (no flags, no placeholders — dropped straight into "{POSSESSIVE} face carries **{DEMEANOR}**")
+- **Feature**: `<noun phrase, may use {object}>` — a mark carried on the body:
+  scarring, a tattoo, a prosthetic, an implant, worn-in lines. No behavioural
+  flags, but it is one of the seven themed tables, so a `@theme` tag is legal
+  here and belongs in a second segment (`<noun phrase> || @cyberpunk`) when
+  the mark is strongly of one look. Most should stay neutral, per §0.
 - **Faction**: `<name> || <visual, about a dozen words> || [civ] [mil] [palette] [dressy]`
   — the `name` is what the dossier and the Import GUI print ("Smith-Shimano
   Corpro"); the `visual` is the *only* part that reaches the image prompt, and
@@ -487,9 +507,22 @@ against the file you just wrote and fix anything they surface:
     read as gradient prose, not as a flag. A colour with a flag but no tail
     still needs the empty middle segment: `greying || || older`, never
     `greying || older`.
+12. **Every `Faction` candidate's flags sit in the third segment** — the same
+    trap one table over. `Faction` is `name || visual || flags`, so `civ`
+    written as `name || civ` becomes the *visual signature* and reaches the
+    image prompt as the literal word. A faction with flags but nothing to
+    show still writes the empty middle segment: `unaligned and freelance || ||
+    civ`.
+13. **No `Stance` candidate names anything but the body.** Read each one for a
+    noun that is scenery, furniture, machinery, ground, weather, or a prop not
+    held in a hand — "on a raised ledge", "into open machinery", "in the
+    rising heat", "wind and snow" all shipped before this check existed. The
+    token has no environment to put them in, and CFG 1.0 with no negative
+    prompt means the template cannot argue them back out.
 
-A short script is the fast way to do all eleven; if the run was small enough
-to eyeball, eyeball it. Report what you checked, not just that you checked.
+A short script is the fast way to do most of these — 13 is a read, not a
+regex; if the run was small enough to eyeball, eyeball it. Report what you
+checked, not just that you checked.
 
 ## 8. Tell the user what you staged
 
@@ -520,8 +553,15 @@ substitution on a candidate bullet before it's ever imported:
 python generate-npc.py --dry-run --count 1 --set-trait Backdrop="<paste the candidate's bullet field>"
 ```
 
-Only offer this — don't run it unprompted, since it's the user's call whether
-they want a test roll right now.
+`--set-trait` is repeatable, so a candidate can be checked against the rest of
+the roll it has to sit beside — pinning `Theme`, `Role` or `Outfit` alongside
+it is the way to see whether a flag actually gates the way you expect. Once an
+entry *is* imported, `--reroll-trait <Table>` re-rolls that one trait on an
+existing NPC and reproduces everything else, which is how a new bullet gets
+seen on a character that already exists.
+
+Only offer these — don't run one unprompted, since it's the user's call
+whether they want a test roll right now.
 
 ## Worked example
 
@@ -596,3 +636,6 @@ All of these have actually happened on a run of this skill.
 | Accepting a subagent's status sentence as its results | Read the return; re-dispatch anything that didn't produce JSON. |
 | Handing over the file without checking it | Run §7. Unknown flags and bad filenames fail silently. |
 | Inventing a table heading that doesn't exist yet | The importer refuses it; use an existing `##` heading. |
+| Staging armament as a `Gear` candidate | Anything that reads as a weapon is `Weapon` now — `Gear` is equipment only, and `weapon`/`gun`/`simple`/`sidearm` are silently ignored there. 25 staged entries had to be re-tabled after the split. |
+| A `Stance` pose that names the ground, a wall, or the weather | The token has no environment. Describe the body and drop the rest — §4. |
+| A `Faction` flag written in the second segment | That segment is the visual signature and reaches the prompt as literal text. `name \|\| \|\| civ`. |
