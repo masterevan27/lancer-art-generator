@@ -251,6 +251,22 @@ instance of it rather than a special case. So build the general thing.
    - `Age` → `Build` and `Build` → `Age` (the `young`/`figure` pairing runs both
      ways — the map is deliberately not acyclic, so the closure below must
      tolerate a cycle rather than assume a DAG).
+   - `Age` → `Hair colour` — **added during Task 3**, from an audit of
+     `roll_npc()`'s filter chain rather than from the spec. `:1135` drops
+     `older` colours on a `young` Age, so an `older` colour asserts an age the
+     Age clause contradicts. Measured live at 3/400 before the edge existed.
+   - `Backdrop` → `Gear` — **added during Task 3**, same audit. The `nogear`
+     correction re-rolls a `hands` Gear to a free-handed one, but it runs
+     *before* `npc.update(overrides)`, so a pinned Gear pastes straight back
+     over the correction and survives a scene that forbids it. Measured live
+     at 23/400. This is an ordering bug the map closes rather than a filter
+     read, which is why it is worth its own sentence in the code.
+
+   The spec's §3 table was written to justify Theme's cascade, not as a
+   complete dependency graph, so treat it as a starting point and audit
+   `roll_npc()`'s filter chain against it. Both additions above were verified
+   at the controller to leave the closure of `Theme` at exactly the spec's
+   twelve; they widen only `Age`, `Build` and `Backdrop`.
 
 2. **Derive each trait's cascade as the transitive closure** of its dependents,
    including itself. One small function; it must terminate on the Age/Build
@@ -288,8 +304,10 @@ instance of it rather than a special case. So build the general thing.
   makes a future themed table covered without an edit.
 - Every cascade is a subset of `REQUIRED_TABLES`, contains its own trait, and
   has no duplicates.
-- The closure terminates on the `Age`/`Build` cycle and yields `{Age, Build}`
-  from either end.
+- The closure terminates on the `Age`/`Build` cycle and yields
+  `{Age, Build, Hair colour, Hair}` from either end — still a cycle test (the
+  point is that mutual edges terminate), just with more members once `Age` →
+  `Hair colour` is in the map.
 - Every cascade is ordered consistently with `REQUIRED_TABLES`.
 - The theme draw never returns the old theme over many seeds on a multi-theme
   table, and returns the only theme with a notice on a single-theme one. Build
