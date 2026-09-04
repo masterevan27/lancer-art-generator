@@ -73,9 +73,12 @@ python -m unittest discover test
 
 Tests load the generator by path (its hyphen makes it non-importable) and roll
 against `test/fixtures/tables-minimal.md` rather than the live tables, so
-authoring a bullet never breaks a test. The exceptions are the guards on where
-a `@theme` tag may appear, which have to read the live tables file to say
-anything at all.
+authoring a bullet never breaks a test. The exceptions are the guards that have
+nothing to say about a fixture, and so read the live tables file: where a
+`@theme` tag may appear, the Headgear register's classification, and the check
+that the `npc-trait-import` skill documents every flag the tables actually use.
+That last one exists because the skill's own handoff checklist refuses a staged
+bullet whose flag is undocumented, which had quietly drifted five flags behind.
 
 Theme visibility is measured rather than asserted, because the number is a
 property of the content and the content is authored over time:
