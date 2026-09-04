@@ -883,19 +883,27 @@ ignored — so notes like this one are safe to leave inline.
   Weights keep the roster mostly adult: these are soldiers, technicians and
   officers, so a late-teen NPC should read as the youngest person in the room
   rather than the median.
+
+  A bullet names a decade and nothing else. The trailing look-clauses these
+  used to carry - "the first lines already setting around the eyes", "face
+  lean and weathered" - are the part the model was already shown to ignore
+  when a bullet gave it nothing numeric to hold, so they bought no render and
+  spent tokens against Krea 2's 512 ceiling. The two under-twenty bullets are
+  the exception and keep their explicit number, because the templates assert
+  "a fully grown adult" in the highest-signal position and the model believes
+  that over a bare "late teens". See "Name the number" in docs/generate-npc.md.
 -->
 
-- in {possessive} late teens, sixteen or seventeen, face still soft and unlined || young
-- x2 just nineteen, newly in uniform and still growing into it || young
-- x2 in {possessive} early twenties, jaw and cheekbones fully adult
-- x2 twenty-one or twenty-two, fully grown for a couple of years now, the face still unlined and unweathered
-- x3 in {possessive} mid-twenties, fully grown but not yet weathered
-- x2 in {possessive} late twenties, jaw and cheekbones fully adult
-- x3 in {possessive} early thirties, the first lines already setting around the eyes
-- x2 in {possessive} mid-thirties, face lean and weathered
-- in {possessive} forties, grey coming in at the temples
-- in {possessive} fifties, weathered but unslowed, deeply lined
-- in {possessive} sixties, face deeply creased, old enough that the war stories are first-hand
+- in {possessive} late teens, sixteen or seventeen || young
+- x2 just nineteen || young
+- x4 twenty-one or twenty-two
+- x3 in {possessive} mid-twenties
+- x2 in {possessive} late twenties
+- x3 in {possessive} early thirties
+- x2 in {possessive} mid-thirties
+- in {possessive} forties
+- in {possessive} fifties
+- in {possessive} sixties
 
 ## Build
 

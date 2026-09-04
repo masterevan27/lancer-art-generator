@@ -336,17 +336,31 @@ doesn't already exist rather than inventing one.
 
 ## Name the number
 
-Every `Age` bullet names a decade. Two once described only a *look* — "old
-enough that the war stories are first-hand, face heavily creased" — and the
-model, given nothing numeric to hold, ignored them: that bullet rendered a
-smooth-faced twenty-something whenever the `Hair` roll suggested one. Both now
-say a decade ("in her sixties", "in her forties but weathered well past it") and
-land. Keep new bullets numeric.
+Every `Age` bullet names a decade, and *only* a decade. Two once described a
+look instead — "old enough that the war stories are first-hand, face heavily
+creased" — and the model, given nothing numeric to hold, ignored them: that
+bullet rendered a smooth-faced twenty-something whenever the `Hair` roll
+suggested one.
 
-The under-twenty bullets name the actual number for the same reason — "sixteen
-or seventeen", "just nineteen" — rather than leaving "late teens" to carry it
-alone. They also carry the `young` flag; see
+Naming the decade fixed those two, but the look-clauses stayed on every other
+bullet as a trailing description — "the first lines already setting around the
+eyes", "face lean and weathered", "grey coming in at the temples". They are
+gone now, and the same finding is why: a clause describing skin, lines or
+weathering is the part the model was already demonstrated to ignore, so it
+bought nothing and spent tokens on a prompt that runs close to Krea 2's 512
+ceiling. Trimming them dropped the portrait's over-budget share from 0.3% to
+0.1% and its p99 from 496 to 487. A bullet is now the decade and nothing else:
+"in her mid-twenties", "in her sixties".
+
+The under-twenty bullets are the one exception, and keep their explicit number
+— "sixteen or seventeen", "just nineteen" — rather than leaving "late teens"
+to carry it alone. That is not decoration: the templates assert `a fully grown
+adult` in the highest-signal position in the prompt, and without a number to
+argue against it the model believes the assertion over the age. They also carry
+the `young` flag; see
 [Keeping figures adult and on-model](#keeping-figures-adult-and-on-model).
+
+So: name the decade, name the number under twenty, and describe nothing else.
 
 ## Period vocabulary matters
 
