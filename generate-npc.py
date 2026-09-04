@@ -2178,7 +2178,12 @@ def reroll_from_raw(tables, npc, free, rng):
     freed trait is drawn by the ordinary roller under the ordinary filters,
     and there is no second copy of the filter chain here to drift away from
     the one in roll_npc(). 'name' needs no pinning of its own: it is rebuilt
-    from the pinned Given names and Family names by roll_npc() itself.
+    from the pinned Given names and Family names by roll_npc() itself. A name
+    hand-edited in the manifest is therefore not preserved - the rebuild comes
+    from the bullets, so it wins. That is unreachable for a machine-written
+    entry, whose stored name IS that rebuild, and pinning the stored one
+    instead would let an edited name outlive the bullets it claims to be made
+    of.
 
     The result replaces `npc` wholesale rather than being copied trait by
     trait, npc["_raw"] included, because the fresh roll's _raw holds the
@@ -2190,6 +2195,28 @@ def reroll_from_raw(tables, npc, free, rng):
     reroll_trait()'s contract is to mutate in place and regenerate_one() holds
     the reference.
     """
+    # A table this entry has no bullet for cannot be pinned, so it rolls free
+    # and the trait changes without having been asked for - the same silent
+    # drift the two lists guard against everywhere else, arriving through the
+    # gap between them: RAW_REROLLABLE_TRAITS is derived from REQUIRED_TABLES
+    # and so admits a newly added table the day it is added, while a rawTraits
+    # written before that day carries no bullet for it.
+    #
+    # Warn and proceed, which is this file's settled answer to a stored entry
+    # that predates a table: migrate_traits() says so for a missing Headgear,
+    # regenerate_one() for a missing Height and for an unrecorded 'young'.
+    # Refusing instead would break the promise that a stored NPC keeps
+    # regenerating, and pinning a fabricated value would be worse than either.
+    # Anything in `free` is excluded: it was asked for, so it re-rolling is
+    # the request rather than a surprise.
+    unrecorded = [trait for trait in REQUIRED_TABLES
+                  if trait not in npc["_raw"] and trait not in free]
+    if unrecorded:
+        print("! this entry recorded no raw bullet for: %s (written before "
+              "that table existed) - a trait with nothing to pin re-rolls "
+              "along with the one you named instead of being kept. Re-roll "
+              "the NPC to record it." % ", ".join(unrecorded), file=sys.stderr)
+
     overrides = {trait: bullet for trait, bullet in npc["_raw"].items()
                  if trait not in free}
     fresh = roll_npc(tables, rng, overrides)

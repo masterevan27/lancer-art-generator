@@ -20,6 +20,8 @@ the opposite of the refusals - that the filters really do rebuild, that
 nothing but the named trait moves, and that npc["_raw"] still describes the
 NPC afterwards rather than the one it replaced.
 """
+import contextlib
+import io
 import random
 import unittest
 
@@ -239,15 +241,23 @@ class TestWhatIsRerollableFromRaw(unittest.TestCase):
             self.assertIn(name, gen.REQUIRED_TABLES,
                           "%r is not a table the script rolls" % name)
 
-    def test_every_required_table_is_either_raw_rerollable_or_explained(self):
-        """The same check the legacy set gets, for the same reason: a table
-        added to REQUIRED_TABLES must land in one list or the other rather
-        than falling through to "not a trait this script rolls"."""
-        for name in gen.REQUIRED_TABLES:
-            self.assertTrue(
-                name in gen.RAW_REROLLABLE_TRAITS or name in gen.UNREROLLABLE_REASONS,
-                "%r is neither re-rollable from raw nor given a reason it is not"
-                % name)
+    def test_no_raw_refusal_blames_the_lossy_manifest(self):
+        """The reasons are printed verbatim, so each has to be true on the
+        path that prints it.
+
+        Most entries in UNREROLLABLE_REASONS say some version of "the manifest
+        stores it with its flags already stripped", which is exactly the
+        complaint raw bullets answer - the bullet is right there. So a table
+        refused on this path with one of those reasons would be telling its
+        owner something false about their own entry, and is far likelier to
+        be a table wrongly left out of the derived set than a reason wrongly
+        worded. The check that makes someone look.
+        """
+        for name in set(gen.REQUIRED_TABLES) - set(gen.RAW_REROLLABLE_TRAITS):
+            self.assertNotIn(
+                "manifest stores", gen.UNREROLLABLE_REASONS[name],
+                "%r is refused even with raw bullets, so its reason cannot be "
+                "that the manifest threw the flags away" % name)
 
     def test_it_refuses_only_what_raw_bullets_cannot_help_with(self):
         """Named one by one, so widening this set later has to argue with a
@@ -469,6 +479,38 @@ class TestFiltersThatRebuildFromRaw(unittest.TestCase):
         self.assertTrue(soldiers, "no 'mil' Role was rolled in the sweep")
         self.assertTrue(civilians, "no civilian Role was rolled in the sweep")
 
+    def test_a_rerolled_scene_placement_never_lands_on_an_unlit_backdrop(self):
+        """The pinned-path twin of TestGatesThatDoRebuild's case above.
+
+        Both halves of the reason roll_npc() pastes a forced value over its
+        draw need a test on this path, or half the rationale is only an
+        argument. The Stance case below covers the pinned Weapon and Gear;
+        this covers the pinned Backdrop, which the Glow placement filter reads
+        - left to the npc.update() at the end of the roll, that filter keyed
+        off the backdrop this roll discarded and washed light across a scene
+        that casts none.
+        """
+        scene = {text for b in bullets_for(TABLES, "Glow placement")
+                 if "scene" in gen.split_flags(b)[1]
+                 for text in rendered(TABLES, "Glow placement", b)}
+        self.assertTrue(scene, "fixture needs a 'scene' placement to avoid")
+        checked = 0
+        for seed in range(300):
+            npc = raw_npc_for(seed)
+            # The Backdrop is pinned, so reading it before the re-roll reads
+            # the same bullet the filter has to honour.
+            if gen.has_light_source(gen.split_backdrop(npc["Backdrop"])[1]):
+                continue
+            checked += 1
+            gen.reroll_trait(TABLES, npc, "Glow placement",
+                             random.Random(seed + 900))
+            self.assertNotIn(
+                npc["Glow placement"], scene,
+                "seed %d: re-rolled a 'scene' placement onto a backdrop that "
+                "casts no light of its own" % seed)
+        self.assertTrue(checked, "no unlit backdrop was rolled - this test "
+                        "checked nothing")
+
     def test_a_rerolled_stance_never_frees_a_hand_that_is_full(self):
         armed = texts_with_hands("Weapon")
         held = texts_with_hands("Gear")
@@ -489,6 +531,45 @@ class TestFiltersThatRebuildFromRaw(unittest.TestCase):
                 % (seed, npc["Weapon"], npc["Gear"]))
         self.assertTrue(checked, "no seed rolled a Weapon or Gear that occupies "
                         "a hand - this test checked nothing")
+
+
+class TestAnIncompleteRaw(unittest.TestCase):
+    """rawTraits written before a table joined the roll.
+
+    The two lists move at different speeds on purpose: RAW_REROLLABLE_TRAITS
+    is derived from REQUIRED_TABLES and admits a new table the day it is
+    added, while an entry's rawTraits is a record of the day it was written.
+    So a table can be re-rollable for an entry that has no bullet for it, and
+    the unpinned trait then rolls free - changing something nobody asked to
+    change. Warned about rather than refused, which is what migrate_traits()
+    does for a Headgear and regenerate_one() for a Height.
+    """
+
+    def _reroll_quietly(self, npc, name):
+        with contextlib.redirect_stderr(io.StringIO()) as err:
+            gen.reroll_trait(TABLES, npc, name, random.Random(0))
+        return err.getvalue()
+
+    def test_it_names_the_table_that_will_roll_free(self):
+        npc = raw_npc_for()
+        del npc["_raw"]["Weather"]
+        warning = self._reroll_quietly(npc, "Eyes")
+        self.assertIn("Weather", warning)
+        self.assertIn("Re-roll the NPC", warning,
+                      "the warning should say how to stop getting it")
+
+    def test_a_complete_raw_warns_about_nothing(self):
+        """The counterpart, so the warning stays a signal: an ordinary entry
+        must not print it on every re-roll."""
+        self.assertEqual(self._reroll_quietly(raw_npc_for(), "Eyes"), "")
+
+    def test_the_trait_being_rerolled_is_not_warned_about(self):
+        """Re-rolling the very table the entry has no bullet for is not a
+        surprise - it is the request. Warning there would train the user to
+        ignore the message in the case that matters."""
+        npc = raw_npc_for()
+        del npc["_raw"]["Weather"]
+        self.assertEqual(self._reroll_quietly(npc, "Weather"), "")
 
 
 class TestTheLossyPathIsUntouched(unittest.TestCase):
