@@ -10,7 +10,7 @@
 ## 1. Problem
 
 `--reroll-trait` re-rolls one trait of a stored NPC and keeps the rest. It
-refuses 13 of the 24 rolled traits, and the refusal is honest rather than
+refuses 14 of the 25 rolled traits, and the refusal is honest rather than
 conservative: **the manifest is a lossy record of the roll.**
 
 `roll_npc()` strips a bullet's flag segment before storing it, for the nine

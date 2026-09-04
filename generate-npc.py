@@ -504,27 +504,47 @@ LEGACY_TRAIT_NAMES = {
 DEFAULT_HEADGEAR = "{Subject} {is_are} bare-headed."
 
 
+def rename_legacy_traits(traits):
+    """`traits` with every key in LEGACY_TRAIT_NAMES renamed to its current
+    heading, values untouched.
+
+    Split out of migrate_traits() because it is the one of that function's
+    three jobs that also applies to a stored rawTraits dict. The other two -
+    the Faction repair and the Headgear backfill - both recognise or invent a
+    RENDERED sentence, and a raw bullet is not one: repairing a raw Faction's
+    missing '||' would collide with the '||' that already separates its own
+    flag segment, and inventing a raw Headgear bullet would hand
+    reroll_from_raw() prose with no flags to filter on. A renamed key,
+    though, is exactly as stale in rawTraits as it is in traits - the table
+    heading changed, not the shape of what is stored under it - so this much
+    of the migration is safe to run on either.
+    """
+    out = dict(traits)
+    for old, new in LEGACY_TRAIT_NAMES.items():
+        if old in out:
+            value = out.pop(old)
+            out.setdefault(new, value)
+    return out
+
+
 def migrate_traits(traits):
     """A stored manifest trait dict brought forward to current table names
     and value shapes.
 
     Three jobs: rename any trait key listed in LEGACY_TRAIT_NAMES to its
-    current heading, repair a Faction value stored before the name/visual
+    current heading (see rename_legacy_traits(), which does this job alone
+    for rawTraits), repair a Faction value stored before the name/visual
     split existed (a bare string with no '||') into the current
     'name || visual' shape, and backfill a missing Headgear the same way
     regenerate_one() already backfills a missing Height - so a regenerated
     prompt reproduces the original one, or comes as close as a lost trait
     allows.
     """
-    out = dict(traits)
-    # Captured before the rename loop below pops "Accent" out of `out` - see
-    # the Faction repair's gate further down, which needs to know whether the
-    # key was ever there at all.
-    predates_rename = "Accent" in out
-    for old, new in LEGACY_TRAIT_NAMES.items():
-        if old in out:
-            value = out.pop(old)
-            out.setdefault(new, value)
+    # Captured before the rename below pops "Accent" out - see the Faction
+    # repair's gate further down, which needs to know whether the key was
+    # ever there at all.
+    predates_rename = "Accent" in traits
+    out = rename_legacy_traits(traits)
     # A stored Faction with no '||' predates split_faction()'s name/visual
     # split: every bullet in the current tables file carries at least one
     # separator, so a bare string can only have been written before the
@@ -1079,12 +1099,18 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     pronouns = (overrides or {}).get("Pronouns") or rng.choice(tables["Pronouns"])
     subject = pronouns.split("/")[0]
 
-    # Age, Role, Outfit and Build are read up front because each one's flag
-    # gates a roll that happens BEFORE its own table does - the pairings below
-    # that run backwards, a forced Build narrowing the Age pool and a forced
-    # Outfit narrowing the Role pool. Every forced value gating a *later*
-    # table is handled inside the loop, where it replaces that table's draw.
-    # Pass the flag to keep it either way, as in
+    # Age, Role, Outfit and Build are read up front, but for two different
+    # reasons. Build's and Outfit's flags each gate a roll that happens
+    # BEFORE their own table does - a forced Build narrows the Age pool, and
+    # a forced Outfit narrows the Role pool - so those two have to be known
+    # this early to narrow anything at all. Age and Role are read this early
+    # too, but only so the loop below can tell "already forced" from "about
+    # to be rolled" and skip narrowing a pool whose forced value would
+    # discard the narrowing anyway; the actual both-forced contradiction is
+    # caught later, once npc["Age"] and npc["Role"] are known either way.
+    # Every forced value gating a *later* table is handled inside the loop,
+    # where it replaces that table's draw. Pass the flag to keep it either
+    # way, as in
     # --set-trait Age="in her late teens || young",
     # --set-trait Role="a Union marine soldier || mil", or
     # --set-trait Outfit="an elaborate floral kimono ... || civ notac".
@@ -1511,19 +1537,19 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     if (forced_dressy and forced_role is not None
             and dress_policy_for(ROLE_CATEGORIES.get(split_flags(forced_role)[0])) == "plain"):
         raise SystemExit(
-            "--set-trait Role and --set-trait Outfit disagree: a bullet flagged "
-            "'dressy' is ceremonial or finely made and must not be combined "
-            "with a Role whose work is manual. Force only one of the two and "
-            "the other will roll to match, or drop the flag."
+            "Role and Outfit disagree: a bullet flagged 'dressy' is "
+            "ceremonial or finely made and must not be combined with a "
+            "Role whose work is manual. One of the two has to change, or "
+            "the 'dressy' flag has to go."
         )
 
     build, build_flags = split_flags(npc["Build"])
     if young and "figure" in build_flags:
         raise SystemExit(
-            "--set-trait Age and --set-trait Build disagree: a bullet flagged "
-            "'figure' describes an adult woman's build and must not be "
-            "combined with an Age flagged 'young'. Force only one of the two "
-            "and the other will roll to match, or drop a flag."
+            "Age and Build disagree: a bullet flagged 'figure' describes "
+            "an adult woman's build and must not be combined with an Age "
+            "flagged 'young'. One of the two has to change, or the "
+            "'figure' flag has to go."
         )
     npc["Build"] = build
 
@@ -2671,7 +2697,16 @@ def regenerate_one(args):
     # the warning belongs where a consumer actually needs the raw bullets and
     # doesn't have them.
     if "rawTraits" in entry:
-        npc["_raw"] = dict(entry["rawTraits"])
+        # Renamed the same way entry["traits"] was above, two lines up - a
+        # raw bullet stored under a name LEGACY_TRAIT_NAMES has since renamed
+        # (Accent -> Glow colour) would otherwise sit under a key nothing
+        # reads any more, silently rolling that trait free on every re-roll
+        # from here on rather than pinning it, with only the "recorded no raw
+        # bullet for" warning to notice. Only the rename: entry["rawTraits"]
+        # holds raw bullets, not rendered text, so neither the Faction
+        # repair nor the Headgear backfill applies to it - see
+        # rename_legacy_traits().
+        npc["_raw"] = rename_legacy_traits(entry["rawTraits"])
     if "Height" not in npc:
         print("! %s has no recorded Height trait (written before the Height table existed) - "
               "regenerating without one; re-roll instead of regenerating to pick one up."

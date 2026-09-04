@@ -36,6 +36,7 @@ import tempfile
 import types
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from test.helpers import (FIXTURE_TABLES, REPO, bullets_for, load_generator,
                           rendered)
@@ -510,10 +511,14 @@ class TestFiltersThatRebuildFromRaw(unittest.TestCase):
         mil = self._texts_flagged(LIVE, "Outfit", "mil")
         self.assertTrue(civ and mil, "the live Outfit table needs both sides")
         soldiers = civilians = 0
-        # Each pass is two live rolls - the entry, then the re-roll that pins
-        # it - so this is the few thousand rolls the spec asks for, at about
-        # three quarters of a second.
-        for seed in range(1200):
+        # 400 rather than the 1200 this started at: TestTheMapIsCompleteOnLiveTables
+        # (test_trait_cascades.py) and TestTheThemeCascade.SEEDS below already
+        # drive this exact pair - a soldier's Role against a re-rolled
+        # Outfit - to zero contradictions on their own seeds, so the marginal
+        # seeds past 400 here were buying confidence two other sweeps already
+        # supply. Each pass is two live rolls - the entry, then the re-roll
+        # that pins it.
+        for seed in range(400):
             npc = gen.roll_npc(LIVE, random.Random(seed), None)
             gen.reroll_trait(LIVE, npc, "Outfit", random.Random(seed + 900))
             # Read off the pinned bullet, which is where the flag lives and
@@ -594,10 +599,14 @@ class TestTheThemeCascade(unittest.TestCase):
     fixture is too small to reach.
     """
 
-    # A few thousand entries, as the doc's §8.2 asks - each pass is two fixture
-    # rolls, the entry and the cascade that pins it, so 1200 is the same
-    # arithmetic the live civ/mil sweep below already settled on.
-    SEEDS = range(1200)
+    # This is a deterministic-property check on the fixture - every kept
+    # trait survives byte-identical, full stop, not "usually" - so depth here
+    # buys confidence against a regression rather than reaching a rare flag
+    # combination the way the live sweeps do. 400 catches the same class of
+    # failure 1200 did (this started at 1200, the same arithmetic the live
+    # civ/mil sweep above once used, before it was retargeted too) at a third
+    # of the cost.
+    SEEDS = range(400)
 
     def kept(self):
         """The traits a Theme cascade must not touch, derived the way the
@@ -978,6 +987,85 @@ class TestTheCascadeReport(unittest.TestCase):
         enumerate - and printing a cascade there would describe traits that
         did not move."""
         self.assertEqual(len(self.report_for("Hair", with_raw=False)), 1)
+
+
+class TestTheRegenWriterActuallyRuns(unittest.TestCase):
+    """The manifest write regenerate_one() does after a raw re-roll, driven
+    for real rather than rebuilt inline.
+
+    test_raw_traits.py's TestWhatTheWriterStores rebuilds the writers' dict
+    comprehensions by hand, which proves the SHAPE is right but never once
+    calls `entry["rawTraits"] = dict(npc["_raw"])` itself - deleting that
+    line would leave that test, and every other test in the suite, green.
+    This drives regenerate_one() past it instead, the way
+    TestTheCascadeReport above does, but far enough that art.save_manifest()
+    actually runs: both --no-portrait and --no-token skip the render
+    entirely, a packaged workflow file that exists on disk lets
+    resolve_recorded_workflow() and locate_slots() succeed for real instead
+    of raising, and find_server() is stubbed rather than left to fail on no
+    ComfyUI listening - the one piece of the pipeline this harness cannot
+    reach without a running server.
+    """
+
+    # Seed 1: the one hand-checked seed in a small sweep where re-rolling
+    # Eyes actually changes the bullet ('dark eyes, steady and unreadable' ->
+    # 'grey eyes'). A seed where the reroll happens to land back on the same
+    # value would pass this test whether or not the writer line exists, since
+    # the entry's ORIGINAL rawTraits (seeded into it below, pre-reroll)
+    # would then equal the post-reroll one it should have been overwritten
+    # with - the exact way a too-weak assertion could rot silently.
+    SEED = 1
+
+    def test_a_raw_reroll_persists_the_rerolled_rawTraits_to_the_manifest(self):
+        npc = gen.roll_npc(TABLES, random.Random(self.SEED), None)
+        entry = {
+            "id": "writer-check-1",
+            "seed": self.SEED,
+            "workflow": str(REPO / "workflows" / "api" / "Lancer_Scene_Workflow_v1.json"),
+            "traits": {k: v for k, v in npc.items() if not k.startswith("_")},
+            "rawTraits": dict(npc["_raw"]),
+            "young": npc["_young"],
+            "outfit_notac": npc["_outfit_notac"],
+            "files": [],
+        }
+
+        # Computed independently of regenerate_one(), against a fresh copy of
+        # the same roll, so the assertion below is not just "some value was
+        # written" but "the value the reroll actually produced was written" -
+        # the distinction that catches the writer line being deleted even
+        # though the entry already carries a (now stale) rawTraits of its own.
+        expected = gen.roll_npc(TABLES, random.Random(self.SEED), None)
+        gen.reroll_trait(TABLES, expected, "Eyes", random.Random(entry["seed"]))
+        expected_raw = dict(expected["_raw"])
+        self.assertNotEqual(
+            expected_raw, entry["rawTraits"],
+            "seed %d's Eyes reroll landed back on its old value, so this "
+            "seed cannot tell a persisted reroll from a stale one - pick a "
+            "different SEED" % self.SEED)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest_path = Path(tmp) / "manifest.json"
+            # Inside the temp dir, so folder.mkdir() further down leaves
+            # nothing behind once the test exits.
+            folder_path = str(Path(tmp) / "out" / "writer-check")
+            manifest_path.write_text(
+                json.dumps({folder_path: entry}), encoding="utf-8")
+            args = types.SimpleNamespace(
+                regen_manifest=manifest_path, regen_id="writer-check-1",
+                reroll_trait="Eyes", new_seed=None, tables=FIXTURE_TABLES,
+                no_portrait=True, no_token=True, server=None)
+            stub_comfy = types.SimpleNamespace(base="stub://nowhere")
+            with mock.patch.object(gen.art, "find_server", return_value=stub_comfy):
+                result = gen.regenerate_one(args)
+            self.assertEqual(
+                result, 0,
+                "the regen should have completed with both stages skipped, "
+                "not hit a code path this stub does not cover")
+            saved = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.assertEqual(
+                saved[folder_path].get("rawTraits"), expected_raw,
+                "regenerate_one() re-rolled Eyes but did not persist the "
+                "resulting rawTraits back to the manifest")
 
 
 class TestAnIncompleteRaw(unittest.TestCase):

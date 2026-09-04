@@ -4,11 +4,20 @@ All 135 entries in .generated-npcs.json store the trait under 'Accent', and
 --regen-manifest rebuilds an NPC from that stored dict rather than re-rolling.
 A bare rename would raise KeyError in build_prompts() for every one of them.
 """
+import contextlib
+import io
+import json
+import random
+import tempfile
+import types
 import unittest
+from pathlib import Path
+from unittest import mock
 
-from test.helpers import load_generator
+from test.helpers import FIXTURE_TABLES, REPO, load_generator
 
 gen = load_generator()
+TABLES = gen.parse_tables(FIXTURE_TABLES)
 
 
 class TestLegacyTraitNames(unittest.TestCase):
@@ -135,6 +144,108 @@ class TestSetTraitFactionIsLeftAlone(unittest.TestCase):
         roll writes), but the gate should fail closed either way."""
         migrated = gen.migrate_traits({"Faction": "Harrison Armory"})
         self.assertEqual(migrated["Faction"], "Harrison Armory")
+
+
+class TestRawTraitsGetTheRenameToo(unittest.TestCase):
+    """rename_legacy_traits() - the one job of migrate_traits()'s three that
+    also applies to a stored rawTraits dict.
+
+    A raw bullet is unrendered text: the Faction repair recognises a
+    rendered value with no '||', and the Headgear backfill invents a
+    rendered sentence, so neither belongs on rawTraits. But a key
+    LEGACY_TRAIT_NAMES has renamed is exactly as stale there as it is in
+    traits - Accent -> Glow colour predates this branch, and the next rename
+    would otherwise leave a re-roll pinning a raw bullet under a key nothing
+    reads any more, silently rolling that trait free with only the
+    "recorded no raw bullet for" warning to notice.
+    """
+
+    def test_a_stored_accent_becomes_a_glow_colour(self):
+        renamed = gen.rename_legacy_traits(
+            {"Accent": "amber || none", "Role": "a dockworker || civ"})
+        self.assertEqual(renamed["Glow colour"], "amber || none")
+        self.assertNotIn("Accent", renamed)
+
+    def test_an_entry_already_using_the_new_name_is_untouched(self):
+        renamed = gen.rename_legacy_traits({"Glow colour": "teal-green || none"})
+        self.assertEqual(renamed["Glow colour"], "teal-green || none")
+
+    def test_a_new_name_present_alongside_the_old_one_wins(self):
+        renamed = gen.rename_legacy_traits(
+            {"Accent": "amber || none", "Glow colour": "teal-green || none"})
+        self.assertEqual(renamed["Glow colour"], "teal-green || none")
+
+    def test_the_input_dict_is_not_mutated(self):
+        original = {"Accent": "amber || none"}
+        gen.rename_legacy_traits(original)
+        self.assertEqual(original, {"Accent": "amber || none"})
+
+    def test_migrate_traits_and_rename_legacy_traits_agree(self):
+        """Whichever of the two a caller reaches for, a legacy key comes out
+        under the same current name - they share one rename rather than two
+        that could drift apart."""
+        raw = {"Accent": "amber || none"}
+        self.assertEqual(gen.rename_legacy_traits(raw)["Glow colour"],
+                         gen.migrate_traits(raw)["Glow colour"])
+
+
+class TestAStoredAccentRawBulletSurvivesARegen(unittest.TestCase):
+    """End to end: a manifest entry whose rawTraits still says 'Accent'
+    (every one of them does, until the next --regen-manifest run touches
+    it) gets read back, re-rolled, and re-saved with the raw bullet under
+    'Glow colour' instead - not carried forward under the name nothing else
+    in the file still reads.
+    """
+
+    def test_the_resaved_rawTraits_uses_the_current_name(self):
+        npc = gen.roll_npc(TABLES, random.Random(1), None)
+        raw = dict(npc["_raw"])
+        glow = raw.pop("Glow colour")
+        raw["Accent"] = glow
+        entry = {
+            "id": "accent-regen-1",
+            "seed": 1,
+            "workflow": str(REPO / "workflows" / "api" / "Lancer_Scene_Workflow_v1.json"),
+            "traits": {k: v for k, v in npc.items() if not k.startswith("_")},
+            "rawTraits": raw,
+            "young": npc["_young"],
+            "outfit_notac": npc["_outfit_notac"],
+            "files": [],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest_path = Path(tmp) / "manifest.json"
+            folder_path = str(Path(tmp) / "out" / "accent-regen")
+            manifest_path.write_text(
+                json.dumps({folder_path: entry}), encoding="utf-8")
+            args = types.SimpleNamespace(
+                regen_manifest=manifest_path, regen_id="accent-regen-1",
+                reroll_trait="Eyes", new_seed=None, tables=FIXTURE_TABLES,
+                no_portrait=True, no_token=True, server=None)
+            stub_comfy = types.SimpleNamespace(base="stub://nowhere")
+            stderr = io.StringIO()
+            with mock.patch.object(gen.art, "find_server", return_value=stub_comfy):
+                with contextlib.redirect_stderr(stderr):
+                    gen.regenerate_one(args)
+            # The load-time symptom the finding names: an un-renamed key is
+            # indistinguishable from a table this NPC never recorded a raw
+            # bullet for, so Glow colour would print this warning and roll
+            # free instead of staying pinned. A value-equality check alone
+            # cannot tell "pinned" from "coincidentally re-rolled to the same
+            # bullet", so the warning's absence is the assertion that
+            # actually discriminates the fix from the bug.
+            self.assertNotIn(
+                "Glow colour", stderr.getvalue(),
+                "a legacy 'Accent' raw bullet was not recognised as Glow "
+                "colour's, so it rolled free instead of staying pinned:\n%s"
+                % stderr.getvalue())
+            saved = json.loads(manifest_path.read_text(encoding="utf-8"))
+            saved_raw = saved[folder_path]["rawTraits"]
+            self.assertNotIn("Accent", saved_raw,
+                             "a legacy 'Accent' raw bullet was carried forward "
+                             "under its old name across a regen")
+            self.assertEqual(saved_raw["Glow colour"], glow,
+                             "the raw bullet's own value should survive the "
+                             "rename untouched")
 
 
 if __name__ == "__main__":

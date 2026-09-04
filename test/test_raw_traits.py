@@ -39,9 +39,10 @@ class TestRoundTrip(unittest.TestCase):
     came from, trait for trait, under a different seed.
 
     Pinning every trait at once forces roll_npc()'s "both forced" contradiction
-    guards (Age/Build 'figure', Role/Outfit 'dressy', around generate-npc.py
-    :1283) to evaluate a pairing that was never actually contradictory - a
-    legitimately rolled NPC cannot hold both flags at once. That should mean
+    guards (the Role/Outfit 'dressy' check and the Age/Build 'figure' check
+    near the end of roll_npc()) to evaluate a pairing that was never actually
+    contradictory - a legitimately rolled NPC cannot hold both flags at once.
+    That should mean
     the guards never fire here, but the fixture is small and flag combinations
     are not evenly distributed, so many seeds are run rather than trusting the
     reasoning once. A guard firing on real output would be a genuine bug in
@@ -75,9 +76,11 @@ class TestWhatTheWriterStores(unittest.TestCase):
     regen writers use for "traits" and "rawTraits", rather than extracting a
     helper out of either manifest literal just to make it unit-testable - the
     literal has exactly one caller. This covers that every stored trait has a
-    raw bullet behind it; the writers' own lines (generate-npc.py:2548 and
-    :2341-2347) are otherwise exercised end-to-end only, by hand or by a
-    later task's CLI-level test.
+    raw bullet behind it; the writers' own lines - the manifest dict literal
+    in main()'s per-NPC roll loop, and the equivalent lines in
+    regenerate_one() - are otherwise exercised end-to-end only, by hand or by
+    a CLI-level test (see test_reroll_trait.py's TestTheCascadeReport and its
+    neighbours).
     """
 
     def test_every_stored_trait_except_name_is_a_key_of_raw(self):

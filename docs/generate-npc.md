@@ -710,20 +710,21 @@ workflow renders them. A file with no `EmptyLatentImage` gives up that control
 and prints a warning naming itself, so a two-workflow run says which of the two
 is the problem.
 
-## Re-rolling one trait
+## Re-rolling a trait
 
-`--reroll-trait TABLE`, alongside `--regen-manifest`/`--regen-id`, re-rolls a
-single trait of an already-generated NPC and reproduces every other one, then
+`--reroll-trait TABLE`, alongside `--regen-manifest`/`--regen-id`, re-rolls
+one named trait of an already-generated NPC - and, on an entry that recorded
+its raw bullets, anything whose filters read a flag from it - then
 re-renders into the same folder under the same manifest id:
 
 ```bash
 python generate-npc.py --regen-manifest .generated-npcs.json     --regen-id npc-Nadia-Okonkwo-1234 --reroll-trait Hair
 ```
 
-How much of that "every other one" holds depends on whether the entry
+How much of the NPC keeps its old value depends on whether the entry
 recorded `rawTraits`, and how much moves along with the named trait depends
-on the cascade below. Both are worth knowing before spending a render to find
-out the hard way.
+on the cascade below ("Cascades: what else moves with it"). Both are worth
+knowing before spending a render to find out the hard way.
 
 **The manifest used to be a lossy record of a roll**, and the reason is worth
 knowing because it is not a matter of taste. `roll_npc()` strips a bullet's
@@ -837,6 +838,7 @@ Every re-roll's actual size, on the live tables:
 | `Age` | `Build`, `Hair colour`, `Hair` | 4 |
 | `Weapon` | `Gear`, `Stance` | 3 |
 | `Hair colour` | `Hair` | 2 |
+| `Gear` | `Stance` | 2 |
 | everything else | — | 1 |
 
 The CLI names what travelled rather than counting it, so a re-roll is

@@ -19,10 +19,11 @@ import random
 import unittest
 from unittest import mock
 
-from test.helpers import FIXTURE_TABLES, load_generator
+from test.helpers import FIXTURE_TABLES, REPO, load_generator
 
 gen = load_generator()
 TABLES = gen.parse_tables(FIXTURE_TABLES)
+LIVE = gen.parse_tables(REPO / "prompts" / "npc-generator-tables.md")
 
 # Cascade design doc §3, "What re-rolls" - the twelve, typed out from the doc
 # rather than computed. In REQUIRED_TABLES order, which is the order
@@ -91,7 +92,7 @@ class PoolRecorder(random.Random):
         return super().choice(seq)
 
 
-def pools_by_table(npc):
+def pools_by_table(tables, npc):
     """Each table's final option pool for this exact NPC, keyed by table name.
 
     Re-runs the roller with every one of the NPC's own raw bullets pinned. Each
@@ -120,9 +121,9 @@ def pools_by_table(npc):
     and neither is filtered by anything, so there is no pool to check.
     """
     rng = PoolRecorder(0)
-    gen.roll_npc(TABLES, rng, dict(npc["_raw"]))
+    gen.roll_npc(tables, rng, dict(npc["_raw"]))
     subject = npc["Pronouns"].split("/")[0]
-    reachable = {name: set(gen.variant_table(TABLES, name, subject))
+    reachable = {name: set(gen.variant_table(tables, name, subject))
                  for name in gen.REQUIRED_TABLES}
 
     out = {}
@@ -382,7 +383,82 @@ class TestTraitCascade(unittest.TestCase):
         self.assertNotIn("Stance", gen.TRAIT_DEPENDENTS["Role"])
 
 
-class TestTheMapIsComplete(unittest.TestCase):
+def _doc_cascade_table():
+    """(name, total) rows from the "Every re-roll's actual size" table in
+    docs/generate-npc.md, in the order the doc lists them.
+
+    Parsed out of the markdown rather than retyped as a second literal here,
+    because a literal copy would only ever catch the doc drifting from ITS
+    OWN memorized numbers, not from trait_cascade() - and the doc drifting
+    from the map with nothing to notice is exactly what happened when Gear
+    grew a Stance dependent and the doc's row for Gear stayed at "1", the row
+    the design doc leans on hardest to reassure a user before they spend a
+    render. "everything else" is returned as that literal string, since it
+    names every table not listed above it rather than one table.
+    """
+    text = (REPO / "docs" / "generate-npc.md").read_text(encoding="utf-8")
+    marker = "Every re-roll's actual size, on the live tables:"
+    rows = []
+    in_table = False
+    for line in text[text.index(marker):].splitlines():
+        line = line.strip()
+        if not line.startswith("|"):
+            if in_table:
+                break
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if cells[0] in ("Re-roll", "---"):
+            in_table = True
+            continue
+        rows.append((cells[0].strip("`"), int(cells[-1])))
+    return rows
+
+
+class TestTheDocsCascadeTable(unittest.TestCase):
+    """docs/generate-npc.md's cascade-size table, cross-checked against what
+    trait_cascade() actually computes.
+
+    Nothing else in this file reads the doc, so a table edited out of step
+    with the map - a row for a trait whose cascade grew, or one that never
+    existed - passed every test above. This is the guard that closes that
+    gap: EXPECTED_CASCADES and the doc's table are two independent claims
+    about the same map, and this asserts they agree rather than trusting
+    each in isolation.
+    """
+
+    def test_every_named_row_is_the_cascade_trait_cascade_computes(self):
+        for name, total in _doc_cascade_table():
+            if name == "everything else":
+                continue
+            self.assertEqual(
+                len(gen.trait_cascade(name)), total,
+                "docs/generate-npc.md says re-rolling %r moves %d trait(s), "
+                "but trait_cascade(%r) computes %d"
+                % (name, total, name, len(gen.trait_cascade(name))))
+
+    def test_everything_else_covers_every_trait_the_table_does_not_name(self):
+        rows = dict(_doc_cascade_table())
+        named = set(rows) - {"everything else"}
+        other_total = rows["everything else"]
+        for name in gen.REQUIRED_TABLES:
+            if name in named:
+                continue
+            self.assertEqual(
+                len(gen.trait_cascade(name)), other_total,
+                "%r is not named in the doc's table, so its cascade should "
+                "be the 'everything else' size of %d, but trait_cascade(%r) "
+                "computes %d" % (name, other_total, name,
+                                 len(gen.trait_cascade(name))))
+
+    def test_the_table_is_not_accidentally_empty(self):
+        """Guards the two tests above against a marker string that stopped
+        matching and silently iterated zero rows."""
+        rows = _doc_cascade_table()
+        self.assertGreater(len(rows), 5)
+        self.assertIn("everything else", dict(rows))
+
+
+class _TheMapIsComplete:
     """Does the map cover the dependencies roll_npc() actually has?
 
     Every test above reads TRAIT_DEPENDENTS, so none of them can tell whether
@@ -401,26 +477,31 @@ class TestTheMapIsComplete(unittest.TestCase):
     somebody had already thought of, which is how the two edges below were
     missed in the first place.
 
+    Not a TestCase itself - TestOnTheFixture and TestOnLiveTables below
+    supply TABLES, SEEDS and TARGETS and inherit unittest.TestCase alongside
+    this, so the three test methods run twice, once per data source, without
+    two copies of them to keep in step.
+
     WHAT IT CANNOT SEE, stated plainly so it is not mistaken for a proof. This
-    catches a dependency that narrows a POOL, and only when the fixture reaches
-    the case. Deleting each of the map's twenty-three edges in turn, it catches
-    eleven. The misses are not bad luck; three kinds are structural:
+    catches a dependency that narrows a POOL, and only when the data reaches
+    the case. Three kinds of edge are structural misses on ANY data, fixture
+    or live:
 
     - Dependencies that never narrow a pool. Backdrop -> Weather is read at
       prompt-build time by weather_sentence(), and Hair colour -> Hair is a
       '{colour}' substitution rather than a filter. No pool moves, so no kept
       value can fall outside one.
-    - Dependencies that run backwards. Build -> Age, and Age -> Build, fire
-      only in roll_npc()'s forced-value branches, which narrow an EARLIER
-      table's pool; this harness pins every trait, so those branches never run.
-    - Filters carrying an 'or options' fallback that the minimal fixture never
-      drives to the narrow case. This is the largest group at eight, and it is
-      not the Weapon edges alone: Theme -> Hair, Headgear and Weapon (the
-      theme filter and its share weighting), Outfit -> Headgear, Weapon and
-      Gear (the 'notac' strip and 'hardtech'), Role -> Weapon (the weapon
-      policy), and Weapon -> Stance (the carried-flags filter). Naming them is
-      the point of the paragraph: a limits statement that is vague about its
-      own limits invites the reader to trust it further than it goes.
+    - Dependencies that run backwards. Age -> Build fires only in roll_npc()'s
+      forced-value branches, which narrow an EARLIER table's pool; this
+      harness pins every trait, so that branch never runs.
+    - Filters carrying an 'or options' fallback that the data on hand doesn't
+      always drive to the narrow case - the Weapon edges chief among them,
+      but also Theme -> Hair, Headgear and Weapon (the theme filter and its
+      share weighting), Outfit -> Headgear, Weapon and Gear (the 'notac'
+      strip and 'hardtech'), Role -> Weapon (the weapon policy), and
+      Weapon -> Stance (the carried-flags filter). Naming them is the point
+      of the paragraph: a limits statement that is vague about its own limits
+      invites the reader to trust it further than it goes.
 
     What is worth saying for it is the measurement that motivated it: run
     against the map as it stood before roll_npc()'s filter chain was audited by
@@ -429,22 +510,14 @@ class TestTheMapIsComplete(unittest.TestCase):
     dependency this feature is about, not a proof of completeness.
     """
 
-    # Enough rolls to reach the fixture's flagged bullets - a 'young' Age, a
-    # 'nogear' Backdrop, a two-handed Weapon, a theme that actually changes -
-    # without making the suite slow. Each seed costs three rolls per target,
-    # and the whole class runs in about four tenths of a second. Raising it
-    # buys very little: at 120 the count above goes from eleven to twelve, and
-    # the rest are the structural misses, which no number of seeds reaches.
-    SEEDS = 60
-
     def test_no_kept_trait_is_left_outside_its_own_pool(self):
-        for target in gen.REQUIRED_TABLES:
+        for target in self.TARGETS:
             cascade = gen.trait_cascade(target)
             for seed in range(self.SEEDS):
-                npc = gen.roll_npc(TABLES, random.Random(seed))
-                gen.reroll_from_raw(TABLES, npc, cascade,
+                npc = gen.roll_npc(self.TABLES, random.Random(seed))
+                gen.reroll_from_raw(self.TABLES, npc, cascade,
                                     random.Random(seed + 9000))
-                for name, pool in pools_by_table(npc).items():
+                for name, pool in pools_by_table(self.TABLES, npc).items():
                     if name in cascade:
                         continue
                     self.assertIn(
@@ -463,8 +536,8 @@ class TestTheMapIsComplete(unittest.TestCase):
         the test above is measuring the harness rather than the map.
         """
         for seed in range(20):
-            npc = gen.roll_npc(TABLES, random.Random(seed))
-            for name, pool in pools_by_table(npc).items():
+            npc = gen.roll_npc(self.TABLES, random.Random(seed))
+            for name, pool in pools_by_table(self.TABLES, npc).items():
                 self.assertIn(npc["_raw"][name], pool,
                               "seed %d: a freshly rolled %s is not in its own "
                               "pool" % (seed, name))
@@ -477,9 +550,60 @@ class TestTheMapIsComplete(unittest.TestCase):
         fail. Pronouns and Theme are the two genuine absences: pinning either
         skips its draw, and neither is filtered by anything.
         """
-        seen = set(pools_by_table(gen.roll_npc(TABLES, random.Random(0))))
+        seen = set(pools_by_table(self.TABLES, gen.roll_npc(self.TABLES, random.Random(0))))
         self.assertEqual(sorted(seen),
                          sorted(set(gen.REQUIRED_TABLES) - {"Pronouns", "Theme"}))
+
+
+class TestTheMapIsCompleteOnTheFixture(_TheMapIsComplete, unittest.TestCase):
+    """The fixture side: small, curated, and reaches its flagged bullets - a
+    'young' Age, a 'nogear' Backdrop, a two-handed Weapon, a theme that
+    actually changes - in very few rolls.
+
+    Deleting each of the map's twenty-two edges in turn, this catches eleven.
+    """
+
+    TABLES = TABLES
+
+    # Enough rolls to reach the fixture's flagged bullets without making the
+    # suite slow. Each seed costs three rolls per target, and the whole class
+    # runs in about a fifth of a second. Raising it buys very little: at 120
+    # the count above goes from eleven to twelve, and the rest are the
+    # structural misses above, which no number of seeds reaches.
+    SEEDS = 60
+    TARGETS = gen.REQUIRED_TABLES
+
+
+class TestTheMapIsCompleteOnLiveTables(_TheMapIsComplete, unittest.TestCase):
+    """The live side: much larger and more varied, so a handful of seeds
+    reaches flag combinations the fixture is too small to carry at all -
+    'hardtech' Headgear against a 'notac' Outfit, say.
+
+    Pronouns is dropped from TARGETS for a reason specific to live data: the
+    fixture carries no per-pronoun variant tables at all, so re-rolling
+    Pronouns there never actually changes which pool anything else draws
+    from, and the check is silently vacuous for that one target. The live
+    tables DO vary Build, Height, Hair and more by pronoun - which is the
+    whole point of those variant tables - so re-rolling Pronouns and then
+    comparing every OTHER kept trait's original bullet against a pool
+    rebuilt under the NEW pronoun fails there on every seed, for every kept
+    table, regardless of TRAIT_DEPENDENTS. That is not a missing edge: Pronoun
+    re-rolls are refused outright by --reroll-trait (UNREROLLABLE_REASONS)
+    for exactly this reason, so nothing in production ever asks this
+    question the way this harness would. It is the harness's own structural
+    miss, one live data exposes and the fixture cannot.
+
+    Measured at SEEDS = 15: six of the twenty-two edges, a different six than
+    the fixture catches (Outfit -> Headgear here, where the fixture's
+    'hardtech' bullets never reach the narrow case; Theme's edges and
+    Weapon -> Gear there, where the live tables' much larger pools dilute
+    the same flagged bullets the fixture guarantees). Run together the two
+    classes catch twelve of the twenty-two - more than either alone.
+    """
+
+    TABLES = LIVE
+    SEEDS = 15
+    TARGETS = tuple(name for name in gen.REQUIRED_TABLES if name != "Pronouns")
 
 
 class TestDifferentThemeDraw(unittest.TestCase):

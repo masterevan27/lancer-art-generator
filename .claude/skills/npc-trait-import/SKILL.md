@@ -604,8 +604,9 @@ python generate-npc.py --dry-run --count 1 --set-trait Backdrop="<paste the cand
 the roll it has to sit beside — pinning `Theme`, `Role` or `Outfit` alongside
 it is the way to see whether a flag actually gates the way you expect. Once an
 entry *is* imported, `--reroll-trait <Table>` re-rolls that one trait on an
-existing NPC and reproduces everything else, which is how a new bullet gets
-seen on a character that already exists.
+existing NPC, and anything whose filters read a flag from it — see
+`docs/generate-npc.md`'s cascade section for what a given table pulls in —
+which is how a new bullet gets seen on a character that already exists.
 
 Only offer these — don't run one unprompted, since it's the user's call
 whether they want a test roll right now.
