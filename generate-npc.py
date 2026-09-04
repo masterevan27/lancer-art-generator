@@ -671,7 +671,8 @@ TOKEN_TEMPLATE = (
     "{possessive} head to the soles of {possessive} feet, the head drawn small "
     "in frame with clear empty space above and below, in realistic adult proportions "
     "roughly seven to eight heads tall. "
-    "{Subject} {is_are} {height}, {build}, with {traits}{skin}, {hair}, {eyes}, and {feature}, wearing "
+    "{Subject} {is_are} {height}, {build}, {face}, and {traits}{skin}, {hair}, {eyes}, "
+    "and {feature}, wearing "
     "{outfit}, {faction_line}{possessive} clothing following the shape of "
     "{possessive} frame. {headgear} "
     "{Possessive} face carries {demeanor}. {gear_line}{Subject} {is_are} {stance}, both "
@@ -679,7 +680,7 @@ TOKEN_TEMPLATE = (
     "{glow_line} The background alone is a solid flat plain white, no "
     "texture, no gradient, no shadow, no environment. Full-length wide shot, the whole "
     "figure clear of the frame edge, centered composition, dramatic "
-    "lighting, isolated character illustration, clean silhouette, painterly brushwork "
+    "lighting, high detail, isolated character illustration, clean silhouette, painterly brushwork "
     "with heavy grain and dense halftone screentone worked into every shadow."
 )
 

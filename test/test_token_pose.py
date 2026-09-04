@@ -28,7 +28,13 @@ class TestTokenTemplatePose(unittest.TestCase):
         self.assertNotIn("arms free", gen.TOKEN_TEMPLATE)
 
     def test_the_framing_assertion_survives(self):
-        """Dropping the pose claim must not drop the full-body framing with it."""
+        """Dropping the pose claim must not drop the full-body framing with it.
+
+        'no leg wraps or puttees' was listed here too, as though it were a
+        fourth framing assertion. It never was - it is a wardrobe veto, and it
+        is now deliberately gone; test_token_fidelity.py pins its absence and
+        says why.
+        """
         for phrase in ("whole figure in frame",
                        "to the soles of {possessive} feet",
                        "clear empty space above and below",

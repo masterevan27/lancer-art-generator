@@ -986,7 +986,7 @@ ignored — so notes like this one are safe to leave inline.
 
 - x3 lean and athletic, narrow-hipped and small-busted || figure
 - x3 slim and fine-boned, light through the shoulders and hips || figure
-- x2 athletic and fit, narrow waist and extremely large breasts || figure
+- x2 athletic and fit, narrow-waisted and very full-busted || figure
 - x2 lithe and slender, with fine shoulders and a long neck
 - x2 trim and toned, flat through the midsection with defined shoulders
 - x2 tall and rangy, long-limbed and narrow through the waist
