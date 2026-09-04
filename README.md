@@ -123,12 +123,40 @@ refresh its API-format twin.
 
 </details>
 
-## Staged imports
+## Staged imports, and table presets
+
+Two folders under `prompts/` hold JSON written by tooling rather than by hand,
+and they are tracked on opposite terms because they are opposite kinds of file.
 
 `prompts/staged-imports/` is a working folder for candidate NPC-table entries
 extracted from reference images (see the `npc-trait-import` skill below). Its
 JSON files are gitignored so a run doesn't dirty the tree; `examples/` holds
 three worked examples that stay tracked as a reference for the file shape.
+
+`prompts/presets/` holds **table presets** — a snapshot of which bullet is
+enabled in every table and at what roll weight, saved as one file. This is the
+default location the Import GUI (below) writes them to; nothing in this
+repository reads or writes them, and the generator itself is unaware of them,
+since a preset is applied by editing `npc-generator-tables.md` in place rather
+than by being passed to a run. They are **not** gitignored, unlike the staged
+imports beside them: a preset is meant to be handed to another GM, so a named
+one is content worth keeping in history. That does mean saving a preset leaves
+the tree dirty until you commit it or throw it away.
+
+## The Import GUI
+
+The tool that edits the tables and turns a rolled NPC into a Foundry Actor
+lives in a sibling clone at `G:\GIT-REPOS\lancer-npc-import-gui`. It reads
+this repository directly — `.generated-npcs.json` for the run log,
+`prompts/npc-generator-tables.md` for the tables, and the two folders above —
+and shells out to `generate-npc.py` to roll new NPCs and re-roll single traits.
+
+Nothing here depends on it: the generator runs standalone, and every table edit
+it makes is an edit you could make in a text editor. It matters to this
+repository only because it is a second writer of
+`prompts/npc-generator-tables.md`, so a table's on-disk shape — the `- ` bullet
+under a `##` heading, the `|| flag` suffixes, the `xN ` weight prefix — is a
+contract between the two, not just a convention. See that repository's README.
 
 ## The `npc-trait-import` Claude Code skill
 
