@@ -387,5 +387,47 @@ class TestStageAssemble(unittest.TestCase):
         self.assertEqual(command[command.index("--voxel") + 1], "0.004")
 
 
+class TestRigFlags(unittest.TestCase):
+    """Rigging ships off. Both bind modes were measured against a real Lucia
+    Vos reconstruction and neither is trustworthy unattended: `transfer`
+    produced a complete rig with severe tearing at the shoulder, and `auto`
+    left every one of 292,296 shell vertices unweighted. See
+    docs/generate-3d.md#rigging for the numbers."""
+
+    def test_rigging_is_off_by_default(self):
+        self.assertFalse(d3.parse_args([]).rig)
+
+    def test_rig_turns_it_on(self):
+        self.assertTrue(d3.parse_args(["--rig"]).rig)
+
+    def test_the_bind_mode_defaults_to_transfer(self):
+        self.assertEqual(d3.parse_args([]).bind, "transfer")
+
+    def test_an_unknown_bind_mode_is_refused(self):
+        with self.assertRaises(SystemExit):
+            d3.parse_args(["--bind", "magic"])
+
+    def test_the_flags_reach_the_blender_command(self):
+        args = d3.parse_args(["--rig", "--bind", "auto"])
+        command = d3.assemble_command("/blender.exe", args, Path("/out"), "Jules",
+                                      Path("/b.glb"), Path("/s.glb"))
+        self.assertIn("--rig", command)
+        self.assertIn("--bind", command)
+        self.assertIn("auto", command)
+
+    def test_without_rig_the_flag_is_omitted(self):
+        args = d3.parse_args([])
+        command = d3.assemble_command("/blender.exe", args, Path("/out"), "Jules",
+                                      Path("/b.glb"), Path("/s.glb"))
+        self.assertNotIn("--rig", command)
+
+    def test_the_stem_reaches_the_command_unsplit(self):
+        """A name with a space must arrive as one argv element, not two."""
+        args = d3.parse_args([])
+        command = d3.assemble_command("/blender.exe", args, Path("/out"),
+                                      "Jules Sokolova", Path("/b.glb"), Path("/s.glb"))
+        self.assertIn("Jules Sokolova", command)
+
+
 if __name__ == "__main__":
     unittest.main()

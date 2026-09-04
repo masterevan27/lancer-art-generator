@@ -465,6 +465,33 @@ def parse_report(stdout):
         raise RuntimeError("the Blender assembly's report was not JSON: %s" % exc)
 
 
+def assemble_command(blender, args, folder, stem, base, shell):
+    """The full argv for one headless assembly run.
+
+    Split out from stage_assemble() because getting a flag to the far side of
+    Blender's '--' separator is exactly the kind of thing that fails silently
+    - an unrecognised flag after '--' is argparse's problem inside the
+    script, 600 seconds later.
+
+    --rig is opt-in, not opt-out. Both bind modes were measured against a
+    real Lucia Vos reconstruction (see docs/generate-3d.md#rigging):
+    `transfer` produced a complete rig with visible tearing at the shoulder
+    under a 30-degree bone rotation, and `auto` left every vertex of the
+    shell unweighted. Neither is a result a 160-NPC unattended batch should
+    be defaulted into, so a rigged GLB is only written when someone asks for
+    one with --rig.
+    """
+    command = [
+        str(blender), "--background", "--factory-startup",
+        "--python", str(ASSEMBLE_SCRIPT), "--",
+        str(base), str(shell), str(folder), "--stem", stem,
+        "--voxel", str(args.voxel),
+    ]
+    if args.rig:
+        command += ["--rig", "--bind", args.bind]
+    return command
+
+
 def stage_assemble(args, folder, stem, base, shell):
     """Run headless Blender over the two GLBs. Returns the assembly's report.
 
@@ -489,12 +516,7 @@ def stage_assemble(args, folder, stem, base, shell):
     if not ASSEMBLE_SCRIPT.exists():
         raise SystemExit("assembly script not found: %s" % ASSEMBLE_SCRIPT)
 
-    command = [
-        str(blender), "--background", "--factory-startup",
-        "--python", str(ASSEMBLE_SCRIPT), "--",
-        str(base), str(shell), str(folder), "--stem", stem,
-        "--voxel", str(args.voxel),
-    ]
+    command = assemble_command(blender, args, folder, stem, base, shell)
     proc = subprocess.run(command, capture_output=True, text=True, timeout=args.timeout)
     if proc.returncode != 0:
         raise RuntimeError("Blender assembly failed (%d):\n%s"
@@ -502,6 +524,10 @@ def stage_assemble(args, folder, stem, base, shell):
     report = parse_report(proc.stdout)
     print("      %d component(s) dropped, %d non-manifold edge(s)"
           % (report.get("components_dropped", 0), report.get("non_manifold", 0)))
+    if report.get("rig_error"):
+        print("    ! rigging failed: %s" % report["rig_error"], file=sys.stderr)
+    elif report.get("rigged"):
+        print("      rigged: %d bones, every vertex weighted" % report["bones"])
     return report
 
 
@@ -542,6 +568,17 @@ def parse_args(argv=None):
                             "printable surface on the cleaned shell (default: "
                             "%(default)s - raise it further if a mesh still "
                             "reports non-manifold edges)")
+    stage.add_argument("--rig", action="store_true",
+                       help="also bind the shell to the base's armature and "
+                            "export a rigged GLB; off by default because both "
+                            "bind modes were measured against a real "
+                            "reconstruction and neither is trustworthy "
+                            "unattended - see docs/generate-3d.md#rigging")
+    stage.add_argument("--bind", default="transfer", choices=("transfer", "auto"),
+                       help="how to weight the shell, when --rig is given: "
+                            "'transfer' copies the base's own vertex groups by "
+                            "proximity, 'auto' solves for the bones directly "
+                            "(default: %(default)s)")
 
     gen = p.add_argument_group("the A-pose render")
     gen.add_argument("--workflow", type=Path, default=art.DEFAULT_WORKFLOW,
@@ -608,7 +645,7 @@ def main(argv=None):
     comfy = art.find_server(args.server)
     print("ComfyUI: %s" % comfy.base)
 
-    done = failed = skipped = 0
+    done = failed = skipped = warned = 0
     started = time.time()
     for folder_path, entry in picked:
         folder = npc_3d_folder(folder_path)
@@ -646,6 +683,8 @@ def main(argv=None):
                 built = report["files"]
                 for name in built:
                     print("      -> %s" % name)
+                if report.get("rig_error"):
+                    warned += 1
 
                 dossier = Path(folder_path) / ("%s.md" % stem)
                 if dossier.exists():
@@ -677,8 +716,8 @@ def main(argv=None):
             continue
         done += 1
 
-    print("\ndone: %d built, %d skipped, %d failed, %.1f min"
-          % (done, skipped, failed, (time.time() - started) / 60))
+    print("\ndone: %d built (%d without a rig), %d skipped, %d failed, %.1f min"
+          % (done, warned, skipped, failed, (time.time() - started) / 60))
     return 1 if failed else 0
 
 
