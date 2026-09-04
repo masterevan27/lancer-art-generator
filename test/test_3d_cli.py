@@ -335,5 +335,57 @@ class TestMeshOutputs(unittest.TestCase):
         self.assertEqual(d3.mesh_outputs(record), [])
 
 
+class TestReportParsing(unittest.TestCase):
+    """Blender writes a lot to stdout; the report is one line inside it."""
+
+    def test_it_finds_the_report_among_the_noise(self):
+        stdout = ("Blender 5.2.1 LTS\n"
+                  'LANCER3D {"files": ["a.glb"], "non_manifold": 0}\n'
+                  "Blender quit\n")
+        self.assertEqual(d3.parse_report(stdout)["files"], ["a.glb"])
+
+    def test_the_last_report_wins(self):
+        """Defensive: one run, one report - but never silently read a stale one."""
+        stdout = ('LANCER3D {"files": ["old.glb"]}\n'
+                  'LANCER3D {"files": ["new.glb"]}\n')
+        self.assertEqual(d3.parse_report(stdout)["files"], ["new.glb"])
+
+    def test_no_report_is_an_error(self):
+        with self.assertRaises(RuntimeError):
+            d3.parse_report("Blender quit\n")
+
+    def test_a_malformed_report_is_an_error(self):
+        with self.assertRaises(RuntimeError):
+            d3.parse_report("LANCER3D not json\n")
+
+
+class TestStageAssemble(unittest.TestCase):
+    """The Blender command stage_assemble builds - subprocess.run mocked out,
+    so this needs neither a real Blender nor the assembly script to run."""
+
+    def _command_for(self, argv):
+        """The command list stage_assemble hands to subprocess.run, for argv."""
+        args = d3.parse_args(argv)
+        fake_proc = mock.Mock(returncode=0, stdout='LANCER3D {"files": ["x.glb"]}\n', stderr="")
+        with mock.patch.object(d3, "find_blender", return_value=Path("blender.exe")), \
+             mock.patch.object(d3.subprocess, "run", return_value=fake_proc) as run:
+            d3.stage_assemble(args, Path("/npcs/x/3d"), "X", Path("base.glb"), Path("shell.glb"))
+        return run.call_args[0][0]
+
+    def test_voxel_defaults_to_0_004(self):
+        """0.0, assemble_npc.py's own default, left a real cleaned shell with 3
+        non-manifold edges; 0.004 was the value that measurably fixed it."""
+        self.assertEqual(d3.parse_args([]).voxel, 0.004)
+
+    def test_the_command_passes_voxel_through(self):
+        command = self._command_for(["--voxel", "0.01"])
+        self.assertIn("--voxel", command)
+        self.assertEqual(command[command.index("--voxel") + 1], "0.01")
+
+    def test_the_default_voxel_reaches_the_command_untouched(self):
+        command = self._command_for([])
+        self.assertEqual(command[command.index("--voxel") + 1], "0.004")
+
+
 if __name__ == "__main__":
     unittest.main()

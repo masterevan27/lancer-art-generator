@@ -17,6 +17,7 @@ import importlib.util
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 import urllib.request
@@ -442,6 +443,69 @@ def stage_mesh(comfy, args, entry, folder, apose_png):
 
 
 # --------------------------------------------------------------------------
+# Stage 2: Blender assembly
+# --------------------------------------------------------------------------
+
+REPORT_PREFIX = "LANCER3D "
+
+
+def parse_report(stdout):
+    """The assembly's machine-readable line, out of everything Blender printed.
+
+    An absent or unparseable report is an error rather than an empty dict: it
+    means the script died somewhere after the argument check, and continuing
+    would write a dossier claiming files that are not there.
+    """
+    lines = [l for l in stdout.splitlines() if l.startswith(REPORT_PREFIX)]
+    if not lines:
+        raise RuntimeError("the Blender assembly printed no report line")
+    try:
+        return json.loads(lines[-1][len(REPORT_PREFIX):])
+    except ValueError as exc:
+        raise RuntimeError("the Blender assembly's report was not JSON: %s" % exc)
+
+
+def stage_assemble(args, folder, stem, base, shell):
+    """Run headless Blender over the two GLBs. Returns the assembly's report.
+
+    The whole report rather than just report["files"], because the caller has
+    to be able to say more about a run than which files came out of it - and
+    because Phase 3 adds keys to it.
+
+    Blender's own stderr is only surfaced when it fails: a successful run
+    prints several screens of startup noise that would bury a 160-NPC batch's
+    actual progress.
+
+    --voxel is passed through explicitly rather than left to
+    assemble_npc.py's own default of 0.0. Run by hand against real Stage 0/1
+    output for a catalogue NPC: at 0.0 the cleaned shell had 3 non-manifold
+    edges and the stage correctly refused to write an unprintable STL; at
+    0.004 it produced a manifold result with 0 components dropped in a few
+    seconds. assemble_npc.py's own default is left alone deliberately - it is
+    a general-purpose tool with its own reviewed tests - and generate-3d.py
+    supplies the value that actually works for real reconstruction output.
+    """
+    blender = find_blender(args.blender)
+    if not ASSEMBLE_SCRIPT.exists():
+        raise SystemExit("assembly script not found: %s" % ASSEMBLE_SCRIPT)
+
+    command = [
+        str(blender), "--background", "--factory-startup",
+        "--python", str(ASSEMBLE_SCRIPT), "--",
+        str(base), str(shell), str(folder), "--stem", stem,
+        "--voxel", str(args.voxel),
+    ]
+    proc = subprocess.run(command, capture_output=True, text=True, timeout=args.timeout)
+    if proc.returncode != 0:
+        raise RuntimeError("Blender assembly failed (%d):\n%s"
+                           % (proc.returncode, proc.stderr[-2000:]))
+    report = parse_report(proc.stdout)
+    print("      %d component(s) dropped, %d non-manifold edge(s)"
+          % (report.get("components_dropped", 0), report.get("non_manifold", 0)))
+    return report
+
+
+# --------------------------------------------------------------------------
 # CLI
 # --------------------------------------------------------------------------
 
@@ -473,6 +537,11 @@ def parse_args(argv=None):
                             "(repeatable; default: all of %s)" % ", ".join(STAGES))
     stage.add_argument("--blender", type=Path, default=None,
                        help="the Blender executable (default: %s)" % DEFAULT_BLENDER)
+    stage.add_argument("--voxel", type=float, default=0.004,
+                       help="voxel remesh size in metres, forcing a closed, "
+                            "printable surface on the cleaned shell (default: "
+                            "%(default)s - raise it further if a mesh still "
+                            "reports non-manifold edges)")
 
     gen = p.add_argument_group("the A-pose render")
     gen.add_argument("--workflow", type=Path, default=art.DEFAULT_WORKFLOW,
@@ -569,6 +638,24 @@ def main(argv=None):
             elif "assemble" in args.stage and not (shell.exists() and base.exists()):
                 raise RuntimeError(
                     "no _shell.glb / _base.glb in %s - run --stage mesh first" % folder)
+
+            if "assemble" in args.stage:
+                print("    assembling ...", flush=True)
+                stem = npc_gen._safe(entry["name"])
+                report = stage_assemble(args, folder, stem, base, shell)
+                built = report["files"]
+                for name in built:
+                    print("      -> %s" % name)
+
+                dossier = Path(folder_path) / ("%s.md" % stem)
+                if dossier.exists():
+                    append_dossier_3d(dossier, built,
+                                      [MESH_WORKFLOW, RIG_WORKFLOW], APOSE_STANCE)
+                else:
+                    # Not an error: an NPC folder moved by hand into Foundry
+                    # keeps its art and loses nothing by having no dossier.
+                    print("    ! no dossier at %s - skipping the 3D section"
+                          % dossier.name, file=sys.stderr)
         except KeyboardInterrupt:
             print("\ninterrupted - cancelling the running job")
             comfy.cancel_all()

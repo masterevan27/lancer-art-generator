@@ -63,6 +63,17 @@ rolling for it, since a single bullet in a pool of thirty rarely comes up. Full
 documentation, including worked examples for rolling a whole group of related NPCs:
 [`docs/generate-npc.md`](docs/generate-npc.md).
 
+### `generate-3d.py`
+
+Turns an NPC already in `.generated-npcs.json` into a printable 32 mm STL, a
+cleaned 3D shell and four turnaround renders, by re-rendering its token in a
+forced A-pose and reconstructing from that. Needs a running ComfyUI and
+Blender 5.2. See [docs/generate-3d.md](docs/generate-3d.md).
+
+```
+python generate-3d.py --filter Sokolova
+```
+
 ### Tests
 
 Standard library `unittest`, no dependencies:
