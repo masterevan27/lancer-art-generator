@@ -11,6 +11,11 @@ output/
 
 # Staged trait candidates are a working folder; examples/ ships tracked.
 prompts/staged-imports/*.json
+# The reference images npc-trait-import copies beside each run, so the import
+# GUI can show what a candidate was read from. Local working state like the
+# JSON above, and heavy with it - a large run is 50-100MB of somebody else's
+# asset library.
+prompts/staged-imports/refs/
 
 # Agent scratch: worktrees and subagent-driven-development ledgers
 .claude/worktrees/

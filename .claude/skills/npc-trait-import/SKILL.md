@@ -465,6 +465,43 @@ matters here:
   `placement_hint` is advice for the human reviewer, not something the
   importer acts on. Write it for a person.
 
+### 6.1 Copy each referenced image beside the run
+
+`source_image` names the image a candidate came from; this puts the image
+itself within reach, so the review page can *show* the reference instead of
+only naming it. After writing the JSON, copy every image an `entries` record
+names into:
+
+```
+prompts/staged-imports/refs/<the JSON's stem>/<source_image>
+```
+
+So `2026-09-02-221633.json` gets `refs/2026-09-02-221633/`, holding one file
+per distinct `source_image`, each keeping its filename **byte for byte** —
+that name is the only key the GUI has to match them up.
+
+Four things this gets wrong if you improvise:
+
+- **Copy, don't move, link, or shortcut.** The source directories are somebody's
+  asset library and get reorganised, cleaned out and renamed; a copy is the
+  whole reason the preview still works in six months.
+- **Only images `entries` actually reference.** A `skipped` image has no
+  candidate to preview, so copying it wastes tens of megabytes for nothing.
+  A run that reads 81 images and stages 66 of them copies 66.
+- **Per-run folders are what make bare filenames safe.** Generic names —
+  `images (3).jpg`, `screenshot.png` — repeat across asset folders, and a
+  flat shared directory would let one run's copy answer for another's. Two
+  runs that read the same image keep a copy each; that is the intended trade.
+- **A failed copy is not a failed run.** If an image is gone, locked, or
+  unreadable, note it in §8 and carry on. The GUI treats a missing copy as
+  "no preview available" and falls back to naming the file, which is exactly
+  today's behaviour — so a candidate with no copy is still importable.
+
+`refs/` is local working state and is gitignored, like the staged `*.json`
+beside it. Expect real size: reference images run about a megabyte each, so a
+large run leaves 50-100MB on disk. Say so in §8 rather than letting the user
+discover it.
+
 ## 7. Validate the file before reporting it
 
 Most of what can go wrong here fails *silently* — an unknown flag is ignored
@@ -520,6 +557,11 @@ against the file you just wrote and fix anything they surface:
     token has no environment to put them in, and CFG 1.0 with no negative
     prompt means the template cannot argue them back out.
 
+14. **Every referenced `source_image` has a copy under `refs/<stem>/`**, with
+    a byte-identical name and a non-zero size — the §6.1 copy step, checked
+    rather than assumed. Any that are missing go in the §8 report by name;
+    they are a degraded preview, not a broken run, so don't fail on them.
+
 A short script is the fast way to do most of these — 13 is a read, not a
 regex; if the run was small enough to eyeball, eyeball it. Report what you
 checked, not just that you checked.
@@ -537,6 +579,11 @@ State the tag ratio even when it is zero. A run that tagged nothing is a
 perfectly good run — the neutral pool is load-bearing — but the user is the
 one deciding when a theme has enough content to raise its weight, and they
 can only do that if every run says what it contributed.
+
+Say how many reference images you copied under `refs/<stem>/` and roughly
+what they weigh, and name any that could not be copied — those candidates
+will show a filename with no preview, and the user should hear it from the
+report rather than from an empty detail sheet.
 
 Surface anything the reviewer would otherwise discover the hard way:
 candidates that overlap each other or an existing bullet, judgment calls you
