@@ -135,6 +135,136 @@ REQUIRED_TABLES = [
 THEMED_TABLES = ("Hair", "Hair colour", "Feature", "Outfit", "Headgear",
                  "Weapon", "Backdrop")
 
+# Which traits a re-roll of one trait invalidates: "re-roll this and these stop
+# being answers the roller could have given". The map exists because a pinned
+# re-roll only filters in one direction. reroll_from_raw() pins every trait but
+# the target and lets roll_npc() draw the rest, so the freed trait is filtered
+# against everything pinned - but a pinned trait is never drawn, so not one
+# filter runs on it, and nothing re-checks it against the value that just
+# changed. Free the Role alone and the kept Faction lands on the wrong side of
+# the civ/mil split 138 times in 400 on the live tables: a colonial
+# administrator flying a marine corps banner, which is precisely the pairing
+# filter_by_mil() exists to stop, arriving through the one path that skips it.
+# The cure is to free the dependents along with the target, and this is the
+# list of them.
+#
+# The reason differs per edge and each one is named below, because those
+# reasons are what a later reader has to check this map against. A filter that
+# moves, or a flag that stops being read, leaves an edge here asserting a
+# constraint the roller no longer applies, and the map cannot notice that by
+# itself.
+TRAIT_DEPENDENTS = {
+    # Selection by theme rather than a flag read, which is why this single
+    # edge points at a whole tuple: filter_by_theme() and apply_theme_share()
+    # choose each of these tables' bullets by the rolled theme, so under a new
+    # theme the old bullets are ones the roll could not have produced. Derived
+    # from THEMED_TABLES rather than typed out, so a table tagged for theming
+    # next month cascades the day it is added rather than the day somebody
+    # remembers this line - the same property REQUIRED_TABLES buys elsewhere
+    # in this file.
+    "Theme": THEMED_TABLES,
+
+    # All three read Role's 'mil' flag: Faction and Outfit through
+    # filter_by_mil(), Weapon through apply_weapon_policy(), which also reads
+    # the rolled Role's ROLE_CATEGORIES entry to decide what a soldier is
+    # guaranteed to be carrying. Outfit reads Role a second way as well,
+    # through filter_by_dress() and the policy dress_policy_for() derives from
+    # that same category - a dockworker is not entitled to a ceremonial robe.
+    "Role": ("Faction", "Outfit", "Weapon"),
+
+    # All three read Outfit's 'notac'. Weapon and Gear lose their
+    # military-issue bullets to it, so a kimono carries neither a service rifle
+    # nor a tactical assault pack; Headgear is filtered on its own 'hardtech'
+    # flag by filter_by_hardtech(), keyed on that same outfit register.
+    "Outfit": ("Headgear", "Weapon", "Gear"),
+
+    # Gear reads the Weapon's 'hands' - a weapon that occupies them rules out
+    # equipment that needs one - and Stance reads its 'hands', 'gun' and 'none'
+    # flags, since a pose that aims a firearm needs the roll to have actually
+    # produced one.
+    "Weapon": ("Gear", "Stance"),
+
+    # The other half of the combined carried-flags filter Stance runs on:
+    # roll_npc() concatenates the Weapon's flags with the Gear's, so a new
+    # thermos filling a hand invalidates a hands-in-pockets pose exactly as a
+    # new rifle does.
+    "Gear": ("Stance",),
+
+    # Weather is gated by the Backdrop's own 'weather' flag in
+    # weather_sentence(), since rain inside a cockpit or in hard vacuum is
+    # nonsense. Glow placement is filtered on whether the Backdrop's scene has
+    # a light source at all, via has_light_source(split_backdrop(...)), since a
+    # placement flagged 'scene' asserts the environment is what casts the
+    # light. Keep either across a new Backdrop and it describes a scene that is
+    # gone.
+    "Backdrop": ("Weather", "Glow placement"),
+
+    # The cut carries a '{colour}' slot that roll_npc() fills from the rolled
+    # colour, and that colour's tail is appended after the whole cut phrase. A
+    # new colour therefore has to redraw the cut: the old one's slot was filled
+    # and closed over a shade the NPC is no longer in, so there is nowhere left
+    # to put the new one. That is the refusal UNREROLLABLE_REASONS already
+    # spells out for Hair colour, restated here as an edge.
+    "Hair colour": ("Hair",),
+
+    # The one pairing that runs both ways, which is why this map is not a DAG
+    # and why the closure below must not assume one. An Age flagged 'young' is
+    # a teenager, so it drops the Build bullets flagged 'figure', which
+    # describe an adult woman's; and a forced 'figure' Build drops the 'young'
+    # Age bullets in the other direction. roll_npc() implements both
+    # directions, so both are edges here.
+    "Age": ("Build",),
+    "Build": ("Age",),
+}
+
+
+def trait_cascade(name):
+    """`name` plus every trait a re-roll of it invalidates, transitively.
+
+    The closure of TRAIT_DEPENDENTS from `name`, `name` included - so a trait
+    nothing depends on closes to just itself, which is what leaves the eleven
+    traits that already re-roll cleanly untouched by any of this.
+
+    Transitive because the invalidation is: a new Role redraws the Outfit, the
+    new Outfit redraws Headgear, Weapon and Gear, and the new Weapon and Gear
+    redraw the Stance. Stopping at the direct dependents would hand back a
+    figure posed around the rifle that was replaced two steps earlier.
+
+    Written as a worklist over a `seen` set rather than as a recursive walk
+    because the map contains a cycle on purpose - Age depends on Build and
+    Build on Age, the 'young'/'figure' pairing roll_npc() filters in both
+    directions. Nothing is enqueued twice, so the walk terminates on that cycle
+    rather than recurring forever; do not replace it with a recursion that
+    assumes a DAG.
+
+    Ordered by REQUIRED_TABLES rather than by discovery order, so a cascade can
+    never disagree with the order the roller draws in, and so the same cascade
+    reads the same way in the CLI's report as in the GUI's dialog.
+    """
+    seen = {name}
+    pending = [name]
+    while pending:
+        for dependent in TRAIT_DEPENDENTS.get(pending.pop(), ()):
+            if dependent not in seen:
+                seen.add(dependent)
+                pending.append(dependent)
+    return tuple(trait for trait in REQUIRED_TABLES if trait in seen)
+
+
+# The twelve traits a Theme re-roll has to draw again: Theme, the seven themed
+# tables, and then Gear, Stance, Glow placement and Weather, which arrive
+# transitively - through the new Outfit and Weapon, and through the new
+# Backdrop. The design doc names all twelve by hand; this is bound to the
+# closure rather than to a copy of that list, because a derivation that comes
+# out agreeing with the doc is worth more than a second copy of the doc that
+# can drift the first time THEMED_TABLES changes.
+#
+# The name is kept because two things outside this line refer to it: the design
+# doc, and the import GUI's server, which reads THEME_CASCADE out of this file
+# by name over the same read-the-source route it already uses for
+# REROLLABLE_TRAITS.
+THEME_CASCADE = trait_cascade("Theme")
+
 # Krea 2 conditions on at most 512 tokens and silently truncates the rest, so a
 # prompt that runs long loses its tail - which is where the palette, the flat
 # white background and the closing style tags live. Measured against ComfyUI's
@@ -2161,6 +2291,44 @@ def hair_colour_tail(tables, subject, base):
         if candidate == base:
             return tail
     return ""
+
+
+def draw_different_theme(tables, current, rng):
+    """A theme from the table that is not `current`.
+
+    A Theme re-roll that draws the theme it already had spends twelve traits
+    and a render to produce a differently-dressed version of the same idea,
+    which is not what the button says it does. So the new theme has to differ.
+
+    The design doc words that as "repeat until it differs", and a reader who
+    has read it will look for the retry loop here and not find one. There is
+    none because there need not be: excluding the current theme from the pool
+    and drawing once conditions the same weighted distribution on the same
+    event that rejection sampling would, so the two are distribution-equivalent
+    - and unlike a retry loop this cannot spin forever on a tables file that
+    offers a single theme. The weighting survives the exclusion because
+    parse_tables() expands an 'x2 alpha' bullet into two copies in a flat list,
+    so dropping one theme's copies leaves every other theme in its original
+    proportion to the rest.
+
+    Drawn from tables["Theme"] directly rather than through variant_table(),
+    matching roll_npc()'s own Theme draw: theme bullets are bare names with no
+    per-pronoun variants and no flag segment, so there is nothing for
+    variant_table() or split_flags() to unpack here.
+
+    A file offering only one theme has no different theme to give. Re-rolling
+    within it is still a real change - the seven themed tables redraw inside
+    that theme, and so do the four traits that depend on them - so this
+    proceeds with the theme it has rather than refusing, and says so on stderr
+    so the result is not mistaken for a theme that failed to change.
+    """
+    others = [theme for theme in tables["Theme"] if theme != current]
+    if not others:
+        print("! the tables file offers only one theme (%r), so the re-roll "
+              "keeps it - the themed tables will draw again within it rather "
+              "than under a new one" % current, file=sys.stderr)
+        return current
+    return rng.choice(others)
 
 
 def reroll_from_raw(tables, npc, free, rng):
