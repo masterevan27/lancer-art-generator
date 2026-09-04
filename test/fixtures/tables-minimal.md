@@ -45,6 +45,7 @@ Used by the test suite. Not used by the generator at runtime.
 
 ## Eyes
 - grey eyes
+- dark eyes, steady and unreadable
 
 ## Feature
 - a scar across one cheek

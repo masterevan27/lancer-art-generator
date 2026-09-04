@@ -611,6 +611,51 @@ workflow renders them. A file with no `EmptyLatentImage` gives up that control
 and prints a warning naming itself, so a two-workflow run says which of the two
 is the problem.
 
+## Re-rolling one trait
+
+`--reroll-trait TABLE`, alongside `--regen-manifest`/`--regen-id`, re-rolls a
+single trait of an already-generated NPC and reproduces every other one, then
+re-renders into the same folder under the same manifest id:
+
+```bash
+python generate-npc.py --regen-manifest .generated-npcs.json     --regen-id npc-Nadia-Okonkwo-1234 --reroll-trait Hair
+```
+
+Only some traits can be re-rolled alone, and the reason is worth knowing
+because it is not a matter of taste. **The manifest is a lossy record of a
+roll**: `roll_npc()` strips a bullet's flags before storing it, so an entry
+carries `a colonial administrator`, not `a colonial administrator || mil`. A
+trait whose filters need another trait's flags therefore cannot be re-rolled
+correctly from an entry — re-rolling `Outfit` without knowing whether the Role
+was `mil` produces a civilian in a service uniform.
+
+The script already met this once and solved it one flag at a time: `young` is a
+manifest key of its own precisely because the Age bullet's flag was gone by the
+time it was stored.
+
+| | |
+| --- | --- |
+| **Re-rollable** | `Callsigns`, `Build`, `Height`, `Skin`, `Hair`, `Eyes`, `Feature`, `Demeanor`, `Headgear`, `Glow colour`, `Glow placement` |
+| **Refused** | everything else, each with its own reason — see `UNREROLLABLE_REASONS` |
+
+The filters that *do* rebuild are the ones whose inputs survive storage: the
+rolled `Theme` is a stored trait, `young` is a stored key, and the stored
+`Backdrop` keeps its scene segment, which is what `Glow placement`'s `scene`
+flag is tested against.
+
+`Hair` is the fiddly one and worth describing. `roll_npc()` substitutes the
+colour into the cut and appends the colour's trailing clause to the whole
+phrase, storing only the bare base under `Hair colour` — so a new cut is
+re-filled from that base, and the tail is recovered from the table *by* that
+base. Without the recovery step, re-rolling someone's haircut would silently
+drop a gradient they had. `Hair colour` itself is refused for the mirror-image
+reason: the stored cut has the colour already substituted in and its
+`{colour}` slot is gone, so there is nowhere to put a new one. Re-roll `Hair`
+instead, which picks a new cut in the same colour.
+
+The re-roll draws from `--new-seed` (or the entry's seed), so the same re-roll
+of the same NPC is repeatable.
+
 ## Options
 
 | Flag | Effect |
