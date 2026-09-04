@@ -58,8 +58,8 @@ Used by the test suite. Not used by the generator at runtime.
 - a Union marine soldier || mil
 
 ## Faction
-- unaligned and freelance
-- in dress uniform || mil
+- Unaligned || unaligned and freelance
+- Dress uniform || in dress uniform || mil
 
 ## Outfit
 - grey coveralls

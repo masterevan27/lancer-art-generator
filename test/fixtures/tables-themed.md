@@ -89,8 +89,8 @@ exactly the interaction worth measuring.
 
 ## Faction
 
-- unaligned and freelance
-- in dress uniform || mil
+- Unaligned || unaligned and freelance
+- Dress uniform || in dress uniform || mil
 
 ## Hair
 

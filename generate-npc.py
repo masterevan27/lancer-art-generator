@@ -299,7 +299,7 @@ PORTRAIT_TEMPLATE = (
     "painterly illustration style with fine grain texture, clean linework and halftone "
     "dot shading worked into the shadows, moody cinematic lighting. {Subject} {is_are} "
     "{height}, {build}, {face}, and {traits}"
-    "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction}, the clothing "
+    "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction_line}the clothing "
     "following the shape of that frame. {headgear} {Possessive} face carries {demeanor}. "
     "{gear_line}{backdrop} {weather_line}{accent_line} "
     "Shallow depth of field, square framing, high detail, atmospheric sci-fi character "
@@ -334,7 +334,7 @@ TOKEN_TEMPLATE = (
     "puttees, with clear empty space above and below, in realistic adult proportions "
     "roughly seven to eight heads tall. "
     "{Subject} {is_are} {height}, {build}, with {traits}{skin}, {hair}, {eyes}, and {feature}, wearing "
-    "{outfit}, {faction}, the clothing following the shape of that frame. {headgear} "
+    "{outfit}, {faction_line}the clothing following the shape of that frame. {headgear} "
     "{Possessive} face carries {demeanor}. {gear_line}{Subject} {is_are} {stance}, both "
     "feet in frame, the pose natural and unforced. "
     "{accent_line} The background alone is a solid flat plain white, no "
@@ -426,7 +426,7 @@ def variant_table(tables, name, subject):
     return tables[name] + tables.get("%s (%s) +" % (name, subject), [])
 
 
-def filter_by_mil(options, mil):
+def filter_by_mil(options, mil, name):
     """Faction/Outfit bullets flagged 'civ' or 'mil', filtered by a military Role.
 
     A bullet flagged 'civ' reads as plainly civilian dress and is dropped when
@@ -437,9 +437,13 @@ def filter_by_mil(options, mil):
     but shouldn't appear in uniform unless they used to serve. An unflagged
     bullet is neutral and reachable either way, the same as an untagged
     Gear/Stance entry - never filtered down to nothing.
+
+    Takes the table name because Faction keeps its flags in a third segment
+    while Outfit keeps them in a second - split_flags() on a three-segment
+    bullet would return the visual prose as flags.
     """
     exclude = "civ" if mil else "mil"
-    plain = [x for x in options if exclude not in split_flags(x)[1]]
+    plain = [x for x in options if exclude not in flags_for(name, x)]
     return plain or options
 
 
@@ -711,7 +715,7 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
         # Role precedes all three in REQUIRED_TABLES, so role_mil is already
         # known.
         if name in ("Faction", "Outfit"):
-            options = filter_by_mil(options, role_mil)
+            options = filter_by_mil(options, role_mil, name)
 
         # A weapon that occupies the hands rules out equipment that also needs
         # one. Weapon precedes Gear in REQUIRED_TABLES so this flag is already
@@ -770,18 +774,21 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
         # already had its flags stripped right here - re-splitting it there
         # would just split plain text and get nothing back.
         #
-        # Two themed tables are deliberately absent, for one shared reason:
-        # Backdrop and Hair colour each separate three fields with '||' rather
-        # than two, so split_flags() would take the third table's prose - a
-        # Backdrop's scene, a Hair colour's tail - for flags and throw it
+        # Three tables are deliberately absent, for one shared reason:
+        # Backdrop, Hair colour and Faction each separate three fields with
+        # '||' rather than two, so split_flags() would take the third table's
+        # prose - a Backdrop's scene, a Hair colour's tail, a Faction's
+        # visual signature (the second segment, the description that reaches
+        # the image prompt in place of the name) - for flags and throw it
         # away. Each is unpacked by its own splitter instead, Backdrop by
         # split_backdrop() downstream in build_prompts() and write_dossier(),
-        # Hair colour by split_hair_colour() further down this function. A
-        # newly themed table belongs in the list below only if its bullets are
-        # the ordinary two-segment shape. Gear is absent for an unrelated
+        # Hair colour by split_hair_colour() further down this function,
+        # Faction by split_faction() in build_prompts() and write_dossier().
+        # A newly themed table belongs in the list below only if its bullets
+        # are the ordinary two-segment shape. Gear is absent for an unrelated
         # reason - its own flags gate the Stance roll further down, so it is
         # split there instead.
-        if name in ("Age", "Build", "Role", "Faction", "Outfit",
+        if name in ("Age", "Build", "Role", "Outfit",
                     "Hair", "Feature", "Headgear", "Weapon"):
             value, flags = split_flags(value)
             if name == "Age":
@@ -878,7 +885,6 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     # Same reason as Age: a --set-trait override for any of these pastes the
     # raw bullet text back over the split-out value above, flag and all.
     npc["Role"] = split_flags(npc["Role"])[0]
-    npc["Faction"] = split_flags(npc["Faction"])[0]
     npc["Outfit"] = split_flags(npc["Outfit"])[0]
     # The themed tables need it too, and Gear along with them: its split above
     # happens before this update, so --set-trait Gear='a rifle || hands gun'
@@ -1021,6 +1027,31 @@ def split_hair_colour(bullet):
     return base, tail, flags
 
 
+def split_faction(bullet):
+    """A Faction bullet carries the name, an optional visual, and flags.
+
+    Three segments, the same shape split_backdrop() and split_hair_colour()
+    use, and for the same reason: two of them are prose that goes to different
+    places and only the third is flags.
+
+    The name is what the dossier and the GUI print - "Smith-Shimano Corpro".
+    The visual is what reaches the image prompt, and it is deliberately allowed
+    to be empty: two entries here are non-affiliations with nothing to show.
+
+    The split exists because the single-segment form put a garment CATEGORY
+    ("corporate wear", "service dress") in the prompt immediately after
+    Outfit's specific garment description, competing with it for the same slot
+    and losing every time - deleting the whole Faction clause from a prompt
+    changed the render not at all. The visual segment is written to describe
+    what Outfit does not: fabric, tailoring, insignia, patina.
+    """
+    parts = [p.strip() for p in bullet.split("||")]
+    name = parts[0]
+    visual = parts[1] if len(parts) > 1 else ""
+    flags = tuple(f for f in parts[2].split() if f) if len(parts) > 2 else ()
+    return name, visual, flags
+
+
 def themes_of(flags):
     """The '@theme' tags among a bullet's flags, with the '@' stripped.
 
@@ -1039,16 +1070,18 @@ def themes_of(flags):
 def flags_for(name, bullet):
     """A bullet's flag tuple, whichever '||' shape its table uses.
 
-    Backdrop and Hair colour both carry three segments and keep their flags in
-    the third, so a two-segment bullet of either has no flags at all - its
-    second segment is prose. Every other table keeps flags in the second
-    segment. Reading the last segment blindly would mistake a Backdrop's scene
-    or a Hair colour's tail for flags.
+    Backdrop, Hair colour and Faction all carry three segments and keep their
+    flags in the third, so a two-segment bullet of any of them has no flags at
+    all - its second segment is prose. Every other table keeps flags in the
+    second segment. Reading the last segment blindly would mistake a
+    Backdrop's scene, a Hair colour's tail or a Faction's visual for flags.
     """
     if name == "Backdrop":
         return split_backdrop(bullet)[2]
     if name == "Hair colour":
         return split_hair_colour(bullet)[2]
+    if name == "Faction":
+        return split_faction(bullet)[2]
     return split_flags(bullet)[1]
 
 
@@ -1125,7 +1158,6 @@ def build_prompts(npc):
         "feature": npc["Feature"],
         "outfit": npc["Outfit"],
         "headgear": npc["Headgear"],
-        "faction": npc["Faction"],
         "demeanor": npc["Demeanor"],
         "weapon": weapon,
         "gear": npc["Gear"],
@@ -1140,6 +1172,13 @@ def build_prompts(npc):
     # Built from the same fields and inserted already-substituted, since
     # str.format does a single pass and would leave any nested placeholder raw.
     carrying = carry_sentence(fields, weapon, npc["Gear"])
+
+    # Pre-formatted rather than a bare slot, because a Faction with no visual
+    # signature - the two non-affiliations - would otherwise leave a doubled
+    # comma in the middle of the clothing sentence. Same reason gear_line is
+    # assembled here rather than substituted raw.
+    _, faction_visual, faction_flags = split_faction(npc["Faction"])
+    fields["faction_line"] = "%s, " % faction_visual if faction_visual else ""
 
     # The glow colour only belongs in the prompt when something rolled for
     # this NPC would actually cast it. Equipped sources (something worn or
@@ -1220,7 +1259,7 @@ def write_dossier(path, npc, seed, prompts, images):
         # written before Theme existed still writes a dossier rather than raising.
         ("Theme", npc.get("Theme", "-")),
         ("Role", npc["Role"]),
-        ("Affiliation", npc["Faction"]),
+        ("Affiliation", split_faction(npc["Faction"])[0]),
         ("Age", npc["Age"]),
         ("Height", npc["Height"]),
         ("Build", npc["Build"]),
@@ -1244,7 +1283,7 @@ def write_dossier(path, npc, seed, prompts, images):
     lines = [
         "# %s" % npc["name"],
         "",
-        '"%s" - %s, %s.' % (npc["Callsigns"], npc["Role"], npc["Faction"]),
+        '"%s" - %s, %s.' % (npc["Callsigns"], npc["Role"], split_faction(npc["Faction"])[0]),
         "",
         "Rolled by `generate-npc.py` on %s with `--seed %d`. Re-rolling with that"
         % (time.strftime("%Y-%m-%d"), seed),

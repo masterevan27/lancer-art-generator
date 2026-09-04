@@ -80,6 +80,15 @@ templates at the bottom of this file.
   greying hair asserts an age the Age clause in the same prompt would
   contradict. A colour with a flag but no trailing clause writes the middle
   segment empty, `greying || || older`.
+- **Faction** bullets carry three segments too — the affiliation's name, then
+  an optional visual signature, then flags. The name is what the dossier
+  prints under "Affiliation" and what the byline names; the visual is what
+  reaches the clothing sentence in the image prompt, in place of the name,
+  and is deliberately left empty for the two non-affiliations. It is written
+  to describe what Outfit's own bullet does not — fabric, tailoring,
+  insignia, patina — since the two used to compete for the same slot and the
+  more specific Outfit clause always won; a visual segment left empty writes
+  the middle segment blank, the same idiom Hair colour uses above.
 - **Weather** bullets may end `|| clear`, meaning the bullet contributes nothing
   to the prompt. Weather only reaches a portrait whose Backdrop is flagged
   `weather`, and never reaches the token at all.
@@ -96,8 +105,10 @@ templates at the bottom of this file.
   issued uniform and is dropped for a civilian (unflagged) Role instead. A
   bullet with neither flag is neutral and reachable either way — most Outfit
   entries stay this way, the same as a build or gear item with no flag at
-  all. **Gear** and **Weapon** bullets may also carry `|| mil`, marking the
-  item as military-issue — equipment on a Gear entry, an actual issued
+  all. The flag lives in Faction's third segment and Outfit's second, since
+  the two tables carry different numbers of prose segments — see the Faction
+  item above. **Gear** and **Weapon** bullets may also carry `|| mil`, marking
+  the item as military-issue — equipment on a Gear entry, an actual issued
   weapon on a Weapon entry, since every bullet in that table already reads
   as one.
 
@@ -1376,14 +1387,14 @@ ignored — so notes like this one are safe to leave inline.
 
 ## Faction
 
-- x2 unaligned and freelance || civ
-- x2 in worn Union Administrative Department kit || mil
-- in Harrison Armory service dress, imperial and immaculate || mil
-- in Smith-Shimano Corpro corporate wear, sleek and expensive || civ
-- in IPS-Northstar workwear, riveted and salt-stained || civ
-- in Karrakin baronial livery, formal and slightly archaic
-- in the mismatched kit of a colonial militia || mil
-- in the deliberately anonymous gear of someone who does not answer questions
+- x2 Unaligned || unaligned and freelance || civ
+- x2 Union Administrative Department || in worn Union Administrative Department kit || mil
+- Harrison Armory || in Harrison Armory service dress, imperial and immaculate || mil
+- Smith-Shimano Corpro || in Smith-Shimano Corpro corporate wear, sleek and expensive || civ
+- IPS-Northstar || in IPS-Northstar workwear, riveted and salt-stained || civ
+- Karrakin Trade Baronies || in Karrakin baronial livery, formal and slightly archaic
+- Colonial militia || in the mismatched kit of a colonial militia || mil
+- Unregistered || in the deliberately anonymous gear of someone who does not answer questions
 
 ## Outfit
 
