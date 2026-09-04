@@ -229,24 +229,29 @@ TRAIT_DEPENDENTS = {
     # spells out for Hair colour, restated here as an edge.
     "Hair colour": ("Hair",),
 
-    # Build is the one pairing that runs both ways, which is why this map is
-    # not a DAG and why the closure below must not assume one. An Age flagged
-    # 'young' is a teenager, so it drops the Build bullets flagged 'figure',
-    # which describe an adult woman's; and a forced 'figure' Build drops the
-    # 'young' Age bullets in the other direction. roll_npc() implements both
-    # directions, so both are edges here.
+    # Build. An Age flagged 'young' is a teenager, so it drops the Build
+    # bullets flagged 'figure', which describe an adult woman's.
     #
-    # Both are also wider than they strictly need to be, in the same way and
-    # for the same reason, and the symmetry is worth recording so that neither
-    # is later mistaken for load-bearing on its own. Freeing either one alone
-    # already reaches the other's filter: a pinned 'figure' Build narrows the
-    # freed Age's pool through roll_npc()'s forced_figure branch, and a freed
-    # Build is narrowed by the pinned Age's 'young' inside the loop. So neither
-    # edge is preventing a measured contradiction the way Age -> Hair colour
-    # is; each only guarantees that the pair is redrawn together rather than
-    # one of them being squeezed into whatever the other left. Both err in the
-    # safe direction - too wide, never too narrow - which is the direction to
-    # err in when the cost is one extra trait moving.
+    # The pairing runs both ways in roll_npc() - a forced 'figure' Build drops
+    # the 'young' Age bullets through the forced_figure branch - but only ONE
+    # direction is an edge here, and the asymmetry is deliberate rather than an
+    # oversight. Neither direction is preventing a measured contradiction: free
+    # either trait alone and the pinned one already narrows its pool, inside
+    # the loop for a freed Build and through forced_figure for a freed Age. So
+    # both edges would only be buying width, and width is not free in the same
+    # amount on both sides.
+    #
+    # Age is not one of the eleven traits an entry without raw bullets can
+    # re-roll, so nothing outside this map is promised anything about the size
+    # of its cascade, and too wide is the safe way to be wrong - a cascade one
+    # trait too wide re-draws something that would have been fine, one trait
+    # too narrow ships a contradiction. Build IS one of the eleven, and the
+    # cascade spec's §5 promises those keep firing on one click: an edge from
+    # Build would make a one-click button silently change the NPC's age and
+    # hair, which is the "user expected a smaller change" risk §6 names, spent
+    # on an edge that guards nothing. So the width goes on Age's side, where it
+    # costs nothing, and Build closes to itself. A test derived from
+    # REROLLABLE_TRAITS holds that promise for all eleven.
     #
     # Hair colour is the same 'young' flag read one table over: an 'older'
     # shade - greying, salt-and-pepper - asserts an age the Age clause earlier
@@ -257,7 +262,6 @@ TRAIT_DEPENDENTS = {
     # which is right: a cut that closed over a greying shade cannot keep it
     # once the NPC is a teenager.
     "Age": ("Build", "Hair colour"),
-    "Build": ("Age",),
 }
 
 
@@ -273,12 +277,16 @@ def trait_cascade(name):
     redraw the Stance. Stopping at the direct dependents would hand back a
     figure posed around the rifle that was replaced two steps earlier.
 
-    Written as a worklist over a `seen` set rather than as a recursive walk
-    because the map contains a cycle on purpose - Age depends on Build and
-    Build on Age, the 'young'/'figure' pairing roll_npc() filters in both
-    directions. Nothing is enqueued twice, so the walk terminates on that cycle
-    rather than recurring forever; do not replace it with a recursion that
-    assumes a DAG.
+    Written as a worklist over a `seen` set rather than as a recursive walk,
+    because the map is not promised to be acyclic and this must not depend on
+    it. It held a cycle until recently - Age depended on Build and Build on
+    Age, the 'young'/'figure' pairing roll_npc() filters in both directions -
+    and Build's half was dropped for a reason about button behaviour rather
+    than about graph shape, so the next filter audited in both directions will
+    put one back. Nothing is enqueued twice, so the walk terminates on a cycle
+    rather than recurring forever; the test for that patches a cycle into the
+    map rather than relying on today's data, and do not replace this with a
+    recursion that assumes a DAG.
 
     Ordered by REQUIRED_TABLES rather than by discovery order, so a cascade can
     never disagree with the order the roller draws in, and so the same cascade
@@ -2537,14 +2545,23 @@ def reroll_trait(tables, npc, name, rng):
         # halves of the name are refused whatever the entry recorded, and
         # telling their owner to re-roll the NPC would send them off to record
         # bullets that change nothing.
+        #
+        # The opening clause moves with it. "on its own" is the right words for
+        # a trait this script will not re-roll for anybody - Pronouns takes the
+        # whole NPC with it however the entry was written. It is the wrong
+        # words for Theme on the lossy path, which is not refused on its own at
+        # all: it cascades perfectly well from an entry that kept its bullets,
+        # and is refused here because this particular entry did not.
         if raw or name not in RAW_REROLLABLE_TRAITS:
+            refusal = "cannot re-roll that one on its own"
             offer = "Re-rollable: %s" % ", ".join(rerollable)
         else:
+            refusal = "cannot re-roll that one from this entry"
             offer = ("Re-roll the NPC to record them, or re-roll a single "
                      "trait from: %s" % ", ".join(rerollable))
         raise SystemExit(
-            "--reroll-trait %s: cannot re-roll that one on its own, because "
-            "%s.\n%s" % (name, reason, offer))
+            "--reroll-trait %s: %s, because %s.\n%s"
+            % (name, refusal, reason, offer))
 
     if raw:
         # Theme's new value is chosen rather than drawn, and it is the only

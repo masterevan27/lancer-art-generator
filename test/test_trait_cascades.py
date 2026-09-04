@@ -17,6 +17,7 @@ import contextlib
 import io
 import random
 import unittest
+from unittest import mock
 
 from test.helpers import FIXTURE_TABLES, load_generator
 
@@ -50,10 +51,17 @@ THEME_KEEP_SET_FROM_THE_DOC = (
 # override paste that runs after it. Both were measured on the live tables
 # before being added - 3 and 23 contradictions in 400 re-rolls, against none at
 # all on a fresh roll.
+#
+# Build is absent, and its absence is the claim rather than an omission. The
+# 'young'/'figure' pairing runs both ways in roll_npc(), so a map recording
+# filters alone would carry both directions - but neither direction prevents a
+# measured contradiction, and Build is one of the eleven traits the cascade
+# spec's §5 promises keep firing on one click. The width therefore goes on
+# Age's side, which promises nothing, and Build closes to itself. The class
+# below asserts that for all eleven rather than for Build alone.
 EXPECTED_CASCADES = {
     "Theme": THEME_CASCADE_FROM_THE_DOC,
     "Age": ("Age", "Build", "Hair", "Hair colour"),
-    "Build": ("Age", "Build", "Hair", "Hair colour"),
     "Hair colour": ("Hair", "Hair colour"),
     "Role": ("Role", "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Stance"),
     "Outfit": ("Outfit", "Headgear", "Weapon", "Gear", "Stance"),
@@ -269,6 +277,30 @@ class TestTraitCascade(unittest.TestCase):
         with self.assertRaises(ValueError):
             gen.trait_cascade("Not A Table")
 
+    def test_every_one_click_trait_closes_to_itself(self):
+        """The eleven the lossy path re-rolls must each cascade to just itself.
+
+        This is a promise made outside this file. The cascade spec's §5 says
+        the eleven non-cascading buttons keep firing on one click, and the
+        import GUI reads REROLLABLE_TRAITS out of the generator to draw them -
+        so an edge added from any of the eleven turns a one-click button into a
+        silent multi-trait re-roll, with no dialog and nothing in the GUI to
+        notice it.
+
+        Derived from REROLLABLE_TRAITS rather than listed, because the failure
+        it guards against is a future map edit rather than today's map. Build
+        is the one this was written for: it is one of the eleven AND a filter
+        that roll_npc() runs in both directions, so the obvious map has an edge
+        from it and the obvious map is wrong here. Nothing else in the suite
+        can catch that - a test of what the cascade moves takes the cascade as
+        its allowed set, so a widened cascade widens the assertion with it.
+        """
+        for name in gen.REROLLABLE_TRAITS:
+            self.assertEqual(
+                gen.trait_cascade(name), (name,),
+                "%r re-rolls on one click with no confirmation, so its cascade "
+                "has to be itself alone" % name)
+
     def test_a_trait_with_no_dependents_closes_to_itself(self):
         """What leaves the traits that already re-roll cleanly alone.
 
@@ -307,25 +339,33 @@ class TestTraitCascade(unittest.TestCase):
         """Otherwise a whole cascade could change with nothing pinning it."""
         self.assertEqual(sorted(EXPECTED_CASCADES), sorted(gen.TRAIT_DEPENDENTS))
 
-    def test_the_closure_terminates_on_the_age_build_cycle(self):
-        """Age depends on Build and Build on Age, and that is not a defect.
+    def test_the_closure_terminates_on_a_cycle(self):
+        """A recursive walk would recur forever; this stops one being written.
 
-        The 'young'/'figure' pairing is filtered in both directions by
-        roll_npc(), so both directions are edges and the map is not a DAG. A
-        closure written as a recursive walk would recur forever here; this test
-        is what stops one from being written. Both ends are checked, since a
-        walk can terminate from one and not the other, and both are asserted to
-        reach the same four traits - a cycle that terminated by dropping half
-        its members on one pass would still be wrong.
+        The map held a real cycle until Build -> Age was dropped - Age depends
+        on Build for the 'young'/'figure' pairing, which roll_npc() filters in
+        both directions - and it was dropped for a reason about button
+        behaviour rather than about graph shape, so the next filter audited in
+        both directions puts one back. Asserting against today's data would
+        therefore have made this test disappear exactly when the property it
+        guards became untested.
 
-        Four rather than the two the pairing itself names: Age gates Hair
-        colour's 'older' shades as well, and Hair follows the colour through
-        the '{colour}' slot it closes over. That is the closure doing its job
-        across the cycle rather than in spite of it.
+        So the cycle is patched in rather than found. Both ends are checked,
+        since a walk can terminate from one and not the other, and both are
+        asserted to reach the same members - a cycle that terminated by
+        dropping half of them on one pass would still be wrong. A timeout is
+        not needed to make the failure legible: the walk either returns or the
+        run never gets here.
         """
-        both = ("Age", "Build", "Hair", "Hair colour")
-        self.assertEqual(gen.trait_cascade("Age"), both)
-        self.assertEqual(gen.trait_cascade("Build"), both)
+        cyclic = dict(gen.TRAIT_DEPENDENTS, **{"Build": ("Age",)})
+        with mock.patch.object(gen, "TRAIT_DEPENDENTS", cyclic):
+            both = ("Age", "Build", "Hair", "Hair colour")
+            self.assertEqual(gen.trait_cascade("Age"), both)
+            self.assertEqual(gen.trait_cascade("Build"), both)
+        # And the patch really did put a cycle there, rather than testing the
+        # map as it stands.
+        self.assertNotIn("Build", gen.TRAIT_DEPENDENTS)
+        self.assertEqual(gen.trait_cascade("Build"), ("Build",))
 
     def test_the_transitive_step_actually_runs(self):
         """A cascade two hops deep, so 'transitive' is more than a word.
