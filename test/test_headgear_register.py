@@ -167,7 +167,18 @@ class TestTheRegisterIsRecorded(unittest.TestCase):
 
 class TestTheRerollRespectsIt(unittest.TestCase):
     def _entry_npc(self, register):
+        """A stored entry with a recorded register and no raw bullets.
+
+        '_outfit_notac' is the manifest key that exists *because* the entry is
+        a lossy record of the roll, so the cases below are all about the entry
+        shape that has one - written before rawTraits existed. Dropping _raw
+        is what makes it that shape: reroll_trait() prefers raw bullets when
+        they are there, and a raw re-roll reads the pinned Outfit's own
+        'notac' flag and never consults this key at all, so leaving _raw in
+        would quietly turn every case here into a test of the other path.
+        """
         npc = roll(0, Outfit=KIMONO)
+        npc.pop("_raw")
         npc["_outfit_notac"] = register
         return npc
 

@@ -888,10 +888,12 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     pronouns = (overrides or {}).get("Pronouns") or rng.choice(tables["Pronouns"])
     subject = pronouns.split("/")[0]
 
-    # Age, Role and Outfit are all resolved up front, for the same reason
-    # Pronouns is: each one's flag gates a later roll, so an override has to
-    # be in hand before that later table is rolled rather than pasted over
-    # the result afterwards. Pass the flag to keep it, as in
+    # Age, Role, Outfit and Build are read up front because each one's flag
+    # gates a roll that happens BEFORE its own table does - the pairings below
+    # that run backwards, a forced Build narrowing the Age pool and a forced
+    # Outfit narrowing the Role pool. Every forced value gating a *later*
+    # table is handled inside the loop, where it replaces that table's draw.
+    # Pass the flag to keep it either way, as in
     # --set-trait Age="in her late teens || young",
     # --set-trait Role="a Union marine soldier || mil", or
     # --set-trait Outfit="an elaborate floral kimono ... || civ notac".
@@ -1082,12 +1084,28 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
         # since a shorter pool draws differently. Those already behaved this
         # way for a rolled trait; forcing one just makes it reachable sooner.
         value = rng.choice(options)
-        if name == "Age" and forced_age is not None:
-            value = forced_age
-        if name == "Role" and forced_role is not None:
-            value = forced_role
-        if name == "Outfit" and forced_outfit is not None:
-            value = forced_outfit
+
+        # A forced value replaces the draw here, at the moment its own table is
+        # rolled, rather than at the npc.update(overrides) much further down -
+        # so every filter that reads an earlier trait reads the bullet this NPC
+        # actually keeps rather than the one the roll discarded.
+        #
+        # This named Age, Role and Outfit one at a time until reroll_from_raw()
+        # arrived, because those three were the only forced traits anything
+        # downstream read. A re-roll from stored raw bullets pins every trait
+        # but one, so the rest are read too, and leaving them to the late
+        # update produced exactly the contradictions the flags exist to
+        # prevent: a pinned Weapon was invisible to the Gear and Stance
+        # filters, which posed a figure with their hands in their pockets
+        # around the rifle they are holding, and a pinned Backdrop was
+        # invisible to the Glow placement filter, which washed light across a
+        # scene that casts none. The three names above are kept where they
+        # are, because those uses run the pairing the other way round - a
+        # forced trait narrowing an *earlier* table's pool, which cannot be
+        # decided from inside that table's own iteration.
+        forced = (overrides or {}).get(name)
+        if forced is not None:
+            value = forced
 
         # Recorded here: after a forced value has replaced the draw, so _raw
         # describes the NPC rather than the bullet it discarded, and before
@@ -1208,13 +1226,14 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     # were ever added, since Stance would then be picked without knowing about
     # it. Not restructured to fix this, since nothing reachable today needs it.
     #
-    # Read from overrides first, falling back to the rolled value - the same
-    # pattern Pronouns and Theme use above. npc.update(overrides) hasn't run
-    # yet at this point in the function, so a forced Backdrop (--set-trait, or
-    # a test's override dict) would otherwise be invisible here and this
-    # filter would key off the random roll it was meant to replace.
-    effective_backdrop = (overrides or {}).get("Backdrop", npc["Backdrop"])
-    if "nogear" in split_backdrop(effective_backdrop)[2] and "hands" in gear_flags:
+    # npc["Backdrop"] is already the effective one: the loop pastes a forced
+    # value over its draw at the point that table is rolled, so a --set-trait
+    # backdrop, or one pinned by reroll_from_raw(), is in hand here without
+    # this line reading the override dict for itself. It used to do exactly
+    # that, back when the paste covered only Age, Role and Outfit and
+    # npc.update(overrides) - which runs below this - was the first place a
+    # forced Backdrop appeared.
+    if "nogear" in split_backdrop(npc["Backdrop"])[2] and "hands" in gear_flags:
         free = [x for x in variant_table(tables, "Gear", subject)
                 if "hands" not in split_flags(x)[1]]
         # 'notac' applies here too, same as it does in the loop's own Gear
@@ -2051,27 +2070,33 @@ def load_workflows(args, rolled):
     return loaded
 
 
-# Which traits --reroll-trait can re-roll from a stored manifest entry.
+# Which traits --reroll-trait can re-roll from an entry that recorded no raw
+# bullets - every entry written before rawTraits existed.
 #
 # A reroll re-rolls ONE trait and keeps every other, so it has to apply the
 # same filters the original roll applied - and roll_npc() strips a bullet's
-# flags before storing it, so the manifest is a lossy record of the roll. A
+# flags before storing it, so such an entry is a lossy record of the roll. A
 # trait is rerollable only when every filter gating it can be rebuilt from what
 # the entry DOES carry: the rolled Theme, the recorded 'young' flag, the stored
 # Backdrop scene, the stored Pronouns.
 #
 # The repo already met this problem once and solved it one flag at a time:
 # 'young' is a manifest key of its own precisely because the Age bullet's flag
-# was gone by the time it was stored. Storing the raw bullets would make every
-# trait rerollable and is worth doing; it is a manifest format change and is
-# deliberately not in this change.
+# was gone by the time it was stored. Storing the raw bullets generalises that,
+# and has since landed - so this tuple, and the hand-rebuilt filters in
+# reroll_trait() that go with it, are now the fallback for old entries rather
+# than the only path. An entry that carries its raw bullets uses
+# RAW_REROLLABLE_TRAITS below instead, and none of this applies to it.
 REROLLABLE_TRAITS = (
     "Callsigns", "Build", "Height", "Skin", "Hair", "Eyes", "Feature",
     "Demeanor", "Headgear", "Glow colour", "Glow placement",
 )
 
 # Why each of the others is refused, printed verbatim so the answer to "why
-# not hair colour" is in the error rather than in this file.
+# not hair colour" is in the error rather than in this file. Both paths read
+# it, but most of these reasons name the lossy manifest and so can only ever
+# be printed for an entry without raw bullets; the four that outlive it are
+# the four RAW_REROLLABLE_TRAITS below excludes.
 UNREROLLABLE_REASONS = {
     "Given names": "the NPC's folder and manifest id are derived from its name, "
                    "so re-rolling one would not be a change in place",
@@ -2102,6 +2127,25 @@ UNREROLLABLE_REASONS = {
                "manifest stores Backdrop without its flag segment",
 }
 
+# Which traits --reroll-trait can re-roll from an entry that DID record its raw
+# bullets - which is nearly all of them, because nearly every refusal above is
+# a complaint about the lossy manifest and nothing else. A pinned raw bullet
+# arrives carrying the flags its dependents filter on, so reroll_from_raw()
+# rebuilds no filter at all; it re-runs the roller's own.
+#
+# Derived from REQUIRED_TABLES by exclusion rather than written out, so a table
+# added there next month is re-rollable the day it is added rather than the day
+# somebody remembers this line. The four it excludes are refused for reasons
+# raw bullets do not touch: the NPC's folder and manifest id are derived from
+# its name, so re-rolling either half of the name is not a change in place;
+# Pronouns selects every per-pronoun variant table and takes the name with it;
+# and Theme is not a one-free-variable re-roll at all - it gates seven
+# appearance tables, so it needs a cascade that frees those and their
+# dependents together rather than a re-roll in place.
+RAW_REROLLABLE_TRAITS = tuple(
+    name for name in REQUIRED_TABLES
+    if name not in ("Given names", "Family names", "Pronouns", "Theme"))
+
 
 def hair_colour_tail(tables, subject, base):
     """The trailing clause belonging to a stored Hair colour base, or ''.
@@ -2119,18 +2163,71 @@ def hair_colour_tail(tables, subject, base):
     return ""
 
 
+def reroll_from_raw(tables, npc, free, rng):
+    """Re-draw the traits in `free`, with every other raw bullet pinned.
+
+    A re-roll is a fresh roll with one free variable, and a Theme cascade is
+    the same operation with twelve - so this takes the free set as an argument
+    and neither end knows about the other. `free` is any container of trait
+    names; everything else npc["_raw"] recorded is pinned as an override.
+
+    Pinning raw bullets is the designed use of the override path, not a trick:
+    it is the one --set-trait already documents, a bullet handed over verbatim
+    with its flags ('an elaborate floral kimono ... || civ notac'). So every
+    pinned trait arrives carrying the flags its dependents filter on, every
+    freed trait is drawn by the ordinary roller under the ordinary filters,
+    and there is no second copy of the filter chain here to drift away from
+    the one in roll_npc(). 'name' needs no pinning of its own: it is rebuilt
+    from the pinned Given names and Family names by roll_npc() itself.
+
+    The result replaces `npc` wholesale rather than being copied trait by
+    trait, npc["_raw"] included, because the fresh roll's _raw holds the
+    bullets this NPC now actually has. Keeping the old one would leave the
+    regen writer persisting rawTraits that describe bullets the NPC no longer
+    carries - traits and rawTraits silently disagreeing, which is the one risk
+    both specs single out. The recomputed _young and _outfit_notac ride along
+    for the same reason. Cleared and updated rather than rebound, because
+    reroll_trait()'s contract is to mutate in place and regenerate_one() holds
+    the reference.
+    """
+    overrides = {trait: bullet for trait, bullet in npc["_raw"].items()
+                 if trait not in free}
+    fresh = roll_npc(tables, rng, overrides)
+    npc.clear()
+    npc.update(fresh)
+
+
 def reroll_trait(tables, npc, name, rng):
     """Re-roll one trait of an already-rolled NPC in place, and return it.
 
-    Applies the same filters roll_npc() would, for the subset of them that can
-    be rebuilt from a stored entry - see REROLLABLE_TRAITS. Mutates `npc`.
+    Two paths, chosen by whether the entry recorded its raw bullets. With them,
+    the whole thing is one pinned re-roll through reroll_from_raw() and nearly
+    every trait is re-rollable. Without them - an entry written before
+    rawTraits existed - it falls back to rebuilding by hand the few filters a
+    lossy entry still supports, which is the code below and the reason
+    REROLLABLE_TRAITS is a much shorter list. Mutates `npc` either way.
     """
-    if name not in REROLLABLE_TRAITS:
+    # Absent means the entry predates rawTraits, and the hand-written path is
+    # exactly the fallback written for that. A recorded-but-empty dict takes
+    # the same path deliberately rather than being read as "raw bullets, all
+    # of them nothing": pinning nothing would re-roll the entire NPC under the
+    # name of one trait, which is the opposite of what this function promises,
+    # and there would be nothing in it to pin anyway.
+    raw = npc.get("_raw")
+    rerollable = RAW_REROLLABLE_TRAITS if raw else REROLLABLE_TRAITS
+    if name not in rerollable:
         reason = UNREROLLABLE_REASONS.get(
             name, "it is not a trait this script rolls")
+        # The set that applies, not the shorter one: an entry with raw bullets
+        # can re-roll ten traits the fallback refuses, and printing the
+        # fallback's list to its owner would be a lie about their own NPC.
         raise SystemExit(
             "--reroll-trait %s: cannot re-roll that one on its own, because %s.\n"
-            "Re-rollable: %s" % (name, reason, ", ".join(REROLLABLE_TRAITS)))
+            "Re-rollable: %s" % (name, reason, ", ".join(rerollable)))
+
+    if raw:
+        reroll_from_raw(tables, npc, (name,), rng)
+        return npc[name]
 
     subject = npc["Pronouns"].split("/")[0].strip().lower()
     options = variant_table(tables, name, subject)
