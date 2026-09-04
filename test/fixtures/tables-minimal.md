@@ -56,17 +56,19 @@ Used by the test suite. Not used by the generator at runtime.
 
 ## Role
 - a dockworker
+- a colonial administrator
 - a Union marine soldier || mil
 
 ## Faction
 - Unaligned || unaligned and freelance
+- Baronies || heavy brocade and gold braid || dressy
 - Dress uniform || in dress uniform || mil
 
 ## Outfit
 - grey coveralls
 - lacquered plate || @alpha
 - a neon techwear jacket || @beta
-- an elaborate floral kimono || civ notac
+- an elaborate floral kimono || civ notac dressy
 
 ## Headgear
 - {Subject} {is_are} bare-headed.

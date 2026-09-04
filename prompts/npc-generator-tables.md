@@ -122,6 +122,29 @@ templates at the bottom of this file.
   weapon on a Weapon entry, since every bullet in that table already reads
   as one.
 
+  **Outfit** and **Faction** bullets may also carry `|| dressy`, a third axis
+  orthogonal to both `civ`/`mil` and to theme. It marks dress that is
+  ceremonial, formal or finely made — gold thread, lacquer, brocade,
+  ornament — and it is gated on the *kind of work* the Role is, through
+  `DRESS_POLICY` in the script rather than through a flag on the Role bullet:
+  `ROLE_CATEGORIES` already knows which job an occupation is, and restating
+  that here would only let the two drift. Roles filed under `Laborers` or
+  `Technicians` are `plain` and everything else is unconstrained.
+
+  The two tables consume the flag differently on purpose. A `dressy` **Outfit**
+  is dropped from a `plain` Role's pool. A `dressy` **Faction** is not: it
+  keeps its place, and only its visual segment is suppressed, so the dossier
+  still prints the affiliation while the image prompt loses the brocade. A
+  dockworker employed by the Karrakin Trade Baronies is good flavour; a
+  dockworker dressed as a baron is what this exists to stop.
+
+  `dressy` is **not** `notac`, however much the two overlap. `notac` means
+  "do not pair with tactical gear" and covers rags as readily as finery — a
+  dockworker in ragged cloth bindings, a travel-worn robe or a weathered
+  haori is entirely plausible, and several of those read as *poorer* than the
+  default coveralls. The two disagree on seven of the thirteen `notac`
+  bullets in the base table. Flag finery, not tradition.
+
   Three more flags, plus one on Outfit, are read by `apply_weapon_policy()`
   rather than by the civ/mil split above — see the comments on the Weapon
   and Outfit tables themselves for the full detail: `weapon` (an actual
@@ -1433,6 +1456,15 @@ ignored — so notes like this one are safe to leave inline.
   empty; build_prompts() then drops the clause entirely rather than leaving a
   doubled comma.
 
+  '|| dressy' marks a faction whose visual signature is finery - brocade and
+  gold braid, precise tailoring in white and pastels. For a Role whose work is
+  manual it suppresses the VISUAL ONLY: the affiliation still reaches the
+  dossier and the byline, and only the clothing sentence loses the clause. A
+  dockworker employed by the Karrakin Trade Baronies is good flavour; a
+  dockworker in baronial heraldry is not, and barring the faction outright
+  would throw the first away to fix the second. The suppression writes the
+  middle segment empty, the same idiom the two non-affiliations already use.
+
   '|| palette' marks a faction that asserts colours of its own. Those are
   PIGMENT - dye in cloth - and they coexist with the Glow colour, which is
   LIGHT. The closing palette line softens from "the only saturated color" to
@@ -1448,9 +1480,9 @@ ignored — so notes like this one are safe to leave inline.
 - x2 Unaligned || || civ
 - x2 Union Administrative Department || issued and worn thin, in faded institutional blue-grey || mil palette
 - Harrison Armory || sharply pressed, high collar and polished fittings, in imperial green and gold || mil palette
-- Smith-Shimano Corpro || precisely tailored with fine seam piping, in white and pale pastels || civ palette
+- Smith-Shimano Corpro || precisely tailored with fine seam piping, in white and pale pastels || civ palette dressy
 - IPS-Northstar || riveted and salt-stained heavy canvas, in rust orange || civ palette
-- Karrakin Trade Baronies || heavy brocade and gold braid, an heraldic crest at the shoulder, in deep crimson || palette
+- Karrakin Trade Baronies || heavy brocade and gold braid, an heraldic crest at the shoulder, in deep crimson || palette dressy
 - Colonial militia || mismatched surplus, webbing straps and taped-over insignia || mil
 - Unregistered || ||
 
@@ -1466,6 +1498,20 @@ ignored — so notes like this one are safe to leave inline.
   equipment rather than a uniform and is deliberately left unflagged, so it
   stays reachable either way: a civilian with military-grade gear is exactly
   what the flag split is meant to allow.
+
+  A fourth flag, 'dressy', marks dress that is ceremonial, formal or finely
+  made - gold thread, lacquer, brocade, ornament - and drops it from the pool
+  for a Role whose work is manual (DRESS_POLICY files Laborers and Technicians
+  as 'plain'). This is what stops a dockworker rolling a gold-embroidered robe
+  with a purple sash, which the civ/mil split never could: 'civ' says "not a
+  uniform", not "not ceremonial".
+
+  Do NOT flag a bullet 'dressy' just because it is 'notac'. The two overlap on
+  about half the bullets and disagree on the rest: the pilgrim's robes, the
+  tattered robe, the ragged cloth bindings, the travel-worn robe and the
+  weathered haori are all 'notac' and none of them are finery - several read
+  as poorer than the default coveralls, and a dockworker in any of them is
+  entirely plausible. Flag finery, not tradition.
 
   A third flag, 'notac', marks an elaborate or traditional outfit - a kimono,
   shrine robes - that shouldn't turn up paired with tactical gear no matter
@@ -1553,16 +1599,16 @@ ignored — so notes like this one are safe to leave inline.
 - a mottled camouflage jacket worn open over a plain dark tee stencilled with a bold unit number, cargo trousers and fingerless tactical gloves || mil
 - a sealed high-collared armored bodysuit with heavy pauldron-style shoulder plating and integrated sensor housings at each shoulder
 - a fitted dark tactical bodysuit segmented with rust-orange trim plating at the joints and collar, a long weathered rust-colored cape trailing from one shoulder
-- segmented crimson-lacquered armor plates over a floral-patterned quilted robe, tasseled cords trailing from one shoulder and a wrapped bundle slung across the back || civ notac
-- full lacquered samurai armor in dark green and black with segmented shoulder pauldrons over a trailing hakama-style skirt, ornamental tassels at the waist || civ notac
-- dark samurai robes with a long crimson cloak trailing from the shoulders, one leg bared and banded with tattooed markings || civ notac
+- segmented crimson-lacquered armor plates over a floral-patterned quilted robe, tasseled cords trailing from one shoulder and a wrapped bundle slung across the back || civ notac dressy
+- full lacquered samurai armor in dark green and black with segmented shoulder pauldrons over a trailing hakama-style skirt, ornamental tassels at the waist || civ notac dressy
+- dark samurai robes with a long crimson cloak trailing from the shoulders, one leg bared and banded with tattooed markings || civ notac dressy
 - a tattered dark robe hanging open at the chest, its hems torn and trailing loose || civ notac
 - a dark robe with a pale patterned collar, red fingerless gloves laced to the wrist || civ notac
 - a dark patterned robe with a bright orange underlining, a string of prayer beads wound at one wrist || civ notac
 - ragged wrapped cloth bindings over bare limbs, one wrist bound in worn bandaging, feet bare in simple woven sandals || civ notac
-- a dark robe traced with gold embroidered trim, a purple sash knotted at the waist and small tassels hanging loose || civ notac
-- a dark kimono cinched with a wide white sash tied in a full bow at the back || civ notac
-- a fringed pleated mantle draped over the shoulders and swagged with hanging chain loops, worn over a dark strapped underlayer || civ notac
+- a dark robe traced with gold embroidered trim, a purple sash knotted at the waist and small tassels hanging loose || civ notac dressy
+- a dark kimono cinched with a wide white sash tied in a full bow at the back || civ notac dressy
+- a fringed pleated mantle draped over the shoulders and swagged with hanging chain loops, worn over a dark strapped underlayer || civ notac dressy
 
 ## Outfit (she) +
 
@@ -1613,8 +1659,8 @@ ignored — so notes like this one are safe to leave inline.
 - a white double-breasted officer's tunic with a high open collar and armored shoulder boards, belted at the waist over a short flared skirt, a long dark cape hanging from the shoulders, garter straps at the thigh above white boots || mil
 - a cropped olive bomber jacket over a slim chest rig and a fitted tee, a band of bare midriff above olive cargo trousers slung with pouches || civ
 - a dark work shirt with the sleeves rolled to the elbow under a strapped harness rig, a radio pouch at the chest, baggy olive cargo trousers, tactical gloves and armored shin guards over heavy boots || civ
-- an elaborate floral kimono layered over a plain white underrobe, sleeves trailing long past the fingertips || civ notac
-- white shrine robes with a red hakama skirt, a cord-tied over-sash crossing the chest || civ notac
+- an elaborate floral kimono layered over a plain white underrobe, sleeves trailing long past the fingertips || civ notac dressy
+- white shrine robes with a red hakama skirt, a cord-tied over-sash crossing the chest || civ notac dressy
 - a black jacket studded with spikes at the collar and shoulders, a small enamel pin at the breast, over a cropped top and a low-slung belt hung with metal loops || civ
 - a worn hooded jacket patched with faded characters at the sleeve, torn and taped at the seams || civ
 - an olive tank top over cargo trousers, a pair of fingerless gloves and worn lace-up boots || civ
@@ -1627,17 +1673,17 @@ ignored — so notes like this one are safe to leave inline.
 - a mustard-yellow flight suit with padded shoulder patches and a wide belted utility harness, sleeves rolled to reveal a lighter underlayer, a weathered grey scarf knotted loosely at the throat
 - a glossy black bodysuit with a short pleated skirt panel at the hip, one arm sheathed in an articulated mechanical gauntlet running to the shoulder, over knee-high boots
 - a cropped olive tank top with a patch pocket at the chest, twin red armbands worn above the elbow
-- a lacquered single pauldron over a fitted dark robe with an embroidered high collar, tasseled cords hanging from the shoulder, a wide sash cinched at the waist || civ notac
+- a lacquered single pauldron over a fitted dark robe with an embroidered high collar, tasseled cords hanging from the shoulder, a wide sash cinched at the waist || civ notac dressy
 - a fitted halter-neck tank top with a high choker collar, one bare shoulder crossed by a thin strap || civ
 - a cropped bomber-style jacket zipped only at the chest over a fitted sports top and briefs, midriff and legs bare, wrists wrapped in tape || civ
 - a fitted red-and-white segmented plate armor suit cut low across the chest, articulated joints at the shoulders and knees
 - a sleek black tactical bodysuit with segmented dark red armor plating across one shoulder and arm, fingerless gloves and knee-high boots || civ
 - a tattered black cloak like torn wings draped from the shoulders over a wrapped cropped top, buckled utility straps cinched at the waist and one armored bracer laced to the forearm || civ
 - a fitted dark leather bodice cut low at the chest over a long dark wrap skirt, faint red markings tracing down one bared arm || civ
-- a partial lacquered pauldron and vambrace worn over a cropped underlayer baring the midriff, small red tassels trailing from the shoulder plate || civ notac
-- a white-and-black lacquered armor harness baring the midriff, fitted white trousers tucked into patterned boots || civ notac
-- a sleeveless dark lamellar armor bodice with a red cord sash, plate segments hanging low over dark leggings, {possessive} shoulders left bare || civ notac
-- a dark kimono patterned with pale plum blossoms, a crimson underlayer glimpsed at the collar and wide sleeves || civ notac
+- a partial lacquered pauldron and vambrace worn over a cropped underlayer baring the midriff, small red tassels trailing from the shoulder plate || civ notac dressy
+- a white-and-black lacquered armor harness baring the midriff, fitted white trousers tucked into patterned boots || civ notac dressy
+- a sleeveless dark lamellar armor bodice with a red cord sash, plate segments hanging low over dark leggings, {possessive} shoulders left bare || civ notac dressy
+- a dark kimono patterned with pale plum blossoms, a crimson underlayer glimpsed at the collar and wide sleeves || civ notac dressy
 
 ## Weapon
 
