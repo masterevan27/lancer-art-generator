@@ -1,6 +1,6 @@
 ---
 name: npc-trait-import
-description: Extract Backdrop scenes, Stance poses, Gear/weapons, Outfit, Headgear, Hair, Demeanor (facial expression), Faction and Glow colour entries from reference images and stage them as importable candidate entries in a timestamped JSON file, for later selective review/import into npc-generator-tables.md (by the import webpage or by hand) rather than editing that file directly. Use whenever the user shares one or more reference images (pasted inline or given as file paths) from this Lancer campaign's ComfyUI/Krea pipeline and asks to add, extract, stage, or import backdrops, scenes, poses, gear, weapons, outfits, headgear, hairstyles, or expressions "from these" or "in our house style" into the NPC generator.
+description: Extract Backdrop scenes, Stance poses, Gear/weapons, Outfit, Headgear, Hair, Demeanor (facial expression), Faction, Glow colour and Glow placement entries from reference images and stage them as importable candidate entries in a timestamped JSON file, for later selective review/import into npc-generator-tables.md (by the import webpage or by hand) rather than editing that file directly. Use whenever the user shares one or more reference images (pasted inline or given as file paths) from this Lancer campaign's ComfyUI/Krea pipeline and asks to add, extract, stage, or import backdrops, scenes, poses, gear, weapons, outfits, headgear, hairstyles, expressions, or where a glow or rim light falls "from these" or "in our house style" into the NPC generator.
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 argument-hint: [image paths or a directory, or omit to use images already shown in the conversation]
 model: sonnet
@@ -38,8 +38,10 @@ conventions, and the pronoun placeholders. As of this writing the flags are:
 | Flag | Tables | Meaning |
 | --- | --- | --- |
 | `hands` | Gear, Weapon, Stance | Gear/Weapon: occupies at least one hand/arm. Stance: pose needs both hands free. |
-| `gun` | Weapon, Stance | Weapon: an actual firearm *held in hand*. Stance: a pose that aims/fires/handles a weapon. |
-| `mil` | Role, Faction, Outfit, Weapon, Gear | Issued uniform / military-issue equipment. Dropped for a civilian Role. |
+| `gun` | Weapon, Stance | Weapon: an actual firearm *held in hand*. Stance: the narrower case of a firearm being aimed, fired or otherwise handled. |
+| `armed` | Stance | A pose that references a weapon of *any* kind — a blade held, a hilt gripped, something raised overhead. Dropped when the Weapon roll came up empty; a non-firearm weapon keeps `armed` reachable and drops only `gun`. A pose may carry both (`\|\| hands gun`). Poses reference the weapon generically ("raising it", "sighting down it") — the Weapon line has already named it. |
+| `none` | Weapon | The single empty bullet, which is how an NPC rolls unarmed; it is also read directly by the Stance filter. Listed for completeness — never author one from a reference image. |
+| `mil` | Role, Faction, Outfit, Weapon, Gear | An issued uniform or military-issue equipment. **What it does differs by table, and assuming otherwise is the trap.** On Faction and Outfit it is dropped for a civilian Role (and `civ` is dropped for a `mil` one) — that is `filter_by_mil()`, and Weapon and Gear are not in it. A civilian may carry military-issue kit; on those two tables `mil` is instead what a `notac` Outfit drops. |
 | `civ` | Faction, Outfit | Plainly civilian dress. Dropped for a `mil` Role. |
 | `palette` | Faction | The faction asserts colours of its own (dye in cloth, not light) — softens the closing glow-colour line from "the only saturated color" to "the only *other* saturated color" so pigment and glow can coexist. A faction with no colour scheme of its own must not carry it. |
 | `weapon` | Weapon | An actual weapon, as opposed to equipment that merely *is* `mil` (a radio, a pack). |
@@ -47,8 +49,10 @@ conventions, and the pronoun placeholders. As of this writing the flags are:
 | `sidearm` | Weapon | A bullet that explicitly includes a **holstered or openly worn** pistol. |
 | `notac` | Outfit | Elaborate/traditional dress that must never pair with `mil`-flagged Weapon or Gear, nor with `hardtech` Headgear. |
 | `hardtech` | Headgear | Modern technology worn on the head — helmets sealed or open, visor and lens rigs, sensor/night-vision hardware, breather masks, comms headsets, anything cabled or jacked, powered or cybernetic pieces, plus industrial eye and ear protection. Dropped when the Outfit roll came up `notac`. **Not** soft goods (cloth, straw, woven, leather, fur — hats, caps, hoods, bandanas, headbands), **not** plain eyewear, and **not** the traditional or ceremonial register: those are what an elaborate outfit *should* reach, and a kabuto over a kimono is the point. Goggles are eyewear, not hardware. A traditional hat with a mask beneath it is the hat. |
+| `dressy` | Outfit, Faction | Ceremonial, formal or finely made — gold thread, lacquer, brocade, ornament. The two tables consume it differently: a `dressy` Outfit is dropped for a Role whose work is manual or dirty, while a `dressy` Faction keeps its place and loses only its *visual* segment, so the dossier still prints the affiliation. **Not** the same as `notac`, and merging them is the main way to get this wrong: `notac` covers rags as readily as finery, and the pilgrim's robes, the ragged bindings and the travel-worn robe are all `notac` and none are fine. Flag finery, not tradition. |
 | `nogear` | Backdrop | The scene already puts something in the subject's hands. |
 | `weather` | Backdrop | Outdoors, so a Weather roll can land in it. |
+| `scene` | Glow placement | The light falls out in the *environment* — on a wall, in the air, across the ground. Only reachable when the Backdrop is what casts it, since the alternative source is something the NPC wears or carries and a lit visor cannot light the wall behind them. An unflagged placement keeps the light on or immediately around the figure and is reachable either way; most should stay unflagged, because the equipped case is the common one. |
 | `clear` | Weather | Contributes nothing to the prompt. |
 | `young` | Age | NPC under twenty; swaps the adult clauses. |
 | `figure` | Build | Written in terms of an adult woman's figure; dropped when Age rolled `young`. |
@@ -110,7 +114,9 @@ Three flag traps worth stating outright, because each has been gotten wrong:
     bullet doesn't crash anything (`Gear` bullets are split on `||`, so it
     lands in the flag segment) — it's just silently ignored as an
     unrecognized flag, the same as any other typo'd flag, and the bullet
-    stays reachable from every theme regardless of the tag. On `Skin`,
+    stays reachable from every theme regardless of the tag. `Glow placement`
+    behaves the same way: split on `||`, but not themed, so a tag there is
+    swallowed rather than rendered. On `Skin`,
     `Eyes`, `Demeanor`, `Glow colour`, `Height` and the name tables a tag is
     *worse* than silently ignored: those are never split on `||` at all, so
     a bullet reading `- chrome-inlaid irises || @cyberpunk` ships the literal
@@ -215,15 +221,16 @@ subagents, but hold these lines, all of which have failed in practice:
 | What the image shows | Table | Notes |
 | --- | --- | --- |
 | A wide scene/environment, with or without the subject doing something in it | **Backdrop** | Portrait only. If the subject is actively posed against the scene (leaning, fighting, kneeling), stage the whole shot as one `{Subject} {is_are} ...` sentence rather than a blurred-background phrase. |
-| A body pose with no particular environment, meant for the full-body token | **Stance** | Token only — no scene, no lighting, just the pose. |
+| A body pose with no particular environment, meant for the full-body token | **Stance** | Token only — no scene, no lighting, just the pose. Tag `hands` if the pose needs both hands free, `armed` if it references a weapon at all, `gun` if it specifically aims or fires one. An untagged pose is treated as hands-free and weaponless, so a raised blade left untagged will turn up on an unarmed NPC. |
 | A weapon — held, slung, holstered or worn | **Weapon** | Tag `hands`/`gun`/`mil`/`weapon`/`simple`/`sidearm` as applicable — see the flag traps in §0. |
 | A tool, pack, or other carried item that isn't a weapon | **Gear** | Tag `hands`/`mil` only — `gun`/`weapon`/`simple`/`sidearm` moved to `Weapon` with the split and no longer apply here. |
-| A garment, armor, or full kit | **Outfit** (or `Outfit (she) +` if the cut only reads on a woman's figure) | Tag `civ`/`mil`. |
-| A helmet, hood, hat, or headset | **Headgear** (or `Headgear (she) +`) | Full sentence: `{Subject} {wear} ...`. |
+| A garment, armor, or full kit | **Outfit** (or `Outfit (she) +` if the cut only reads on a woman's figure) | Tag `civ`/`mil`, plus `notac` if it is elaborate or traditional and `dressy` if it is finery. The two are not the same — see the flag table. |
+| A helmet, hood, hat, or headset | **Headgear** (or `Headgear (she) +`) | Full sentence: `{Subject} {wear} ...`. Tag `hardtech` if it is a helmet, visor rig, sensor or comms hardware, a breather mask or a cybernetic piece; leave soft hats, hoods, plain eyewear and the traditional register unflagged. |
 | A hairstyle/cut visible on its own (not tucked under headgear) | **Hair** (or `Hair (she) +` / `Hair (he) +` if the cut only reads on one gender) | Noun phrase with exactly one `{colour}` placeholder standing in for the shade — no literal color word, no flags. If headgear covers all but a fringe or a couple of strands, it's fine to note that (existing bullets do), but the cut itself is still what gets recorded. A distinctive *shade* seen in the image (not just the cut) is a separate `Hair colour` candidate — see the note on that table's shape in §0. |
 | A distinctive facial expression / mood on the subject | **Demeanor** (or `Demeanor (she) +`) | Noun phrase describing the look, not the backstory behind it — "a wry, crooked grin," not "someone who's seen a lot." |
-| An insignia, unit livery, or faction-defining look | **Faction** | `name || visual || flags` — the name is dossier-only; the visual is the only part that reaches the prompt, and it must describe fabric, tailoring, insignia or patina, **never a garment category** (that loses to `Outfit` every time). Tag `palette` if the faction asserts colours of its own. See §4 for the full shape. |
+| An insignia, unit livery, or faction-defining look | **Faction** | `name || visual || flags` — the name is dossier-only; the visual is the only part that reaches the prompt, and it must describe fabric, tailoring, insignia or patina, **never a garment category** (that loses to `Outfit` every time). Tag `palette` if the faction asserts colours of its own, `dressy` if the livery is ceremonial. See §4 for the full shape. |
 | A distinctive glow/neon color with nothing else new | **Glow colour** | Just the color name — see the palette-strip rule below before adding one. |
+| A distinctive *placement* of the glow — rim light from behind, colour pooling on the ground, a haze hanging in the air | **Glow placement** | Portrait only. The predicate of "A faint {glow} glow ___", so it starts with a verb and never names the colour. Tag `scene` only if the light lands out in the environment rather than on the figure. |
 
 Most reference images you'll be handed for this campaign are wide "hero
 shot" environments (a mech towering over a street, a ruin, a battlefield) —
@@ -286,7 +293,12 @@ the image will not fit this file. Apply all of these:
   then land in it). Add `nogear` only if the sentence already puts a weapon
   in the subject's hands, so the template doesn't also hand them a rolled
   Gear item on top of it.
-- **Stance**: `<participial phrase, third person> || [hands] [gun]`
+- **Stance**: `<participial phrase, third person> || [hands] [armed] [gun]`
+  `armed` and `gun` are a hierarchy, not alternatives: `armed` is any weapon
+  referenced at all, `gun` the narrower case of a firearm being aimed or
+  fired, and a pose aiming a rifle two-handed is `hands armed gun`. Leaving a
+  weapon-referencing pose untagged is silent — it stays reachable by an NPC
+  who rolled no weapon, and the prompt then describes a blade nobody has.
 - **Weapon**: `<noun phrase, may use {possessive}> || [hands] [gun] [mil] [weapon] [simple] [sidearm]`
   A held weapon is `hands gun mil weapon` (+ `simple` if pocketable); a worn
   or slung one drops `hands gun`; only a holstered/worn pistol earns
@@ -311,7 +323,7 @@ the image will not fit this file. Apply all of these:
   clause for gradients, and `older` is the only flag. See the consonant and
   tail traps in §0 before adding a shade.
 - **Demeanor**: `<noun phrase>` (no flags, no placeholders — dropped straight into "{POSSESSIVE} face carries **{DEMEANOR}**")
-- **Faction**: `<name> || <visual, about a dozen words> || [civ] [mil] [palette]`
+- **Faction**: `<name> || <visual, about a dozen words> || [civ] [mil] [palette] [dressy]`
   — the `name` is what the dossier and the Import GUI print ("Smith-Shimano
   Corpro"); the `visual` is the *only* part that reaches the image prompt, and
   must describe fabric, tailoring, insignia or patina — **never a garment
@@ -327,6 +339,16 @@ the image will not fit this file. Apply all of these:
   "**{glow}** glow", so a phenomenon word reads wrong ("electric blue" comes
   out as arcing electricity, "neon cyan" pulls neon tubing into frame). Say
   the shade and let the template supply the glow.
+- **Glow placement**: `<verb-initial predicate, may use {possessive}/{object}> || [scene]`
+  Portrait only — the token renders on flat white and keeps its own unplaced
+  wording. Each bullet is the predicate of "A faint {glow} glow ___.", so it
+  begins with a verb and carries its own contrast clause where it wants one:
+  `rims {possessive} shoulders and hair from behind, the face lit only by what
+  spills around it`. **Never name the colour** — the template has already said
+  it, and saying it twice is how the frame ends up with two glows. Add `scene`
+  only when the light lands out in the environment (a wall, the air, the
+  ground); a placement on or immediately around the figure stays unflagged and
+  is reachable either way, which is what most should be.
 
 This is the exact text that will eventually follow `- ` in the table file —
 write it as that final form, not a description of it. Only use a placeholder
