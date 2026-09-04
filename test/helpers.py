@@ -5,6 +5,7 @@ error. Load it by path instead - the same trick the module's own docstring
 describes for generate-art.py.
 """
 import importlib.util
+import random
 import sys
 from pathlib import Path
 
@@ -25,6 +26,60 @@ def load_generator():
         spec.loader.exec_module(module)
         _cached = module
     return _cached
+
+
+_cached_3d = None
+
+
+def load_3d():
+    """The generate-3d.py module object, loaded once per process.
+
+    Same by-path load as load_generator(), for the same reason: the hyphen
+    keeps generate-3d.py off the normal import path.
+    """
+    global _cached_3d
+    if _cached_3d is None:
+        spec = importlib.util.spec_from_file_location("gen3d", REPO / "generate-3d.py")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["gen3d"] = module
+        spec.loader.exec_module(module)
+        _cached_3d = module
+    return _cached_3d
+
+
+def manifest_entry(seed=0, overrides=None):
+    """One .generated-npcs.json entry, rolled from the fixture tables.
+
+    The 3D tools read manifest entries, not rolled npc dicts, so a test that
+    handed them a dict straight out of roll_npc() would be testing a shape
+    that never reaches them. This reproduces exactly the keys generate-npc.py's
+    roll path writes, minus the render results, which nothing in the 3D
+    rebuild reads.
+
+    The fixture's 'Given names' and 'Family names' tables hold exactly one
+    entry each, so every seed rolls the same "Test Subject" - fine for a
+    caller that only ever holds one entry at a time, but a test that packs
+    two different seeds into one manifest dict keyed by name (as the real
+    .generated-npcs.json is keyed by folder path, which embeds the name) would
+    silently collapse them into a single row. The seed is folded into the
+    name here, once, rather than in every such caller - unless the caller
+    forced its own "name" via `overrides`, in which case that choice wins.
+    """
+    gen = load_generator()
+    tables = gen.parse_tables(FIXTURE_TABLES)
+    npc = gen.roll_npc(tables, random.Random(seed), overrides or {})
+    if not (overrides or {}).get("name"):
+        npc["name"] = "%s %d" % (npc["name"], seed)
+    return {
+        "id": "npc-test-%d" % seed,
+        "kind": "npc",
+        "name": npc["name"],
+        "callsign": npc["Callsigns"],
+        "seed": seed,
+        "traits": {k: v for k, v in npc.items() if not k.startswith("_")},
+        "young": npc["_young"],
+        "outfit_notac": npc["_outfit_notac"],
+    }
 
 
 def table_keys(tables, name):
