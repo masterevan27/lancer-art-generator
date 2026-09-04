@@ -68,9 +68,7 @@ class TestAssembly(unittest.TestCase):
     def setUpClass(cls):
         cls._tmp = tempfile.TemporaryDirectory()
         cls.outdir = Path(cls._tmp.name)
-        # No --no-render yet: turnarounds arrive in the next task, and this
-        # call grows the flag there.
-        cls.report, cls.proc = run_assembly(cls.outdir)
+        cls.report, cls.proc = run_assembly(cls.outdir, "--no-render")
 
     @classmethod
     def tearDownClass(cls):
@@ -121,7 +119,7 @@ class TestAssemblyFailsLoudly(unittest.TestCase):
             proc = subprocess.run(
                 [str(BLENDER), "--background", "--factory-startup", "--python",
                  str(SCRIPT), "--", str(FIXTURES / "nope.glb"), str(SHELL), tmp,
-                 "--stem", STEM],
+                 "--stem", STEM, "--no-render"],
                 capture_output=True, text=True, timeout=600)
         self.assertNotEqual(proc.returncode, 0)
 
@@ -141,11 +139,63 @@ class TestAssemblyFailsLoudly(unittest.TestCase):
             garbage.write_bytes(b"not a real glb")
             proc = subprocess.run(
                 [str(BLENDER), "--background", "--factory-startup", "--python",
-                 str(SCRIPT), "--", str(garbage), str(SHELL), tmp, "--stem", STEM],
+                 str(SCRIPT), "--", str(garbage), str(SHELL), tmp, "--stem", STEM,
+                 "--no-render"],
                 capture_output=True, text=True, timeout=600)
         self.assertEqual(proc.returncode, 1)
         self.assertFalse(
             any(l.startswith("LANCER3D ") for l in proc.stdout.splitlines()))
+
+
+@unittest.skipUnless(BLENDER, "Blender not installed")
+class TestTurnarounds(unittest.TestCase):
+    """Rendered on CPU Cycles at 64px, so no GPU and no display is needed.
+
+    The engine is a flag precisely so this test can pick the one that always
+    works headless. A real run uses EEVEE, which is far faster and needs the
+    GPU that is there anyway.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.outdir = Path(cls._tmp.name)
+        cls.report, cls.proc = run_assembly(
+            cls.outdir, "--engine", "CYCLES", "--samples", "1",
+            "--turnaround-size", "64")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
+
+    def test_it_exits_cleanly(self):
+        self.assertEqual(self.proc.returncode, 0, self.proc.stderr[-3000:])
+
+    def test_all_four_angles_are_rendered(self):
+        for angle in ("000", "090", "180", "270"):
+            path = self.outdir / ("%s Turnaround_%s.png" % (STEM, angle))
+            with self.subTest(angle=angle):
+                self.assertTrue(path.exists(), "missing %s" % path.name)
+                self.assertGreater(path.stat().st_size, 0)
+
+    def test_they_are_real_pngs(self):
+        path = self.outdir / ("%s Turnaround_000.png" % STEM)
+        self.assertEqual(path.read_bytes()[:8], b"\x89PNG\r\n\x1a\n")
+
+    def test_they_are_listed_in_the_report(self):
+        names = [n for n in self.report["files"] if n.endswith(".png")]
+        self.assertEqual(len(names), 4)
+
+    def test_no_render_skips_them(self):
+        """--no-render is what makes iterating on the mesh work bearable.
+
+        Its own run rather than a peek at TestAssembly's report: a test that
+        reads another class's state passes or fails on class ordering, and
+        fails outright when run alone.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            report, _ = run_assembly(Path(tmp), "--no-render")
+        self.assertEqual([n for n in report["files"] if n.endswith(".png")], [])
 
 
 if __name__ == "__main__":

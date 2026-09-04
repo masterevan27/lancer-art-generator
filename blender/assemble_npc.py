@@ -25,6 +25,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import npc_mesh  # noqa: E402  (must follow the sys.path line)
+import npc_render  # noqa: E402
 
 
 def parse_argv(argv):
@@ -39,6 +40,15 @@ def parse_argv(argv):
                    help="weld distance in metres (default: %(default)s)")
     p.add_argument("--voxel", type=float, default=0.0,
                    help="voxel remesh size in metres; 0 disables (default: %(default)s)")
+    p.add_argument("--no-render", action="store_true",
+                   help="skip the turnarounds, for iterating on the mesh work")
+    p.add_argument("--turnaround-size", type=int, default=768,
+                   help="turnaround render size in pixels (default: %(default)s)")
+    p.add_argument("--engine", default="BLENDER_EEVEE", choices=npc_render.ENGINES,
+                   help="render engine (default: %(default)s); CYCLES needs no "
+                        "GL context and is what the tests use")
+    p.add_argument("--samples", type=int, default=16,
+                   help="render samples (default: %(default)s)")
     return p.parse_args(argv)
 
 
@@ -93,6 +103,11 @@ def main():
     print_stl = args.outdir / ("%s Print.stl" % args.stem)
     npc_mesh.export_stl(shell, print_stl, args.print_height_mm)
     files.append(print_stl.name)
+
+    if not args.no_render:
+        files += npc_render.turnaround(
+            shell, args.outdir, args.stem, size=args.turnaround_size,
+            engine=args.engine, samples=args.samples)
 
     print("LANCER3D " + json.dumps({
         "files": files,
