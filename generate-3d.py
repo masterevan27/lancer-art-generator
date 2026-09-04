@@ -14,10 +14,13 @@ slow and failure-prone, and it must never be able to break art generation.
 """
 import argparse
 import importlib.util
+import json
 import os
 import re
 import sys
 import time
+import urllib.request
+import uuid
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -252,6 +255,101 @@ def append_dossier_3d(path, files, workflows, stance):
 
 
 # --------------------------------------------------------------------------
+# Stage 0: the A-pose source render
+# --------------------------------------------------------------------------
+
+
+def _multipart(fields, field_name, filename, blob):
+    """A multipart/form-data (content_type, body) for one file plus fields.
+
+    The standard library has no builder for this and ComfyUI's /upload/image
+    wants nothing else. Kept separate from the POST so it can be checked
+    without a server.
+    """
+    boundary = "----lancer3d%s" % uuid.uuid4().hex
+    parts = []
+    for name, value in fields.items():
+        parts.append(
+            ('--%s\r\nContent-Disposition: form-data; name="%s"\r\n\r\n%s\r\n'
+             % (boundary, name, value)).encode("utf-8"))
+    parts.append(
+        ('--%s\r\nContent-Disposition: form-data; name="%s"; filename="%s"\r\n'
+         'Content-Type: image/png\r\n\r\n' % (boundary, field_name, filename)).encode("utf-8"))
+    parts.append(blob)
+    parts.append(("\r\n--%s--\r\n" % boundary).encode("utf-8"))
+    return "multipart/form-data; boundary=%s" % boundary, b"".join(parts)
+
+
+def upload_image(comfy, path, subfolder="lancer3d"):
+    """Put one PNG in ComfyUI's input folder; return its LoadImage reference.
+
+    Stage 1 could reference the Stage 0 output where it already sits on the
+    server, with image_ref() - but only inside one run. `--stage mesh` on its
+    own, which is the whole point of the flag, has nothing but the file on
+    disk. Uploading is the one path that works both ways, so it is the only
+    path taken.
+    """
+    content_type, body = _multipart(
+        {"type": "input", "subfolder": subfolder, "overwrite": "true"},
+        "image", path.name, path.read_bytes())
+    request = urllib.request.Request(
+        comfy.base + "/upload/image", data=body, headers={"Content-Type": content_type})
+    with urllib.request.urlopen(request, timeout=120) as resp:
+        info = json.loads(resp.read().decode("utf-8"))
+    sub = info.get("subfolder", "")
+    name = "%s/%s" % (sub, info["name"]) if sub else info["name"]
+    return "%s [input]" % name.replace("\\", "/")
+
+
+def stage_apose(comfy, args, entry, folder):
+    """Render this NPC's token again in the A-pose, cut out. -> <folder>/apose.png
+
+    Renders through the entry's OWN recorded workflow and its own seed, so the
+    figure is the same person the token shows - only the pose and the empty
+    hands differ. The portrait half of build_prompts() is discarded; nothing
+    downstream has a use for a backdrop.
+    """
+    npc = apose_npc(entry)
+    prompt = npc_gen.build_prompts(npc)[1]
+    category = npc_gen.role_category(npc)
+    slug = art._slug(npc["name"])
+    seed = entry["seed"]
+    knobs = npc_gen.Knobs(args, npc_gen.TOKEN_SIZE, npc_gen.COMFY_PREFIX)
+
+    workflow_path = npc_gen.resolve_recorded_workflow(entry, npc, args)
+    template = art.load_api_workflow(workflow_path)
+    try:
+        slots = art.locate_slots(template)
+    except art.WorkflowError as exc:
+        raise SystemExit("%s: %s" % (workflow_path.name, exc))
+
+    job = art.build_job(template, slots,
+                        npc_gen.entry_for(category, slug, "apose", prompt), seed, knobs)
+    images = art.Comfy.images(comfy.wait(comfy.queue(job), timeout=args.timeout))
+    if not images:
+        raise RuntimeError("the A-pose render produced no image")
+    time.sleep(args.pause)
+
+    if not args.rmbg.exists():
+        raise SystemExit("Background-removal workflow not found: %s" % args.rmbg)
+    post = art.load_api_workflow(args.rmbg)
+    try:
+        post_slots = art.locate_post_slots(post)
+    except art.WorkflowError as exc:
+        raise SystemExit("%s: %s" % (args.rmbg.name, exc))
+
+    prefix = "%s/%s/%s/apose_rmbg" % (npc_gen.COMFY_PREFIX, category, slug)
+    cut_job = art.build_post_job(
+        post, post_slots, art.image_ref(images[0]), prefix, seed, knobs)
+    cut = art.Comfy.images(comfy.wait(comfy.queue(cut_job), timeout=args.timeout))
+    if not cut:
+        raise RuntimeError("background removal produced no image")
+    time.sleep(args.pause)
+
+    return npc_gen.fetch(comfy, cut[0], folder / "apose.png")
+
+
+# --------------------------------------------------------------------------
 # CLI
 # --------------------------------------------------------------------------
 
@@ -346,7 +444,55 @@ def main(argv=None):
             print("  A-pose token prompt:\n%s" % apose_prompt(entry))
         return 0
 
-    raise SystemExit("stages are not wired up yet - see Task 4")
+    comfy = art.find_server(args.server)
+    print("ComfyUI: %s" % comfy.base)
+
+    done = failed = skipped = 0
+    started = time.time()
+    for folder_path, entry in picked:
+        folder = npc_3d_folder(folder_path)
+        if should_skip(folder, args):
+            print("skip %s (3d/ exists; --overwrite to rebuild)" % entry["name"])
+            skipped += 1
+            continue
+
+        print("\n%s  \"%s\"  -> %s" % (entry["name"], entry.get("callsign", ""), folder))
+        folder.mkdir(parents=True, exist_ok=True)
+        try:
+            apose = None
+            if "apose" in args.stage:
+                print("    A-pose render ...", flush=True)
+                apose = stage_apose(comfy, args, entry, folder)
+                print("      -> %s" % apose.name)
+            else:
+                apose = folder / "apose.png"
+                if not apose.exists():
+                    raise RuntimeError(
+                        "no apose.png in %s - run --stage apose first" % folder)
+        except KeyboardInterrupt:
+            print("\ninterrupted - cancelling the running job")
+            comfy.cancel_all()
+            return 130
+        except (Exception, SystemExit) as exc:
+            # Per-NPC isolation, spec §8: one bad reconstruction must not take
+            # the rest of a 160-NPC batch with it. SystemExit is caught here
+            # deliberately, not by oversight - it derives from BaseException,
+            # not Exception, so a bare `except Exception` lets it sail past
+            # this handler and abort the whole run. stage_apose() (and
+            # stage_mesh(), later) raise SystemExit for a missing workflow
+            # file or a malformed one; inside this loop that is exactly one
+            # NPC's failure, not a reason to stop the batch. Do not narrow
+            # this back to `except Exception` - a SystemExit escaping here
+            # was proven, by hand, to silently drop every NPC after the
+            # first.
+            failed += 1
+            print("    ! %s" % exc, file=sys.stderr)
+            continue
+        done += 1
+
+    print("\ndone: %d built, %d skipped, %d failed, %.1f min"
+          % (done, skipped, failed, (time.time() - started) / 60))
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

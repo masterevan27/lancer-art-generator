@@ -10,6 +10,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 from test.helpers import load_3d, manifest_entry
 
@@ -174,6 +175,95 @@ class TestDryRun(unittest.TestCase):
         output = buffer.getvalue()
         self.assertIn(entry["name"], output)
         self.assertIn(d3.APOSE_STANCE, output)
+
+
+class TestBatchIsolation(unittest.TestCase):
+    """Regression test for a Critical review finding on Task 4.
+
+    stage_apose() raises SystemExit for a missing/malformed workflow file.
+    SystemExit derives from BaseException, not Exception, so a per-NPC
+    handler written as `except Exception` lets it escape the batch loop
+    entirely - the exact failure spec §8's "one bad reconstruction must not
+    take the rest of a 160-NPC batch with it" forbids. This drives main()
+    over a two-entry manifest with stage_apose() faked to always raise
+    SystemExit, and checks the isolation property itself - that BOTH NPCs
+    were attempted and BOTH are counted as failed - not merely that no
+    exception happened to propagate, which a version that silently skipped
+    the second NPC would also satisfy.
+    """
+
+    def test_a_systemexit_from_one_npc_does_not_abort_the_batch(self):
+        a = manifest_entry(41)
+        b = manifest_entry(42)
+        attempted = []
+
+        def fake_stage_apose(comfy, args, entry, folder):
+            attempted.append(entry["name"])
+            raise SystemExit("Background-removal workflow not found: nope.json")
+
+        fake_comfy = mock.Mock()
+        fake_comfy.base = "http://fake"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = {str(Path(tmp) / a["name"]): a, str(Path(tmp) / b["name"]): b}
+            path = Path(tmp) / "manifest.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            with mock.patch.object(d3.art, "find_server", return_value=fake_comfy), \
+                 mock.patch.object(d3, "stage_apose", side_effect=fake_stage_apose):
+                buffer = io.StringIO()
+                try:
+                    with redirect_stdout(buffer):
+                        code = d3.main(["--manifest", str(path)])
+                except SystemExit as exc:
+                    self.fail("SystemExit from one NPC's stage escaped main() "
+                              "and aborted the batch: %r" % (exc,))
+
+        self.assertEqual(attempted, [a["name"], b["name"]],
+                         "both NPCs must be attempted, not just the first")
+        self.assertIn("2 failed", buffer.getvalue())
+        self.assertEqual(code, 1)
+
+
+class TestMultipart(unittest.TestCase):
+    """The upload body is built by hand, so it is worth checking by hand.
+
+    ComfyUI's /upload/image takes multipart/form-data and the standard library
+    has no builder for it. Splitting the body construction out from the POST
+    is what makes it checkable without a server.
+    """
+
+    def body(self):
+        return d3._multipart({"type": "input", "subfolder": "lancer3d"},
+                             "image", "apose.png", b"\x89PNG\r\n\x1a\n")
+
+    def test_the_boundary_is_declared_and_used(self):
+        content_type, body = self.body()
+        self.assertTrue(content_type.startswith("multipart/form-data; boundary="))
+        boundary = content_type.split("boundary=")[1]
+        self.assertIn(boundary.encode(), body)
+
+    def test_it_ends_with_the_closing_boundary(self):
+        content_type, body = self.body()
+        boundary = content_type.split("boundary=")[1]
+        self.assertTrue(body.endswith(("--%s--\r\n" % boundary).encode()))
+
+    def test_every_field_is_present(self):
+        _, body = self.body()
+        for token in (b'name="type"', b'input', b'name="subfolder"', b'lancer3d',
+                      b'name="image"', b'filename="apose.png"'):
+            with self.subTest(token=token):
+                self.assertIn(token, body)
+
+    def test_the_binary_payload_is_not_mangled(self):
+        _, body = self.body()
+        self.assertIn(b"\x89PNG\r\n\x1a\n", body)
+
+    def test_the_boundary_does_not_occur_in_the_payload(self):
+        """A collision would truncate the upload silently."""
+        content_type, _ = self.body()
+        boundary = content_type.split("boundary=")[1]
+        self.assertNotIn(boundary.encode(), b"\x89PNG\r\n\x1a\n")
 
 
 if __name__ == "__main__":
