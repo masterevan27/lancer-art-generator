@@ -55,10 +55,21 @@ def manifest_entry(seed=0, overrides=None):
     that never reaches them. This reproduces exactly the keys generate-npc.py's
     roll path writes, minus the render results, which nothing in the 3D
     rebuild reads.
+
+    The fixture's 'Given names' and 'Family names' tables hold exactly one
+    entry each, so every seed rolls the same "Test Subject" - fine for a
+    caller that only ever holds one entry at a time, but a test that packs
+    two different seeds into one manifest dict keyed by name (as the real
+    .generated-npcs.json is keyed by folder path, which embeds the name) would
+    silently collapse them into a single row. The seed is folded into the
+    name here, once, rather than in every such caller - unless the caller
+    forced its own "name" via `overrides`, in which case that choice wins.
     """
     gen = load_generator()
     tables = gen.parse_tables(FIXTURE_TABLES)
     npc = gen.roll_npc(tables, random.Random(seed), overrides or {})
+    if not (overrides or {}).get("name"):
+        npc["name"] = "%s %d" % (npc["name"], seed)
     return {
         "id": "npc-test-%d" % seed,
         "kind": "npc",
