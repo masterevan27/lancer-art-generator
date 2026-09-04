@@ -45,16 +45,20 @@ templates at the bottom of this file.
   together, so an NPC never ends up holding something in both hands while
   standing with those hands in their pockets.
   Tag any new bullet the same way — an untagged one is treated as hands-free.
-- **Weapon** and **Stance** bullets may also carry `|| gun`. On a Weapon
-  entry that marks the item as an actual firearm held in hand; on a Stance
-  entry it marks a pose that describes aiming, firing or otherwise handling
-  a weapon — one the Weapon roll has to supply, so a gun pose is never
-  rolled for an NPC whose Weapon roll came up empty or something pocketable.
-  A bullet can carry both flags at once, `|| hands gun`. Stance poses that
-  reference a weapon do so generically — "raising it", "sighting down it" —
-  since the Weapon line earlier in the prompt has already named the specific
-  weapon; naming it twice would just contradict itself if the two ever
-  disagreed.
+- **Weapon** and **Stance** bullets may also carry `|| gun`, and a **Stance**
+  bullet may separately carry `|| armed`. On a Weapon entry `gun` marks the
+  item as an actual firearm held in hand. On a Stance entry the two form a
+  hierarchy: `armed` marks a pose that references a weapon of any kind — a
+  blade held, a hilt gripped, a weapon raised overhead — while `gun` marks
+  the narrower case of a firearm specifically being aimed, fired or otherwise
+  handled. Both read off the Weapon roll: an NPC whose Weapon came up empty
+  drops both `armed` and `gun` poses, one whose Weapon is a non-firearm
+  weapon drops only `gun` and keeps `armed` reachable, and one whose Weapon
+  is a firearm reaches both. A bullet can carry both flags at once,
+  `|| hands gun`. Stance poses that reference a weapon do so generically —
+  "raising it", "sighting down it" — since the Weapon line earlier in the
+  prompt has already named the specific weapon; naming it twice would just
+  contradict itself if the two ever disagreed.
 - **Backdrop** bullets carry three segments: the shot's opening phrase, the
   scene sentence, then optional flags. There are two: `nogear` and `weather`,
   and a bullet may carry both — `|| nogear weather`. `weather` marks a scene
@@ -76,6 +80,15 @@ templates at the bottom of this file.
   greying hair asserts an age the Age clause in the same prompt would
   contradict. A colour with a flag but no trailing clause writes the middle
   segment empty, `greying || || older`.
+- **Faction** bullets carry three segments too — the affiliation's name, then
+  an optional visual signature, then flags. The name is what the dossier
+  prints under "Affiliation" and what the byline names; the visual is what
+  reaches the clothing sentence in the image prompt, in place of the name,
+  and is deliberately left empty for the two non-affiliations. It is written
+  to describe what Outfit's own bullet does not — fabric, tailoring,
+  insignia, patina — since the two used to compete for the same slot and the
+  more specific Outfit clause always won; a visual segment left empty writes
+  the middle segment blank, the same idiom Hair colour uses above.
 - **Weather** bullets may end `|| clear`, meaning the bullet contributes nothing
   to the prompt. Weather only reaches a portrait whose Backdrop is flagged
   `weather`, and never reaches the token at all.
@@ -92,8 +105,10 @@ templates at the bottom of this file.
   issued uniform and is dropped for a civilian (unflagged) Role instead. A
   bullet with neither flag is neutral and reachable either way — most Outfit
   entries stay this way, the same as a build or gear item with no flag at
-  all. **Gear** and **Weapon** bullets may also carry `|| mil`, marking the
-  item as military-issue — equipment on a Gear entry, an actual issued
+  all. The flag lives in Faction's third segment and Outfit's second, since
+  the two tables carry different numbers of prose segments — see the Faction
+  item above. **Gear** and **Weapon** bullets may also carry `|| mil`, marking
+  the item as military-issue — equipment on a Gear entry, an actual issued
   weapon on a Weapon entry, since every bullet in that table already reads
   as one.
 
@@ -127,7 +142,7 @@ colour`, `Feature`, `Outfit`, `Headgear`, `Weapon` and `Backdrop`. `Gear` is
 deliberately not one of them - it split away from `Weapon` because it isn't
 theme-defining. Anywhere else it does nothing — the theme filter never looks
 at that table — and on the tables whose bullets carry no `||` segment at all,
-it is worse than nothing: `Skin`, `Eyes`, `Demeanor`, `Accent`, `Height` and
+it is worse than nothing: `Skin`, `Eyes`, `Demeanor`, `Glow colour`, `Height` and
 the name tables are never split, so their text is dropped into the prompt
 exactly as written. A bullet reading `- chrome-inlaid irises || @cyberpunk`
 under `## Eyes` would ship the literal text `|| @cyberpunk` to the image model
@@ -1372,14 +1387,43 @@ ignored — so notes like this one are safe to leave inline.
 
 ## Faction
 
-- x2 unaligned and freelance || civ
-- x2 in worn Union Administrative Department kit || mil
-- in Harrison Armory service dress, imperial and immaculate || mil
-- in Smith-Shimano Corpro corporate wear, sleek and expensive || civ
-- in IPS-Northstar workwear, riveted and salt-stained || civ
-- in Karrakin baronial livery, formal and slightly archaic
-- in the mismatched kit of a colonial militia || mil
-- in the deliberately anonymous gear of someone who does not answer questions
+<!--
+  Three segments: the affiliation NAME, the visual signature, then flags.
+
+  The name is what the dossier and the Import GUI print. The visual is the
+  only part that reaches the image prompt, and it is what makes this table
+  worth having at all: the old single-segment form put a garment CATEGORY
+  ("corporate wear", "service dress") straight after Outfit's specific garment
+  description, competing for the same slot and losing every time. Deleting the
+  whole Faction clause from a prompt changed the render not at all.
+
+  So a visual describes what Outfit does not - fabric, tailoring, insignia,
+  patina, and where the faction has one, colour. Never a garment category.
+
+  Two entries are non-affiliations with nothing to show and leave the visual
+  empty; build_prompts() then drops the clause entirely rather than leaving a
+  doubled comma.
+
+  '|| palette' marks a faction that asserts colours of its own. Those are
+  PIGMENT - dye in cloth - and they coexist with the Glow colour, which is
+  LIGHT. The closing palette line softens from "the only saturated color" to
+  "the only other saturated color" when one is rolled, so the prompt stops
+  claiming something the uniform contradicts. A faction without a colour
+  scheme should NOT carry the flag: Unaligned, Unregistered and the colonial
+  militia deliberately leave the palette unconstrained.
+
+  Keep visuals to about a dozen words. Both prompts run close to Krea 2's
+  512-token ceiling - see test/test_prompt_budget.py.
+-->
+
+- x2 Unaligned || || civ
+- x2 Union Administrative Department || issued and worn thin, in faded institutional blue-grey || mil palette
+- Harrison Armory || sharply pressed, high collar and polished fittings, in imperial green and gold || mil palette
+- Smith-Shimano Corpro || precisely tailored with fine seam piping, in white and pale pastels || civ palette
+- IPS-Northstar || riveted and salt-stained heavy canvas, in rust orange || civ palette
+- Karrakin Trade Baronies || heavy brocade and gold braid, an heraldic crest at the shoulder, in deep crimson || palette
+- Colonial militia || mismatched surplus, webbing straps and taped-over insignia || mil
+- Unregistered || ||
 
 ## Outfit
 
@@ -1498,8 +1542,8 @@ ignored — so notes like this one are safe to leave inline.
   a woman in grey coveralls is entirely normal and should stay possible.
 
   The armored-bodyglove entries deliberately name no glow color: the palette
-  sentence in the template already makes the rolled Accent the only saturated
-  color, so "glowing seam lines" picks it up instead of fighting it.
+  sentence in the template already makes the rolled Glow colour the only
+  saturated color, so "glowing seam lines" picks it up instead of fighting it.
 -->
 
 - x2 a flight suit tailored close through the bust, waist and hips, the front zip run down past the sternum
@@ -1578,18 +1622,31 @@ ignored — so notes like this one are safe to leave inline.
   every theme's armament used to land on everyone.
 
   The 'x30 || none' entry is an empty bullet: split_flags() parses it to text
-  '' with flags ('none',), so it contributes nothing to the prompt - 'none' is
-  a literal marker flag that nothing reads. It keeps an unarmed NPC the common
-  case, and it keeps the average prompt short, since most NPCs then render no
-  weapon phrase at all. Its weight is the dial for how armed the setting feels
-  - raise it for a quieter one. A 'mil' Role never reaches it:
-  apply_weapon_policy() restricts that pool to 'sidearm'-flagged bullets,
-  which this is not.
+  '' with flags ('none',), so it contributes nothing to the prompt. It keeps
+  an unarmed NPC the common case, and it keeps the average prompt short, since
+  most NPCs then render no weapon phrase at all. Its weight is the dial for
+  how armed the setting feels - raise it for a quieter one. A 'mil' Role never
+  reaches it: apply_weapon_policy() restricts that pool to 'sidearm'-flagged
+  bullets, which this is not.
+
+  'none' is also read directly, by the Stance filter in roll_npc(): once the
+  Weapon roll lands on this bullet, a pose that names a weapon - flagged
+  'armed' or 'gun' - is no longer reachable, so an unarmed NPC is never posed
+  brandishing something the prompt never named.
+
+  That weight is the baseline. On top of it, apply_weapon_policy() gives every
+  non-military Role a 'civilian' tier that stacks further copies of this entry
+  into the pool - CIVILIAN_UNARMED_COPIES in generate-npc.py - because without
+  it an ordinary dockworker came out armed two rolls in three. Weapon sits
+  outside the civ/mil filter on purpose, so nothing else was holding a
+  civilian back from the military bullets here.
 
   Flags here: 'weapon' (an actual weapon), 'simple' (small and pocketable),
   'sidearm' (includes a holstered or openly worn pistol - the guaranteed-armed
   baseline for a mil Role), 'gun' (an actual firearm held in hand), 'hands'
-  (occupies at least one hand), 'mil' (military-issue).
+  (occupies at least one hand), 'mil' (military-issue), 'none' (the empty
+  bullet below - load-bearing, not inert: the Stance filter in roll_npc()
+  reads it directly to keep an unarmed NPC off an armed pose).
 -->
 
 - x30 || none
@@ -1689,9 +1746,19 @@ ignored — so notes like this one are safe to leave inline.
 - a small pendant amulet glowing softly at the throat
 - an old-fashioned lantern glowing warm, carried by its handle in one hand || hands
 
-## Accent
+## Glow colour
 
-<!-- The single saturated glow color in an otherwise restrained frame. -->
+<!--
+  The single saturated colour of the one light source in an otherwise
+  restrained frame - not a design accent, which is what the old name implied.
+  Only reached when something rolled for this NPC could actually cast it; see
+  has_light_source() in generate-npc.py.
+
+  Entries name a HUE, never a light-emitting phenomenon. Both templates wrap
+  the value as "{glow} glow", so "electric blue" came out as arcing
+  electricity and "neon cyan" pulled neon tubing into frame. Say the shade -
+  "vivid cobalt blue" - and let the template supply the glow.
+-->
 
 - teal-green
 - x2 amber
@@ -1701,9 +1768,9 @@ ignored — so notes like this one are safe to leave inline.
 - deep violet
 - brass-gold
 - crimson-red
-- electric blue
+- vivid cobalt blue
 - magenta-pink
-- neon cyan
+- bright cyan
 
 ## Backdrop
 
@@ -1958,6 +2025,21 @@ ignored — so notes like this one are safe to leave inline.
 
 ## Stance
 
+<!--
+  TOKEN ONLY. The portrait takes its pose from Backdrop; this table reaches
+  only the token, which renders on flat white so the RMBG pass can cut it to a
+  transparent PNG for dropping onto a battlemap.
+
+  So a bullet here may describe the BODY and nothing else. No ground, no
+  ledge, no wall, no furniture, no weather, no props that are not held in a
+  hand. A pose may crouch, kneel or sit - it simply must not sit on anything.
+
+  This is not a style preference. Generation runs at CFG 1.0 with no negative
+  prompt, so the template's trailing "no environment" cannot argue a noun back
+  out of the image: a rolled "raised ledge" put a visible platform under the
+  figure and a second person on it. test_stance_content.py enforces the rule.
+-->
+
 - standing in a relaxed, watchful stance, weight settled evenly on both feet
 - standing squared and formal, hands clasped behind the back || hands
 - standing with arms folded, weight shifted onto one hip || hands
@@ -1977,22 +2059,22 @@ ignored — so notes like this one are safe to leave inline.
 - standing at a low ready, weapon angled down and across the body, alert and scanning the middle distance || gun
 - standing in a sharp half-turn with a sidearm gripped in each hand, one arm extended straight out toward the viewer and the other braced out to the side || gun
 - caught mid-stride walking straight toward the viewer, twin sidearms held low and loose at {possessive} sides || gun
-- standing with head bowed and shoulders drawn in against the weather
+- standing with head bowed and shoulders drawn in tight
 - standing in a slow half-bow, one hand pressed flat against the chest
 - standing with both arms raised overhead, a long board gripped in both hands and braced across the back of the shoulders like a yoke || hands
 - sitting cross-legged in a formal meditative pose, palms pressed together at the chest, segmented mechanical arms folded still || hands
-- leaning down into open machinery from above, braced on one forearm and reaching in with the other hand || hands
-- crouched low and coiled on a raised ledge, weight braced forward on one arm, ready to spring || hands
+- leaning forward and down, braced on one forearm, the other hand reaching toward something out of frame || hands
+- crouched low and coiled, weight braced forward on one arm, ready to spring || hands
 - leaning low into a forward sprint, {possessive} braid whipped back and one arm driving down
-- crouched low on one knee, gripping a blade planted point-down and ready to spring || hands
-- standing in profile with head bowed slightly, one hand resting on a sheathed blade at the hip || hands
-- caught in a dynamic overhead swing, both hands driving a blade down in a decisive arc, cloak and sash ribbons whipped by the motion || hands
-- kneeling formally with both hands folded around an upright hilt held back against one shoulder || hands
+- crouched low on one knee, both hands wrapped around an upright blade, ready to spring || hands armed
+- standing in profile with head bowed slightly, one hand resting on a sheathed blade at the hip || hands armed
+- caught in a dynamic overhead swing, both hands driving a blade down in a decisive arc, cloak and sash ribbons whipped by the motion || hands armed
+- kneeling formally with both hands folded around an upright hilt held back against one shoulder || hands armed
 - kneeling in profile with head bowed low, hands stilled in {possessive} lap
-- walking straight toward the viewer with {possessive} weapon raised over one shoulder, cloak snapping back in the rising heat || hands
-- raising {possessive} weapon high overhead in both hands, mid-swing, hair whipped wild by the wind and snow || hands
+- walking straight toward the viewer with {possessive} weapon raised over one shoulder, cloak snapping back behind {object} || hands armed
+- raising {possessive} weapon high overhead in both hands, mid-swing, hair whipped wild by the motion || hands armed
 - sitting cross-legged with one elbow propped on a knee, chin resting in that hand, gazing out in quiet thought
-- standing tense with both hands crossed at the hip, one gripping the hilt of {possessive} sheathed weapon, poised to draw || hands
+- standing tense with both hands crossed at the hip, one gripping the hilt of {possessive} sheathed weapon, poised to draw || hands armed
 - crouched low on the balls of the feet, one fist raised in a guarded ready stance, weight coiled forward || hands
 
 ## Stance (she) +
@@ -2021,7 +2103,7 @@ ignored — so notes like this one are safe to leave inline.
 - standing with {possessive} head tilted slightly, one hand trailing loose at {possessive} thigh
 - standing with {possessive} back to the viewer and one hand set on the hip, looking back over {possessive} shoulder
 - standing with one hip kicked out, one hand brushing a loose strand of hair back near {possessive} temple, the other resting low on {possessive} belt
-- sitting back with both hands laced behind {possessive} head, elbows out, utterly at ease || hands
+- standing with both hands laced behind {possessive} head, elbows out, utterly at ease || hands
 
 ## Prompt templates
 
@@ -2035,9 +2117,10 @@ they live in `generate-npc.py` — editing them here changes nothing.
 > painterly illustration style with fine grain texture and clean linework, halftone
 > dot shading worked into the shadows, moody cinematic lighting. {SUBJECT} is
 > **{BUILD}**, with **{TRAITS}** **{SKIN}**, **{HAIR}**, and **{EYES}**, and **{FEATURE}**,
-> wearing **{OUTFIT}**, **{FACTION}**. **{HEADGEAR}** {POSSESSIVE} face carries
+> wearing **{OUTFIT}**, **{FACTION_LINE}**the clothing following the shape of that
+> frame. **{HEADGEAR}** {POSSESSIVE} face carries
 > **{DEMEANOR}**. {SUBJECT} carries
-> **{GEAR}**. **{BACKDROP}** **{WEATHER}** **{ACCENT_LINE}** Shallow depth of field, square
+> **{GEAR}**. **{BACKDROP}** **{WEATHER}** **{GLOW_LINE}** Shallow depth of field, square
 > framing, high detail, atmospheric sci-fi character portrait. Painterly illustration
 > throughout with visible brushwork, heavy fine grain texture over every surface, and
 > dense halftone dot screentone worked deep into the shadows.
@@ -2049,6 +2132,15 @@ than an adult figure. It lives in `GENDER_TRAITS` in
 `generate-npc.py`, because a trait that should reach nearly every NPC of one
 gender cannot come out of a pool of thirty bullets.
 
+`{FACTION_LINE}` is the rolled Faction's visual signature alone, already
+comma-suffixed and ready to sit in front of "the clothing following the shape
+of that frame" — never the affiliation name. `split_faction()` keeps the name
+("Smith-Shimano Corpro") for the dossier's "Affiliation" row only; the name
+never reaches either prompt. The two non-affiliations (`Unaligned`,
+`Unregistered`) roll no visual at all, so `{FACTION_LINE}` is empty for them
+and the sentence reads "wearing **{OUTFIT}**, the clothing following..." with
+no orphaned comma.
+
 `{HEADGEAR}` is a whole sentence rather than a noun phrase, and so is
 `{WEATHER}` — which is empty unless the rolled Backdrop is flagged `weather`.
 `{SHOT}` and `{BACKDROP}` are the two halves of one Backdrop bullet, split on
@@ -2057,54 +2149,82 @@ entry restage the whole shot, swapping "a half-body character portrait" for "a
 dynamic, dramatically foreshortened character portrait" and putting the subject
 in freefall, without a separate pose table to keep in sync.
 
-`{ACCENT_LINE}` is "A faint **{ACCENT}** glow falls across one side of
-{POSSESSIVE} face against warm dim ambient light on the other. Keep the palette
-restrained — greys, olive drab and rust — with **{ACCENT}** as the only
-saturated color in the frame." _only_ when something rolled for this NPC would
-actually cast that glow — a lit instrument panel, neon signage, a muzzle flash
-in the Backdrop scene, or a glowing/lit detail in Gear, Outfit, Headgear,
-Feature or Eyes. `has_light_source()` in `generate-npc.py` checks the rolled
-text of those fields against a short list of light-implying words (`glow`,
-`lit`, `neon`, `lantern`, `beacon`, `readout`, `monitor`, `display`, `screen`,
-`flame`, `ember`, `burning`, `instrument`, `holographic`, `headlamp`, `glaring`,
-`muzzle flash`) — deliberately excluding plain daylight words like `sun`, since
-natural light doesn't motivate an arbitrary saturated accent color either. When
-nothing matches, `{ACCENT_LINE}` falls back to "Keep the palette restrained —
-greys, olive drab and rust, with no stray saturated color." instead of
-inventing a source for a color that has nothing to shine from — which used to
-happen on plenty of rolls (a dim mech hangar, a dropship bay door against a
-plain sky) and is why a stray green glow could land on a face with nothing
-nearby to cast it.
+`{GLOW_LINE}` takes one of four forms, crossing two independent questions:
+whether anything rolled for this NPC would actually cast a glow
+(`has_light_source()`), and whether the rolled Faction asserts pigment of its
+own (flagged `palette`) — pigment (dye in cloth) and glow (light) are
+different things and coexist happily, but the line's wording has to agree
+with whichever pair is true this roll:
+
+- **Glow, no pigment** — "A faint **{GLOW}** glow falls across one side of
+  {POSSESSIVE} face against warm dim ambient light on the other. Keep the
+  palette restrained — greys, olive drab and rust — with **{GLOW}** the only
+  saturated color in the frame."
+- **Glow, with pigment** — the same sentence, but "the only saturated color"
+  softens to "the only **other** saturated color", since the Faction's own
+  colours are already in frame and the line would otherwise contradict the
+  uniform it just described.
+- **No glow, no pigment** — "Keep the palette restrained — greys, olive drab
+  and rust, with no stray saturated color."
+- **No glow, with pigment** (`GLOW_NONE_PIGMENT`) — "Keep the rest of the
+  palette restrained — greys, olive drab and rust." The "no stray saturated
+  color" claim is dropped entirely rather than kept and contradicted, since
+  the Faction's pigment is itself a saturated color already in the frame.
+
+The glow half of that pairing fires only when something rolled for this NPC
+would actually cast the glow — a lit instrument panel, neon signage, a muzzle
+flash in the Backdrop scene, or a glowing/lit detail in Gear, Outfit,
+Headgear, Feature or Eyes. `has_light_source()` in `generate-npc.py` checks
+the rolled text of those fields against a short list of light-implying words
+(`glow`, `lit`, `neon`, `lantern`, `beacon`, `readout`, `monitor`, `display`,
+`screen`, `flame`, `ember`, `burning`, `instrument`, `holographic`,
+`headlamp`, `glaring`, `muzzle flash`) — deliberately excluding plain daylight
+words like `sun`, since natural light doesn't motivate an arbitrary saturated
+glow color either. Absent that, `{GLOW_LINE}` falls back to one of the two
+no-glow forms above instead of inventing a source for a color that has
+nothing to shine from — which used to happen on plenty of rolls (a dim mech
+hangar, a dropship bay door against a plain sky) and is why a stray green
+glow could land on a face with nothing nearby to cast it.
 
 ### Token (1024x1280, then RMBG to a transparent PNG)
 
-> A full-body character illustration of **{ROLE}**, **{AGE}**, standing at full
-> adult height and facing the viewer, entire body visible from the top of {POSSESSIVE} head to the
-> soles of {POSSESSIVE} plain modern boots, no leg wraps or puttees, with clear empty
-> space above and below, rendered in a
-> detailed painterly illustration style with fine grain texture and clean linework,
-> halftone dot shading worked into the shadows, moody cinematic lighting on the
-> figure. {SUBJECT} is **{BUILD}**, with
-> **{TRAITS}** **{SKIN}**, **{HAIR}**, and **{EYES}**, and **{FEATURE}**, wearing **{OUTFIT}**,
-> **{FACTION}**. {POSSESSIVE} face carries **{DEMEANOR}**. {SUBJECT} carries
-> **{GEAR}**. {SUBJECT} is
-> **{STANCE}**, both boots planted and fully visible, {POSSESSIVE} face toward the
-> viewer — a relaxed, natural pose with the arms free, not a rigid attention
-> stance with the hands pinned at the sides. **{ACCENT_LINE}** The background alone
-> is a solid flat plain white, no texture, no
-> gradient, no shadow, no environment. Centered composition, dramatic lighting,
-> isolated character illustration, clean silhouette. Painterly illustration throughout with
-> visible brushwork, heavy fine grain texture over every surface, and dense
-> halftone dot screentone worked deep into the shadows, matching the same painterly
-> rendering as the portrait shot.
+> A full-body character illustration of **{ROLE}**, **{MATURITY}** **{GENDER}**
+> **{AGE}**, rendered in a detailed painterly illustration style with fine
+> grain texture, clean linework and halftone dot shading worked into the
+> shadows, moody cinematic lighting on the figure. {SUBJECT} is facing the
+> viewer, the whole figure in frame from the top of {POSSESSIVE} head to the
+> soles of {POSSESSIVE} plain modern boots, no leg wraps or puttees, with clear
+> empty space above and below, in realistic adult proportions roughly seven to
+> eight heads tall. {SUBJECT} is **{HEIGHT}**, **{BUILD}**, with **{TRAITS}**
+> **{SKIN}**, **{HAIR}**, **{EYES}**, and **{FEATURE}**, wearing **{OUTFIT}**,
+> **{FACTION_LINE}**the clothing following the shape of that frame. **{HEADGEAR}**
+> {POSSESSIVE} face carries **{DEMEANOR}**. {SUBJECT} carries **{GEAR}**.
+> {SUBJECT} is **{STANCE}**, both feet in frame, the pose natural and
+> unforced. **{GLOW_LINE}** The background alone is a solid flat plain white,
+> no texture, no gradient, no shadow, no environment. Centered composition,
+> dramatic lighting, isolated character illustration, clean silhouette,
+> painterly brushwork with heavy grain and dense halftone screentone worked
+> into every shadow.
 
-`{ACCENT_LINE}` here is "Keep the palette restrained — greys, olive drab and
-rust — with a single **{ACCENT}** glow the only saturated color.", gated the
-same way as the portrait's — except the token has no backdrop at all (it's
-flat white for RMBG), so only an equipped source counts: something glowing or
-lit in the rolled Gear, Outfit, Headgear, Feature or Eyes. No match falls back
-to "Keep the palette restrained — greys, olive drab and rust, with no stray
-saturated color." See the portrait section above for the word list.
+`{FACTION_LINE}` is the same pre-formatted, visual-only slot the portrait
+uses — see the portrait section above; the affiliation name never reaches
+either prompt, only the dossier.
+
+`{GLOW_LINE}` here takes one of the same four forms as the portrait's, gated
+the same way — except the token has no backdrop at all (it's flat white for
+RMBG), so only an equipped source counts: something glowing or lit in the
+rolled Gear, Outfit, Headgear, Feature or Eyes.
+
+- **Glow, no pigment** — "Keep the palette restrained — greys, olive drab and
+  rust — with a single **{GLOW}** glow the only saturated color."
+- **Glow, with pigment** — the same sentence with "the only saturated color"
+  softened to "the only **other** saturated color".
+- **No glow, no pigment** and **no glow, with pigment** fall back to the same
+  two strings as the portrait's no-glow cases above - both prompts share the
+  one `GLOW_NONE` and one `GLOW_NONE_PIGMENT` constant in `generate-npc.py`
+  rather than each keeping their own copy of an identical sentence.
+
+See the portrait section above for the light-implying word list.
 
 The token template names the footwear outright - "plain modern boots, no leg
 wraps or puttees" - because with nothing said about them the campaign's
@@ -2114,9 +2234,15 @@ grown adult". Outfit bullets that specify their own footwear (the knee boots,
 thigh-high boots and so on in `Outfit (she) +`) still win, since they land
 later in the prompt and are far more specific.
 
+The opening sentence asserts framing, not pose. It used to read "standing at
+full height", which fought the rolled Stance on every crouching, kneeling or
+sitting bullet - the prompt asserted standing and crouching at once and the
+render came back with two figures. Stance owns the pose; this sentence owns
+the framing, and the two no longer overlap.
+
 The `even lighting` / flat-background phrasing this used to carry was flattening
 the whole render toward a clean cel-shaded look rather than just the background —
-`{ACCENT}` aside, the token came out visibly less painterly than the portrait even
+`{GLOW}` aside, the token came out visibly less painterly than the portrait even
 though both prompts asserted the same style words. Scoping "no texture, no
 gradient" to "the background alone" and giving the figure its own "moody
 cinematic lighting" / "dramatic lighting" cue keeps the flat cutout background

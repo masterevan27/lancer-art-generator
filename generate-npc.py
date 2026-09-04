@@ -104,23 +104,25 @@ DEFAULT_OUTPUT_ROOT = (Path(_OUTPUT_ROOT) if _OUTPUT_ROOT else SCRIPT_DIR / "out
 # Tables the prompt templates below require. Anything else in the markdown file
 # is ignored, so extra tables can be added for reference without breaking this.
 #
-# The ORDER is load-bearing in four places, and roll_npc() reads each flag off
+# The ORDER is load-bearing in five places, and roll_npc() reads each flag off
 # the earlier table on the assumption that it has already been rolled: Age
 # before Build ('figure'), Age before Hair colour ('older'), Role before
-# Faction, Outfit and Weapon, and Weapon before Gear (the 'hands' collision).
-# Each is explained at its own use site in roll_npc() rather than restated
-# here; reorder this list without reading those four comments and the filter
-# each one describes goes quietly dead.
+# Faction, Outfit and Weapon, Outfit before Weapon and Gear (the 'notac'
+# strip), and Weapon before Gear and Stance (the 'hands' collision with Gear,
+# and the 'none' flag that gates Stance alongside 'gun'). Each is explained at
+# its own use site in roll_npc() rather than restated here; reorder this list
+# without reading those five comments and the filter each one describes goes
+# quietly dead.
 REQUIRED_TABLES = [
     "Given names", "Family names", "Callsigns", "Pronouns", "Theme", "Age",
     "Build", "Height", "Skin", "Hair", "Hair colour", "Eyes", "Feature",
     "Demeanor", "Role",
-    "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Accent", "Backdrop",
+    "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Glow colour", "Backdrop",
     "Weather", "Stance",
 ]
 
 # The tables a rolled Theme gates. Everything else - names, age, build, height,
-# skin, eyes, accent, weather, stance - describes the person or the moment
+# skin, eyes, glow colour, weather, stance - describes the person or the moment
 # rather than the visual world they come from, and stays untouched by theme.
 # Gear is deliberately absent: what is left of it after the Weapon split is
 # data-slates, tool bags and thermoses, which no theme owns. Weapon is here
@@ -149,12 +151,12 @@ def estimate_tokens(text):
 # Backdrop-scene bullet already uses when it describes something that would
 # actually cast colored light - a lit instrument panel, a glowing seam, a
 # neon sign, a muzzle flash.
-# The accent-glow sentences below only fire when at least one rolled bullet
-# matches, so the "faint {accent} glow" they describe always has something in
+# The glow-colour sentences below only fire when at least one rolled bullet
+# matches, so the "faint {glow} glow" they describe always has something in
 # frame to have cast it, rather than landing on a scene with no light source
 # at all (a mech hangar in shadow, a dropship bay door against a plain sky).
 # Deliberately excludes plain daylight/dusk words like "sun" or "sunlit" -
-# natural light doesn't motivate an arbitrary saturated accent color either.
+# natural light doesn't motivate an arbitrary saturated glow color either.
 LIGHT_SOURCE_WORDS = re.compile(
     r"\b(glow\w*|lit|lighting|lights?|neon|lanterns?|beacons?|readouts?|"
     r"monitors?|displays?|screens?|flames?|embers?|burning|instruments?|"
@@ -231,12 +233,123 @@ ROLE_CATEGORIES = {
 UNCATEGORIZED_ROLE = "Other"
 
 # The Weapon-roll policy each ROLE_CATEGORIES bucket gets, layered on top of
-# the mil/civ split - see apply_weapon_policy(). A category with no entry
-# here rolls Weapon exactly as it always has: no filter, no bias.
+# the mil/civ split - see apply_weapon_policy().
 WEAPON_POLICY = {
     "Officials": "restricted",
     "Criminals": "armed_bias",
 }
+
+# What a non-mil Role gets when WEAPON_POLICY names no policy for it. It used
+# to be "none at all", which meant seven civilian Roles - dockworker, chief
+# mechanic, maintenance technician, freelance salvager, bar owner, data
+# courier, scavenger-priest - rolled the raw pool and came out armed 65% of
+# the time. Weapon sits outside the civ/mil filter by design (a civilian may
+# carry a military-issue weapon), so nothing else was holding them back.
+# A default rather than seven more WEAPON_POLICY entries, so a civilian Role
+# added to the Role table later is covered without a second edit here.
+DEFAULT_WEAPON_POLICY = "civilian"
+
+# How many extra copies of the unarmed bullets the civilian tier stacks into
+# the pool. The live table is 86 weighted entries, 30 of them unarmed; three
+# extra copies makes it 176 with 120 unarmed, or 68%. This is the dial for how
+# armed ordinary civilians feel - raise it for a quieter setting.
+CIVILIAN_UNARMED_COPIES = 3
+
+# Trait names that have changed, old -> new. --regen-manifest rebuilds an NPC
+# from a stored traits dict rather than re-rolling, so an entry written before
+# a rename still carries the old key and would otherwise KeyError in
+# build_prompts(). Same situation the npc.get("Weapon", "") and
+# npc.get("Theme", "-") reads elsewhere in this file handle inline; factored
+# out here because a rename is mechanical and a table of names is easier to
+# extend than another scattered .get.
+LEGACY_TRAIT_NAMES = {
+    "Accent": "Glow colour",
+}
+
+# What a stored manifest entry gets for Headgear when it has none at all -
+# ten entries predate the Headgear table entirely and would otherwise raise
+# KeyError('Headgear') in build_prompts() on regeneration. The most common
+# roll by far (weighted x6 against the table's other ~40 entries, each x1 or
+# x2) is bare-headed, so that is the truest guess available for an entry that
+# recorded no opinion either way.
+DEFAULT_HEADGEAR = "{Subject} {is_are} bare-headed."
+
+
+def migrate_traits(traits):
+    """A stored manifest trait dict brought forward to current table names
+    and value shapes.
+
+    Three jobs: rename any trait key listed in LEGACY_TRAIT_NAMES to its
+    current heading, repair a Faction value stored before the name/visual
+    split existed (a bare string with no '||') into the current
+    'name || visual' shape, and backfill a missing Headgear the same way
+    regenerate_one() already backfills a missing Height - so a regenerated
+    prompt reproduces the original one, or comes as close as a lost trait
+    allows.
+    """
+    out = dict(traits)
+    # Captured before the rename loop below pops "Accent" out of `out` - see
+    # the Faction repair's gate further down, which needs to know whether the
+    # key was ever there at all.
+    predates_rename = "Accent" in out
+    for old, new in LEGACY_TRAIT_NAMES.items():
+        if old in out:
+            value = out.pop(old)
+            out.setdefault(new, value)
+    # A stored Faction with no '||' predates split_faction()'s name/visual
+    # split: every bullet in the current tables file carries at least one
+    # separator, so a bare string can only have been written before the
+    # split existed - back when the table's single segment WAS the visual
+    # clause, dropped straight into the clothing sentence ("in IPS-Northstar
+    # workwear, riveted and salt-stained" was the whole Faction bullet, not
+    # a name). Restoring it into BOTH the name and visual segments, not just
+    # the visual, means split_faction() returns the same text everywhere the
+    # old single-segment value used to reach - the prompt's clothing
+    # sentence and the dossier's "Affiliation" row and byline alike - which
+    # is what makes regenerate_one()'s promise of an identical prompt
+    # actually hold for the entries rolled before this split, this
+    # migration's whole reason to exist.
+    #
+    # Gated on "Accent" rather than just "no '||' in Faction", because that
+    # weaker test has a real false positive: `--set-trait
+    # Faction="Harrison Armory"` is accepted today and stores exactly that
+    # bare shape, so an entry rolled with it AFTER the split would also have
+    # no '||' without being a legacy value at all. The Accent rename and the
+    # Faction split shipped in the same branch, in that order, so an entry
+    # storing "Accent" is old enough to predate both and its bare Faction is
+    # genuinely pre-split; an entry already storing "Glow colour" was rolled
+    # after the rename landed, and by the time it could roll at all the split
+    # had landed too - so its bare Faction, if any, can only be a
+    # --set-trait, and rewriting it here would double up a visual clause it
+    # never had.
+    if predates_rename and "Faction" in out and "||" not in out["Faction"]:
+        print("! stored Faction %r has no '||' - assuming this entry "
+              "predates Faction's name/visual split and treating the whole "
+              "value as the visual signature, so the original prompt "
+              "reproduces. If this entry was rolled after that split from a "
+              "genuinely bare Faction bullet, this is wrong - check the "
+              "regenerated render." % out["Faction"], file=sys.stderr)
+        out["Faction"] = "%s || %s" % (out["Faction"], out["Faction"])
+    # Same shim as the Height backfill in regenerate_one(), for the same
+    # reason: a trait table added after some manifest entries were written
+    # leaves those entries with no key for it at all, and build_prompts()
+    # reads npc["Headgear"] unconditionally (unlike npc.get("Weapon", "") and
+    # npc.get("Theme", "-") elsewhere, a missing Headgear predates the table
+    # rather than describing a genuinely headgear-less NPC, so it needs a
+    # stand-in rather than an empty string). Warn once, then proceed, so the
+    # promise that every stored NPC keeps regenerating stays true instead of
+    # a KeyError traceback. Substituted here, not left for roll_npc()'s
+    # generic pronoun pass, because that pass never runs on a migrated dict -
+    # a stored entry is already-finished prose, and this default has to match
+    # that shape to reach build_prompts() usable.
+    if "Headgear" not in out:
+        print("! stored traits for %r has no Headgear (written before the "
+              "Headgear table existed) - defaulting to bare-headed; re-roll "
+              "instead of regenerating to pick a real one."
+              % out.get("name", "<unnamed>"), file=sys.stderr)
+        out["Headgear"] = DEFAULT_HEADGEAR.format(**pronoun_fields(out.get("Pronouns", "")))
+    return out
+
 
 # How much of a themed roll should come from that theme's own bullets rather
 # than from the neutral pool. A theme that is merely *opened* is not *visible*:
@@ -262,9 +375,9 @@ PORTRAIT_TEMPLATE = (
     "painterly illustration style with fine grain texture, clean linework and halftone "
     "dot shading worked into the shadows, moody cinematic lighting. {Subject} {is_are} "
     "{height}, {build}, {face}, and {traits}"
-    "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction}, the clothing "
+    "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction_line}the clothing "
     "following the shape of that frame. {headgear} {Possessive} face carries {demeanor}. "
-    "{gear_line}{backdrop} {weather_line}{accent_line} "
+    "{gear_line}{backdrop} {weather_line}{glow_line} "
     "Shallow depth of field, square framing, high detail, atmospheric sci-fi character "
     "portrait, painterly brushwork with heavy grain and dense halftone screentone worked "
     "into every shadow."
@@ -278,44 +391,58 @@ PORTRAIT_TEMPLATE = (
 # that in the position a diffusion model weights hardest. Removing them bought
 # back the headroom the Weapon slot needed - see
 # docs/superpowers/specs/2026-09-03-phase-2-structural-splits-design.md §4.
+# The opening sentence asserts FRAMING only - the whole body in shot, at
+# realistic proportions. It used to open "standing at full height", which also
+# asserted a pose, and that fought {stance} on every crouching, kneeling or
+# sitting bullet: the prompt claimed both at once and the model answered by
+# rendering both, one standing figure and one crouched. The pose is {stance}'s
+# job alone. "both boots planted and fully visible" went the same way - it is
+# false for every non-standing bullet - and "the arms free" contradicted any
+# pose braced on an arm. What replaces them says only what is true of every
+# pose in the table: the feet are in frame and the pose is not rigid.
 TOKEN_TEMPLATE = (
     "A full-body character illustration of {role}, {maturity} {gender} {age}, "
     "rendered in a detailed painterly illustration style with fine grain texture, clean "
     "linework and halftone dot shading worked into the shadows, moody cinematic lighting "
     "on the figure. {Subject} {is_are} "
-    "standing at full height facing the viewer, entire body visible from the top of "
+    "facing the viewer, the whole figure in frame from the top of "
     "{possessive} head to the soles of {possessive} plain modern boots, no leg wraps or "
     "puttees, with clear empty space above and below, in realistic adult proportions "
     "roughly seven to eight heads tall. "
     "{Subject} {is_are} {height}, {build}, with {traits}{skin}, {hair}, {eyes}, and {feature}, wearing "
-    "{outfit}, {faction}, the clothing following the shape of that frame. {headgear} "
+    "{outfit}, {faction_line}the clothing following the shape of that frame. {headgear} "
     "{Possessive} face carries {demeanor}. {gear_line}{Subject} {is_are} {stance}, both "
-    "boots planted and fully visible, the pose relaxed and natural with the arms free. "
-    "{accent_line} The background alone is a solid flat plain white, no "
+    "feet in frame, the pose natural and unforced. "
+    "{glow_line} The background alone is a solid flat plain white, no "
     "texture, no gradient, no shadow, no environment. Centered composition, dramatic "
     "lighting, isolated character illustration, clean silhouette, painterly brushwork "
     "with heavy grain and dense halftone screentone worked into every shadow."
 )
 
-# The two forms {accent_line} takes, gated on has_light_source() - see there
-# for why. The "with" case keeps the original wording verbatim; the "without"
-# case drops the accent color entirely rather than inventing a source for it.
-ACCENT_PORTRAIT = (
-    "A faint {accent} glow falls across one side of {possessive} face against "
+# The forms the closing palette line takes. Two dimensions: whether anything
+# rolled for this NPC could cast a glow (has_light_source), and whether the
+# rolled Faction asserts pigment of its own ('|| palette').
+#
+# Pigment and light are different things and coexist happily - a green-and-gold
+# Harrison uniform lit by a red instrument glow reads correctly - but the
+# line's claim that the glow is the ONLY saturated colour stops being true when
+# the uniform has one, so {other} softens it. Four constants and one slot
+# rather than eight constants.
+GLOW_PORTRAIT = (
+    "A faint {glow} glow falls across one side of {possessive} face against "
     "warm dim ambient light on the other. Keep the palette restrained - greys, "
-    "olive drab and rust - with {accent} the only saturated color in the frame."
+    "olive drab and rust - with {glow} the only {other}saturated color in the frame."
 )
-ACCENT_PORTRAIT_NONE = (
-    "Keep the palette restrained - greys, olive drab and rust, with no stray "
-    "saturated color."
-)
-ACCENT_TOKEN = (
+GLOW_TOKEN = (
     "Keep the palette restrained - greys, olive drab and rust - with a single "
-    "{accent} glow the only saturated color."
+    "{glow} glow the only {other}saturated color."
 )
-ACCENT_TOKEN_NONE = (
+GLOW_NONE = (
     "Keep the palette restrained - greys, olive drab and rust, with no stray "
     "saturated color."
+)
+GLOW_NONE_PIGMENT = (
+    "Keep the rest of the palette restrained - greys, olive drab and rust."
 )
 
 
@@ -384,7 +511,7 @@ def variant_table(tables, name, subject):
     return tables[name] + tables.get("%s (%s) +" % (name, subject), [])
 
 
-def filter_by_mil(options, mil):
+def filter_by_mil(options, mil, name):
     """Faction/Outfit bullets flagged 'civ' or 'mil', filtered by a military Role.
 
     A bullet flagged 'civ' reads as plainly civilian dress and is dropped when
@@ -395,9 +522,13 @@ def filter_by_mil(options, mil):
     but shouldn't appear in uniform unless they used to serve. An unflagged
     bullet is neutral and reachable either way, the same as an untagged
     Gear/Stance entry - never filtered down to nothing.
+
+    Takes the table name because Faction keeps its flags in a third segment
+    while Outfit keeps them in a second - split_flags() on a three-segment
+    bullet would return the visual prose as flags.
     """
     exclude = "civ" if mil else "mil"
-    plain = [x for x in options if exclude not in split_flags(x)[1]]
+    plain = [x for x in options if exclude not in flags_for(name, x)]
     return plain or options
 
 
@@ -469,7 +600,7 @@ def apply_theme_share(options, theme, name, share=THEME_SHARE):
     return tagged * max(1, n) + neutral
 
 
-def apply_weapon_policy(options, category, mil):
+def apply_weapon_policy(options, category, mil, unarmed=False):
     """Bias or filter the Weapon roll to fit the NPC's Role.
 
     Three tiers, layered on top of filter_by_mil's civ/mil split:
@@ -490,25 +621,43 @@ def apply_weapon_policy(options, category, mil):
       - WEAPON_POLICY['Criminals'] ("armed_bias"): usually carrying something.
         'weapon'-flagged bullets are duplicated into the pool, the same
         trick this function used to reserve for a mil Role alone.
+      - Every other non-mil category ("civilian", DEFAULT_WEAPON_POLICY):
+        unarmed bullets are duplicated CIVILIAN_UNARMED_COPIES times so an
+        ordinary Role - anything not named in WEAPON_POLICY, which is most
+        of them - is unarmed more often than not rather than defaulting to
+        the raw, mostly-armed pool.
 
-    Any other category - or a tables file with no 'weapon'/'sidearm' flags at
-    all - rolls Weapon exactly as before: untouched.
+    Untouched is no longer reachable through category at all; it now only
+    happens for a tables file with no 'weapon'/'sidearm' flags to duplicate
+    or filter on.
     """
+    # --unarmed disarms who it can, not everyone. A mil Role's sidearm is a
+    # setting guarantee and a Criminal's armament is most of what makes them
+    # read as one; the flag exists to empty ordinary civilians' hands. Placed
+    # first so the intent is visible before the tiers it overrides, though the
+    # mil guard below would reach the same answer either way.
+    if unarmed and not mil and category != "Criminals":
+        disarmed = [x for x in options if "weapon" not in split_flags(x)[1]]
+        return disarmed or options
+
     if mil:
         armed = [x for x in options if "sidearm" in split_flags(x)[1]]
         return armed or options
 
-    policy = WEAPON_POLICY.get(category)
+    policy = WEAPON_POLICY.get(category, DEFAULT_WEAPON_POLICY)
     if policy == "restricted":
         pocketable = [
             x for x in options
             if "weapon" not in split_flags(x)[1] or "simple" in split_flags(x)[1]
         ] or options
-        unarmed = [x for x in pocketable if "weapon" not in split_flags(x)[1]]
-        return pocketable + unarmed * 5 if unarmed else pocketable
+        unarmed_bullets = [x for x in pocketable if "weapon" not in split_flags(x)[1]]
+        return pocketable + unarmed_bullets * 5 if unarmed_bullets else pocketable
     if policy == "armed_bias":
         tagged = [x for x in options if "weapon" in split_flags(x)[1]]
         return options + tagged * 4 if tagged else options
+    if policy == "civilian":
+        unarmed_bullets = [x for x in options if "weapon" not in split_flags(x)[1]]
+        return options + unarmed_bullets * CIVILIAN_UNARMED_COPIES if unarmed_bullets else options
     return options
 
 
@@ -555,7 +704,7 @@ def pronoun_fields(pronouns):
     }
 
 
-def roll_npc(tables, rng, overrides=None):
+def roll_npc(tables, rng, overrides=None, unarmed=False):
     """One NPC as a flat dict of trait -> rolled text."""
     # Pronouns first: every other table may have a per-pronoun variant, so the
     # roll that selects between them has to happen before the rest.
@@ -651,7 +800,7 @@ def roll_npc(tables, rng, overrides=None):
         # Role precedes all three in REQUIRED_TABLES, so role_mil is already
         # known.
         if name in ("Faction", "Outfit"):
-            options = filter_by_mil(options, role_mil)
+            options = filter_by_mil(options, role_mil, name)
 
         # A weapon that occupies the hands rules out equipment that also needs
         # one. Weapon precedes Gear in REQUIRED_TABLES so this flag is already
@@ -674,7 +823,7 @@ def roll_npc(tables, rng, overrides=None):
         # fallback re-admits them rather than the reverse.
         if name == "Weapon":
             options = apply_weapon_policy(
-                options, ROLE_CATEGORIES.get(npc["Role"]), role_mil)
+                options, ROLE_CATEGORIES.get(npc["Role"]), role_mil, unarmed)
 
         # 'notac' applies to both halves of the old Gear table: an elaborate or
         # traditional outfit should pair with neither a military-issue rifle
@@ -710,18 +859,21 @@ def roll_npc(tables, rng, overrides=None):
         # already had its flags stripped right here - re-splitting it there
         # would just split plain text and get nothing back.
         #
-        # Two themed tables are deliberately absent, for one shared reason:
-        # Backdrop and Hair colour each separate three fields with '||' rather
-        # than two, so split_flags() would take the third table's prose - a
-        # Backdrop's scene, a Hair colour's tail - for flags and throw it
+        # Three tables are deliberately absent, for one shared reason:
+        # Backdrop, Hair colour and Faction each separate three fields with
+        # '||' rather than two, so split_flags() would take the third table's
+        # prose - a Backdrop's scene, a Hair colour's tail, a Faction's
+        # visual signature (the second segment, the description that reaches
+        # the image prompt in place of the name) - for flags and throw it
         # away. Each is unpacked by its own splitter instead, Backdrop by
         # split_backdrop() downstream in build_prompts() and write_dossier(),
-        # Hair colour by split_hair_colour() further down this function. A
-        # newly themed table belongs in the list below only if its bullets are
-        # the ordinary two-segment shape. Gear is absent for an unrelated
+        # Hair colour by split_hair_colour() further down this function,
+        # Faction by split_faction() in build_prompts() and write_dossier().
+        # A newly themed table belongs in the list below only if its bullets
+        # are the ordinary two-segment shape. Gear is absent for an unrelated
         # reason - its own flags gate the Stance roll further down, so it is
         # split there instead.
-        if name in ("Age", "Build", "Role", "Faction", "Outfit",
+        if name in ("Age", "Build", "Role", "Outfit",
                     "Hair", "Feature", "Headgear", "Weapon"):
             value, flags = split_flags(value)
             if name == "Age":
@@ -757,7 +909,21 @@ def roll_npc(tables, rng, overrides=None):
     # in their pockets, which is the pairing this filter exists to stop.
     carried_flags = weapon_flags + gear_flags
     stances = [split_flags(x) for x in variant_table(tables, "Stance", subject)]
-    if "gun" not in carried_flags:
+    # Two flags, one hierarchy. 'armed' marks a pose that references a weapon
+    # of any kind - a blade held, a hilt gripped, a weapon raised overhead;
+    # 'gun' marks the narrower case of a firearm being handled. An NPC whose
+    # Weapon roll came up empty can wear neither, or the prompt poses them
+    # brandishing something no earlier sentence names. Before 'armed' existed
+    # only 'gun' was gated, so seven melee poses could land on an unarmed
+    # figure - rare on a plain roll, routine under --unarmed.
+    #
+    # The unarmed bullet is identified by its 'none' flag, which used to be an
+    # inert marker and is now load-bearing; the Weapon table's comment says so.
+    if "none" in weapon_flags:
+        disarmed = [x for x in stances
+                    if "armed" not in x[1] and "gun" not in x[1]]
+        stances = disarmed or stances      # never filter the pool down to nothing
+    elif "gun" not in carried_flags:
         unarmed = [x for x in stances if "gun" not in x[1]]
         stances = unarmed or stances       # never filter the pool down to nothing
     if "hands" in carried_flags:
@@ -804,7 +970,6 @@ def roll_npc(tables, rng, overrides=None):
     # Same reason as Age: a --set-trait override for any of these pastes the
     # raw bullet text back over the split-out value above, flag and all.
     npc["Role"] = split_flags(npc["Role"])[0]
-    npc["Faction"] = split_flags(npc["Faction"])[0]
     npc["Outfit"] = split_flags(npc["Outfit"])[0]
     # The themed tables need it too, and Gear along with them: its split above
     # happens before this update, so --set-trait Gear='a rifle || hands gun'
@@ -947,6 +1112,31 @@ def split_hair_colour(bullet):
     return base, tail, flags
 
 
+def split_faction(bullet):
+    """A Faction bullet carries the name, an optional visual, and flags.
+
+    Three segments, the same shape split_backdrop() and split_hair_colour()
+    use, and for the same reason: two of them are prose that goes to different
+    places and only the third is flags.
+
+    The name is what the dossier and the GUI print - "Smith-Shimano Corpro".
+    The visual is what reaches the image prompt, and it is deliberately allowed
+    to be empty: two entries here are non-affiliations with nothing to show.
+
+    The split exists because the single-segment form put a garment CATEGORY
+    ("corporate wear", "service dress") in the prompt immediately after
+    Outfit's specific garment description, competing with it for the same slot
+    and losing every time - deleting the whole Faction clause from a prompt
+    changed the render not at all. The visual segment is written to describe
+    what Outfit does not: fabric, tailoring, insignia, patina.
+    """
+    parts = [p.strip() for p in bullet.split("||")]
+    name = parts[0]
+    visual = parts[1] if len(parts) > 1 else ""
+    flags = tuple(f for f in parts[2].split() if f) if len(parts) > 2 else ()
+    return name, visual, flags
+
+
 def themes_of(flags):
     """The '@theme' tags among a bullet's flags, with the '@' stripped.
 
@@ -965,16 +1155,18 @@ def themes_of(flags):
 def flags_for(name, bullet):
     """A bullet's flag tuple, whichever '||' shape its table uses.
 
-    Backdrop and Hair colour both carry three segments and keep their flags in
-    the third, so a two-segment bullet of either has no flags at all - its
-    second segment is prose. Every other table keeps flags in the second
-    segment. Reading the last segment blindly would mistake a Backdrop's scene
-    or a Hair colour's tail for flags.
+    Backdrop, Hair colour and Faction all carry three segments and keep their
+    flags in the third, so a two-segment bullet of any of them has no flags at
+    all - its second segment is prose. Every other table keeps flags in the
+    second segment. Reading the last segment blindly would mistake a
+    Backdrop's scene, a Hair colour's tail or a Faction's visual for flags.
     """
     if name == "Backdrop":
         return split_backdrop(bullet)[2]
     if name == "Hair colour":
         return split_hair_colour(bullet)[2]
+    if name == "Faction":
+        return split_faction(bullet)[2]
     return split_flags(bullet)[1]
 
 
@@ -1051,11 +1243,10 @@ def build_prompts(npc):
         "feature": npc["Feature"],
         "outfit": npc["Outfit"],
         "headgear": npc["Headgear"],
-        "faction": npc["Faction"],
         "demeanor": npc["Demeanor"],
         "weapon": weapon,
         "gear": npc["Gear"],
-        "accent": npc["Accent"],
+        "glow": npc["Glow colour"],
         "shot": shot,
         "backdrop": scene,
         "stance": npc["Stance"],
@@ -1067,7 +1258,23 @@ def build_prompts(npc):
     # str.format does a single pass and would leave any nested placeholder raw.
     carrying = carry_sentence(fields, weapon, npc["Gear"])
 
-    # The accent glow only belongs in the prompt when something rolled for
+    # Pre-formatted rather than a bare slot, because a Faction with no visual
+    # signature - the two non-affiliations - would otherwise leave a doubled
+    # comma in the middle of the clothing sentence. Same reason gear_line is
+    # assembled here rather than substituted raw.
+    _, faction_visual, faction_flags = split_faction(npc["Faction"])
+    fields["faction_line"] = "%s, " % faction_visual if faction_visual else ""
+
+    # A Faction flagged 'palette' asserts pigment of its own - dye in cloth,
+    # not light - so the closing line's claim that the glow is the ONLY
+    # saturated colour has to soften to "the only other saturated color", and
+    # the no-glow case has to drop its "no stray saturated color" claim
+    # entirely rather than contradict the uniform it just described.
+    pigment = "palette" in faction_flags
+    fields["other"] = "other " if pigment else ""
+    none_line = GLOW_NONE_PIGMENT if pigment else GLOW_NONE
+
+    # The glow colour only belongs in the prompt when something rolled for
     # this NPC would actually cast it. Equipped sources (something worn or
     # carried) apply to both shots; the backdrop's own light - a neon sign, an
     # instrument panel, a muzzle flash - only reaches the portrait, since the
@@ -1085,10 +1292,10 @@ def build_prompts(npc):
     # rolled Stance, so nothing there contradicts what the NPC carries.
     portrait_fields = dict(
         fields, gear_line="" if "nogear" in flags else carrying,
-        accent_line=(ACCENT_PORTRAIT if portrait_glow else ACCENT_PORTRAIT_NONE).format(**fields))
+        glow_line=(GLOW_PORTRAIT if portrait_glow else none_line).format(**fields))
     token_fields = dict(
         fields, gear_line=carrying,
-        accent_line=(ACCENT_TOKEN if equipped_glow else ACCENT_TOKEN_NONE).format(**fields))
+        glow_line=(GLOW_TOKEN if equipped_glow else none_line).format(**fields))
 
     prompts = (PORTRAIT_TEMPLATE.format(**portrait_fields),
                TOKEN_TEMPLATE.format(**token_fields))
@@ -1146,7 +1353,7 @@ def write_dossier(path, npc, seed, prompts, images):
         # written before Theme existed still writes a dossier rather than raising.
         ("Theme", npc.get("Theme", "-")),
         ("Role", npc["Role"]),
-        ("Affiliation", npc["Faction"]),
+        ("Affiliation", split_faction(npc["Faction"])[0]),
         ("Age", npc["Age"]),
         ("Height", npc["Height"]),
         ("Build", npc["Build"]),
@@ -1158,7 +1365,7 @@ def write_dossier(path, npc, seed, prompts, images):
         ("Wearing", npc["Outfit"]),
         ("Carrying", npc["Gear"]),
         ("Armed with", npc.get("Weapon", "-") or "unarmed"),
-        ("Accent color", npc["Accent"]),
+        ("Glow colour", npc["Glow colour"]),
         ("Portrait shot", split_backdrop(npc["Backdrop"])[0]),
         ("Portrait scene", split_backdrop(npc["Backdrop"])[1]),
         ("Portrait weather", weather_sentence(npc) or (
@@ -1170,7 +1377,7 @@ def write_dossier(path, npc, seed, prompts, images):
     lines = [
         "# %s" % npc["name"],
         "",
-        '"%s" - %s, %s.' % (npc["Callsigns"], npc["Role"], npc["Faction"]),
+        '"%s" - %s, %s.' % (npc["Callsigns"], npc["Role"], split_faction(npc["Faction"])[0]),
         "",
         "Rolled by `generate-npc.py` on %s with `--seed %d`. Re-rolling with that"
         % (time.strftime("%Y-%m-%d"), seed),
@@ -1294,6 +1501,10 @@ def parse_args(argv=None):
                       help="force one rolled trait, e.g. --set-trait Role='a field medic' "
                            "or --set-trait Theme=neosamurai to pin a whole group to one look "
                            "(repeatable; table names are the markdown headings)")
+    roll.add_argument("--unarmed", action="store_true",
+                      help="roll every NPC unarmed, except military Roles and "
+                           "Criminals - a soldier's sidearm and a pirate's "
+                           "armament are what make them read as one")
 
     gen = p.add_argument_group("generation")
     gen.add_argument("--workflow", type=Path, default=art.DEFAULT_WORKFLOW,
@@ -1364,6 +1575,7 @@ def parse_args(argv=None):
                 ("--count", args.count != 1), ("--seed", args.seed is not None),
                 ("--name", bool(args.name)), ("--pronouns", bool(args.pronouns)),
                 ("--set-trait", bool(args.set_trait)),
+                ("--unarmed", args.unarmed),
             ) if given
         ]
         if conflicting:
@@ -1492,7 +1704,7 @@ def regenerate_one(args):
     if entry is None:
         raise SystemExit("--regen-id %r: no such entry in %s" % (args.regen_id, args.regen_manifest))
 
-    npc = dict(entry["traits"])
+    npc = migrate_traits(entry["traits"])
     npc["_pronouns"] = pronoun_fields(npc["Pronouns"])
     if "young" not in entry:
         print("! %s has no recorded 'young' flag (written by an older version of this script) - "
@@ -1668,7 +1880,7 @@ def main(argv=None):
     rolled = []
     for n in range(args.count):
         seed = base_seed + n
-        npc = roll_npc(tables, random.Random(seed), overrides)
+        npc = roll_npc(tables, random.Random(seed), overrides, args.unarmed)
         rolled.append((seed, npc, build_prompts(npc)))
 
     print("%s: %d tables, %d NPC(s) rolled from base seed %d" % (
@@ -1678,7 +1890,7 @@ def main(argv=None):
     if args.dry_run:
         for seed, npc, (portrait_prompt, token_prompt) in rolled:
             print("\n  %s  \"%s\"  (seed %d)" % (npc["name"], npc["Callsigns"], seed))
-            print("    %s, %s" % (npc["Role"], npc["Faction"]))
+            print("    %s, %s" % (npc["Role"], split_faction(npc["Faction"])[0]))
             print("    -> %s" % (npc_folder(args.out, npc["name"], role_category(npc), args.overwrite)))
             print("    workflow %s" % workflow_for(args, npc).name)
             if not args.no_portrait:
@@ -1743,7 +1955,7 @@ def main(argv=None):
         tag = "[%d/%d]" % (index, len(rolled))
 
         print("\n%s %s  \"%s\"  seed=%d" % (tag, npc["name"], npc["Callsigns"], seed))
-        print("    %s, %s" % (npc["Role"], npc["Faction"]))
+        print("    %s, %s" % (npc["Role"], split_faction(npc["Faction"])[0]))
 
         written = []
         portrait_file = token_file = None

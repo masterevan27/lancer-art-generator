@@ -82,5 +82,86 @@ class TestWeaponRoll(unittest.TestCase):
         self.assertNotIn("Gear", gen.THEMED_TABLES)
 
 
+class TestCivilianWeaponPolicy(unittest.TestCase):
+    """Seven Roles reached apply_weapon_policy with no policy at all.
+
+    WEAPON_POLICY only named Officials and Criminals, so a dockworker, a
+    maintenance technician or a data courier rolled the raw pool - measured at
+    65% armed against the live tables, because Weapon deliberately sits
+    outside the civ/mil filter and a civilian can reach every military bullet
+    in it.
+    """
+
+    def unarmed_share(self, options):
+        unarmed = [x for x in options if "weapon" not in gen.split_flags(x)[1]]
+        return len(unarmed) / len(options)
+
+    def test_an_uncategorised_civilian_role_gets_the_civilian_tier(self):
+        """The default, not another hardcoded bucket - so a Role added to the
+        table later is covered without also needing a ROLE_CATEGORIES entry."""
+        biased = gen.apply_weapon_policy(TABLES["Weapon"], None, False)
+        self.assertGreater(self.unarmed_share(biased), 0.6)
+
+    def test_a_named_civilian_category_gets_it_too(self):
+        biased = gen.apply_weapon_policy(TABLES["Weapon"], "Laborers", False)
+        self.assertGreater(self.unarmed_share(biased), 0.6)
+
+    def test_the_civilian_tier_leaves_armed_rolls_reachable(self):
+        """Two-thirds unarmed, not always unarmed."""
+        biased = gen.apply_weapon_policy(TABLES["Weapon"], "Laborers", False)
+        self.assertLess(self.unarmed_share(biased), 0.95)
+
+    def test_criminals_keep_their_armed_bias(self):
+        biased = gen.apply_weapon_policy(TABLES["Weapon"], "Criminals", False)
+        self.assertLess(self.unarmed_share(biased),
+                        self.unarmed_share(TABLES["Weapon"]))
+
+    def test_officials_keep_their_restriction(self):
+        biased = gen.apply_weapon_policy(TABLES["Weapon"], "Officials", False)
+        self.assertGreater(self.unarmed_share(biased), 0.6)
+
+    def test_a_mil_role_is_unaffected_by_the_civilian_default(self):
+        """The mil branch returns before policy is consulted."""
+        armed = gen.apply_weapon_policy(TABLES["Weapon"], None, True)
+        self.assertEqual(self.unarmed_share(armed), 0.0)
+
+
+class TestUnarmedFlag(unittest.TestCase):
+    """--unarmed disarms who it can, not everyone.
+
+    Soldiers, pilots and other mil Roles keep their guaranteed sidearm, and so
+    do Criminals - a pirate with empty hands is not what the flag is for. It
+    disarms the civilians, who are the ones you actually want unarmed when you
+    are populating a market or a dockside.
+    """
+
+    def test_a_civilian_is_disarmed(self):
+        for seed in range(50):
+            npc = gen.roll_npc(TABLES, random.Random(seed),
+                               {"Role": "a dockworker"}, unarmed=True)
+            self.assertEqual(npc["Weapon"], "",
+                             "seed %d: a civilian rolled armed under --unarmed" % seed)
+
+    def test_a_mil_role_stays_armed(self):
+        for seed in range(50):
+            npc = gen.roll_npc(TABLES, random.Random(seed),
+                               {"Role": "a Union marine soldier || mil"}, unarmed=True)
+            self.assertNotEqual(npc["Weapon"], "",
+                                "seed %d: a mil Role was disarmed" % seed)
+
+    def test_criminals_stay_armed_at_the_policy_level(self):
+        biased = gen.apply_weapon_policy(TABLES["Weapon"], "Criminals", False, unarmed=True)
+        armed = [x for x in biased if "weapon" in gen.split_flags(x)[1]]
+        self.assertTrue(armed, "--unarmed emptied the Criminals pool")
+
+    def test_the_default_is_unchanged(self):
+        """Omitting the flag must not disarm anyone."""
+        self.assertTrue(
+            any(gen.roll_npc(TABLES, random.Random(s),
+                             {"Role": "a dockworker"})["Weapon"] != ""
+                for s in range(100)),
+            "a civilian never rolled armed without --unarmed")
+
+
 if __name__ == "__main__":
     unittest.main()

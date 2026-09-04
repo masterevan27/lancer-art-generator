@@ -1,6 +1,6 @@
 ---
 name: npc-trait-import
-description: Extract Backdrop scenes, Stance poses, Gear/weapons, Outfit, Headgear, Hair, Demeanor (facial expression), Faction and Accent-color entries from reference images and stage them as importable candidate entries in a timestamped JSON file, for later selective review/import into npc-generator-tables.md (by the import webpage or by hand) rather than editing that file directly. Use whenever the user shares one or more reference images (pasted inline or given as file paths) from this Lancer campaign's ComfyUI/Krea pipeline and asks to add, extract, stage, or import backdrops, scenes, poses, gear, weapons, outfits, headgear, hairstyles, or expressions "from these" or "in our house style" into the NPC generator.
+description: Extract Backdrop scenes, Stance poses, Gear/weapons, Outfit, Headgear, Hair, Demeanor (facial expression), Faction and Glow colour entries from reference images and stage them as importable candidate entries in a timestamped JSON file, for later selective review/import into npc-generator-tables.md (by the import webpage or by hand) rather than editing that file directly. Use whenever the user shares one or more reference images (pasted inline or given as file paths) from this Lancer campaign's ComfyUI/Krea pipeline and asks to add, extract, stage, or import backdrops, scenes, poses, gear, weapons, outfits, headgear, hairstyles, or expressions "from these" or "in our house style" into the NPC generator.
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 argument-hint: [image paths or a directory, or omit to use images already shown in the conversation]
 model: sonnet
@@ -28,8 +28,9 @@ context for someone else (or a later pass) to insert it correctly.
 
 Before writing anything, read `## How the script reads this file` at the top
 of `npc-generator-tables.md` in full, **and the HTML comment above whichever
-tables you're writing into** — the Weapon, Gear, Outfit and Hair colour
-comments carry flag rules that the top-of-file section only summarizes.
+tables you're writing into** — the Weapon, Gear, Outfit, Faction and Hair
+colour comments carry flag rules that the top-of-file section only
+summarizes.
 
 That file is the authoritative spec for `xN` weights, the `||` flag
 conventions, and the pronoun placeholders. As of this writing the flags are:
@@ -40,6 +41,7 @@ conventions, and the pronoun placeholders. As of this writing the flags are:
 | `gun` | Weapon, Stance | Weapon: an actual firearm *held in hand*. Stance: a pose that aims/fires/handles a weapon. |
 | `mil` | Role, Faction, Outfit, Weapon, Gear | Issued uniform / military-issue equipment. Dropped for a civilian Role. |
 | `civ` | Faction, Outfit | Plainly civilian dress. Dropped for a `mil` Role. |
+| `palette` | Faction | The faction asserts colours of its own (dye in cloth, not light) — softens the closing glow-colour line from "the only saturated color" to "the only *other* saturated color" so pigment and glow can coexist. A faction with no colour scheme of its own must not carry it. |
 | `weapon` | Weapon | An actual weapon, as opposed to equipment that merely *is* `mil` (a radio, a pack). |
 | `simple` | Weapon | A `weapon` small and pocketable — a knife, one holstered pistol. |
 | `sidearm` | Weapon | A bullet that explicitly includes a **holstered or openly worn** pistol. |
@@ -108,7 +110,7 @@ Three flag traps worth stating outright, because each has been gotten wrong:
     lands in the flag segment) — it's just silently ignored as an
     unrecognized flag, the same as any other typo'd flag, and the bullet
     stays reachable from every theme regardless of the tag. On `Skin`,
-    `Eyes`, `Demeanor`, `Accent`, `Height` and the name tables a tag is
+    `Eyes`, `Demeanor`, `Glow colour`, `Height` and the name tables a tag is
     *worse* than silently ignored: those are never split on `||` at all, so
     a bullet reading `- chrome-inlaid irises || @cyberpunk` ships the literal
     text `|| @cyberpunk` to the image model and prints it in the dossier.
@@ -219,8 +221,8 @@ subagents, but hold these lines, all of which have failed in practice:
 | A helmet, hood, hat, or headset | **Headgear** (or `Headgear (she) +`) | Full sentence: `{Subject} {wear} ...`. |
 | A hairstyle/cut visible on its own (not tucked under headgear) | **Hair** (or `Hair (she) +` / `Hair (he) +` if the cut only reads on one gender) | Noun phrase with exactly one `{colour}` placeholder standing in for the shade — no literal color word, no flags. If headgear covers all but a fringe or a couple of strands, it's fine to note that (existing bullets do), but the cut itself is still what gets recorded. A distinctive *shade* seen in the image (not just the cut) is a separate `Hair colour` candidate — see the note on that table's shape in §0. |
 | A distinctive facial expression / mood on the subject | **Demeanor** (or `Demeanor (she) +`) | Noun phrase describing the look, not the backstory behind it — "a wry, crooked grin," not "someone who's seen a lot." |
-| An insignia, unit livery, or faction-defining look | **Faction** | Short phrase starting "in ..." or similar. |
-| A distinctive glow/neon color with nothing else new | **Accent** | Just the color name — see the palette rule below before adding one. |
+| An insignia, unit livery, or faction-defining look | **Faction** | `name || visual || flags` — the name is dossier-only; the visual is the only part that reaches the prompt, and it must describe fabric, tailoring, insignia or patina, **never a garment category** (that loses to `Outfit` every time). Tag `palette` if the faction asserts colours of its own. See §4 for the full shape. |
+| A distinctive glow/neon color with nothing else new | **Glow colour** | Just the color name — see the palette-strip rule below before adding one. |
 
 Most reference images you'll be handed for this campaign are wide "hero
 shot" environments (a mech towering over a street, a ruin, a battlefield) —
@@ -234,16 +236,16 @@ shot where the face is small or averted.
 This is the part that actually requires judgment — a literal description of
 the image will not fit this file. Apply all of these:
 
-- **Strip literal glow/neon colors.** The Accent table supplies the *one*
+- **Strip literal glow/neon colors.** The Glow colour table supplies the *one*
   saturated color in the frame, and `has_light_source()` in `generate-npc.py`
   only lights the palette when something in the rolled text implies a light
-  source at all. Write "a glowing accent" / "optics burning dull red" /
+  source at all. Write "a glowing detail" / "optics burning dull red" /
   "sensor clusters glowing" — implying light without hardcoding a color that
-  would fight the rolled Accent. (One existing exception worth matching: named
-  colors already baked into a few Backdrop bullets, like "dull rust-toned" for
-  a kaiju silhouette or "dull amber" beacons — those read as scene color, not
-  the accent glow, and are fine to keep if the reference image's color is
-  scene-defining rather than a single light source.)
+  would fight the rolled Glow colour. (One existing exception worth matching:
+  named colors already baked into a few Backdrop bullets, like "dull
+  rust-toned" for a kaiju silhouette or "dull amber" beacons — those read as
+  scene color, not the glow, and are fine to keep if the reference image's
+  color is scene-defining rather than a single light source.)
 - **Take content and staging, never rendering style.** If the reference is
   cel-shaded, photographic, anime, or otherwise off-style, ignore that
   entirely — the shared prompt templates already assert this campaign's
@@ -303,8 +305,22 @@ the image will not fit this file. Apply all of these:
   clause for gradients, and `older` is the only flag. See the consonant and
   tail traps in §0 before adding a shade.
 - **Demeanor**: `<noun phrase>` (no flags, no placeholders — dropped straight into "{POSSESSIVE} face carries **{DEMEANOR}**")
-- **Faction**: `<short phrase, usually starting "in ..."> || [civ] [mil]`
-- **Accent**: `<color name only>`, e.g. `dull rust-orange`
+- **Faction**: `<name> || <visual, about a dozen words> || [civ] [mil] [palette]`
+  — the `name` is what the dossier and the Import GUI print ("Smith-Shimano
+  Corpro"); the `visual` is the *only* part that reaches the image prompt, and
+  must describe fabric, tailoring, insignia or patina — **never a garment
+  category** ("corporate wear", "service dress"), which loses every time to
+  Outfit's specific garment description sitting right next to it in the same
+  sentence. Leave the visual segment empty (`name || || flags`) for a
+  non-affiliation with nothing to show. Add `palette` only when the faction
+  asserts colours of its own (dye in cloth, not light) — it softens the
+  closing glow-colour line so pigment and glow can coexist; a faction with no
+  colour scheme of its own must not carry it.
+- **Glow colour**: `<hue only, never a light-emitting phenomenon>`, e.g.
+  `dull rust-orange` or `vivid cobalt blue` — both templates wrap the value as
+  "**{glow}** glow", so a phenomenon word reads wrong ("electric blue" comes
+  out as arcing electricity, "neon cyan" pulls neon tubing into frame). Say
+  the shade and let the template supply the glow.
 
 This is the exact text that will eventually follow `- ` in the table file —
 write it as that final form, not a description of it. Only use a placeholder
@@ -353,7 +369,7 @@ Write one JSON file per skill run to
       "source_image": "colossal-insect-warmachine.png",
       "placement_hint": "next to the other mech-companion / cityscape Backdrop bullets",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count in the ## Weather section comment and in docs/generate-npc.md's roll-table enumeration",
-      "notes": "nogear because the sentence already puts a weapon in the subject's hands; glow left uncolored so it doesn't fight the rolled Accent"
+      "notes": "nogear because the sentence already puts a weapon in the subject's hands; glow left uncolored so it doesn't fight the rolled Glow colour"
     }
   ],
   "skipped": [
@@ -508,7 +524,7 @@ file, `prompts/staged-imports/2026-09-01-142300.json`:
       "source_image": "insect-warmachine-street.png",
       "placement_hint": "next to the other mech-companion / cityscape Backdrop bullets",
       "bookkeeping_note": "adds one to the weather-flagged Backdrop count",
-      "notes": "nogear because a weapon is already in the subject's hands; no color name on the war-machine's glow so it doesn't fight the rolled Accent"
+      "notes": "nogear because a weapon is already in the subject's hands; no color name on the war-machine's glow so it doesn't fight the rolled Glow colour"
     },
     {
       "id": "e2",

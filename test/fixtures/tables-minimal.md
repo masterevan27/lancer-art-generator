@@ -58,8 +58,8 @@ Used by the test suite. Not used by the generator at runtime.
 - a Union marine soldier || mil
 
 ## Faction
-- unaligned and freelance
-- in dress uniform || mil
+- Unaligned || unaligned and freelance
+- Dress uniform || in dress uniform || mil
 
 ## Outfit
 - grey coveralls
@@ -89,7 +89,7 @@ exists to prevent cannot be produced at all.
 - a canvas tool roll at the hip
 - a hard-shelled tactical backpack || mil
 
-## Accent
+## Glow colour
 - teal-green
 
 ## Backdrop
@@ -105,3 +105,4 @@ exists to prevent cannot be produced at all.
 - standing squarely
 - {possessive} hands in {possessive} pockets || hands
 - {possessive} weapon raised and sighted down the barrel || gun
+- one hand resting on a sheathed blade at the hip || armed
