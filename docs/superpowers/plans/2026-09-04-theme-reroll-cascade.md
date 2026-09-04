@@ -33,6 +33,25 @@ not two. Every filter then runs exactly as it does for a fresh roll, because it
 *is* a fresh roll, which is what deletes the eleven hand-written filter
 rebuilds in `reroll_trait()` rather than extending them.
 
+> **Amended after Task 2 (see the ledger's plan-defect ruling).** The claim
+> above — raw-bullets §2.1's "it *is* a fresh roll with one free variable" — is
+> true downstream and **false upstream**. A pinned trait is never drawn, so the
+> filter that would have constrained it never runs: re-roll `Role` and the kept
+> `Faction` sits on the wrong side of civ/mil 138 times in 400 on the live
+> tables, measured by the implementer and re-verified at the controller. Since
+> those traits are *refused* today, widening them without cascades trades a
+> refusal for a contradiction.
+>
+> So `free` is never a single trait. It is the target's **cascade** — the
+> target plus the transitive closure of everything whose filters read a flag
+> from it, which is exactly the rule cascade §3 states for Theme. Tasks 3–4 are
+> rewritten to build that map and derive every cascade from it. `THEME_CASCADE`
+> becomes the closure of `Theme`, which is verified to be exactly the twelve
+> traits spec §3 names — so the map *derives* the spec's tuple instead of
+> restating it, which is the property spec §4 asked for. For a trait with no
+> dependents the cascade is just itself, so the eleven traits that re-roll
+> cleanly today are unaffected.
+
 ### Scope: this repository only
 
 The spec spans two repositories. §5 ("The import GUI") describes
@@ -199,98 +218,143 @@ they cover the legacy path, which must not change):
   the rest with today's message (§4.5) — assert the legacy path is untouched.
 - `Theme` is still refused in this task, on both paths.
 
-## Task 3 — `THEME_CASCADE`, and the different-theme draw
+## Task 3 — The trait dependency map, and cascades derived from it
 
-**Files:** `generate-npc.py`, `test/test_theme_cascade.py` (new)
+**Files:** `generate-npc.py`, `test/test_trait_cascades.py` (new)
 
-Spec: cascade §3, §4, §4.1.
+Spec: cascade §3, §4, §4.1 — generalised, per the ledger's plan-defect ruling.
 
-1. **Define `THEME_CASCADE`** beside `THEMED_TABLES`, exactly as the spec
-   writes it:
+**Why this task changed shape.** Task 2 shipped the raw-bullets re-roll and
+measured a contradiction the specs did not anticipate: a one-free-variable
+re-roll filters the *freed* trait against everything pinned, but never
+re-filters a *pinned* trait against the new one. Re-rolling `Role` strands the
+kept `Faction` on the wrong side of civ/mil 138 times in 400 on the live
+tables (verified twice — implementer and controller). Raw bullets cannot fix
+this; it is the reverse direction. Cascade §3 already states the cure — re-roll
+the target plus everything whose filters read a flag from it — and Theme is one
+instance of it rather than a special case. So build the general thing.
 
-   ```python
-   THEME_CASCADE = ("Theme",) + THEMED_TABLES + ("Gear", "Stance",
-                                                 "Glow placement", "Weather")
-   ```
+1. **Define the dependency map**, as data, beside `THEMED_TABLES`. Each entry is
+   "re-rolling this trait invalidates these", with the *reason* named in a
+   comment the way this file names every other reason:
 
-   Comment it with *why each of the four dependents is there* — Gear on the
-   Weapon's `hands` and the Outfit's `notac`; Stance on the combined
-   Weapon/Gear flags; Glow placement on the Backdrop's light source via
-   `has_light_source(split_backdrop(...))`; Weather on the Backdrop's `weather`
-   flag. Spec §3's table is the source; put the reasoning in the file, not a
-   pointer to the doc alone.
-2. **A helper for the new theme.** Theme is drawn at `generate-npc.py:926`
+   - `Theme` → the seven `THEMED_TABLES` (selected by theme, not by a flag).
+     Derive this entry from `THEMED_TABLES`; do not type the seven out.
+   - `Role` → `Faction`, `Outfit`, `Weapon` (all read Role's `mil`; Outfit also
+     reads its dress policy via `ROLE_CATEGORIES`).
+   - `Outfit` → `Headgear`, `Gear`, `Weapon` (all read Outfit's `notac`).
+   - `Weapon` → `Gear`, `Stance` (read its `hands` and `gun`).
+   - `Gear` → `Stance` (the combined hands filter).
+   - `Backdrop` → `Weather` (its `weather` flag), `Glow placement`
+     (`has_light_source(split_backdrop(...))`).
+   - `Hair colour` → `Hair` (the cut carries a `{colour}` slot filled from it).
+   - `Age` → `Build` and `Build` → `Age` (the `young`/`figure` pairing runs both
+     ways — the map is deliberately not acyclic, so the closure below must
+     tolerate a cycle rather than assume a DAG).
+
+2. **Derive each trait's cascade as the transitive closure** of its dependents,
+   including itself. One small function; it must terminate on the Age/Build
+   cycle. Return the result ordered by `REQUIRED_TABLES` so it can never
+   disagree with the roller's own order — the property spec §4 asks for.
+
+3. **`THEME_CASCADE` is the closure of `Theme`, not a hand-written tuple.**
+   Verified at the controller: that closure is *exactly* the twelve traits
+   spec §3 names — `Theme`, the seven themed tables, plus `Gear`, `Stance`,
+   `Glow placement` and `Weather`, which arrive transitively through `Outfit`,
+   `Weapon` and `Backdrop`. Keep the name `THEME_CASCADE` (spec §4 and the GUI
+   handoff both refer to it) but bind it to the derived value. This is what
+   spec §4 wanted: a table added to `THEMED_TABLES` next month is covered with
+   no edit here.
+
+4. **The different-theme draw** (§4.1). Theme is drawn at `generate-npc.py:926`
    with a bare `rng.choice(tables["Theme"])` — bare-name bullets, no
-   `variant_table()`, no flags. So "repeat until it differs" (§4.1) is
-   implemented as drawing from the pool with the current theme excluded, which
-   is distribution-equivalent to rejection sampling and cannot loop forever.
-   Say that in the comment, because a reader who has read §4.1 will expect a
-   retry loop and deserves to know why there isn't one.
+   `variant_table()`, no flags. So "repeat until it differs" is implemented as
+   drawing from the pool with the current theme excluded, which is
+   distribution-equivalent to rejection sampling and cannot loop forever. Say
+   that in the comment: a reader who has read §4.1 will expect a retry loop and
+   deserves to know why there isn't one. When excluding the old theme empties
+   the pool — a table offering only one theme — proceed with the theme it has
+   and say so on stderr, per §4.1.
 
-   When excluding the old theme empties the pool — a table offering only one
-   theme — proceed with the theme it has and say so on stderr, per §4.1.
+**Tests** (`test/test_trait_cascades.py`):
 
-**Tests** (`test/test_theme_cascade.py`):
+- The closure of `Theme` is exactly the twelve traits spec §3 names. **Write
+  the twelve out literally in the test** — this is where the spec's claim gets
+  pinned, and deriving both sides from the same expression would assert
+  nothing.
+- The keep-set (`REQUIRED_TABLES` minus the Theme cascade) is exactly the
+  thirteen §3 names, written out literally for the same reason.
+- Every member of `THEMED_TABLES` is in the Theme cascade — the property that
+  makes a future themed table covered without an edit.
+- Every cascade is a subset of `REQUIRED_TABLES`, contains its own trait, and
+  has no duplicates.
+- The closure terminates on the `Age`/`Build` cycle and yields `{Age, Build}`
+  from either end.
+- Every cascade is ordered consistently with `REQUIRED_TABLES`.
+- The theme draw never returns the old theme over many seeds on a multi-theme
+  table, and returns the only theme with a notice on a single-theme one. Build
+  a one-theme table in the test; do not edit the shared fixture.
 
-- `THEME_CASCADE` has no duplicates and every member is in `REQUIRED_TABLES`.
-- It is exactly twelve entries, and the derived keep-set is exactly the
-  thirteen §3 names. Write the thirteen out in the test: the test is where
-  the spec's claim gets pinned, and deriving both sides from the same
-  expression would assert nothing.
-- Every member of `THEMED_TABLES` is in `THEME_CASCADE` (the property that
-  makes a future themed table covered without an edit).
-- The theme draw never returns the old theme, over many seeds, on a
-  multi-theme table; and returns the only theme, with a notice, on a
-  single-theme one. Build a one-theme fixture in the test rather than editing
-  the shared fixture file.
+## Task 4 — Wire every cascade through `--reroll-trait`
 
-## Task 4 — Wire `--reroll-trait Theme` through the cascade
+**Files:** `generate-npc.py`, `test/test_trait_cascades.py`,
+`test/test_reroll_trait.py`
 
-**Files:** `generate-npc.py`, `test/test_theme_cascade.py`
+Spec: cascade §4, §4.2, §8.2–§8.6, plus the ledger's plan-defect ruling.
 
-Spec: cascade §4, §4.2, §8.2–§8.6.
-
-1. **`reroll_theme_cascade(tables, npc, rng)`.** Draw the new theme (Task 3
-   helper), then call `reroll_from_raw()` (Task 2) with the eleven other
-   cascade members free and the new `Theme` pinned as an override — so Theme
-   takes the drawn value rather than a fresh uniform draw. Return enough for
-   the caller to report every changed trait, not just one.
-2. **Dispatch.** `reroll_trait()` routes `Theme` to the cascade when `_raw` is
-   recorded, and `Theme` joins the raw-path re-rollable set from Task 2.
+1. **Route every re-roll through its cascade.** `reroll_trait()` already
+   prefers the raw path when `_raw` is recorded (Task 2); it now calls
+   `reroll_from_raw()` with the target's **cascade** as the free set rather
+   than the single trait. For a dependency-free trait the cascade is just
+   itself, so the eleven traits that re-roll cleanly today are unchanged —
+   confirm that rather than assume it.
+2. **Theme.** Its cascade is the twelve. Draw the new theme with Task 3's
+   helper and pin it as an override so Theme takes the drawn value rather than
+   a fresh uniform draw; the other eleven are free.
 3. **§4.2 refusal, verbatim.** An entry without `rawTraits` asked to re-roll
-   `Theme` gets the spec's message — the reason, and the traits it *can* still
+   `Theme` gets the spec's message — the reason, and the traits it can still
    re-roll. Not a silent fallback to a partial cascade. Update
-   `UNREROLLABLE_REASONS["Theme"]`, whose current text ("which would all have
-   to re-roll with it") is now describing what the feature does rather than
-   why it is refused.
-4. **`regenerate_one()` reporting.** The existing single-trait line
-   (`re-rolled %s: %r -> %r`) cannot describe twelve. Print the theme change,
-   then the traits that went with it. This is the CLI's half of §6's "enumerate
-   rather than summarise".
+   `UNREROLLABLE_REASONS`: the `Theme` entry, and every other entry whose
+   reason was "the manifest stores X with its flags stripped", is now
+   describing a solved problem. Those traits are re-rollable on the raw path;
+   their reasons only apply to the legacy path, and the message must not claim
+   otherwise.
+4. **Reporting.** The existing single-trait line (`re-rolled %s: %r -> %r`)
+   cannot describe twelve. Print the target's change, then the traits that went
+   with it. This is the CLI's half of §6's "enumerate rather than summarise",
+   and it now applies to every cascading trait, not only Theme.
 5. **Manifest.** A cascade must set `rerolled` truthy so the existing
    `if rerolled is not None:` block rewrites `traits`, and Task 1's addition
-   rewrites `rawTraits` with it. `entry["outfit_notac"]` picks up the new
-   Outfit's register automatically; confirm `young` is unchanged (Age is
-   pinned) rather than assuming it.
+   rewrites `rawTraits` with it. Confirm `young` and `outfit_notac` carry the
+   recomputed values rather than assuming.
 
-**Tests** (extend `test/test_theme_cascade.py`) — these are spec §8 items 2–6:
+**Tests** — spec §8 items 2–6, generalised:
 
-- **§8.2** All thirteen kept traits byte-identical after a cascade, over a few
-  thousand entries. `name` too.
-- **§8.3** A cascade never produces the theme it started from, given a
-  multi-theme table.
+- **§8.2** All thirteen kept traits, and `name`, byte-identical after a Theme
+  cascade, over a few thousand entries.
+- **§8.3** A cascade never produces the theme it started from, on a multi-theme
+  table.
 - **§8.4** Every re-rolled trait is legal under the new theme, checked by
   putting the new bullets back through `filter_by_theme()` — not by re-reading
   the tables file.
 - **§8.5** No contradiction across the cascade: `Stance` never comes back
   hands-free when the new `Weapon` or `Gear` occupies a hand, and
-  `Glow placement` never asserts a light source the new `Backdrop` lacks
-  (`has_light_source(split_backdrop(...))`).
-- **§8.6** An entry with no `rawTraits` refuses the Theme re-roll, with the
-  §4.2 message, and still offers the traits it can.
-- **§8.1, second half** The raw/rendered round-trip from Task 1 holds after a
-  cascade, not only after a fresh roll. Spec §6 names this explicitly as the
-  test that must run over a re-rolled entry.
+  `Glow placement` never asserts a light source the new `Backdrop` lacks.
+- **The general contradiction test — this is the one that closes the defect.**
+  For *every* trait on the raw-rerollable path, re-rolling it must leave no
+  kept trait contradicting the new value. Assert at minimum the pairs the
+  implementer measured: `Role`→`Faction` civ/mil (was 138/400), `Role`→`Outfit`
+  (110/400), `Gear`→`Stance` (32), `Backdrop`→`Glow placement` (30),
+  `Outfit`→`Headgear` (16). All must be 0. Reuse the existing definitions of
+  "occupies a hand" and civ/mil from `test_hands.py`, `test_stance_armed.py`
+  and `test_faction.py`; do not invent second ones.
+- **§8.6** An entry with no `rawTraits` refuses the Theme re-roll with the §4.2
+  message and still offers the traits it can.
+- **§8.1 after a cascade.** The raw/rendered round-trip holds after a cascade,
+  not only after a fresh roll — spec §6 names this explicitly.
+- The eleven legacy-path traits still re-roll identically on an entry with no
+  `rawTraits`. `test_reroll_trait.py`'s existing cases must stay green.
+
 
 ## Task 5 — Documentation
 
