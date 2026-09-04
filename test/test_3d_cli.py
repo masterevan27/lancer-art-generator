@@ -266,5 +266,74 @@ class TestMultipart(unittest.TestCase):
         self.assertNotIn(boundary.encode(), b"\x89PNG\r\n\x1a\n")
 
 
+class TestMeshJob(unittest.TestCase):
+    """Patching the two graphs, without a server."""
+
+    def setUp(self):
+        self.template = json.loads(
+            (d3.MESH_WORKFLOW).read_text(encoding="utf-8"))
+
+    def test_the_source_image_is_patched_in(self):
+        job = d3.build_mesh_job(self.template, "lancer3d/apose.png [input]", "3d/x")
+        load = job[d3.node_of(job, "LoadImage")]
+        self.assertEqual(load["inputs"]["image"], "lancer3d/apose.png [input]")
+
+    def test_the_output_prefix_is_patched_in(self):
+        job = d3.build_mesh_job(self.template, "a.png [input]", "LancerNPCs/Crew/jules/shell")
+        save = job[d3.node_of(job, "SaveGLB")]
+        self.assertEqual(save["inputs"]["filename_prefix"], "LancerNPCs/Crew/jules/shell")
+
+    def test_the_template_on_disk_is_not_mutated(self):
+        """One template is patched once per NPC across a 160-NPC batch."""
+        before = json.dumps(self.template, sort_keys=True)
+        d3.build_mesh_job(self.template, "a.png [input]", "3d/x")
+        self.assertEqual(json.dumps(self.template, sort_keys=True), before)
+
+    def test_the_seed_reaches_every_sampler(self):
+        job = d3.build_mesh_job(self.template, "a.png [input]", "3d/x", seed=4242)
+        seeds = [n["inputs"]["seed"] for n in job.values()
+                 if n["class_type"] == "KSampler"]
+        self.assertEqual(seeds, [4242])
+
+    def test_node_of_refuses_an_ambiguous_graph(self):
+        graph = {"1": {"class_type": "LoadImage", "inputs": {}},
+                 "2": {"class_type": "LoadImage", "inputs": {}}}
+        with self.assertRaises(d3.art.WorkflowError):
+            d3.node_of(graph, "LoadImage")
+
+    def test_node_of_refuses_a_missing_node(self):
+        with self.assertRaises(d3.art.WorkflowError):
+            d3.node_of({}, "SaveGLB")
+
+
+class TestMeshOutputs(unittest.TestCase):
+    """SaveGLB does not report under "images", and its key has moved before.
+
+    Reading every list of file dicts in the record, rather than one hardcoded
+    UI key, is what stops a ComfyUI rename turning into "the job produced no
+    .glb" on a job that produced one.
+    """
+
+    def test_it_finds_a_glb_under_any_key(self):
+        for key in ("3d", "result", "images", "gltf"):
+            record = {"outputs": {"5": {key: [
+                {"filename": "base_00001_.glb", "subfolder": "3d", "type": "output"}]}}}
+            with self.subTest(key=key):
+                found = d3.mesh_outputs(record)
+                self.assertEqual([f["filename"] for f in found], ["base_00001_.glb"])
+
+    def test_it_ignores_a_png_beside_the_glb(self):
+        record = {"outputs": {"5": {"images": [
+            {"filename": "preview.png"}, {"filename": "base.glb"}]}}}
+        self.assertEqual([f["filename"] for f in d3.mesh_outputs(record)], ["base.glb"])
+
+    def test_it_survives_a_record_with_no_outputs(self):
+        self.assertEqual(d3.mesh_outputs({}), [])
+
+    def test_it_survives_scalar_output_values(self):
+        record = {"outputs": {"5": {"text": "done", "count": 3}}}
+        self.assertEqual(d3.mesh_outputs(record), [])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -350,6 +350,98 @@ def stage_apose(comfy, args, entry, folder):
 
 
 # --------------------------------------------------------------------------
+# Stage 1: the two meshes
+# --------------------------------------------------------------------------
+
+
+def node_of(graph, class_type):
+    """The one node of that class_type, or a WorkflowError naming the count.
+
+    Both 3D graphs are checked in beside this script, so addressing their
+    nodes by class rather than by id survives a re-export from the ComfyUI
+    editor - which renumbers every node - while still failing loudly if
+    someone adds a second LoadImage.
+    """
+    found = [n for n, d in graph.items() if d.get("class_type") == class_type]
+    if len(found) != 1:
+        raise art.WorkflowError(
+            "expected exactly one %s node, found %d" % (class_type, len(found)))
+    return found[0]
+
+
+def build_mesh_job(template, ref, prefix, seed=None):
+    """One queueable image -> mesh job. The template is left untouched."""
+    graph = json.loads(json.dumps(template))
+    graph[node_of(graph, "LoadImage")]["inputs"]["image"] = ref
+    graph[node_of(graph, "SaveGLB")]["inputs"]["filename_prefix"] = prefix
+    if seed is not None:
+        for node in graph.values():
+            if node.get("class_type") == "KSampler":
+                node["inputs"]["seed"] = seed
+    return graph
+
+
+def mesh_outputs(record, suffix=".glb"):
+    """Every saved file in a history record whose filename ends in `suffix`.
+
+    Comfy.images() reads the "images" key, which is right for an image node
+    and wrong for SaveGLB - a 3D save reports under a UI key of its own, and
+    which key that is has changed between ComfyUI versions. Walking every list
+    of file dicts in the record costs nothing and makes a rename upstream a
+    non-event, where a hardcoded key would turn "the key moved" into "the job
+    produced no .glb".
+    """
+    out = []
+    for node_output in record.get("outputs", {}).values():
+        for value in node_output.values():
+            if not isinstance(value, list):
+                continue
+            for item in value:
+                if (isinstance(item, dict)
+                        and str(item.get("filename", "")).endswith(suffix)):
+                    out.append(item)
+    return out
+
+
+def stage_mesh(comfy, args, entry, folder, apose_png):
+    """Reconstruct a clothed shell and a rigged body from one A-pose image.
+
+    Two jobs from one source, deliberately: the Hunyuan3D shell has the
+    clothing and the silhouette but a fragmented head and no rig (spec §2.3),
+    and the SAM3DBody base has a clean 127-bone rig and a real face but no
+    clothes (spec §2.4). Neither is the deliverable; Stage 2 is where they
+    become one.
+
+    Both files are underscore-prefixed because they are intermediates - the
+    named deliverables of §6.1 land beside them.
+    """
+    npc = apose_npc(entry)
+    category = npc_gen.role_category(npc)
+    slug = art._slug(npc["name"])
+    ref = upload_image(comfy, apose_png)
+
+    written = []
+    for workflow, label, target in (
+            (MESH_WORKFLOW, "shell", folder / "_shell.glb"),
+            (RIG_WORKFLOW, "base", folder / "_base.glb")):
+        if not workflow.exists():
+            raise SystemExit("Workflow not found: %s" % workflow)
+        print("    %s ..." % label, flush=True)
+        template = art.load_api_workflow(workflow)
+        prefix = "%s/%s/%s/%s" % (npc_gen.COMFY_PREFIX, category, slug, label)
+        job = build_mesh_job(template, ref, prefix, entry["seed"])
+        record = comfy.wait(comfy.queue(job), timeout=args.timeout)
+        files = mesh_outputs(record)
+        if not files:
+            raise RuntimeError("the %s job produced no .glb" % label)
+        written.append(npc_gen.fetch(comfy, files[0], target))
+        print("      -> %s" % target.name)
+        time.sleep(args.pause)
+
+    return tuple(written)
+
+
+# --------------------------------------------------------------------------
 # CLI
 # --------------------------------------------------------------------------
 
@@ -469,6 +561,14 @@ def main(argv=None):
                 if not apose.exists():
                     raise RuntimeError(
                         "no apose.png in %s - run --stage apose first" % folder)
+
+            shell = folder / "_shell.glb"
+            base = folder / "_base.glb"
+            if "mesh" in args.stage:
+                shell, base = stage_mesh(comfy, args, entry, folder, apose)
+            elif "assemble" in args.stage and not (shell.exists() and base.exists()):
+                raise RuntimeError(
+                    "no _shell.glb / _base.glb in %s - run --stage mesh first" % folder)
         except KeyboardInterrupt:
             print("\ninterrupted - cancelling the running job")
             comfy.cancel_all()
