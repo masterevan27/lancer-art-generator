@@ -217,8 +217,21 @@ Output:
 Keys are raw bullet text exactly as it appears in the file after the weight
 prefix is removed — which is precisely the `text` the GUI's own
 `tableBullets.js` produces via `splitWeight()`, so the two agree without either
-knowing about the other. Values are fractions of `samples`, not percentages;
-formatting is the GUI's business.
+knowing about the other. The prefix is gone for free rather than by agreement:
+`parse_tables()` expresses a weight by *repeating* the bullet `N` times in the
+pool rather than carrying a weights column, so `xN ` never survives into a
+rolled value in the first place. Values are fractions of `samples`, not
+percentages; formatting is the GUI's business.
+
+**A variant family splits its total; a heading does not carry one.** For a
+table with no variants the heading's rows sum to 1.0. For one with variants
+they do not, and should not: a `Build (she)` bullet is reachable only by a
+woman, so that heading sums to the share of NPCs who are women (measured:
+0.498 against `Build`'s 0.502). This is the honest unconditional answer and
+the display wants it — a reader looking at `Build (she)` is being told how
+often that bullet lands on an NPC, not how often it wins a roll it was
+eligible for. What sums to 1.0 is the *family*: a base table plus every
+`(subject)` and `(subject) +` heading derived from it.
 
 A bullet that never came up is present with `0.0` rather than absent, so the
 GUI can tell "genuinely unreachable" from "heading the generator does not
@@ -292,13 +305,17 @@ all untouched.
 6. **Variant attribution.** A bullet present only in `Hair (she) +` is reported
    under that heading and never under `Hair`; a `Build (she)` roll is never
    attributed to `Build`.
-7. **Each heading sums to ~1.** Every heading the generator rolls sums to 1.0
-   within sampling error; headings are exactly those `parse_tables()` returns.
-8. **Filters actually show up.** Over a run against the live file, a Stance
-   bullet flagged `|| gun` has a probability strictly below its share of the
-   Stance table's weight, and a bullet flagged `@`-theme has one strictly above
-   its share. These are the assertions that would fail if `--trait-odds` were
-   quietly reporting naive weight shares.
+7. **Each variant family sums to ~1**, and a variant heading on its own sums
+   to strictly less (§3.3). Checked per family, not per heading, which is the
+   distinction a test written the obvious way gets wrong.
+8. **Filters actually show up.** A Stance bullet flagged `|| gun` has a
+   probability strictly below its share of the Stance pool, and a themed
+   bullet has one strictly above its share. These are the assertions that
+   would fail if `--trait-odds` were quietly reporting naive weight shares.
+   The theme half must run against `test/fixtures/tables-themed.md`: the live
+   file describes `@` tags in its documentation but carries none on any
+   bullet, so the same assertion against the live tables would pass vacuously
+   today and silently start meaning something later.
 9. **A disabled bullet is absent** from the output entirely, not present at
    `0.0`.
 10. **It writes nothing.** `--trait-odds` run in a temp cwd creates no files

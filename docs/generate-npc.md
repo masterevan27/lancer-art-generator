@@ -765,6 +765,46 @@ instead, which picks a new cut in the same colour.
 The re-roll draws from `--new-seed` (or the entry's seed), so the same re-roll
 of the same NPC is repeatable.
 
+## What a bullet's real odds are
+
+A weight tells you how a bullet compares to its neighbour. It does not tell you
+how often the bullet turns up, and dividing by the table total does not either:
+a disabled bullet is not in the pool at all, and most tables are filtered
+before they are drawn from. A Stance flagged `|| gun` needs the Weapon roll to
+have produced an actual firearm; a Weapon flagged `|| mil` is unreachable under
+a `notac` outfit; a themed bullet is weighted *up* when its theme comes up and
+unreachable when it does not.
+
+```
+python generate-npc.py --trait-odds          # 20,000 rolls, about six seconds
+python generate-npc.py --trait-odds 2000     # rougher, faster
+```
+
+It rolls N NPCs through the real roller, counts what comes out, prints JSON on
+stdout and exits — no images, no manifest, nothing written anywhere:
+
+```json
+{ "samples": 20000,
+  "tables": { "Stance": { "standing at a low ready, weapon angled down…": 0.002 } } }
+```
+
+Sampled rather than calculated, on purpose. Working the probabilities out
+analytically would mean a second copy of the filter chain living beside the
+first, and when the two drifted apart nothing would break — the numbers would
+just quietly be wrong. Rolling the actual roller cannot disagree with itself,
+and it keeps up with every filter added later on its own.
+
+Two things to know before reading the output. **A variant family splits its
+total.** `Build` comes to about 0.50 and `Build (she)` to about 0.50, because a
+`Build (she)` bullet only ever lands on a woman — the number is the share of
+*all* NPCs that get it, not the share of the rolls it was eligible for. And
+**`Weather` sums to 1.0 though most NPCs show no weather**: it is always
+rolled, and then dropped unless the Backdrop is flagged `weather`.
+
+The Import GUI's Tables page reads this to put a percentage beside every
+bullet, which is where it is most useful — the numbers move as you edit the
+weights.
+
 ## Options
 
 | Flag | Effect |
@@ -785,6 +825,7 @@ of the same NPC is repeatable.
 | `--steps` / `--cfg` / `--sampler` / `--scheduler` / `--set` | Same generation overrides as [`generate-art.py`](README.md#options). |
 | `--server` / `--timeout` | Same as [`generate-art.py`](README.md#options). |
 | `--dry-run` | Roll, print the NPCs and their prompts, queue nothing. |
+| `--trait-odds [N]` | Print each bullet's chance of being rolled as JSON and exit. See [What a bullet's real odds are](#what-a-bullets-real-odds-are). |
 
 Sizes are fixed per image — 1024×1024 for the portrait, 1024×1280 for the token —
 since the token needs headroom and footroom for a clean background-removal crop
