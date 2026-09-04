@@ -197,7 +197,19 @@ TRAIT_DEPENDENTS = {
     # placement flagged 'scene' asserts the environment is what casts the
     # light. Keep either across a new Backdrop and it describes a scene that is
     # gone.
-    "Backdrop": ("Weather", "Glow placement"),
+    #
+    # Gear is the third, and it is here for an ordering reason rather than a
+    # flag-filter one, which is why it is worth spelling out. A 'nogear'
+    # backdrop has already filled the subject's hands, so roll_npc() corrects
+    # for it by re-rolling a 'hands' Gear onto a bullet that leaves them free -
+    # the one place in that function where a dependency runs backwards, since
+    # Gear is drawn before Backdrop. That correction runs BEFORE
+    # npc.update(overrides), so a pinned Gear is pasted straight back over it
+    # and survives a scene that forbids it: 23 times in 400 on the live tables
+    # with Backdrop freed alone, against none at all on a fresh roll. A pinned
+    # Gear therefore cannot be trusted across a new Backdrop the way the
+    # correction inside the roller can - it has to be re-rolled with it.
+    "Backdrop": ("Weather", "Glow placement", "Gear"),
 
     # The cut carries a '{colour}' slot that roll_npc() fills from the rolled
     # colour, and that colour's tail is appended after the whole cut phrase. A
@@ -207,13 +219,22 @@ TRAIT_DEPENDENTS = {
     # spells out for Hair colour, restated here as an edge.
     "Hair colour": ("Hair",),
 
-    # The one pairing that runs both ways, which is why this map is not a DAG
-    # and why the closure below must not assume one. An Age flagged 'young' is
-    # a teenager, so it drops the Build bullets flagged 'figure', which
-    # describe an adult woman's; and a forced 'figure' Build drops the 'young'
-    # Age bullets in the other direction. roll_npc() implements both
+    # Build is the one pairing that runs both ways, which is why this map is
+    # not a DAG and why the closure below must not assume one. An Age flagged
+    # 'young' is a teenager, so it drops the Build bullets flagged 'figure',
+    # which describe an adult woman's; and a forced 'figure' Build drops the
+    # 'young' Age bullets in the other direction. roll_npc() implements both
     # directions, so both are edges here.
-    "Age": ("Build",),
+    #
+    # Hair colour is the same 'young' flag read one table over: an 'older'
+    # shade - greying, salt-and-pepper - asserts an age the Age clause earlier
+    # in the same prompt would contradict, so a young Age drops those bullets
+    # exactly as it drops the 'figure' builds. Freeing Age alone strands one 3
+    # times in 400 on the live tables, against none at all on a fresh roll. It
+    # reaches Hair transitively from here, through the '{colour}' edge above,
+    # which is right: a cut that closed over a greying shade cannot keep it
+    # once the NPC is a teenager.
+    "Age": ("Build", "Hair colour"),
     "Build": ("Age",),
 }
 

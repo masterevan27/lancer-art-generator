@@ -37,6 +37,96 @@ THEME_KEEP_SET_FROM_THE_DOC = (
     "Height", "Skin", "Eyes", "Demeanor", "Role", "Faction", "Glow colour",
 )
 
+# The other cascades worth pinning by hand, in REQUIRED_TABLES order. Written
+# out for the same reason the twelve are: each one is a claim about which
+# filters read which flags, and computing it from the map would make it agree
+# with any map at all. Every trait that has dependents is here, so an edge
+# added or dropped shows up as a named failure rather than as a cascade that
+# quietly changed size.
+#
+# Age and Backdrop are the two that grew after the roller's filter chain was
+# audited edge by edge: Age gates Hair colour's 'older' shades and reaches the
+# cut through them, and a 'nogear' Backdrop's Gear correction is undone by the
+# override paste that runs after it. Both were measured on the live tables
+# before being added - 3 and 23 contradictions in 400 re-rolls, against none at
+# all on a fresh roll.
+EXPECTED_CASCADES = {
+    "Theme": THEME_CASCADE_FROM_THE_DOC,
+    "Age": ("Age", "Build", "Hair", "Hair colour"),
+    "Build": ("Age", "Build", "Hair", "Hair colour"),
+    "Hair colour": ("Hair", "Hair colour"),
+    "Role": ("Role", "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Stance"),
+    "Outfit": ("Outfit", "Headgear", "Weapon", "Gear", "Stance"),
+    "Weapon": ("Weapon", "Gear", "Stance"),
+    "Gear": ("Gear", "Stance"),
+    "Backdrop": ("Gear", "Backdrop", "Glow placement", "Weather", "Stance"),
+}
+
+
+class PoolRecorder(random.Random):
+    """A Random that keeps every pool roll_npc() drew from.
+
+    roll_npc() reaches for randomness in exactly one shape - rng.choice(pool) -
+    so recording the argument records the set of bullets the roller considered
+    legal at that moment, after every filter that applies to it has run. That
+    is the only way to ask "could the roller have produced this value here?"
+    without writing a second copy of the filter chain in the test, which would
+    be a copy that drifts.
+    """
+
+    def __init__(self, seed):
+        super().__init__(seed)
+        self.pools = []
+
+    def choice(self, seq):
+        self.pools.append(list(seq))
+        return super().choice(seq)
+
+
+def pools_by_table(npc):
+    """Each table's final option pool for this exact NPC, keyed by table name.
+
+    Re-runs the roller with every one of the NPC's own raw bullets pinned. Each
+    draw still happens - a forced value replaces the drawn one after the pool
+    has been built, not before - so each recorded pool is narrowed by exactly
+    the values this NPC actually has, which is the question being asked.
+
+    Pools are attributed to tables by content rather than by call order: a pool
+    belongs to the one table whose bullets contain all of it. Attribution by
+    counting calls would be a restatement of roll_npc()'s own loop, and would
+    go quietly wrong the first time a draw is added or moved. Ambiguity is an
+    assertion rather than a guess, so a fixture that ever gave two tables the
+    same bullet fails loudly instead of being mis-attributed.
+
+    Later pools overwrite earlier ones for the same table, which matters for
+    exactly one table: a 'nogear' Backdrop makes roll_npc() draw Gear a second
+    time, from a pool with the hands-occupying bullets removed. That second
+    pool is the one that decided the value, so it is the one to judge against.
+
+    Pronouns and Theme are absent from the result by design. Both are drawn
+    only when they were not forced, so pinning them skips the draw entirely -
+    and neither is filtered by anything, so there is no pool to check.
+    """
+    rng = PoolRecorder(0)
+    gen.roll_npc(TABLES, rng, dict(npc["_raw"]))
+    subject = npc["Pronouns"].split("/")[0]
+    reachable = {name: set(gen.variant_table(TABLES, name, subject))
+                 for name in gen.REQUIRED_TABLES}
+
+    out = {}
+    for pool in rng.pools:
+        # Stance is the one table whose pool holds (bullet, flags) pairs, so
+        # that roll_npc() still has the raw line in hand when it picks one.
+        bullets = [x[0] if isinstance(x, tuple) else x for x in pool]
+        owners = [name for name in gen.REQUIRED_TABLES
+                  if set(bullets) <= reachable[name]]
+        assert len(owners) == 1, (
+            "pool %r could belong to any of %r - the fixture has given two "
+            "tables the same bullet, so this attribution is no longer sound"
+            % (bullets, owners))
+        out[owners[0]] = bullets
+    return out
+
 
 class TestTheDependencyMap(unittest.TestCase):
     """The map itself, before anything is derived from it."""
@@ -183,6 +273,22 @@ class TestTraitCascade(unittest.TestCase):
         self.assertTrue(free, "every table has dependents, so the no-dependents "
                               "case above asserts nothing")
 
+    def test_every_cascade_with_dependents_is_the_one_expected(self):
+        """The map's other claims, pinned by hand the way Theme's twelve are.
+
+        Iterated over the literal table rather than over TRAIT_DEPENDENTS, so
+        an edge added for a source that is not listed there is a failure too -
+        a new cascade nobody wrote down is exactly the drift these literals
+        exist to catch.
+        """
+        for name, expected in EXPECTED_CASCADES.items():
+            self.assertEqual(gen.trait_cascade(name), expected,
+                             "%s's cascade is not the one expected" % name)
+
+    def test_the_expected_table_covers_every_trait_with_dependents(self):
+        """Otherwise a whole cascade could change with nothing pinning it."""
+        self.assertEqual(sorted(EXPECTED_CASCADES), sorted(gen.TRAIT_DEPENDENTS))
+
     def test_the_closure_terminates_on_the_age_build_cycle(self):
         """Age depends on Build and Build on Age, and that is not a defect.
 
@@ -190,10 +296,18 @@ class TestTraitCascade(unittest.TestCase):
         roll_npc(), so both directions are edges and the map is not a DAG. A
         closure written as a recursive walk would recur forever here; this test
         is what stops one from being written. Both ends are checked, since a
-        walk can terminate from one and not the other.
+        walk can terminate from one and not the other, and both are asserted to
+        reach the same four traits - a cycle that terminated by dropping half
+        its members on one pass would still be wrong.
+
+        Four rather than the two the pairing itself names: Age gates Hair
+        colour's 'older' shades as well, and Hair follows the colour through
+        the '{colour}' slot it closes over. That is the closure doing its job
+        across the cycle rather than in spite of it.
         """
-        self.assertEqual(gen.trait_cascade("Age"), ("Age", "Build"))
-        self.assertEqual(gen.trait_cascade("Build"), ("Age", "Build"))
+        both = ("Age", "Build", "Hair", "Hair colour")
+        self.assertEqual(gen.trait_cascade("Age"), both)
+        self.assertEqual(gen.trait_cascade("Build"), both)
 
     def test_the_transitive_step_actually_runs(self):
         """A cascade two hops deep, so 'transitive' is more than a word.
@@ -208,6 +322,100 @@ class TestTraitCascade(unittest.TestCase):
             ("Role", "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Stance"))
         self.assertNotIn("Headgear", gen.TRAIT_DEPENDENTS["Role"])
         self.assertNotIn("Stance", gen.TRAIT_DEPENDENTS["Role"])
+
+
+class TestTheMapIsComplete(unittest.TestCase):
+    """Does the map cover the dependencies roll_npc() actually has?
+
+    Every test above reads TRAIT_DEPENDENTS, so none of them can tell whether
+    the map is missing an edge - they would agree with an incomplete map as
+    readily as with a complete one. This one asks the roller instead, and never
+    looks at the map except to get a cascade out of it.
+
+    The question a cascade has to answer is: after re-rolling `target` and
+    everything the map says goes with it, is every KEPT trait still a value the
+    roller would draw for it? A missing edge is exactly a kept trait that is
+    now illegal - the civ Faction on a mil Role, 138 times in 400, that started
+    all of this. So: re-roll the cascade, re-run the roller with the result
+    pinned while recording the pool it offers each table, and assert every kept
+    bullet is in its own pool. Nothing here knows what the filters are; a
+    hand-written list of known contradictions would only ever catch the ones
+    somebody had already thought of, which is how the two edges below were
+    missed in the first place.
+
+    WHAT IT CANNOT SEE, stated plainly so it is not mistaken for a proof. This
+    catches a dependency that narrows a POOL, and only when the fixture reaches
+    the case. Deleting each of the map's twenty-three edges in turn, it catches
+    eleven. The misses are not bad luck; three kinds are structural:
+
+    - Dependencies that never narrow a pool. Backdrop -> Weather is read at
+      prompt-build time by weather_sentence(), and Hair colour -> Hair is a
+      '{colour}' substitution rather than a filter. No pool moves, so no kept
+      value can fall outside one.
+    - Dependencies that run backwards. Build -> Age, and Age -> Build, fire
+      only in roll_npc()'s forced-value branches, which narrow an EARLIER
+      table's pool; this harness pins every trait, so those branches never run.
+    - Filters carrying an 'or options' fallback that the minimal fixture never
+      drives to the narrow case - several of the Weapon edges.
+
+    What is worth saying for it is the measurement that motivated it: run
+    against the map as it stood before roll_npc()'s filter chain was audited by
+    hand, it independently finds both of the edges that audit found - Age ->
+    Hair colour and Backdrop -> Gear. It is a real check on the class of
+    dependency this feature is about, not a proof of completeness.
+    """
+
+    # Enough rolls to reach the fixture's flagged bullets - a 'young' Age, a
+    # 'nogear' Backdrop, a two-handed Weapon, a theme that actually changes -
+    # without making the suite slow. Each seed costs three rolls per target,
+    # and the whole class runs in about four tenths of a second. Raising it
+    # buys very little: at 120 the count above goes from eleven to twelve, and
+    # the rest are the structural misses, which no number of seeds reaches.
+    SEEDS = 60
+
+    def test_no_kept_trait_is_left_outside_its_own_pool(self):
+        for target in gen.REQUIRED_TABLES:
+            cascade = gen.trait_cascade(target)
+            for seed in range(self.SEEDS):
+                npc = gen.roll_npc(TABLES, random.Random(seed))
+                gen.reroll_from_raw(TABLES, npc, cascade,
+                                    random.Random(seed + 9000))
+                for name, pool in pools_by_table(npc).items():
+                    if name in cascade:
+                        continue
+                    self.assertIn(
+                        npc["_raw"][name], pool,
+                        "re-rolling %s (cascade %r) left %s holding %r, which "
+                        "the roller would not now draw - the map is missing an "
+                        "edge from something in that cascade to %s"
+                        % (target, cascade, name, npc["_raw"][name], name))
+
+    def test_a_fresh_roll_is_already_consistent(self):
+        """The baseline the check above is only meaningful against.
+
+        Every trait of an untouched roll must sit in its own pool, since the
+        roller drew it from there. If this fails, pools_by_table() is
+        mis-attributing or the pinned re-run is not reproducing the NPC, and
+        the test above is measuring the harness rather than the map.
+        """
+        for seed in range(20):
+            npc = gen.roll_npc(TABLES, random.Random(seed))
+            for name, pool in pools_by_table(npc).items():
+                self.assertIn(npc["_raw"][name], pool,
+                              "seed %d: a freshly rolled %s is not in its own "
+                              "pool" % (seed, name))
+
+    def test_the_recorder_sees_every_table_it_should(self):
+        """Guards the check above against going vacuous by seeing nothing.
+
+        A pool that stopped being recorded - a draw moved behind a condition,
+        say - would silently drop that table from the loop above rather than
+        fail. Pronouns and Theme are the two genuine absences: pinning either
+        skips its draw, and neither is filtered by anything.
+        """
+        seen = set(pools_by_table(gen.roll_npc(TABLES, random.Random(0))))
+        self.assertEqual(sorted(seen),
+                         sorted(set(gen.REQUIRED_TABLES) - {"Pronouns", "Theme"}))
 
 
 class TestDifferentThemeDraw(unittest.TestCase):
