@@ -1,0 +1,41 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "_meta": {"title": "A-pose source (patched by generate-3d.py)"},
+    "inputs": {"image": "apose.png [output]"}
+  },
+  "2": {
+    "class_type": "SAM3DBody_Loader",
+    "inputs": {"model_file": "sam_3d_body_dinov3_bf16.safetensors"}
+  },
+  "3": {
+    "class_type": "SAM3DBody_Predict",
+    "inputs": {
+      "sam3d_body_model": ["2", 0],
+      "image": ["1", 0],
+      "run_hand_refinement": true,
+      "fov": 0.0,
+      "batch_size": 64
+    }
+  },
+  "4": {
+    "class_type": "BuildPoseFile",
+    "_meta": {"title": "127-bone body mesh - the pose is discarded in Blender"},
+    "inputs": {
+      "pose_data": ["3", 0],
+      "sam3d_body_model": ["2", 0],
+      "format": "glb",
+      "format.mesh_style": "body_mesh",
+      "format.mesh_style.bone_vis": "off",
+      "format.mesh_style.shader": "default",
+      "format.bone_smooth_window": 0,
+      "fps": 24.0,
+      "camera_translation": "off",
+      "track_index": 0
+    }
+  },
+  "5": {
+    "class_type": "SaveGLB",
+    "inputs": {"mesh": ["4", 0], "filename_prefix": "3d/base"}
+  }
+}

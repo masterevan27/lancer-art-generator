@@ -1,0 +1,73 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "_meta": {"title": "A-pose source (patched by generate-3d.py)"},
+    "inputs": {"image": "apose.png [output]"}
+  },
+  "2": {
+    "class_type": "ImageOnlyCheckpointLoader",
+    "_meta": {"title": "Hunyuan3D v2 mv"},
+    "inputs": {"ckpt_name": "hunyuan3d-dit-v2-mv_fp16.safetensors"}
+  },
+  "3": {
+    "class_type": "CLIPVisionEncode",
+    "inputs": {"clip_vision": ["2", 1], "image": ["1", 0], "crop": "center"}
+  },
+  "4": {
+    "class_type": "Hunyuan3Dv2Conditioning",
+    "inputs": {"clip_vision_output": ["3", 0]}
+  },
+  "5": {
+    "class_type": "EmptyLatentHunyuan3Dv2",
+    "inputs": {"resolution": 3072, "batch_size": 1}
+  },
+  "6": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": ["2", 0],
+      "seed": 0,
+      "steps": 50,
+      "cfg": 5.0,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "positive": ["4", 0],
+      "negative": ["4", 1],
+      "latent_image": ["5", 0],
+      "denoise": 1.0
+    }
+  },
+  "7": {
+    "class_type": "VAEDecodeHunyuan3D",
+    "inputs": {"samples": ["6", 0], "vae": ["2", 2], "num_chunks": 8000, "octree_resolution": 256}
+  },
+  "8": {
+    "class_type": "VoxelToMesh",
+    "inputs": {"voxel": ["7", 0], "algorithm": "surface net", "threshold": 0.6}
+  },
+  "9": {
+    "class_type": "RemeshMesh",
+    "_meta": {"title": "Remesh - drops the specks, closes the surface"},
+    "inputs": {
+      "mesh": ["8", 0],
+      "resolution": 512,
+      "sign_mode": "udf",
+      "sign_mode.qef": false,
+      "sign_mode.drop_inverted_components": true,
+      "sign_mode.drop_enclosed_components": true,
+      "band": 1.0,
+      "project_back": 1.0,
+      "fix_poles": true,
+      "smooth_iters": 2,
+      "drop_small_components": 0.02,
+      "precluster_max_verts": 20000000
+    }
+  },
+  "10": {
+    "class_type": "DecimateMesh",
+    "inputs": {"mesh": ["9", 0], "target_face_count": 200000, "placement_mode": "midpoint"}
+  },
+  "11": {
+    "class_type": "SaveGLB",
+    "inputs": {"mesh": ["10", 0], "filename_prefix": "3d/shell"}
+  }
+}
