@@ -17,8 +17,16 @@ almost anything: reroll_from_raw() pins every other bullet back into a fresh
 roll_npc() with its flags intact, so the filters are the roller's own rather
 than a second copy written out here. What is worth testing on that path is
 the opposite of the refusals - that the filters really do rebuild, that
-nothing but the named trait moves, and that npc["_raw"] still describes the
-NPC afterwards rather than the one it replaced.
+nothing outside the target's cascade moves, and that npc["_raw"] still
+describes the NPC afterwards rather than the one it replaced.
+
+The free set is that cascade rather than the single trait, which is the
+correction the whole branch is for: pinning filters in one direction, so a
+kept trait was never re-checked against the value that had just replaced its
+gate. Two classes at the end are about nothing else - one sweeps every
+re-rollable trait against every contradiction that was measured, and the other
+reproduces each of those contradictions on demand, so the first cannot pass by
+reading the wrong flag.
 """
 import contextlib
 import io
@@ -261,30 +269,34 @@ class TestWhatIsRerollableFromRaw(unittest.TestCase):
 
     def test_it_refuses_only_what_raw_bullets_cannot_help_with(self):
         """Named one by one, so widening this set later has to argue with a
-        test - each of the four is refused for a reason that survives having
+        test - each of the three is refused for a reason that survives having
         the bullets: two are the name the folder and manifest id derive from,
-        one takes the name with it, and one needs a cascade rather than a
-        re-roll in place."""
+        and one takes the name with it.
+
+        Theme was the fourth until re-rolls started cascading. It was held out
+        because reroll_trait() had one free variable to offer and Theme needs
+        twelve, which is an objection to the mechanism rather than to the
+        trait; the mechanism now offers a cascade, so the objection is spent.
+        """
         refused = set(gen.REQUIRED_TABLES) - set(gen.RAW_REROLLABLE_TRAITS)
-        self.assertEqual(
-            refused, {"Given names", "Family names", "Pronouns", "Theme"})
+        self.assertEqual(refused, {"Given names", "Family names", "Pronouns"})
         for name in refused:
             self.assertIn(name, gen.UNREROLLABLE_REASONS)
 
     def test_it_is_strictly_wider_than_the_legacy_set(self):
         """The point of the whole change. Anything the lossy path can re-roll
-        the raw path can too, and then ten more."""
+        the raw path can too, and then eleven more."""
         self.assertTrue(
             set(gen.REROLLABLE_TRAITS) < set(gen.RAW_REROLLABLE_TRAITS))
 
-    def test_theme_is_still_refused_on_both_paths(self):
-        """Theme is the deliberate seam with the cascade that comes next: it
-        gates seven appearance tables, so it is not a one-free-variable
-        re-roll and raw bullets do not make it one."""
-        for npc in (npc_for(), raw_npc_for()):
-            with self.assertRaises(SystemExit) as caught:
-                gen.reroll_trait(TABLES, npc, "Theme", random.Random(0))
-            self.assertIn("seven appearance tables", str(caught.exception))
+    def test_theme_is_offered_only_where_the_bullets_are(self):
+        """The seam moved: Theme is a raw-path trait, not a refused one.
+
+        An entry with raw bullets cascades it. An entry without them still
+        cannot, and gets §4.2's refusal below rather than a partial cascade.
+        """
+        self.assertIn("Theme", gen.RAW_REROLLABLE_TRAITS)
+        self.assertNotIn("Theme", gen.REROLLABLE_TRAITS)
 
     def test_the_refusal_names_the_set_that_applies(self):
         """An entry with raw bullets and one without offer different sets, and
@@ -325,23 +337,32 @@ class TestRerollingFromRaw(unittest.TestCase):
         self.assertIn(value, outfits)
         self.assertEqual(value, npc["Outfit"], "the return value is the new trait")
 
-    def test_only_the_named_trait_moves(self):
-        """Every other trait byte-identical, the name included.
+    def test_nothing_outside_the_cascade_moves(self):
+        """Every trait the cascade does not name is byte-identical, the name
+        included.
 
         'name' is asserted rather than pinned: roll_npc() rebuilds it from the
         Given names and Family names this pins, so a re-roll that changed it
         would mean the pinning had failed rather than that the name needs
         handling of its own.
 
-        Hair is the one legitimate second mover, and only when Hair colour is
-        the target: the colour is substituted into the cut and its tail
-        appended to the whole phrase, so one raw bullet renders into two
-        traits. That is the same coupling the lossy path refuses Hair colour
-        over - here it resolves correctly instead of being refused.
+        The allowed set is the target's cascade, taken from the module under
+        test. That would be circular if the question were "is the cascade
+        right?" - it is not; test_trait_cascades.py pins every cascade against
+        the design doc by hand. The question here is whether the wiring honours
+        whatever cascade it was given, and nothing outside it moves. A cascade
+        widened by accident fails there, loudly, rather than being absorbed
+        here.
+
+        Hair used to be named as a special case for a Hair colour re-roll - the
+        colour is substituted into the cut and its tail appended, so one raw
+        bullet renders into two traits. It needs no case of its own now: the
+        map carries that coupling as an edge, so the cascade already contains
+        it.
         """
         moved = 0
         for name in gen.RAW_REROLLABLE_TRAITS:
-            allowed = {name} | ({"Hair"} if name == "Hair colour" else set())
+            allowed = set(gen.trait_cascade(name))
             for seed in self.SEEDS:
                 npc = raw_npc_for(seed)
                 before = {k: npc[k] for k in list(gen.REQUIRED_TABLES) + ["name"]}
@@ -357,6 +378,31 @@ class TestRerollingFromRaw(unittest.TestCase):
         # sweep a path that changed nothing at all would pass every assertion
         # above while doing nothing.
         self.assertTrue(moved, "no re-roll in the sweep changed its target")
+
+    def test_a_dependency_free_trait_still_moves_nothing_but_itself(self):
+        """The eleven that re-rolled cleanly before must be untouched by any of
+        this.
+
+        Routing every re-roll through a cascade is only safe because a trait
+        nothing depends on closes to just itself. Confirmed rather than assumed
+        - it is the whole basis for the claim that this change costs the
+        existing traits nothing, and the assertion above is too generous to
+        catch it, since it would pass just as happily if Skin had quietly
+        acquired dependents.
+        """
+        alone = [name for name in gen.RAW_REROLLABLE_TRAITS
+                 if name not in gen.TRAIT_DEPENDENTS]
+        self.assertTrue(alone, "no dependency-free trait left to check")
+        for name in alone:
+            for seed in self.SEEDS:
+                npc = raw_npc_for(seed)
+                before = {k: npc[k] for k in list(gen.REQUIRED_TABLES) + ["name"]}
+                gen.reroll_trait(TABLES, npc, name, random.Random(seed + 500))
+                changed = {k for k in before if npc[k] != before[k]}
+                self.assertTrue(
+                    changed <= {name},
+                    "seed %d: re-rolling %s, which nothing depends on, also "
+                    "moved %s" % (seed, name, sorted(changed - {name})))
 
     def test_the_rerolled_npc_still_builds_its_prompts(self):
         """The copy-back replaces the dict wholesale, so everything
@@ -533,6 +579,249 @@ class TestFiltersThatRebuildFromRaw(unittest.TestCase):
                         "a hand - this test checked nothing")
 
 
+class TestTheThemeCascade(unittest.TestCase):
+    """Re-rolling Theme, which is the twelve-trait case the design doc is about.
+
+    Everything here runs on the fixture, which carries a theme tag on all seven
+    themed tables and two themes to move between - so none of it is vacuous
+    there, and the live sweeps below are spent on the contradictions the
+    fixture is too small to reach.
+    """
+
+    # A few thousand entries, as the doc's §8.2 asks - each pass is two fixture
+    # rolls, the entry and the cascade that pins it, so 1200 is the same
+    # arithmetic the live civ/mil sweep below already settled on.
+    SEEDS = range(1200)
+
+    def kept(self):
+        """The traits a Theme cascade must not touch, derived the way the
+        caller derives them - REQUIRED_TABLES minus the cascade - plus 'name',
+        which is not a table but is the thing a user most notices moving."""
+        return [name for name in gen.REQUIRED_TABLES
+                if name not in gen.THEME_CASCADE] + ["name"]
+
+    def test_every_kept_trait_survives_byte_identical(self):
+        for seed in self.SEEDS:
+            npc = raw_npc_for(seed)
+            before = {k: npc[k] for k in self.kept()}
+            gen.reroll_trait(TABLES, npc, "Theme", random.Random(seed + 700))
+            for key in self.kept():
+                self.assertEqual(npc[key], before[key],
+                                 "seed %d: the cascade moved %r, which it keeps"
+                                 % (seed, key))
+
+    def test_it_never_produces_the_theme_it_started_from(self):
+        """§8.3. The button says 'new theme'; landing back on the old one
+        spends twelve traits and a render to say the same thing again."""
+        self.assertGreater(len(set(TABLES["Theme"])), 1,
+                           "a single-theme fixture could not fail this")
+        # Fewer seeds than the sweep above: draw_different_theme() is where
+        # this property lives and test_trait_cascades.py exhausts it there,
+        # once per theme in the table. This is the integration half - that
+        # reroll_trait() actually routes the Theme draw through it.
+        for seed in range(400):
+            npc = raw_npc_for(seed)
+            was = npc["Theme"]
+            self.assertNotEqual(
+                gen.reroll_trait(TABLES, npc, "Theme", random.Random(seed + 700)),
+                was, "seed %d: re-rolled %r back onto itself" % (seed, was))
+
+    def test_every_rerolled_bullet_is_legal_under_the_new_theme(self):
+        """§8.4, asked of filter_by_theme() rather than of the tables file.
+
+        The bullet is looked for in the filtered pool rather than passed to
+        the filter on its own, because every filter in the roller ends in
+        `or options` - hand one a single illegal bullet and it hands that
+        bullet straight back rather than an empty list. Filtering the pool the
+        roller would have offered and asking whether the bullet is still in it
+        asks the same question without tripping the safety valve.
+        """
+        for seed in range(200):
+            npc = raw_npc_for(seed)
+            gen.reroll_trait(TABLES, npc, "Theme", random.Random(seed + 700))
+            subject = npc["Pronouns"].split("/")[0]
+            for name in gen.THEMED_TABLES:
+                legal = gen.filter_by_theme(
+                    gen.variant_table(TABLES, name, subject), npc["Theme"], name)
+                self.assertIn(
+                    npc["_raw"][name], legal,
+                    "seed %d: %s kept %r, which is tagged for another theme"
+                    % (seed, name, npc["_raw"][name]))
+
+    def test_the_theme_filter_drops_something_on_this_fixture(self):
+        """The theme filter has to actually drop something on this fixture, or
+        the sweep above is a membership test against the whole table."""
+        dropped = 0
+        for theme in set(TABLES["Theme"]):
+            for name in gen.THEMED_TABLES:
+                pool = gen.variant_table(TABLES, name, "she")
+                dropped += len(pool) - len(gen.filter_by_theme(pool, theme, name))
+        self.assertTrue(dropped, "no themed bullet in the fixture is tagged for "
+                        "a theme it can be filtered out of")
+
+    def test_the_recomputed_flags_travel_with_the_cascade(self):
+        """'young' and 'outfit_notac' are written back to the manifest by
+        regenerate_one(), so they have to describe the NPC the cascade produced
+        rather than the one it replaced.
+
+        Read off the new raw bullets, which is where roll_npc() read them. A
+        stale '_outfit_notac' would be the worse of the two: it is what a LATER
+        Headgear re-roll on the lossy path trusts, so a wrong one outlives the
+        run that wrote it.
+        """
+        for seed in range(200):
+            npc = raw_npc_for(seed)
+            gen.reroll_trait(TABLES, npc, "Theme", random.Random(seed + 700))
+            self.assertEqual(npc["_young"],
+                             "young" in gen.flags_for("Age", npc["_raw"]["Age"]))
+            self.assertEqual(
+                npc["_outfit_notac"],
+                "notac" in gen.flags_for("Outfit", npc["_raw"]["Outfit"]))
+
+
+def flags_of(npc, name):
+    """The flags on the bullet this NPC's `name` actually came from.
+
+    Read off npc["_raw"], which is the same string the roller's own filters
+    read, rather than reverse-mapped from the rendered trait. Not a second
+    definition of any of them: 'hands' is test_hands.py's flag, 'civ'/'mil' is
+    the pair filter_by_mil() splits on in test_faction.py, and this reads those
+    exact flags one step earlier - off the bullet instead of off the text it
+    renders to. The rendered-text form those modules use exists because they
+    predate raw bullets and had nothing else to compare against.
+    """
+    return gen.flags_for(name, npc["_raw"][name])
+
+
+def unlit(npc):
+    """The Backdrop casts no light of its own - roll_npc()'s own test."""
+    return not gen.has_light_source(gen.split_backdrop(npc["Backdrop"])[1])
+
+
+# Every contradiction a re-roll was measured to leave behind, as (what it is,
+# which trait's re-roll stranded it, is this NPC holding it).
+#
+# Each predicate is the roller's own filter turned into a question about the
+# pair it decides between, rather than a call to the filter itself. The filters
+# all end in `or options` - a safety valve so no pool is ever narrowed to
+# nothing - so handing one a single illegal bullet returns that bullet rather
+# than an empty list, and a check written that way reports zero contradictions
+# against any implementation at all. That mistake was made once while writing
+# this; it is recorded here because the resulting test looks more principled
+# than the working one.
+#
+# The counts these were measured at are in the guard below, not here: a number
+# in a comment goes stale silently, and one in a test does not.
+CONTRADICTIONS = (
+    ("Faction on the wrong side of the civ/mil line", "Role",
+     lambda n: ("civ" if "mil" in flags_of(n, "Role") else "mil")
+     in flags_of(n, "Faction")),
+    ("Outfit on the wrong side of the civ/mil line", "Role",
+     lambda n: ("civ" if "mil" in flags_of(n, "Role") else "mil")
+     in flags_of(n, "Outfit")),
+    ("a hands-free Stance around a full hand", "Gear",
+     lambda n: "hands" in flags_of(n, "Weapon") + flags_of(n, "Gear")
+     and "hands" in flags_of(n, "Stance")),
+    ("a 'scene' Glow placement on a backdrop that casts no light", "Backdrop",
+     lambda n: unlit(n) and "scene" in flags_of(n, "Glow placement")),
+    ("hardtech Headgear over a 'notac' Outfit", "Outfit",
+     lambda n: n["_outfit_notac"] and "hardtech" in flags_of(n, "Headgear")),
+    ("an 'older' Hair colour on a teenager", "Age",
+     lambda n: n["_young"] and "older" in flags_of(n, "Hair colour")),
+    ("a hands-occupying Gear in a 'nogear' scene", "Backdrop",
+     lambda n: "nogear" in gen.split_backdrop(n["Backdrop"])[2]
+     and "hands" in flags_of(n, "Gear")),
+)
+
+
+class TestNoCascadeLeavesAContradiction(unittest.TestCase):
+    """The defect the cascade was built to close, over every trait at once.
+
+    A pinned re-roll filters in one direction. The freed trait is drawn against
+    everything pinned, but a pinned trait is never drawn, so no filter ever
+    re-checks it against the value that just changed - and the entry comes back
+    holding a pairing the roller could not have produced. Freeing the target's
+    cascade instead re-draws every trait a filter would have had to reject, so
+    there is nothing left to be stranded.
+
+    Run against the live tables. The fixture carries one 'civ' Outfit and no
+    'mil' one, two Roles and neither in WEAPON_POLICY, so half of this would be
+    vacuous there - and it is the half that catches a colonial administrator
+    under a marine corps banner. The guard below is what keeps the other half
+    honest.
+    """
+
+    # Every target, so a contradiction nobody has thought of has somewhere to
+    # show up - the two that started this were both found by a sweep rather
+    # than by reasoning. 80 seeds against 22 targets is one of the more
+    # expensive tests in the suite, at about a second; the depth that would
+    # catch a rare pair is bought in the guard below instead, where it can be
+    # spent on the one target that pair actually comes from.
+    SEEDS = 80
+
+    def test_no_reroll_strands_any_of_them(self):
+        found = []
+        for target in gen.RAW_REROLLABLE_TRAITS:
+            for seed in range(self.SEEDS):
+                npc = gen.roll_npc(LIVE, random.Random(seed), None)
+                gen.reroll_trait(LIVE, npc, target, random.Random(seed + 900))
+                for label, _, contradicts in CONTRADICTIONS:
+                    if contradicts(npc):
+                        found.append("re-rolling %s, seed %d: %s"
+                                     % (target, seed, label))
+        self.assertEqual(found, [], "\n".join(found))
+
+    def test_a_fresh_roll_holds_none_of_them_either(self):
+        """The baseline the sweep above is only meaningful against.
+
+        These are pairings the roller's filters exist to prevent, so an
+        untouched roll must not produce one. If this fails, a predicate is
+        wrong rather than the cascade - and the sweep above is measuring the
+        tables file rather than the wiring.
+        """
+        for seed in range(400):
+            npc = gen.roll_npc(LIVE, random.Random(seed), None)
+            for label, _, contradicts in CONTRADICTIONS:
+                self.assertFalse(contradicts(npc),
+                                 "seed %d: a fresh roll produced %s"
+                                 % (seed, label))
+
+
+class TestTheContradictionChecksCanFail(unittest.TestCase):
+    """Every check above, run against the mechanism the cascade replaced.
+
+    Without this the sweep is seven predicates that might be reading the wrong
+    flag, passing on every NPC ever rolled. So each one is re-run with the free
+    set the re-roll used to take - the single named trait, no dependents - on
+    the one trait whose re-roll stranded it, and has to fire. What it is
+    measuring is the defect itself, still reproducible on demand.
+
+    Asserted as "at least once" rather than at the count it was measured at.
+    The counts over 400 seeds were 134, 111, 30, 34, 17, 5 and 24 in the order
+    the table lists them, and they are worth knowing - but they are properties
+    of today's tables file, and pinning them would turn a new Faction bullet
+    into a failing test that said nothing about the cascade.
+    """
+
+    SEEDS = 400
+
+    def test_each_one_fires_when_only_the_named_trait_is_freed(self):
+        targets = sorted({target for _, target, _ in CONTRADICTIONS})
+        counts = {label: 0 for label, _, _ in CONTRADICTIONS}
+        for target in targets:
+            for seed in range(self.SEEDS):
+                npc = gen.roll_npc(LIVE, random.Random(seed), None)
+                gen.reroll_from_raw(LIVE, npc, (target,), random.Random(seed + 900))
+                for label, stranded_by, contradicts in CONTRADICTIONS:
+                    if stranded_by == target and contradicts(npc):
+                        counts[label] += 1
+        for label, count in counts.items():
+            self.assertTrue(
+                count, "%r never appeared in %d single-trait re-rolls, so the "
+                "check for it in the cascade sweep proves nothing"
+                % (label, self.SEEDS))
+
+
 class TestAnIncompleteRaw(unittest.TestCase):
     """rawTraits written before a table joined the roll.
 
@@ -589,6 +878,42 @@ class TestTheLossyPathIsUntouched(unittest.TestCase):
                     gen.reroll_trait(TABLES, npc, name, random.Random(2))
                 self.assertIn(gen.UNREROLLABLE_REASONS[name],
                               str(caught.exception))
+
+    def test_a_theme_reroll_is_refused_with_the_spec_message(self):
+        """§8.6, and the one refusal the design doc writes out itself.
+
+        A cascade needs the Role's 'mil' flag to re-roll the Outfit and Weapon
+        under it, and this entry threw that flag away before it was stored. The
+        refusal is the whole point: the alternative is a partial cascade, which
+        is precisely the set of contradictions this design exists to avoid, and
+        it would arrive silently. So the message has to carry three things -
+        why, how to stop being refused, and what can still be re-rolled today.
+        """
+        with self.assertRaises(SystemExit) as caught:
+            gen.reroll_trait(TABLES, npc_for(), "Theme", random.Random(0))
+        message = str(caught.exception)
+        self.assertIn("before raw bullets were recorded", message)
+        self.assertIn("Re-roll the NPC to record them", message)
+        for name in gen.REROLLABLE_TRAITS:
+            self.assertIn(name, message,
+                          "the refusal should still offer %r" % name)
+
+    def test_that_refusal_does_not_blame_the_script(self):
+        """The reasons were rewritten when the cascade landed, and this is what
+        keeps them rewritten.
+
+        'the manifest stores Role with its flags already stripped' was a claim
+        about the format. The format records them now, so printed today it
+        would send the owner of a modern NPC looking for a limitation that has
+        been fixed, instead of at the one-line cure. Every reason reachable
+        only from the lossy path has to talk about the entry.
+        """
+        for name, reason in gen.UNREROLLABLE_REASONS.items():
+            if name in gen.RAW_REROLLABLE_TRAITS:
+                self.assertNotIn("the manifest stores", reason,
+                                 "%r is re-rollable given raw bullets, so its "
+                                 "refusal is about this entry rather than about "
+                                 "the manifest format" % name)
 
     def test_a_lossy_reroll_invents_no_raw_bullets(self):
         """Absent means "not recorded", and must stay that way through a

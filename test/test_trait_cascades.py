@@ -94,9 +94,13 @@ def pools_by_table(npc):
     Pools are attributed to tables by content rather than by call order: a pool
     belongs to the one table whose bullets contain all of it. Attribution by
     counting calls would be a restatement of roll_npc()'s own loop, and would
-    go quietly wrong the first time a draw is added or moved. Ambiguity is an
-    assertion rather than a guess, so a fixture that ever gave two tables the
-    same bullet fails loudly instead of being mis-attributed.
+    go quietly wrong the first time a draw is added or moved. Ambiguity raises
+    rather than guessing, so a fixture that ever gave two tables the same
+    bullet fails loudly instead of being mis-attributed - and it raises a real
+    exception rather than asserting, because a bare `assert` is compiled out
+    under `python -O` and this guard is the only thing standing between a
+    mis-attributed pool and a completeness check that silently measures the
+    wrong table.
 
     Later pools overwrite earlier ones for the same table, which matters for
     exactly one table: a 'nogear' Backdrop makes roll_npc() draw Gear a second
@@ -120,10 +124,11 @@ def pools_by_table(npc):
         bullets = [x[0] if isinstance(x, tuple) else x for x in pool]
         owners = [name for name in gen.REQUIRED_TABLES
                   if set(bullets) <= reachable[name]]
-        assert len(owners) == 1, (
-            "pool %r could belong to any of %r - the fixture has given two "
-            "tables the same bullet, so this attribution is no longer sound"
-            % (bullets, owners))
+        if len(owners) != 1:
+            raise RuntimeError(
+                "pool %r could belong to any of %r - the fixture has given two "
+                "tables the same bullet, so this attribution is no longer sound"
+                % (bullets, owners))
         out[owners[0]] = bullets
     return out
 
@@ -251,6 +256,19 @@ class TestTraitCascade(unittest.TestCase):
                 "%s's cascade is not in REQUIRED_TABLES order: %r"
                 % (name, cascade))
 
+    def test_a_name_that_is_not_a_table_raises(self):
+        """An empty cascade would be a re-roll that changed nothing.
+
+        The closure filters its result through REQUIRED_TABLES, so a
+        misspelled name would otherwise close to () - and a caller hands the
+        cascade straight to reroll_from_raw() as its free set, where an empty
+        free set pins every trait and re-rolls none of them. The CLI would then
+        print a re-roll and the render would come back identical, which is the
+        silent no-op this whole feature exists to prevent.
+        """
+        with self.assertRaises(ValueError):
+            gen.trait_cascade("Not A Table")
+
     def test_a_trait_with_no_dependents_closes_to_itself(self):
         """What leaves the traits that already re-roll cleanly alone.
 
@@ -356,7 +374,13 @@ class TestTheMapIsComplete(unittest.TestCase):
       only in roll_npc()'s forced-value branches, which narrow an EARLIER
       table's pool; this harness pins every trait, so those branches never run.
     - Filters carrying an 'or options' fallback that the minimal fixture never
-      drives to the narrow case - several of the Weapon edges.
+      drives to the narrow case. This is the largest group at eight, and it is
+      not the Weapon edges alone: Theme -> Hair, Headgear and Weapon (the
+      theme filter and its share weighting), Outfit -> Headgear, Weapon and
+      Gear (the 'notac' strip and 'hardtech'), Role -> Weapon (the weapon
+      policy), and Weapon -> Stance (the carried-flags filter). Naming them is
+      the point of the paragraph: a limits statement that is vague about its
+      own limits invites the reader to trust it further than it goes.
 
     What is worth saying for it is the measurement that motivated it: run
     against the map as it stood before roll_npc()'s filter chain was audited by

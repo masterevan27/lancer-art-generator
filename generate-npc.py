@@ -190,13 +190,23 @@ TRAIT_DEPENDENTS = {
     # new rifle does.
     "Gear": ("Stance",),
 
-    # Weather is gated by the Backdrop's own 'weather' flag in
-    # weather_sentence(), since rain inside a cockpit or in hard vacuum is
-    # nonsense. Glow placement is filtered on whether the Backdrop's scene has
-    # a light source at all, via has_light_source(split_backdrop(...)), since a
-    # placement flagged 'scene' asserts the environment is what casts the
-    # light. Keep either across a new Backdrop and it describes a scene that is
-    # gone.
+    # Weather is a different KIND of edge from its twenty-two neighbours, and
+    # the difference is worth stating so a later reader does not go looking for
+    # the filter it does not have. Nothing narrows the Weather pool: the
+    # Backdrop's 'weather' flag is read at prompt-build time by
+    # weather_sentence(), which decides only whether the rolled Weather is
+    # RENDERED. So a Weather kept across a new Backdrop is never illegal, only
+    # newly hidden or newly visible - a freshness edge rather than a
+    # contradiction one. It is here because the design doc's §3 table asks for
+    # it and because it errs in the safe direction: re-drawing a trait the new
+    # scene is about to show for the first time beats carrying the old scene's
+    # weather under a new sky.
+    #
+    # Glow placement is the contradiction edge of the pair. It is filtered on
+    # whether the Backdrop's scene has a light source at all, via
+    # has_light_source(split_backdrop(...)), since a placement flagged 'scene'
+    # asserts the environment is what casts the light. Keep it across a new
+    # Backdrop and it describes a scene that is gone.
     #
     # Gear is the third, and it is here for an ordering reason rather than a
     # flag-filter one, which is why it is worth spelling out. A 'nogear'
@@ -225,6 +235,18 @@ TRAIT_DEPENDENTS = {
     # which describe an adult woman's; and a forced 'figure' Build drops the
     # 'young' Age bullets in the other direction. roll_npc() implements both
     # directions, so both are edges here.
+    #
+    # Both are also wider than they strictly need to be, in the same way and
+    # for the same reason, and the symmetry is worth recording so that neither
+    # is later mistaken for load-bearing on its own. Freeing either one alone
+    # already reaches the other's filter: a pinned 'figure' Build narrows the
+    # freed Age's pool through roll_npc()'s forced_figure branch, and a freed
+    # Build is narrowed by the pinned Age's 'young' inside the loop. So neither
+    # edge is preventing a measured contradiction the way Age -> Hair colour
+    # is; each only guarantees that the pair is redrawn together rather than
+    # one of them being squeezed into whatever the other left. Both err in the
+    # safe direction - too wide, never too narrow - which is the direction to
+    # err in when the cost is one extra trait moving.
     #
     # Hair colour is the same 'young' flag read one table over: an 'older'
     # shade - greying, salt-and-pepper - asserts an age the Age clause earlier
@@ -261,7 +283,17 @@ def trait_cascade(name):
     Ordered by REQUIRED_TABLES rather than by discovery order, so a cascade can
     never disagree with the order the roller draws in, and so the same cascade
     reads the same way in the CLI's report as in the GUI's dialog.
+
+    An unknown name raises rather than closing to an empty tuple. The
+    REQUIRED_TABLES filter below would otherwise swallow a misspelling and hand
+    back (), and a caller hands this straight to reroll_from_raw() as its free
+    set - so a typo would pin every trait and re-roll nothing, reporting a
+    re-roll that changed the NPC not at all. A silent no-op wearing the name of
+    a re-roll is the exact failure class this map exists to prevent, so it is
+    an error here rather than a puzzle at the other end.
     """
+    if name not in REQUIRED_TABLES:
+        raise ValueError("%r is not a table the roller rolls" % name)
     seen = {name}
     pending = [name]
     while pending:
@@ -2063,14 +2095,20 @@ def parse_args(argv=None):
                             "with new noise instead of a new roll")
 
     regen.add_argument("--reroll-trait", metavar="TABLE",
-                       help="re-roll ONE trait of the regenerated NPC instead of reproducing "
-                            "it - e.g. --reroll-trait Hair to give an existing character a new "
-                            "haircut and nothing else. Everything else comes from the entry as "
-                            "usual, and the result overwrites the same folder and manifest id. "
-                            "Only some traits can be re-rolled alone: the manifest stores "
-                            "bullets with their flags stripped, so a trait whose filters need "
-                            "another trait's flags is refused with the reason. Re-rollable: "
-                            + ", ".join(REROLLABLE_TRAITS))
+                       help="re-roll ONE trait of the regenerated NPC - and everything that "
+                            "trait invalidates - instead of reproducing it. --reroll-trait Hair "
+                            "gives an existing character a new haircut and nothing else; "
+                            "--reroll-trait Theme redraws its whole visual world, twelve traits "
+                            "of it. A trait that gates others takes them with it rather than "
+                            "leaving them contradicting it, and every trait that goes with "
+                            "it is named on the way past. Everything else comes from the entry "
+                            "as usual, and the result overwrites the same folder and manifest "
+                            "id. Re-rollable: "
+                            + ", ".join(RAW_REROLLABLE_TRAITS)
+                            + ". An NPC generated before its raw bullets were recorded is a "
+                              "lossy record of its own roll - a stored Role has lost the 'mil' "
+                              "flag its Faction, Outfit and Weapon are filtered on - so those "
+                              "re-roll only: " + ", ".join(REROLLABLE_TRAITS))
 
     run = p.add_argument_group("run mode")
     run.add_argument("--trait-odds", type=int, nargs="?", const=DEFAULT_ODDS_SAMPLES,
@@ -2244,10 +2282,23 @@ REROLLABLE_TRAITS = (
 )
 
 # Why each of the others is refused, printed verbatim so the answer to "why
-# not hair colour" is in the error rather than in this file. Both paths read
-# it, but most of these reasons name the lossy manifest and so can only ever
-# be printed for an entry without raw bullets; the four that outlive it are
-# the four RAW_REROLLABLE_TRAITS below excludes.
+# not hair colour" is in the error rather than in this file.
+#
+# Both paths read this dict, and every entry has to be true on the path that
+# prints it. Only three are reachable from an entry that recorded its raw
+# bullets - the two halves of the name and Pronouns, refused for reasons the
+# bullets do not touch. Every other entry here is now a legacy-path message
+# and nothing else: cascading re-rolls made the rest re-rollable, so the only
+# reader who can ever see them is the owner of an entry written before
+# rawTraits existed.
+#
+# Which is why they say "this entry" rather than "the manifest". The earlier
+# wording - "the manifest stores Role with its flags already stripped" - was
+# a claim about the format, and the format no longer does that. Printed today
+# it would tell the owner of a modern NPC something false about a file that
+# has the flag right there in it, and send them looking for a limitation that
+# has been fixed instead of at the one-line cure, which is to re-roll the NPC
+# so its bullets get recorded.
 UNREROLLABLE_REASONS = {
     "Given names": "the NPC's folder and manifest id are derived from its name, "
                    "so re-rolling one would not be a change in place",
@@ -2255,47 +2306,64 @@ UNREROLLABLE_REASONS = {
                     "so re-rolling one would not be a change in place",
     "Pronouns": "every per-pronoun variant table is selected by it, so the whole "
                 "NPC would have to re-roll with it",
-    "Theme": "it gates seven appearance tables, which would all have to re-roll with it",
-    "Role": "it gates Faction, Outfit and Weapon, which would all have to re-roll with it",
-    "Age": "its pairing with Build needs that bullet's 'figure' flag, and the "
-           "manifest stores Build with its flags already stripped",
+    # The design doc's §4.2, which is the one refusal here written out in the
+    # spec rather than in this file. It names Role, Outfit and Weapon because
+    # those are the cascade's own worst case: a themed re-roll of the last two
+    # is filtered on the first one's 'mil' flag, and this entry no longer has
+    # it.
+    "Theme": "this NPC was generated before raw bullets were recorded, so its "
+             "Role's 'mil' flag is gone and a themed re-roll of its Outfit "
+             "and Weapon could contradict it",
+    "Role": "it gates Faction, Outfit and Weapon, which would all have to "
+            "re-roll with it, and this entry stored every one of them with "
+            "its flags already stripped",
+    "Age": "its pairing with Build needs that bullet's 'figure' flag, and this "
+           "entry stored Build with its flags already stripped",
     "Hair colour": "the rolled cut has the colour substituted into it and its "
                    "'{colour}' slot is gone, so there is nowhere to put a new one - "
                    "re-roll Hair instead, which picks a new cut in the same colour",
-    "Faction": "its civ/mil filter needs the Role bullet's 'mil' flag, and the "
-               "manifest stores Role with its flags already stripped",
-    "Outfit": "its civ/mil filter needs the Role bullet's 'mil' flag, and the "
-              "manifest stores Role with its flags already stripped",
+    "Faction": "its civ/mil filter needs the Role bullet's 'mil' flag, and this "
+               "entry stored Role with its flags already stripped",
+    "Outfit": "its civ/mil filter needs the Role bullet's 'mil' flag, and this "
+              "entry stored Role with its flags already stripped",
     "Weapon": "its policy needs the Role bullet's 'mil' flag and the Outfit's "
-              "'notac', and the manifest stores both with their flags stripped",
+              "'notac', and this entry stored both with their flags stripped",
     "Gear": "its filter needs the Weapon bullet's 'hands' flag and the Outfit's "
-            "'notac', and the manifest stores both with their flags stripped",
-    "Stance": "its filter needs the Weapon and Gear 'hands'/'gun' flags, and the "
-              "manifest stores both with their flags stripped",
-    "Backdrop": "Glow placement and Weather are both filtered against it, so "
-                "re-rolling it would leave those two asserting a scene that is gone",
-    "Weather": "it is gated by the Backdrop bullet's 'weather' flag, and the "
-               "manifest stores Backdrop without its flag segment",
+            "'notac', and this entry stored both with their flags stripped",
+    "Stance": "its filter needs the Weapon and Gear 'hands'/'gun' flags, and this "
+              "entry stored both with their flags stripped",
+    "Backdrop": "Glow placement and Gear are filtered against it and Weather is "
+                "gated by it, so re-rolling it would leave all three describing "
+                "a scene that is gone, and this entry kept no bullets to re-roll "
+                "them from",
+    "Weather": "it is gated by the Backdrop bullet's 'weather' flag, and this "
+               "entry stored Backdrop without its flag segment",
 }
 
 # Which traits --reroll-trait can re-roll from an entry that DID record its raw
-# bullets - which is nearly all of them, because nearly every refusal above is
-# a complaint about the lossy manifest and nothing else. A pinned raw bullet
+# bullets - which is all but three of them, because nearly every refusal above
+# is a complaint about the lossy manifest and nothing else. A pinned raw bullet
 # arrives carrying the flags its dependents filter on, so reroll_from_raw()
 # rebuilds no filter at all; it re-runs the roller's own.
 #
+# Theme is here now, and it is the reason this list grew by one. It was held
+# back because it is not a one-free-variable re-roll - it gates seven
+# appearance tables - and reroll_trait() had only one free variable to offer.
+# It now frees a whole cascade, so the objection is answered rather than
+# waived: the seven and their four dependents re-roll with it, under the
+# roller's own filters, which is precisely what "would all have to re-roll
+# with it" was asking for.
+#
 # Derived from REQUIRED_TABLES by exclusion rather than written out, so a table
 # added there next month is re-rollable the day it is added rather than the day
-# somebody remembers this line. The four it excludes are refused for reasons
-# raw bullets do not touch: the NPC's folder and manifest id are derived from
-# its name, so re-rolling either half of the name is not a change in place;
-# Pronouns selects every per-pronoun variant table and takes the name with it;
-# and Theme is not a one-free-variable re-roll at all - it gates seven
-# appearance tables, so it needs a cascade that frees those and their
-# dependents together rather than a re-roll in place.
+# somebody remembers this line. The three it excludes are refused for reasons
+# raw bullets and cascades both leave untouched: the NPC's folder and manifest
+# id are derived from its name, so re-rolling either half of the name is not a
+# change in place, and Pronouns selects every per-pronoun variant table and
+# takes the name with it.
 RAW_REROLLABLE_TRAITS = tuple(
     name for name in REQUIRED_TABLES
-    if name not in ("Given names", "Family names", "Pronouns", "Theme"))
+    if name not in ("Given names", "Family names", "Pronouns"))
 
 
 def hair_colour_tail(tables, subject, base):
@@ -2352,13 +2420,23 @@ def draw_different_theme(tables, current, rng):
     return rng.choice(others)
 
 
-def reroll_from_raw(tables, npc, free, rng):
+def reroll_from_raw(tables, npc, free, rng, pinned=None):
     """Re-draw the traits in `free`, with every other raw bullet pinned.
 
     A re-roll is a fresh roll with one free variable, and a Theme cascade is
     the same operation with twelve - so this takes the free set as an argument
     and neither end knows about the other. `free` is any container of trait
     names; everything else npc["_raw"] recorded is pinned as an override.
+
+    `pinned` is for the one trait in a cascade whose new value is chosen rather
+    than drawn: it is merged over the overrides after the free set has been
+    subtracted, so a trait can be freed - releasing everything downstream of it
+    - and still arrive at a value this function's caller picked. Theme is the
+    only user today. It has to be in `free`, or the eleven traits it gates
+    would stay pinned to bullets tagged for the theme being replaced; and its
+    own draw has to be conditional, or a re-roll would keep landing back on the
+    theme the user asked to leave. Those two are not in conflict, they just
+    cannot both be expressed by the free set alone.
 
     Pinning raw bullets is the designed use of the override path, not a trick:
     it is the one --set-trait already documents, a bullet handed over verbatim
@@ -2408,6 +2486,7 @@ def reroll_from_raw(tables, npc, free, rng):
 
     overrides = {trait: bullet for trait, bullet in npc["_raw"].items()
                  if trait not in free}
+    overrides.update(pinned or {})
     fresh = roll_npc(tables, rng, overrides)
     npc.clear()
     npc.update(fresh)
@@ -2417,11 +2496,22 @@ def reroll_trait(tables, npc, name, rng):
     """Re-roll one trait of an already-rolled NPC in place, and return it.
 
     Two paths, chosen by whether the entry recorded its raw bullets. With them,
-    the whole thing is one pinned re-roll through reroll_from_raw() and nearly
-    every trait is re-rollable. Without them - an entry written before
-    rawTraits existed - it falls back to rebuilding by hand the few filters a
-    lossy entry still supports, which is the code below and the reason
-    REROLLABLE_TRAITS is a much shorter list. Mutates `npc` either way.
+    the whole thing is one pinned re-roll through reroll_from_raw() and every
+    trait but the name and Pronouns is re-rollable. Without them - an entry
+    written before rawTraits existed - it falls back to rebuilding by hand the
+    few filters a lossy entry still supports, which is the code below and the
+    reason REROLLABLE_TRAITS is a much shorter list. Mutates `npc` either way.
+
+    On the raw path the free set is the target's CASCADE rather than the target
+    alone, and that is the whole of this function's half of the cascade design.
+    Pinning filters in one direction only: the freed trait is drawn against
+    everything pinned, but a pinned trait is never drawn, so nothing re-checks
+    it against the value that just changed. Freeing Role alone left the kept
+    Faction on the wrong side of the civ/mil line 138 times in 400 on the live
+    tables. Freeing the cascade instead redraws every trait a filter would have
+    had to reject, so the contradiction has nowhere left to appear. A trait
+    nothing depends on closes to itself, so the eleven that already re-rolled
+    cleanly take the identical path and still move nothing but themselves.
     """
     # Absent means the entry predates rawTraits, and the hand-written path is
     # exactly the fallback written for that. A recorded-but-empty dict takes
@@ -2435,14 +2525,39 @@ def reroll_trait(tables, npc, name, rng):
         reason = UNREROLLABLE_REASONS.get(
             name, "it is not a trait this script rolls")
         # The set that applies, not the shorter one: an entry with raw bullets
-        # can re-roll ten traits the fallback refuses, and printing the
+        # can re-roll eleven traits the fallback refuses, and printing the
         # fallback's list to its owner would be a lie about their own NPC.
+        #
+        # And when raw bullets are the only thing standing in the way, the cure
+        # goes in the message. Every reason above is a legacy-path reason now,
+        # so a reader of one is being told about a limitation of their entry
+        # rather than of this script, and the difference is only useful if the
+        # fix is named. Derived from the two sets rather than written into each
+        # reason, so it appears exactly when it is true - Pronouns and the two
+        # halves of the name are refused whatever the entry recorded, and
+        # telling their owner to re-roll the NPC would send them off to record
+        # bullets that change nothing.
+        if raw or name not in RAW_REROLLABLE_TRAITS:
+            offer = "Re-rollable: %s" % ", ".join(rerollable)
+        else:
+            offer = ("Re-roll the NPC to record them, or re-roll a single "
+                     "trait from: %s" % ", ".join(rerollable))
         raise SystemExit(
-            "--reroll-trait %s: cannot re-roll that one on its own, because %s.\n"
-            "Re-rollable: %s" % (name, reason, ", ".join(rerollable)))
+            "--reroll-trait %s: cannot re-roll that one on its own, because "
+            "%s.\n%s" % (name, reason, offer))
 
     if raw:
-        reroll_from_raw(tables, npc, (name,), rng)
+        # Theme's new value is chosen rather than drawn, and it is the only
+        # one: a cascade that landed back on the theme it started from would
+        # spend twelve traits and a render producing a differently-dressed
+        # version of the same idea, which is not what the user asked for. It
+        # still travels in the free set, so the seven themed tables and their
+        # four dependents draw again under the new theme instead of staying
+        # pinned to bullets tagged for the old one.
+        pinned = None
+        if name == "Theme":
+            pinned = {"Theme": draw_different_theme(tables, npc["Theme"], rng)}
+        reroll_from_raw(tables, npc, trait_cascade(name), rng, pinned)
         return npc[name]
 
     subject = npc["Pronouns"].split("/")[0].strip().lower()
@@ -2546,20 +2661,43 @@ def regenerate_one(args):
               % args.regen_id, file=sys.stderr)
         npc["Height"] = "of average height"
 
-    # One trait re-rolled, everything else reproduced. Seeded from the entry's
-    # own seed so the same reroll of the same NPC is repeatable, unless
-    # --new-seed asks for a different draw.
+    # One trait re-rolled - and, on the raw path, everything a filter would
+    # have had to reject alongside it. Everything else reproduced. Seeded from
+    # the entry's own seed so the same reroll of the same NPC is repeatable,
+    # unless --new-seed asks for a different draw.
     rerolled = None
     if args.reroll_trait:
         if not args.tables.exists():
             raise SystemExit("--reroll-trait needs the tables file: %s" % args.tables)
         tables = parse_tables(args.tables)
         check_tables(tables, args.tables, getattr(parse_tables, "repeated", ()))
-        before = npc.get(args.reroll_trait)
+        # Snapshot before the re-roll replaces the dict wholesale, and every
+        # trait rather than the named one: on the raw path a dozen of them can
+        # move and the old values are gone once roll_npc() has run.
+        #
+        # Whether they will is read here too, for the same reason. A cascade is
+        # what the raw path does and the lossy fallback re-rolls the one trait
+        # it was asked for, so which report to print is decided by which path
+        # is about to run - and reroll_from_raw() leaves no trace of _raw
+        # having been there.
+        before = {k: v for k, v in npc.items() if not k.startswith("_")}
+        cascading = bool(npc.get("_raw"))
         rerolled = reroll_trait(
             tables, npc, args.reroll_trait,
             random.Random(args.new_seed if args.new_seed is not None else entry["seed"]))
-        print("re-rolled %s: %r -> %r" % (args.reroll_trait, before, rerolled))
+        print("re-rolled %s: %r -> %r"
+              % (args.reroll_trait, before.get(args.reroll_trait), rerolled))
+        # Enumerated rather than summarised, which is the CLI's half of the
+        # design doc's §6: somebody who re-rolls Theme expecting a new palette
+        # gets a new outfit, weapon, hair and scene, and "and 11 others" would
+        # let them find that out from the render. Every trait that travelled is
+        # named even where it came back unchanged - a cascade re-draws it
+        # either way, and printing only the movers would make an unlucky run
+        # look like a smaller change than it was.
+        for trait in (trait_cascade(args.reroll_trait) if cascading else ()):
+            if trait != args.reroll_trait:
+                print("  with %s: %r -> %r"
+                      % (trait, before.get(trait), npc.get(trait)))
 
     seed = args.new_seed if args.new_seed is not None else entry["seed"]
     prompts = build_prompts(npc)
