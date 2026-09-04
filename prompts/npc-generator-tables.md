@@ -1148,12 +1148,23 @@ ignored — so notes like this one are safe to leave inline.
 - pale lavender
 - pale mint-green
 - pale seafoam-green
-- dusty pink
 - magenta-tinted black
 - two-tone || dark over a bleached pale underlayer
 - pale silver-white || fading to green at the tips
 - fiery orange-red || fading to dark roots
 - dirty-blonde || fading pale at the tips
+
+## Hair colour (she) +
+
+<!--
+  Added to the shared colours above rather than replacing them - a woman rolls
+  every neutral shade as well as these.
+
+  Three segments, exactly as the base table: colour || trailing clause || flags.
+  See the Hair colour item near the top of this file.
+-->
+
+- dusty pink
 
 ## Eyes
 
