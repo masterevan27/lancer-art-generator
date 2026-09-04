@@ -1260,6 +1260,13 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     # only a --set-trait Stance='... || hands' override still carries flags,
     # and without this they would reach the token prompt.
     npc["Stance"] = split_flags(npc["Stance"])[0]
+    # Glow placement was added to the loop's own strip block above (it isn't
+    # themed - it's there for the same reason Age is, not because THEMED_TABLES
+    # says so) but was missed from this one, so a --set-trait override, or now
+    # a rawTraits round-trip that feeds the rolled bullet straight back in,
+    # still carried its 'scene' flag through to the prompt and the dossier.
+    # Same fix, same place, same reason as every line above.
+    npc["Glow placement"] = split_flags(npc["Glow placement"])[0]
 
     # Hair carries a '{colour}' slot rather than the template joining the two,
     # because the colour's position differs per bullet - "close-cropped
@@ -2212,6 +2219,14 @@ def regenerate_one(args):
     # build_prompts(), so a plain regen neither needs it nor warns about it -
     # the warning belongs where the value is actually used.
     npc["_outfit_notac"] = entry.get("outfit_notac")
+    # No default here either, for the same reason: absent means "not
+    # recorded" (an entry written before rawTraits existed), and that has to
+    # stay distinguishable from a recorded-but-empty dict. A plain regen never
+    # looks at _raw, so it neither needs this nor is degraded by its absence -
+    # the warning belongs where a consumer actually needs the raw bullets and
+    # doesn't have them.
+    if "rawTraits" in entry:
+        npc["_raw"] = dict(entry["rawTraits"])
     if "Height" not in npc:
         print("! %s has no recorded Height trait (written before the Height table existed) - "
               "regenerating without one; re-roll instead of regenerating to pick one up."
@@ -2339,6 +2354,12 @@ def regenerate_one(args):
     # and rewriting traits it did not touch would just churn the manifest.
     if rerolled is not None:
         entry["traits"] = {k: v for k, v in npc.items() if not k.startswith("_")}
+        # Only when _raw is actually known. A legacy entry loaded above with
+        # no rawTraits leaves npc["_raw"] unset, and this regen never had raw
+        # bullets to begin with - writing some in now would invent a
+        # provenance the entry never actually had.
+        if npc.get("_raw") is not None:
+            entry["rawTraits"] = dict(npc["_raw"])
     entry["when"] = time.strftime("%Y-%m-%d %H:%M:%S")
     manifest[folder_path] = entry
     art.save_manifest(args.regen_manifest, manifest)
@@ -2546,6 +2567,14 @@ def main(argv=None):
             "tables": str(args.tables),
             "workflow": str(workflow_for(args, npc)),
             "traits": {k: v for k, v in npc.items() if not k.startswith("_")},
+            # _raw is dropped by the dict comprehension above along with every
+            # other '_'-prefixed key, so it has to be written out explicitly
+            # here to survive at all. It is the bullets traits was built from,
+            # flags and all - traits alone has already lost the 'mil' off a
+            # Role or the 'notac' off an Outfit, which Faction, Weapon and
+            # Headgear filter on, so a --reroll-trait against a stored NPC
+            # needs this to see what its sibling traits actually require.
+            "rawTraits": dict(npc["_raw"]),
             # Not itself a table roll, so it lives beside traits rather than in
             # it - --regen-manifest reads it back to pick the right MATURITY/
             # FACE clause without re-deriving it from the (already flag-
