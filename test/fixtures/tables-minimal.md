@@ -73,6 +73,7 @@ Used by the test suite. Not used by the generator at runtime.
 ## Headgear
 - {Subject} {is_are} bare-headed.
 - {Subject} {wear} a wide woven hat. || @alpha
+- {Subject} {wear} a sealed flight helmet. || hardtech
 
 ## Weapon
 

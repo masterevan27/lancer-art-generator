@@ -45,7 +45,8 @@ conventions, and the pronoun placeholders. As of this writing the flags are:
 | `weapon` | Weapon | An actual weapon, as opposed to equipment that merely *is* `mil` (a radio, a pack). |
 | `simple` | Weapon | A `weapon` small and pocketable — a knife, one holstered pistol. |
 | `sidearm` | Weapon | A bullet that explicitly includes a **holstered or openly worn** pistol. |
-| `notac` | Outfit | Elaborate/traditional dress that must never pair with `mil`-flagged Weapon or Gear. |
+| `notac` | Outfit | Elaborate/traditional dress that must never pair with `mil`-flagged Weapon or Gear, nor with `hardtech` Headgear. |
+| `hardtech` | Headgear | Modern technology worn on the head — helmets sealed or open, visor and lens rigs, sensor/night-vision hardware, breather masks, comms headsets, anything cabled or jacked, powered or cybernetic pieces, plus industrial eye and ear protection. Dropped when the Outfit roll came up `notac`. **Not** soft goods (cloth, straw, woven, leather, fur — hats, caps, hoods, bandanas, headbands), **not** plain eyewear, and **not** the traditional or ceremonial register: those are what an elaborate outfit *should* reach, and a kabuto over a kimono is the point. Goggles are eyewear, not hardware. A traditional hat with a mask beneath it is the hat. |
 | `nogear` | Backdrop | The scene already puts something in the subject's hands. |
 | `weather` | Backdrop | Outdoors, so a Weather roll can land in it. |
 | `clear` | Weather | Contributes nothing to the prompt. |
@@ -294,8 +295,13 @@ the image will not fit this file. Apply all of these:
   Equipment only — data-slates, tool bags, radios, packs, anything that
   doesn't read as a weapon. No `gun`/`weapon`/`simple`/`sidearm` here; those
   flags live on `Weapon` now.
-- **Outfit**: `<noun phrase clause> || [civ] [mil] [notac]`
-- **Headgear**: `{Subject} {wear} <full sentence>.` (no flags)
+- **Outfit**: `<noun phrase clause> || [civ] [mil] [notac] [dressy]`
+- **Headgear**: `{Subject} {wear} <full sentence>. || [hardtech]`
+  Flag it if the piece is a helmet, a visor or lens rig, sensor or
+  night-vision hardware, a breather mask, a comms headset, anything cabled or
+  jacked, a powered or cybernetic piece, or industrial eye/ear protection.
+  Leave it unflagged if it is a soft hat, cap, hood, bandana or headband,
+  plain eyewear, or anything in the traditional/ceremonial register.
 - **Hair**: `<noun phrase, exactly one {colour}>` (no flags — dropped straight
   into `{hair}` alongside `{skin}` and `{eyes}` in the prompt template, with
   the rolled `Hair colour` filling the `{colour}` slot first; see the shape

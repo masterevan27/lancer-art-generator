@@ -453,6 +453,49 @@ forced `dressy` Outfit narrows the *Role* roll; a forced `plain` Role narrows
 the Outfit roll; forcing both into a contradiction is an error naming the pair
 rather than a silent pairing.
 
+### Headgear register
+
+`notac` reaches a third table. It already means "do not pair this with tactical
+gear" and already drops `mil` bullets from Weapon and Gear; a `hardtech`
+Headgear bullet is now dropped the same way, so an elaborate or traditional
+outfit is not crowned with a sealed flight helmet. `Headgear` follows `Outfit`
+in `REQUIRED_TABLES`, so the flag is in hand when the pool is assembled — the
+same ordering guarantee `Faction` and `Outfit` rely on for `role_mil`.
+
+`hardtech` is **not** `mil`, and the shortcut is tempting because the Weapon
+and Gear filter already keys on `mil`. `mil` means "an actual issued uniform"
+on `Faction` and `Outfit`, `Headgear` is not in `filter_by_mil()`, and a `mil`
+flag sitting on headgear bullets would invite someone to wire it in and quietly
+change what a civilian may wear. It is also the wrong word for roughly a third
+of the set — a cybernetic ear implant, a mechanical diagnostic rig and a pair
+of retro-industrial headphones are none of them military and all three fight a
+kimono.
+
+`hardtech` is **not** `dressy` either. `dressy` asks whether a Role may be seen
+in finery; this asks whether a garment sits alongside hard kit. The seven
+bullets the two disagree on — the pilgrim's robes, the ragged bindings, the
+travel-worn robe — are exactly the ones this must also cover: a pilgrim under a
+night-vision helmet is the same bug as a liaison in a kimono.
+
+39 of the 64 base Headgear bullets carry it; all 4 in `Headgear (she) +` do
+not. A `notac` outfit still draws from 25 bullets, 30 by weight, including the
+whole traditional register — both kabuto, both lacquered hats, the bird-skull
+hat, the straw and woven hats — which is the point rather than a consolation.
+Two boundaries are settled so they are not relitigated per bullet: goggles are
+eyewear rather than hardware, and a traditional hat with a mask beneath it is
+the hat.
+
+Measured over 4000 rolls after the change: of 355 NPCs with a `notac` Outfit,
+none wore `hardtech` headgear, while hard tech still reached 1996 of the 4000
+overall and those 355 drew 54 distinct headgear between them — the gate narrows
+the outfits it targets and no others, without flattening what is left.
+
+The reverse gate is deliberately absent: a combat uniform can still roll a
+horned kabuto. Doing it properly needs a second value on the same axis and a
+decision about which Outfits reject it, which is not simply `mil` — the black
+formal dress uniform should keep a peaked cap and reject a bird-skull hat, and
+both are unflagged today.
+
 ## Period vocabulary matters
 
 The military entries originally used mid-20th-century words — *webbing*, *flak
@@ -695,9 +738,19 @@ time it was stored.
 | **Refused** | everything else, each with its own reason — see `UNREROLLABLE_REASONS` |
 
 The filters that *do* rebuild are the ones whose inputs survive storage: the
-rolled `Theme` is a stored trait, `young` is a stored key, and the stored
-`Backdrop` keeps its scene segment, which is what `Glow placement`'s `scene`
-flag is tested against.
+rolled `Theme` is a stored trait, `young` and `outfit_notac` are stored keys,
+and the stored `Backdrop` keeps its scene segment, which is what
+`Glow placement`'s `scene` flag is tested against.
+
+`Headgear` is on the re-rollable list *because* of that second key. It is gated
+by the Outfit bullet's `notac` flag, and the manifest stores Outfit with its
+flags already stripped — the exact condition that refuses `Weapon`, `Gear` and
+`Stance`. `outfit_notac` is therefore written beside `young`, for the reason
+`young` is written at all. An entry from before that key exists reads back as
+`None` rather than `False`, which is not the same claim: it re-rolls headgear
+unrestricted, exactly as it did before the register existed, and says so on
+stderr; a regen of such an entry declines to write a fabricated `False` over
+the gap.
 
 `Hair` is the fiddly one and worth describing. `roll_npc()` substitutes the
 colour into the cut and appends the colour's trailing clause to the whole
