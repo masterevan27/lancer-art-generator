@@ -588,6 +588,35 @@ def filter_by_dress(options, policy):
     return plain or options        # never filter the pool down to nothing
 
 
+def filter_by_hardtech(options, outfit_notac):
+    """Headgear flagged 'hardtech', dropped under an Outfit flagged 'notac'.
+
+    'hardtech' is modern technology worn on the head: helmets sealed or open,
+    visor and lens rigs, sensor and night-vision hardware, breather masks,
+    comms headsets, anything strung with cabling or seated on jacks, and
+    powered or cybernetic pieces. Not soft goods, not plain eyewear, and not
+    the traditional register - a kimono wants a kabuto above it, and gets one.
+
+    This is the third and last place 'notac' reaches. It already drops 'mil'
+    bullets from Weapon and Gear so an elaborate outfit carries neither a
+    military rifle nor a tactical pack; it had never reached what the NPC
+    wears on their head, which is how a corporate liaison ended up in a floral
+    kimono under a sealed flight helmet.
+
+    Deliberately NOT keyed on 'mil'. That flag means "an actual issued
+    uniform" on the two tables that carry it, Headgear is not in
+    filter_by_mil(), and putting 'mil' on headgear bullets would invite
+    someone to wire it in and quietly change what a civilian may wear. It is
+    also the wrong word for a third of the set: a cybernetic ear implant, a
+    mechanical diagnostic rig and a pair of retro-industrial headphones are
+    none of them military and all three fight a kimono.
+    """
+    if not outfit_notac:
+        return options
+    soft = [x for x in options if "hardtech" not in split_flags(x)[1]]
+    return soft or options         # never filter the pool down to nothing
+
+
 def filter_by_mil(options, mil, name):
     """Faction/Outfit bullets flagged 'civ' or 'mil', filtered by a military Role.
 
@@ -950,6 +979,13 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
             no_mil = [x for x in options if "mil" not in split_flags(x)[1]]
             options = no_mil or options
 
+        # And the third thing an NPC wears. Outfit precedes Headgear in
+        # REQUIRED_TABLES, so outfit_notac is already known here, the same way
+        # role_mil is known by the time Faction and Outfit roll. Keyed on its
+        # own 'hardtech' flag rather than on 'mil' - see filter_by_hardtech().
+        if name == "Headgear" and outfit_notac:
+            options = filter_by_hardtech(options, outfit_notac)
+
         # Rolled either way, so that forcing a trait does not shift the rest
         # of the run's random stream and change every NPC after it. The
         # exception is a forced trait that *filters* a later pool - the
@@ -1008,6 +1044,13 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
         npc[name] = value
 
     npc["_young"] = young
+    # The Outfit's register, published for the same reason '_young' is: the
+    # manifest stores Outfit with its flags stripped, so without this a
+    # Headgear re-roll could not tell whether it was gated, and Headgear would
+    # have to leave REROLLABLE_TRAITS - taking its button in the import GUI
+    # with it. See the raw-bullets spec, which generalises this and subsumes
+    # both keys.
+    npc["_outfit_notac"] = outfit_notac
 
     # Stance is rolled last, and filtered against the Weapon and Gear rolls.
     # The tables are otherwise independent, which produced NPCs standing with
@@ -1949,6 +1992,21 @@ def reroll_trait(tables, npc, name, rng):
         on_figure = [x for x in options if "scene" not in split_flags(x)[1]]
         options = on_figure or options
 
+    # 'hardtech' against the recorded outfit register - the second flag the
+    # manifest stores separately, for the same reason 'young' is the first.
+    # None means the entry predates the key, which is not the same as False:
+    # it is "nobody knows", and the honest answer to that is today's
+    # unrestricted behaviour plus a warning, not a fabricated 'plain'.
+    if name == "Headgear":
+        register = npc.get("_outfit_notac")
+        if register is None:
+            print("! this entry has no recorded outfit register (written before "
+                  "the Headgear register existed) - re-rolling headgear "
+                  "unrestricted, so it may come back with hard tech over a "
+                  "traditional outfit. Re-roll the NPC to record it.",
+                  file=sys.stderr)
+        options = filter_by_hardtech(options, bool(register))
+
     value = split_flags(rng.choice(options))[0]
 
     # A new cut takes the NPC's existing colour, and the tail that colour
@@ -1995,6 +2053,11 @@ def regenerate_one(args):
               "assuming not young; the maturity/face wording may drift slightly from the "
               "original render." % args.regen_id, file=sys.stderr)
     npc["_young"] = entry.get("young", False)
+    # No default: absent is 'not recorded', which reroll_trait() distinguishes
+    # from a recorded False. Unlike 'young' this is not consumed by
+    # build_prompts(), so a plain regen neither needs it nor warns about it -
+    # the warning belongs where the value is actually used.
+    npc["_outfit_notac"] = entry.get("outfit_notac")
     if "Height" not in npc:
         print("! %s has no recorded Height trait (written before the Height table existed) - "
               "regenerating without one; re-roll instead of regenerating to pick one up."
@@ -2113,6 +2176,11 @@ def regenerate_one(args):
     entry["token"] = token_file
     entry["tokenPrompt"] = token_prompt
     entry["young"] = npc["_young"]
+    # Only when it is known. Rewriting an entry that predates the key with a
+    # fabricated False would claim the outfit is not 'notac' when nothing here
+    # knows either way, and a later re-roll would then trust the fabrication.
+    if npc.get("_outfit_notac") is not None:
+        entry["outfit_notac"] = npc["_outfit_notac"]
     # Only when a trait actually changed: a plain regen reproduces the entry
     # and rewriting traits it did not touch would just churn the manifest.
     if rerolled is not None:
@@ -2320,6 +2388,10 @@ def main(argv=None):
             # FACE clause without re-deriving it from the (already flag-
             # stripped) Age text.
             "young": npc["_young"],
+            # Not a table roll either, and stored for the same reason: a
+            # Headgear re-roll needs the Outfit bullet's 'notac' flag, and
+            # traits are saved with their flags already stripped.
+            "outfit_notac": npc["_outfit_notac"],
             "files": written,
             "portrait": portrait_file,
             "portraitPrompt": portrait_prompt,
