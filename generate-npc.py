@@ -272,6 +272,35 @@ def migrate_traits(traits):
         if old in out:
             value = out.pop(old)
             out.setdefault(new, value)
+    # A stored Faction with no '||' predates split_faction() (Task 7): every
+    # bullet in the current tables file carries at least one separator, so a
+    # bare string can only have been written before the split existed - back
+    # when the table's single segment WAS the visual clause, dropped straight
+    # into the clothing sentence ("in IPS-Northstar workwear, riveted and
+    # salt-stained" was the whole Faction bullet, not a name). Restoring it
+    # into BOTH the name and visual segments, not just the visual, means
+    # split_faction() returns the same text everywhere the old single-segment
+    # value used to reach - the prompt's clothing sentence and the dossier's
+    # "Affiliation" row and byline alike - which is what makes
+    # regenerate_one()'s promise of an identical prompt actually hold for the
+    # entries rolled before this split, this migration's whole reason to
+    # exist.
+    #
+    # The one case this can't tell apart from a genuine pre-split entry: a
+    # bare bullet - '- Unaligned', no '||' at all - written into the tables
+    # file after Task 7 would roll a brand-new manifest entry whose Faction
+    # also has no '||', and this would wrongly push that name into the
+    # prompt as though it were a visual signature. No live bullet is written
+    # that way, so the risk is low, but it is silent otherwise - the warning
+    # below is what surfaces a wrong guess instead of leaving it a mystery.
+    if "Faction" in out and "||" not in out["Faction"]:
+        print("! stored Faction %r has no '||' - assuming this entry "
+              "predates the Task 7 name/visual split and treating the whole "
+              "value as the visual signature, so the original prompt "
+              "reproduces. If this entry was rolled after that split from a "
+              "genuinely bare Faction bullet, this is wrong - check the "
+              "regenerated render." % out["Faction"], file=sys.stderr)
+        out["Faction"] = "%s || %s" % (out["Faction"], out["Faction"])
     return out
 
 
