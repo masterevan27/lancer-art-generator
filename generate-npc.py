@@ -239,6 +239,34 @@ WEAPON_POLICY = {
     "Criminals": "armed_bias",
 }
 
+# Whether a Role's work admits ceremonial or finely-made dress, layered on top
+# of the civ/mil split the same way WEAPON_POLICY is - see filter_by_dress().
+#
+# Keyed on the ROLE_CATEGORIES bucket rather than on a per-Role flag, for the
+# reason MECH_ACCESS is: that mapping already encodes which job an occupation
+# is, and a second flag on '## Role' would restate it and then drift from it.
+# The 22 Role bullets need no edit at all.
+#
+# Only two categories are 'plain', and that is not an oversight. Pilots,
+# Soldiers and Support are entirely 'mil' Roles, and filter_by_mil() already
+# drops every 'civ' bullet from their pool - which is every ceremonial outfit
+# in the table - so they are barred already. Officials is the case this gate
+# must NOT break: fine dress is correct for a corporate liaison or a colonial
+# administrator. Criminals keeps it because a pirate in finery is a genre
+# staple, and Civilians because it holds the scavenger-priest, for whom robes
+# are the point.
+DRESS_POLICY = {
+    "Laborers": "plain",       # dockworker, freelance salvager
+    "Technicians": "plain",    # chief mechanic, maintenance technician
+}
+
+# What every other category gets. A default rather than six more entries, so a
+# Role category added later is covered without a second edit here - the same
+# reasoning DEFAULT_WEAPON_POLICY carries, and the lesson that file learned
+# when seven civilian Roles fell through an unlisted policy.
+DEFAULT_DRESS_POLICY = "any"
+
+
 # What a non-mil Role gets when WEAPON_POLICY names no policy for it. It used
 # to be "none at all", which meant seven civilian Roles - dockworker, chief
 # mechanic, maintenance technician, freelance salvager, bar owner, data
@@ -528,6 +556,38 @@ def variant_table(tables, name, subject):
     return tables[name] + tables.get("%s (%s) +" % (name, subject), [])
 
 
+def dress_policy_for(category):
+    """The dress policy a ROLE_CATEGORIES bucket gets, 'plain' or 'any'."""
+    return DRESS_POLICY.get(category, DEFAULT_DRESS_POLICY)
+
+
+def filter_by_dress(options, policy):
+    """Outfit bullets flagged 'dressy', dropped for a role that works with its hands.
+
+    'dressy' reads as ceremonial, formal or finely made - gold thread, lacquer,
+    brocade, ornament. It is a third axis, orthogonal to civ/mil and to Theme:
+    civ/mil distinguishes "not a uniform" from "a uniform" and says nothing
+    about register, which is how a dockworker ended up in a gold-embroidered
+    robe with a purple sash.
+
+    Deliberately NOT the same flag as 'notac'. That one means "do not pair this
+    with tactical gear" and covers rags as well as finery - a dockworker in
+    ragged cloth bindings, a travel-worn robe or a weathered haori is entirely
+    plausible, and several of those read as poorer than the default coveralls.
+    The two flags disagree on seven of the thirteen bullets that carry 'notac'
+    in the base table.
+
+    Faction does not come through here. A 'dressy' Faction stays reachable and
+    loses only its visual segment - see build_prompts(). A dockworker employed
+    by the Karrakin Trade Baronies is good flavour; a dockworker dressed as a
+    baron is the bug.
+    """
+    if policy != "plain":
+        return options
+    plain = [x for x in options if "dressy" not in split_flags(x)[1]]
+    return plain or options        # never filter the pool down to nothing
+
+
 def filter_by_mil(options, mil, name):
     """Faction/Outfit bullets flagged 'civ' or 'mil', filtered by a military Role.
 
@@ -748,6 +808,16 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
         forced_build is not None and "figure" in split_flags(forced_build)[1]
     )
 
+    # Dress register runs the same way round as the Age/Build pairing. Role is
+    # rolled before Outfit, so a rolled Role constrains the Outfit pool; but a
+    # FORCED ceremonial Outfit has to constrain the Role roll instead, or an
+    # explicit choice would collide with a randomly rolled dockworker and abort
+    # the run. Both forced and contradictory is checked further down.
+    forced_dressy = (
+        forced_outfit is not None and "dressy" in split_flags(forced_outfit)[1]
+    )
+    role_dress = DEFAULT_DRESS_POLICY
+
     # Theme is rolled before every appearance table it gates, for the same
     # reason Pronouns is: the roll that selects between pools has to happen
     # before those pools are drawn from. It is deliberately NOT gated on Role -
@@ -785,6 +855,17 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
             grown = [x for x in options if "young" not in split_flags(x)[1]]
             options = grown or options     # never filter the pool down to nothing
 
+        # The inverse direction: a forced ceremonial Outfit drops the Role
+        # categories that would contradict it, rather than the Role dropping
+        # the Outfit. Mirrors 'figure'/'young' above exactly, including the
+        # 'or options' guard - a Role table of nothing but Laborers should
+        # still roll rather than abort.
+        if name == "Role" and forced_dressy and forced_role is None:
+            entitled = [x for x in options
+                        if dress_policy_for(
+                            ROLE_CATEGORIES.get(split_flags(x)[0])) != "plain"]
+            options = entitled or options
+
         # Build is filtered against the Age roll, the same way Stance is
         # filtered against Weapon and Gear below. An Age bullet flagged
         # 'young' is a teenager; the Build bullets flagged 'figure' describe
@@ -818,6 +899,13 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
         # known.
         if name in ("Faction", "Outfit"):
             options = filter_by_mil(options, role_mil, name)
+
+        # Dress register, layered on top of civ/mil. Outfit only: a 'dressy'
+        # Faction keeps its place in the pool and loses only its visual
+        # segment, in build_prompts(). Role precedes Outfit in REQUIRED_TABLES,
+        # so role_dress is already known.
+        if name == "Outfit":
+            options = filter_by_dress(options, role_dress)
 
         # A weapon that occupies the hands rules out equipment that also needs
         # one. Weapon precedes Gear in REQUIRED_TABLES so this flag is already
@@ -909,6 +997,9 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
                 young = "young" in flags
             if name == "Role":
                 role_mil = "mil" in flags
+                # Read off the stripped value, which is what ROLE_CATEGORIES
+                # is keyed on.
+                role_dress = dress_policy_for(ROLE_CATEGORIES.get(value))
             if name == "Outfit":
                 outfit_notac = "notac" in flags
             if name == "Weapon":
@@ -1039,6 +1130,20 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     # each flag is known whether it was rolled or forced. Only the both-forced
     # case can still reach this: a forced Build narrows the Age roll and a
     # forced Age narrows the Build roll, so either one alone resolves quietly.
+    # The same both-forced case the Age/Build check below covers, one axis
+    # over. Only this case can reach here: a forced Outfit narrows the Role
+    # roll and a forced Role narrows the Outfit roll, so either alone resolves
+    # quietly. Checked after the loop, where both values are known whether
+    # they were rolled or forced.
+    if (forced_dressy and forced_role is not None
+            and dress_policy_for(ROLE_CATEGORIES.get(split_flags(forced_role)[0])) == "plain"):
+        raise SystemExit(
+            "--set-trait Role and --set-trait Outfit disagree: a bullet flagged "
+            "'dressy' is ceremonial or finely made and must not be combined "
+            "with a Role whose work is manual. Force only one of the two and "
+            "the other will roll to match, or drop the flag."
+        )
+
     build, build_flags = split_flags(npc["Build"])
     if young and "figure" in build_flags:
         raise SystemExit(
@@ -1293,6 +1398,21 @@ def build_prompts(npc):
     # comma in the middle of the clothing sentence. Same reason gear_line is
     # assembled here rather than substituted raw.
     _, faction_visual, faction_flags = split_faction(npc["Faction"])
+
+    # A 'dressy' Faction keeps its NAME - the dossier and byline still print
+    # the affiliation - and loses only the visual that would reach the clothing
+    # sentence, when the Role's work is manual. A dockworker employed by the
+    # Karrakin Trade Baronies is good flavour; a dockworker in baronial
+    # brocade and an heraldic crest is what this exists to stop. Barring the
+    # faction outright would throw away the first to fix the second.
+    #
+    # Emptying the visual is the whole mechanism: the line below already drops
+    # the clause rather than leaving a doubled comma, which is the path the two
+    # non-affiliations - carrying no visual at all - have always taken.
+    if ("dressy" in faction_flags
+            and dress_policy_for(role_category(npc)) == "plain"):
+        faction_visual = ""
+
     fields["faction_line"] = "%s, " % faction_visual if faction_visual else ""
 
     # A Faction flagged 'palette' asserts pigment of its own - dye in cloth,

@@ -1,6 +1,10 @@
 # Role and dress register: gating Outfit and Faction on what the job is
 
-> **Status:** design, awaiting approval 2026-09-04. Independent of the
+> **Status:** implemented 2026-09-04, on branch `dress-register`.
+> One correction was made while building to it: §3.2 originally said a `dressy`
+> bullet "is dropped for a `plain` Role" for *both* tables, which contradicted
+> §3.3's Faction design. §3.3 won — Faction keeps its place in the pool and
+> loses only its visual — and §3.2 and §6 now say so. Independent of the
 > [themed-NPC parent spec](2026-09-03-themed-npc-generation-design.md) and of
 > its unshipped Phases 3 and 4 — see §2, which is the part of this document
 > most worth reading if you already know that spec.
@@ -105,9 +109,15 @@ six are either already handled or genuinely entitled:
 ### 3.2 `dressy` on Outfit and Faction
 
 A bullet flagged `dressy` reads as ceremonial, formal or finely made — gold
-thread, lacquer, brocade, tailoring, ornament. It is dropped for a `plain`
-Role. An unflagged bullet is neutral and reachable by everyone, which is what
-the overwhelming majority stay, exactly as with `civ`/`mil`.
+thread, lacquer, brocade, tailoring, ornament. An unflagged bullet is neutral
+and reachable by everyone, which is what the overwhelming majority stay,
+exactly as with `civ`/`mil`.
+
+**The two tables consume the flag differently, and this is deliberate.** On
+Outfit a `dressy` bullet is dropped from the pool for a `plain` Role. On
+Faction it is *not* — the bullet stays reachable and only its visual segment
+is suppressed, for the reason §3.3 gives. Dropping a Faction outright would
+throw away an affiliation to fix a garment.
 
 On Outfit the flag joins the existing second segment (`|| civ notac dressy`).
 On Faction it joins the third (`|| mil palette dressy`), since the two tables
@@ -219,7 +229,7 @@ follows rather than reinventing:
 
 | Where | What |
 |---|---|
-| `generate-npc.py` | `DRESS_POLICY`, `DEFAULT_DRESS_POLICY`, `dress_policy_for()`, a `filter_by_dress()` applied to Outfit and Faction after `filter_by_mil()`, the Faction visual suppression in `build_prompts()`, and the forced-contradiction check |
+| `generate-npc.py` | `DRESS_POLICY`, `DEFAULT_DRESS_POLICY`, `dress_policy_for()`, a `filter_by_dress()` applied to **Outfit only** after `filter_by_mil()`, the Faction visual suppression in `build_prompts()`, and the forced-contradiction check |
 | `npc-generator-tables.md` | `dressy` on 13 Outfit bullets (6 base, 7 in the `(she) +` variant) and on 2 Faction bullets; the flag documented in the segment-conventions section, the Outfit table comment and the Faction table comment |
 | `docs/generate-npc.md` | A section on register, alongside "Name the number" and "Period vocabulary matters" |
 | `test/test_dress_register.py` | New |

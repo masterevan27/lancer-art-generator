@@ -397,6 +397,62 @@ the `young` flag; see
 
 So: name the decade, name the number under twenty, and describe nothing else.
 
+## Dress register
+
+A rolled dockworker came out in *"a dark robe traced with gold embroidered
+trim, a purple sash knotted at the waist and small tassels hanging loose"*,
+with the Faction clause adding *"heavy brocade and gold braid, an heraldic
+crest at the shoulder"* on top. The figure read as minor nobility; the Role
+line two clauses earlier said dockworker.
+
+The `civ`/`mil` split could never have caught that. It distinguishes *not a
+uniform* from *a uniform*, and says nothing about whether a garment is workaday
+or ceremonial. So `dressy` is a third axis, orthogonal to `civ`/`mil` and to
+Theme alike, gated on the kind of work a Role is:
+
+```python
+DRESS_POLICY = {
+    "Laborers":    "plain",   # dockworker, freelance salvager
+    "Technicians": "plain",   # chief mechanic, maintenance technician
+}
+DEFAULT_DRESS_POLICY = "any"
+```
+
+Keyed on the `ROLE_CATEGORIES` bucket rather than on a flag on the Role bullet,
+because that mapping already encodes which job an occupation is — the 22 Role
+bullets need no edit. Only two categories are `plain`, and the rest are
+deliberate: Pilots, Soldiers and Support are entirely `mil` Roles and
+`filter_by_mil()` already drops every `civ` bullet from their pool, which is
+every ceremonial outfit there is; Officials is the case the gate must *not*
+break, since fine dress is right for a corporate liaison; Criminals keeps it
+because a pirate in finery is a genre staple; and Civilians holds the
+scavenger-priest, for whom robes are the point.
+
+**The two tables consume the flag differently.** A `dressy` Outfit is dropped
+from a `plain` Role's pool. A `dressy` Faction is not — it keeps its place and
+loses only its *visual* segment, so the dossier still prints the affiliation
+while the prompt loses the brocade. A dockworker employed by the Karrakin Trade
+Baronies is good flavour; a dockworker dressed as a baron is the bug, and
+barring the faction outright would throw the first away to fix the second.
+
+`dressy` is **not** `notac`, and the temptation to merge them is the main way
+to get this wrong. `notac` means "do not pair with tactical gear" and covers
+rags as readily as finery. The two disagree on seven of the thirteen `notac`
+bullets in the base Outfit table — the pilgrim's robes, the tattered robe, the
+ragged cloth bindings, the travel-worn robe and the weathered haori are all
+`notac` and none are finery; several read as *poorer* than the default
+coveralls. Flag finery, not tradition.
+
+Measured over 4000 rolls after the change: of 691 NPCs with a `plain` Role,
+none wore a `dressy` outfit and none carried a `dressy` faction's visual, while
+ceremonial dress still reached Officials, Criminals and Civilians — the gate
+narrows the roles it targets and no others.
+
+Forcing a contradiction follows the `young`/`figure` precedent exactly. A
+forced `dressy` Outfit narrows the *Role* roll; a forced `plain` Role narrows
+the Outfit roll; forcing both into a contradiction is an error naming the pair
+rather than a silent pairing.
+
 ## Period vocabulary matters
 
 The military entries originally used mid-20th-century words — *webbing*, *flak
