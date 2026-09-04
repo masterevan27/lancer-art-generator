@@ -1387,14 +1387,43 @@ ignored — so notes like this one are safe to leave inline.
 
 ## Faction
 
-- x2 Unaligned || unaligned and freelance || civ
-- x2 Union Administrative Department || in worn Union Administrative Department kit || mil
-- Harrison Armory || in Harrison Armory service dress, imperial and immaculate || mil
-- Smith-Shimano Corpro || in Smith-Shimano Corpro corporate wear, sleek and expensive || civ
-- IPS-Northstar || in IPS-Northstar workwear, riveted and salt-stained || civ
-- Karrakin Trade Baronies || in Karrakin baronial livery, formal and slightly archaic
-- Colonial militia || in the mismatched kit of a colonial militia || mil
-- Unregistered || in the deliberately anonymous gear of someone who does not answer questions
+<!--
+  Three segments: the affiliation NAME, the visual signature, then flags.
+
+  The name is what the dossier and the Import GUI print. The visual is the
+  only part that reaches the image prompt, and it is what makes this table
+  worth having at all: the old single-segment form put a garment CATEGORY
+  ("corporate wear", "service dress") straight after Outfit's specific garment
+  description, competing for the same slot and losing every time. Deleting the
+  whole Faction clause from a prompt changed the render not at all.
+
+  So a visual describes what Outfit does not - fabric, tailoring, insignia,
+  patina, and where the faction has one, colour. Never a garment category.
+
+  Two entries are non-affiliations with nothing to show and leave the visual
+  empty; build_prompts() then drops the clause entirely rather than leaving a
+  doubled comma.
+
+  '|| palette' marks a faction that asserts colours of its own. Those are
+  PIGMENT - dye in cloth - and they coexist with the Glow colour, which is
+  LIGHT. The closing palette line softens from "the only saturated color" to
+  "the only other saturated color" when one is rolled, so the prompt stops
+  claiming something the uniform contradicts. A faction without a colour
+  scheme should NOT carry the flag: Unaligned, Unregistered and the colonial
+  militia deliberately leave the palette unconstrained.
+
+  Keep visuals to about a dozen words. Both prompts run close to Krea 2's
+  512-token ceiling - see test/test_prompt_budget.py.
+-->
+
+- x2 Unaligned || || civ
+- x2 Union Administrative Department || issued and worn thin, in faded institutional blue-grey || mil palette
+- Harrison Armory || sharply pressed, high collar and polished fittings, in imperial green and gold || mil palette
+- Smith-Shimano Corpro || precisely tailored with fine seam piping, in white and pale pastels || civ palette
+- IPS-Northstar || riveted and salt-stained heavy canvas, in rust orange || civ palette
+- Karrakin Trade Baronies || formal heraldic livery with a stiff standing collar, in deep crimson and gold || palette
+- Colonial militia || mismatched surplus, webbing straps and taped-over insignia || mil
+- Unregistered || ||
 
 ## Outfit
 

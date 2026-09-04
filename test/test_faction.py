@@ -13,7 +13,7 @@ reason: two of them are prose and only the third is flags.
 import random
 import unittest
 
-from test.helpers import FIXTURE_TABLES, load_generator
+from test.helpers import FIXTURE_TABLES, REPO, load_generator
 
 gen = load_generator()
 TABLES = gen.parse_tables(FIXTURE_TABLES)
@@ -80,6 +80,73 @@ class TestFactionInOutput(unittest.TestCase):
             self.assertNotIn(", ,", prompt)
             self.assertNotIn(",  ", prompt)
             self.assertIn("the clothing following the shape of that frame", prompt)
+
+
+class TestFactionPigment(unittest.TestCase):
+    """Faction colour is pigment; the glow colour is light. They coexist.
+
+    A green-and-gold Harrison uniform lit by a red instrument glow is
+    coherent - but the closing line's claim that the glow is "the only
+    saturated color in the frame" stops being true, so it softens to "the only
+    other saturated color". Factions asserting pigment carry '|| palette'.
+    """
+
+    def test_a_pigment_faction_softens_the_exclusivity_claim(self):
+        npc = gen.roll_npc(TABLES, random.Random(0), {
+            "Faction": "Harrison Armory || in imperial green and gold || mil palette",
+            "Glow colour": "amber",
+            "Gear": "an old-fashioned lantern glowing warm, carried in one hand",
+        })
+        portrait, token = gen.build_prompts(npc)
+        for prompt in (portrait, token):
+            self.assertIn("only other saturated color", prompt)
+
+    def test_a_plain_faction_keeps_the_exclusive_claim(self):
+        npc = gen.roll_npc(TABLES, random.Random(0), {
+            "Faction": "Unaligned || || civ",
+            "Glow colour": "amber",
+            "Gear": "an old-fashioned lantern glowing warm, carried in one hand",
+        })
+        portrait, token = gen.build_prompts(npc)
+        for prompt in (portrait, token):
+            self.assertIn("only saturated color", prompt)
+            self.assertNotIn("only other saturated color", prompt)
+
+    def test_a_pigment_faction_with_no_glow_drops_the_no_stray_colour_claim(self):
+        """'no stray saturated color' contradicts a uniform that has one.
+
+        has_light_source() reads Weapon, Gear, Outfit, Headgear, Feature and
+        Eyes (generate-npc.py, LIGHT_SOURCE_WORDS) - so all six are pinned
+        here to glow-free fixture values. Leaving any of them to the roll
+        would make this test flaky by seed: the fixture's Outfit table has a
+        "neon techwear jacket" bullet that would flip has_light_source() true
+        and falsify the very claim this test checks.
+        """
+        npc = gen.roll_npc(TABLES, random.Random(0), {
+            "Faction": "Harrison Armory || in imperial green and gold || mil palette",
+            "Gear": "a canvas tool roll at the hip",
+            "Weapon": "a service pistol worn openly at the thigh",
+            "Outfit": "grey coveralls",
+            "Headgear": "{Subject} {is_are} bare-headed.",
+            "Feature": "a scar across one cheek",
+            "Eyes": "grey eyes",
+        })
+        portrait, token = gen.build_prompts(npc)
+        for prompt in (portrait, token):
+            self.assertNotIn("no stray saturated color", prompt)
+            self.assertIn("Keep the rest of the palette restrained", prompt)
+
+    def test_every_pigment_faction_actually_names_a_colour(self):
+        """A 'palette' flag on a bullet with no colour in it would soften the
+        closing line for nothing."""
+        live = gen.parse_tables(REPO / "prompts" / "npc-generator-tables.md")
+        for bullet in live["Faction"]:
+            _, visual, flags = gen.split_faction(bullet)
+            if "palette" not in flags:
+                continue
+            with self.subTest(bullet=bullet):
+                self.assertIn(" in ", visual,
+                              "a palette faction must name its colours: %s" % bullet)
 
 
 if __name__ == "__main__":

@@ -372,21 +372,30 @@ TOKEN_TEMPLATE = (
     "with heavy grain and dense halftone screentone worked into every shadow."
 )
 
-# The two forms {accent_line} takes, gated on has_light_source() - see there
-# for why. The "with" case keeps the original wording verbatim; the "without"
-# case drops the glow colour entirely rather than inventing a source for it.
+# The forms the closing palette line takes. Two dimensions: whether anything
+# rolled for this NPC could cast a glow (has_light_source), and whether the
+# rolled Faction asserts pigment of its own ('|| palette').
+#
+# Pigment and light are different things and coexist happily - a green-and-gold
+# Harrison uniform lit by a red instrument glow reads correctly - but the
+# line's claim that the glow is the ONLY saturated colour stops being true when
+# the uniform has one, so {other} softens it. Four constants and one slot
+# rather than eight constants.
 GLOW_PORTRAIT = (
     "A faint {glow} glow falls across one side of {possessive} face against "
     "warm dim ambient light on the other. Keep the palette restrained - greys, "
-    "olive drab and rust - with {glow} the only saturated color in the frame."
+    "olive drab and rust - with {glow} the only {other}saturated color in the frame."
+)
+GLOW_TOKEN = (
+    "Keep the palette restrained - greys, olive drab and rust - with a single "
+    "{glow} glow the only {other}saturated color."
 )
 GLOW_NONE = (
     "Keep the palette restrained - greys, olive drab and rust, with no stray "
     "saturated color."
 )
-GLOW_TOKEN = (
-    "Keep the palette restrained - greys, olive drab and rust - with a single "
-    "{glow} glow the only saturated color."
+GLOW_NONE_PIGMENT = (
+    "Keep the rest of the palette restrained - greys, olive drab and rust."
 )
 
 
@@ -1209,6 +1218,15 @@ def build_prompts(npc):
     _, faction_visual, faction_flags = split_faction(npc["Faction"])
     fields["faction_line"] = "%s, " % faction_visual if faction_visual else ""
 
+    # A Faction flagged 'palette' asserts pigment of its own - dye in cloth,
+    # not light - so the closing line's claim that the glow is the ONLY
+    # saturated colour has to soften to "the only other saturated color", and
+    # the no-glow case has to drop its "no stray saturated color" claim
+    # entirely rather than contradict the uniform it just described.
+    pigment = "palette" in faction_flags
+    fields["other"] = "other " if pigment else ""
+    none_line = GLOW_NONE_PIGMENT if pigment else GLOW_NONE
+
     # The glow colour only belongs in the prompt when something rolled for
     # this NPC would actually cast it. Equipped sources (something worn or
     # carried) apply to both shots; the backdrop's own light - a neon sign, an
@@ -1227,10 +1245,10 @@ def build_prompts(npc):
     # rolled Stance, so nothing there contradicts what the NPC carries.
     portrait_fields = dict(
         fields, gear_line="" if "nogear" in flags else carrying,
-        accent_line=(GLOW_PORTRAIT if portrait_glow else GLOW_NONE).format(**fields))
+        accent_line=(GLOW_PORTRAIT if portrait_glow else none_line).format(**fields))
     token_fields = dict(
         fields, gear_line=carrying,
-        accent_line=(GLOW_TOKEN if equipped_glow else GLOW_NONE).format(**fields))
+        accent_line=(GLOW_TOKEN if equipped_glow else none_line).format(**fields))
 
     prompts = (PORTRAIT_TEMPLATE.format(**portrait_fields),
                TOKEN_TEMPLATE.format(**token_fields))
