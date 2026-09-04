@@ -43,6 +43,12 @@ class TestFactionShapeMigration(unittest.TestCase):
     recognize that shape and restore it, the same job it already does for a
     renamed key, or regenerate_one()'s promise of an identical prompt breaks
     silently for every entry rolled before the split.
+
+    A genuinely pre-split entry predates the Accent -> Glow colour rename
+    too, since that rename shipped earlier in the same branch - so these
+    fixtures store 'Accent', not 'Glow colour', the same as every one of the
+    135 real entries in .generated-npcs.json. See TestSetTraitFactionIsLeftAlone
+    below for the shape that must NOT be repaired.
     """
 
     def _stored_traits(self, faction):
@@ -65,7 +71,7 @@ class TestFactionShapeMigration(unittest.TestCase):
             "Headgear": "{Subject} {is_are} bare-headed.",
             "Weapon": "",
             "Gear": "a canvas tool roll at the hip",
-            "Glow colour": "teal-green",
+            "Accent": "teal-green",
             "Backdrop": "A half-body character portrait || Behind {object} is a plain wall.",
             "Stance": "standing squarely",
         }
@@ -103,6 +109,32 @@ class TestFactionShapeMigration(unittest.TestCase):
         npc = gen.migrate_traits(
             self._stored_traits("Harrison Armory || sharply pressed || mil"))
         self.assertEqual(npc["Faction"], "Harrison Armory || sharply pressed || mil")
+
+
+class TestSetTraitFactionIsLeftAlone(unittest.TestCase):
+    """`--set-trait Faction="Harrison Armory"` is accepted today and stores
+    exactly that bare shape - no '||' anywhere - in a manifest entry that
+    already uses the current 'Glow colour' key, since it was rolled after
+    both the rename and the Faction split landed. The absence of '||' alone
+    cannot tell this apart from a genuine pre-split entry; only the missing
+    'Accent' key can. migrate_traits() must leave a bare Faction alone when
+    the entry has no 'Accent' key, rather than doubling it into a fabricated
+    visual clause it never had.
+    """
+
+    def test_a_bare_faction_with_no_accent_key_is_not_repaired(self):
+        migrated = gen.migrate_traits({
+            "Glow colour": "teal-green",
+            "Faction": "Harrison Armory",
+        })
+        self.assertEqual(migrated["Faction"], "Harrison Armory")
+
+    def test_a_bare_faction_with_no_glow_colour_or_accent_is_not_repaired(self):
+        """Same gate, for an entry that predates Glow colour/Accent both -
+        impossible in practice (Glow colour is a REQUIRED_TABLES entry every
+        roll writes), but the gate should fail closed either way."""
+        migrated = gen.migrate_traits({"Faction": "Harrison Armory"})
+        self.assertEqual(migrated["Faction"], "Harrison Armory")
 
 
 if __name__ == "__main__":

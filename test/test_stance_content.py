@@ -31,6 +31,7 @@ BANNED = {
     "snow": "weather the token cannot show",
     "wind": "weather the token cannot show",
     "heat": "weather the token cannot show",
+    "weather": "an environmental assertion the token cannot show",
 }
 
 

@@ -1644,7 +1644,9 @@ ignored — so notes like this one are safe to leave inline.
   Flags here: 'weapon' (an actual weapon), 'simple' (small and pocketable),
   'sidearm' (includes a holstered or openly worn pistol - the guaranteed-armed
   baseline for a mil Role), 'gun' (an actual firearm held in hand), 'hands'
-  (occupies at least one hand), 'mil' (military-issue).
+  (occupies at least one hand), 'mil' (military-issue), 'none' (the empty
+  bullet below - load-bearing, not inert: the Stance filter in roll_npc()
+  reads it directly to keep an unarmed NPC off an armed pose).
 -->
 
 - x30 || none
@@ -2057,7 +2059,7 @@ ignored — so notes like this one are safe to leave inline.
 - standing at a low ready, weapon angled down and across the body, alert and scanning the middle distance || gun
 - standing in a sharp half-turn with a sidearm gripped in each hand, one arm extended straight out toward the viewer and the other braced out to the side || gun
 - caught mid-stride walking straight toward the viewer, twin sidearms held low and loose at {possessive} sides || gun
-- standing with head bowed and shoulders drawn in against the weather
+- standing with head bowed and shoulders drawn in tight
 - standing in a slow half-bow, one hand pressed flat against the chest
 - standing with both arms raised overhead, a long board gripped in both hands and braced across the back of the shoulders like a yoke || hands
 - sitting cross-legged in a formal meditative pose, palms pressed together at the chest, segmented mechanical arms folded still || hands
@@ -2115,7 +2117,8 @@ they live in `generate-npc.py` — editing them here changes nothing.
 > painterly illustration style with fine grain texture and clean linework, halftone
 > dot shading worked into the shadows, moody cinematic lighting. {SUBJECT} is
 > **{BUILD}**, with **{TRAITS}** **{SKIN}**, **{HAIR}**, and **{EYES}**, and **{FEATURE}**,
-> wearing **{OUTFIT}**, **{FACTION}**. **{HEADGEAR}** {POSSESSIVE} face carries
+> wearing **{OUTFIT}**, **{FACTION_LINE}**the clothing following the shape of that
+> frame. **{HEADGEAR}** {POSSESSIVE} face carries
 > **{DEMEANOR}**. {SUBJECT} carries
 > **{GEAR}**. **{BACKDROP}** **{WEATHER}** **{GLOW_LINE}** Shallow depth of field, square
 > framing, high detail, atmospheric sci-fi character portrait. Painterly illustration
@@ -2129,6 +2132,15 @@ than an adult figure. It lives in `GENDER_TRAITS` in
 `generate-npc.py`, because a trait that should reach nearly every NPC of one
 gender cannot come out of a pool of thirty bullets.
 
+`{FACTION_LINE}` is the rolled Faction's visual signature alone, already
+comma-suffixed and ready to sit in front of "the clothing following the shape
+of that frame" — never the affiliation name. `split_faction()` keeps the name
+("Smith-Shimano Corpro") for the dossier's "Affiliation" row only; the name
+never reaches either prompt. The two non-affiliations (`Unaligned`,
+`Unregistered`) roll no visual at all, so `{FACTION_LINE}` is empty for them
+and the sentence reads "wearing **{OUTFIT}**, the clothing following..." with
+no orphaned comma.
+
 `{HEADGEAR}` is a whole sentence rather than a noun phrase, and so is
 `{WEATHER}` — which is empty unless the rolled Backdrop is flagged `weather`.
 `{SHOT}` and `{BACKDROP}` are the two halves of one Backdrop bullet, split on
@@ -2137,24 +2149,42 @@ entry restage the whole shot, swapping "a half-body character portrait" for "a
 dynamic, dramatically foreshortened character portrait" and putting the subject
 in freefall, without a separate pose table to keep in sync.
 
-`{GLOW_LINE}` is "A faint **{GLOW}** glow falls across one side of
-{POSSESSIVE} face against warm dim ambient light on the other. Keep the palette
-restrained — greys, olive drab and rust — with **{GLOW}** as the only
-saturated color in the frame." _only_ when something rolled for this NPC would
-actually cast that glow — a lit instrument panel, neon signage, a muzzle flash
-in the Backdrop scene, or a glowing/lit detail in Gear, Outfit, Headgear,
-Feature or Eyes. `has_light_source()` in `generate-npc.py` checks the rolled
-text of those fields against a short list of light-implying words (`glow`,
-`lit`, `neon`, `lantern`, `beacon`, `readout`, `monitor`, `display`, `screen`,
-`flame`, `ember`, `burning`, `instrument`, `holographic`, `headlamp`, `glaring`,
-`muzzle flash`) — deliberately excluding plain daylight words like `sun`, since
-natural light doesn't motivate an arbitrary saturated glow color either. When
-nothing matches, `{GLOW_LINE}` falls back to "Keep the palette restrained —
-greys, olive drab and rust, with no stray saturated color." instead of
-inventing a source for a color that has nothing to shine from — which used to
-happen on plenty of rolls (a dim mech hangar, a dropship bay door against a
-plain sky) and is why a stray green glow could land on a face with nothing
-nearby to cast it.
+`{GLOW_LINE}` takes one of four forms, crossing two independent questions:
+whether anything rolled for this NPC would actually cast a glow
+(`has_light_source()`), and whether the rolled Faction asserts pigment of its
+own (flagged `palette`) — pigment (dye in cloth) and glow (light) are
+different things and coexist happily, but the line's wording has to agree
+with whichever pair is true this roll:
+
+- **Glow, no pigment** — "A faint **{GLOW}** glow falls across one side of
+  {POSSESSIVE} face against warm dim ambient light on the other. Keep the
+  palette restrained — greys, olive drab and rust — with **{GLOW}** the only
+  saturated color in the frame."
+- **Glow, with pigment** — the same sentence, but "the only saturated color"
+  softens to "the only **other** saturated color", since the Faction's own
+  colours are already in frame and the line would otherwise contradict the
+  uniform it just described.
+- **No glow, no pigment** — "Keep the palette restrained — greys, olive drab
+  and rust, with no stray saturated color."
+- **No glow, with pigment** (`GLOW_NONE_PIGMENT`) — "Keep the rest of the
+  palette restrained — greys, olive drab and rust." The "no stray saturated
+  color" claim is dropped entirely rather than kept and contradicted, since
+  the Faction's pigment is itself a saturated color already in the frame.
+
+The glow half of that pairing fires only when something rolled for this NPC
+would actually cast the glow — a lit instrument panel, neon signage, a muzzle
+flash in the Backdrop scene, or a glowing/lit detail in Gear, Outfit,
+Headgear, Feature or Eyes. `has_light_source()` in `generate-npc.py` checks
+the rolled text of those fields against a short list of light-implying words
+(`glow`, `lit`, `neon`, `lantern`, `beacon`, `readout`, `monitor`, `display`,
+`screen`, `flame`, `ember`, `burning`, `instrument`, `holographic`,
+`headlamp`, `glaring`, `muzzle flash`) — deliberately excluding plain daylight
+words like `sun`, since natural light doesn't motivate an arbitrary saturated
+glow color either. Absent that, `{GLOW_LINE}` falls back to one of the two
+no-glow forms above instead of inventing a source for a color that has
+nothing to shine from — which used to happen on plenty of rolls (a dim mech
+hangar, a dropship bay door against a plain sky) and is why a stray green
+glow could land on a face with nothing nearby to cast it.
 
 ### Token (1024x1280, then RMBG to a transparent PNG)
 
@@ -2167,7 +2197,7 @@ nearby to cast it.
 > empty space above and below, in realistic adult proportions roughly seven to
 > eight heads tall. {SUBJECT} is **{HEIGHT}**, **{BUILD}**, with **{TRAITS}**
 > **{SKIN}**, **{HAIR}**, **{EYES}**, and **{FEATURE}**, wearing **{OUTFIT}**,
-> **{FACTION}**, the clothing following the shape of that frame. **{HEADGEAR}**
+> **{FACTION_LINE}**the clothing following the shape of that frame. **{HEADGEAR}**
 > {POSSESSIVE} face carries **{DEMEANOR}**. {SUBJECT} carries **{GEAR}**.
 > {SUBJECT} is **{STANCE}**, both feet in frame, the pose natural and
 > unforced. **{GLOW_LINE}** The background alone is a solid flat plain white,
@@ -2176,15 +2206,25 @@ nearby to cast it.
 > painterly brushwork with heavy grain and dense halftone screentone worked
 > into every shadow.
 
-`{GLOW_LINE}` here is "Keep the palette restrained — greys, olive drab and
-rust — with a single **{GLOW}** glow the only saturated color.", gated the
-same way as the portrait's — except the token has no backdrop at all (it's
-flat white for RMBG), so only an equipped source counts: something glowing or
-lit in the rolled Gear, Outfit, Headgear, Feature or Eyes. No match falls back
-to the same string as the portrait's no-glow case above - both share the one
-`GLOW_NONE` constant in `generate-npc.py` rather than each keeping their own
-copy of an identical sentence. See the portrait section above for the word
-list.
+`{FACTION_LINE}` is the same pre-formatted, visual-only slot the portrait
+uses — see the portrait section above; the affiliation name never reaches
+either prompt, only the dossier.
+
+`{GLOW_LINE}` here takes one of the same four forms as the portrait's, gated
+the same way — except the token has no backdrop at all (it's flat white for
+RMBG), so only an equipped source counts: something glowing or lit in the
+rolled Gear, Outfit, Headgear, Feature or Eyes.
+
+- **Glow, no pigment** — "Keep the palette restrained — greys, olive drab and
+  rust — with a single **{GLOW}** glow the only saturated color."
+- **Glow, with pigment** — the same sentence with "the only saturated color"
+  softened to "the only **other** saturated color".
+- **No glow, no pigment** and **no glow, with pigment** fall back to the same
+  two strings as the portrait's no-glow cases above - both prompts share the
+  one `GLOW_NONE` and one `GLOW_NONE_PIGMENT` constant in `generate-npc.py`
+  rather than each keeping their own copy of an identical sentence.
+
+See the portrait section above for the light-implying word list.
 
 The token template names the footwear outright - "plain modern boots, no leg
 wraps or puttees" - because with nothing said about them the campaign's

@@ -104,13 +104,15 @@ DEFAULT_OUTPUT_ROOT = (Path(_OUTPUT_ROOT) if _OUTPUT_ROOT else SCRIPT_DIR / "out
 # Tables the prompt templates below require. Anything else in the markdown file
 # is ignored, so extra tables can be added for reference without breaking this.
 #
-# The ORDER is load-bearing in four places, and roll_npc() reads each flag off
+# The ORDER is load-bearing in five places, and roll_npc() reads each flag off
 # the earlier table on the assumption that it has already been rolled: Age
 # before Build ('figure'), Age before Hair colour ('older'), Role before
-# Faction, Outfit and Weapon, and Weapon before Gear (the 'hands' collision).
-# Each is explained at its own use site in roll_npc() rather than restated
-# here; reorder this list without reading those four comments and the filter
-# each one describes goes quietly dead.
+# Faction, Outfit and Weapon, Outfit before Weapon and Gear (the 'notac'
+# strip), and Weapon before Gear and Stance (the 'hands' collision with Gear,
+# and the 'none' flag that gates Stance alongside 'gun'). Each is explained at
+# its own use site in roll_npc() rather than restated here; reorder this list
+# without reading those five comments and the filter each one describes goes
+# quietly dead.
 REQUIRED_TABLES = [
     "Given names", "Family names", "Callsigns", "Pronouns", "Theme", "Age",
     "Build", "Height", "Skin", "Hair", "Hair colour", "Eyes", "Feature",
@@ -264,18 +266,32 @@ LEGACY_TRAIT_NAMES = {
     "Accent": "Glow colour",
 }
 
+# What a stored manifest entry gets for Headgear when it has none at all -
+# ten entries predate the Headgear table entirely and would otherwise raise
+# KeyError('Headgear') in build_prompts() on regeneration. The most common
+# roll by far (weighted x6 against the table's other ~40 entries, each x1 or
+# x2) is bare-headed, so that is the truest guess available for an entry that
+# recorded no opinion either way.
+DEFAULT_HEADGEAR = "{Subject} {is_are} bare-headed."
+
 
 def migrate_traits(traits):
     """A stored manifest trait dict brought forward to current table names
     and value shapes.
 
-    Two jobs: rename any trait key listed in LEGACY_TRAIT_NAMES to its
-    current heading, and repair a Faction value stored before the
-    name/visual split existed (a bare string with no '||') into the
-    current 'name || visual' shape, so a regenerated prompt reproduces the
-    original one.
+    Three jobs: rename any trait key listed in LEGACY_TRAIT_NAMES to its
+    current heading, repair a Faction value stored before the name/visual
+    split existed (a bare string with no '||') into the current
+    'name || visual' shape, and backfill a missing Headgear the same way
+    regenerate_one() already backfills a missing Height - so a regenerated
+    prompt reproduces the original one, or comes as close as a lost trait
+    allows.
     """
     out = dict(traits)
+    # Captured before the rename loop below pops "Accent" out of `out` - see
+    # the Faction repair's gate further down, which needs to know whether the
+    # key was ever there at all.
+    predates_rename = "Accent" in out
     for old, new in LEGACY_TRAIT_NAMES.items():
         if old in out:
             value = out.pop(old)
@@ -294,15 +310,19 @@ def migrate_traits(traits):
     # actually hold for the entries rolled before this split, this
     # migration's whole reason to exist.
     #
-    # The one case this can't tell apart from a genuine pre-split entry: a
-    # bare bullet - '- Unaligned', no '||' at all - written into the tables
-    # file after the split existed would roll a brand-new manifest entry
-    # whose Faction also has no '||', and this would wrongly push that name
-    # into the prompt as though it were a visual signature. No live bullet
-    # is written that way, so the risk is low, but it is silent otherwise -
-    # the warning below is what surfaces a wrong guess instead of leaving it
-    # a mystery.
-    if "Faction" in out and "||" not in out["Faction"]:
+    # Gated on "Accent" rather than just "no '||' in Faction", because that
+    # weaker test has a real false positive: `--set-trait
+    # Faction="Harrison Armory"` is accepted today and stores exactly that
+    # bare shape, so an entry rolled with it AFTER the split would also have
+    # no '||' without being a legacy value at all. The Accent rename and the
+    # Faction split shipped in the same branch, in that order, so an entry
+    # storing "Accent" is old enough to predate both and its bare Faction is
+    # genuinely pre-split; an entry already storing "Glow colour" was rolled
+    # after the rename landed, and by the time it could roll at all the split
+    # had landed too - so its bare Faction, if any, can only be a
+    # --set-trait, and rewriting it here would double up a visual clause it
+    # never had.
+    if predates_rename and "Faction" in out and "||" not in out["Faction"]:
         print("! stored Faction %r has no '||' - assuming this entry "
               "predates Faction's name/visual split and treating the whole "
               "value as the visual signature, so the original prompt "
@@ -310,6 +330,24 @@ def migrate_traits(traits):
               "genuinely bare Faction bullet, this is wrong - check the "
               "regenerated render." % out["Faction"], file=sys.stderr)
         out["Faction"] = "%s || %s" % (out["Faction"], out["Faction"])
+    # Same shim as the Height backfill in regenerate_one(), for the same
+    # reason: a trait table added after some manifest entries were written
+    # leaves those entries with no key for it at all, and build_prompts()
+    # reads npc["Headgear"] unconditionally (unlike npc.get("Weapon", "") and
+    # npc.get("Theme", "-") elsewhere, a missing Headgear predates the table
+    # rather than describing a genuinely headgear-less NPC, so it needs a
+    # stand-in rather than an empty string). Warn once, then proceed, so the
+    # promise that every stored NPC keeps regenerating stays true instead of
+    # a KeyError traceback. Substituted here, not left for roll_npc()'s
+    # generic pronoun pass, because that pass never runs on a migrated dict -
+    # a stored entry is already-finished prose, and this default has to match
+    # that shape to reach build_prompts() usable.
+    if "Headgear" not in out:
+        print("! stored traits for %r has no Headgear (written before the "
+              "Headgear table existed) - defaulting to bare-headed; re-roll "
+              "instead of regenerating to pick a real one."
+              % out.get("name", "<unnamed>"), file=sys.stderr)
+        out["Headgear"] = DEFAULT_HEADGEAR.format(**pronoun_fields(out.get("Pronouns", "")))
     return out
 
 
@@ -339,7 +377,7 @@ PORTRAIT_TEMPLATE = (
     "{height}, {build}, {face}, and {traits}"
     "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction_line}the clothing "
     "following the shape of that frame. {headgear} {Possessive} face carries {demeanor}. "
-    "{gear_line}{backdrop} {weather_line}{accent_line} "
+    "{gear_line}{backdrop} {weather_line}{glow_line} "
     "Shallow depth of field, square framing, high detail, atmospheric sci-fi character "
     "portrait, painterly brushwork with heavy grain and dense halftone screentone worked "
     "into every shadow."
@@ -375,7 +413,7 @@ TOKEN_TEMPLATE = (
     "{outfit}, {faction_line}the clothing following the shape of that frame. {headgear} "
     "{Possessive} face carries {demeanor}. {gear_line}{Subject} {is_are} {stance}, both "
     "feet in frame, the pose natural and unforced. "
-    "{accent_line} The background alone is a solid flat plain white, no "
+    "{glow_line} The background alone is a solid flat plain white, no "
     "texture, no gradient, no shadow, no environment. Centered composition, dramatic "
     "lighting, isolated character illustration, clean silhouette, painterly brushwork "
     "with heavy grain and dense halftone screentone worked into every shadow."
@@ -612,14 +650,14 @@ def apply_weapon_policy(options, category, mil, unarmed=False):
             x for x in options
             if "weapon" not in split_flags(x)[1] or "simple" in split_flags(x)[1]
         ] or options
-        unarmed = [x for x in pocketable if "weapon" not in split_flags(x)[1]]
-        return pocketable + unarmed * 5 if unarmed else pocketable
+        unarmed_bullets = [x for x in pocketable if "weapon" not in split_flags(x)[1]]
+        return pocketable + unarmed_bullets * 5 if unarmed_bullets else pocketable
     if policy == "armed_bias":
         tagged = [x for x in options if "weapon" in split_flags(x)[1]]
         return options + tagged * 4 if tagged else options
     if policy == "civilian":
-        unarmed = [x for x in options if "weapon" not in split_flags(x)[1]]
-        return options + unarmed * CIVILIAN_UNARMED_COPIES if unarmed else options
+        unarmed_bullets = [x for x in options if "weapon" not in split_flags(x)[1]]
+        return options + unarmed_bullets * CIVILIAN_UNARMED_COPIES if unarmed_bullets else options
     return options
 
 
@@ -1254,10 +1292,10 @@ def build_prompts(npc):
     # rolled Stance, so nothing there contradicts what the NPC carries.
     portrait_fields = dict(
         fields, gear_line="" if "nogear" in flags else carrying,
-        accent_line=(GLOW_PORTRAIT if portrait_glow else none_line).format(**fields))
+        glow_line=(GLOW_PORTRAIT if portrait_glow else none_line).format(**fields))
     token_fields = dict(
         fields, gear_line=carrying,
-        accent_line=(GLOW_TOKEN if equipped_glow else none_line).format(**fields))
+        glow_line=(GLOW_TOKEN if equipped_glow else none_line).format(**fields))
 
     prompts = (PORTRAIT_TEMPLATE.format(**portrait_fields),
                TOKEN_TEMPLATE.format(**token_fields))

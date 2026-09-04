@@ -144,13 +144,21 @@ class TestFactionPigment(unittest.TestCase):
         """A 'palette' flag on a bullet with no colour in it would soften the
         closing line for nothing."""
         live = gen.parse_tables(REPO / "prompts" / "npc-generator-tables.md")
+        checked = 0
         for bullet in live["Faction"]:
             _, visual, flags = gen.split_faction(bullet)
             if "palette" not in flags:
                 continue
+            checked += 1
             with self.subTest(bullet=bullet):
                 self.assertIn(" in ", visual,
                               "a palette faction must name its colours: %s" % bullet)
+        # A vacuous pass if 'palette' were ever dropped from every bullet -
+        # the loop above would then assert nothing and the test would pass on
+        # nothing checked, the same shape test_stance_armed.py and
+        # test_stance_content.py guard their own pools against.
+        self.assertGreaterEqual(checked, 5,
+                                 "expected at least 5 palette-flagged Faction bullets")
 
 
 if __name__ == "__main__":
