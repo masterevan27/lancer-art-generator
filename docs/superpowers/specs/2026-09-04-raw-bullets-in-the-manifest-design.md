@@ -54,9 +54,16 @@ benefit of entries and readers that predate `rawTraits`.
 - Re-rolling `Given names` / `Family names`. Those stay refused for an
   unrelated reason: the folder and manifest id derive from the name, so
   changing one is not a change in place.
-- Re-rolling `Pronouns` or `Theme`, which gate whole groups of tables and would
-  require re-rolling those too. Those are a "re-roll the NPC" feature, not a
-  per-trait one.
+- Re-rolling `Pronouns`, which gates whole groups of tables and would require
+  re-rolling those too — including the name, which makes it a "re-roll the NPC"
+  feature rather than a per-trait one.
+
+  `Theme` was on this line too, on the same reasoning. It has since been taken
+  off it: gating a group of tables makes a trait a poor fit for
+  `reroll_trait()`'s one-free-variable shape, which is not the same as making
+  it unwanted, and re-rolling a theme keeps the name. See
+  [the Theme cascade](2026-09-04-theme-reroll-cascade-design.md), which builds
+  on this spec and is the reason to land it.
 
 ## 2. Approach
 
@@ -105,11 +112,15 @@ new path is additive.
 
 ## 3. Risks
 
-**The Foundry importer contract.** `docs/foundry-importer-contract.md` governs
-the manifest as a cross-repo interface — the client ships inside a released
-`module.zip`. Adding a key should be additive and safe, but that document is
-the authority and must be read and updated before this lands. This is the one
-item that could change the shape of the design.
+**The Foundry importer contract.** ~~This is the one item that could change the
+shape of the design.~~ **Read 2026-09-04: it does not.**
+`docs/foundry-importer-contract.md` governs the three `/importer/*` routes, and
+the job payload they carry is `itemId`, `kind`, `name`, `callsign`, `role`,
+`faction`, `portraitPath`, `tokenPath`. It never exposes `traits`, so a key
+added beside them is invisible to it — no contract change, no module bump, and
+`importerContract.test.js` should pass untouched. Left in the risk list rather
+than deleted, because the next person to add a manifest key will ask the same
+question and deserves the answer rather than the worry.
 
 **Manifest size.** Raw bullets roughly double the stored trait text per NPC.
 On a local single-user tool with a few hundred entries this is not a concern;
