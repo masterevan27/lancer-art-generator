@@ -1796,7 +1796,7 @@ def main(argv=None):
     if args.dry_run:
         for seed, npc, (portrait_prompt, token_prompt) in rolled:
             print("\n  %s  \"%s\"  (seed %d)" % (npc["name"], npc["Callsigns"], seed))
-            print("    %s, %s" % (npc["Role"], npc["Faction"]))
+            print("    %s, %s" % (npc["Role"], split_faction(npc["Faction"])[0]))
             print("    -> %s" % (npc_folder(args.out, npc["name"], role_category(npc), args.overwrite)))
             print("    workflow %s" % workflow_for(args, npc).name)
             if not args.no_portrait:
@@ -1861,7 +1861,7 @@ def main(argv=None):
         tag = "[%d/%d]" % (index, len(rolled))
 
         print("\n%s %s  \"%s\"  seed=%d" % (tag, npc["name"], npc["Callsigns"], seed))
-        print("    %s, %s" % (npc["Role"], npc["Faction"]))
+        print("    %s, %s" % (npc["Role"], split_faction(npc["Faction"])[0]))
 
         written = []
         portrait_file = token_file = None
