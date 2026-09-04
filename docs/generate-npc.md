@@ -539,18 +539,23 @@ python generate-npc.py --dry-run --count 2 --seed 43
 ```
 
 ```
-  Maren Ibarra  "Perihelion"  (seed 43)
-    a mercenary sniper, unaligned and freelance
-    -> ...\NPCs\Maren Ibarra
+  Seren Ibarra  "Perihelion"  (seed 43)
+    a mech pilot, Colonial militia
+    -> ...\NPCs\Seren Ibarra
     workflow Lancer_Scene_Workflow_for_girls_v1.json
-    portrait 1024x1024 ~390 tok: A half-body character portrait of a mercenary sniper, a fully grown...
+    portrait 1024x1024 ~422 tok: A three-quarter character portrait of a mech pilot, a fully grown...
 
-  Yusuf Fontaine  "Overkill"  (seed 44)
-    a mech pilot, unaligned and freelance
-    -> ...\NPCs\Yusuf Fontaine
+  Adrian Fontaine  "Overkill"  (seed 44)
+    a corporate liaison officer, Karrakin Trade Baronies
+    -> ...\NPCs\Adrian Fontaine
     workflow Lancer_Scene_Workflow_v1.json
-    portrait 1024x1024 ~404 tok: A character portrait seen from behind of a mech pilot, a fully grown...
+    portrait 1024x1024 ~452 tok: A character portrait seen from behind of a corporate liaison officer, a fully grown...
 ```
+
+This output reflects the tables at time of writing. Names, roles, factions and
+token counts drift every time a bullet is added or edited — the same drift the
+`Backdrop` proportions above are subject to — so re-run the command rather than
+trusting the sample printed here.
 
 Sizes are unaffected: 1024×1024 and 1024×1280 are written into whichever
 workflow renders them. A file with no `EmptyLatentImage` gives up that control
