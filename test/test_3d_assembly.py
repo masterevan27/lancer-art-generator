@@ -198,5 +198,101 @@ class TestTurnarounds(unittest.TestCase):
         self.assertEqual([n for n in report["files"] if n.endswith(".png")], [])
 
 
+def glb_json_chunk(path):
+    """The JSON chunk of a binary glTF, parsed.
+
+    Read by hand rather than by importing it back into Blender: what matters
+    is what is IN the file a Foundry or a game engine would load, and a
+    re-import would let Blender paper over something the file does not
+    actually carry.
+    """
+    data = path.read_bytes()
+    magic, _, _ = struct.unpack("<4sII", data[:12])
+    assert magic == b"glTF", "not a binary glTF: %s" % path.name
+    length, kind = struct.unpack("<II", data[12:20])
+    assert kind == 0x4E4F534A, "first chunk is not JSON"
+    return json.loads(data[20:20 + length].decode("utf-8"))
+
+
+@unittest.skipUnless(BLENDER, "Blender not installed")
+class TestRigging(unittest.TestCase):
+    """Spec §6 step 7, against the fixture pair.
+
+    The fixture shell is a wider cylinder around a narrower one, which is the
+    shape of the real problem in miniature: a garment whose silhouette departs
+    from the body it wraps.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.outdir = Path(cls._tmp.name)
+        cls.report, cls.proc = run_assembly(cls.outdir, "--rig", "--no-render")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
+
+    def test_it_exits_cleanly(self):
+        self.assertEqual(self.proc.returncode, 0, self.proc.stderr[-3000:])
+
+    def test_it_reports_success(self):
+        self.assertTrue(self.report["rigged"], self.report.get("rig_error"))
+
+    def test_the_armature_has_deform_bones(self):
+        """The fixture rig has three; the real one has 127."""
+        self.assertGreater(self.report["bones"], 0)
+
+    def test_every_shell_vertex_carries_a_weight(self):
+        """The assertion spec §6 step 7 demands, reported as a number."""
+        self.assertEqual(self.report["unweighted"], 0)
+
+    def test_the_rigged_glb_is_written(self):
+        path = self.outdir / ("%s Rigged.glb" % STEM)
+        self.assertTrue(path.exists())
+        self.assertGreater(path.stat().st_size, 0)
+
+    def test_the_rigged_glb_actually_carries_a_skin(self):
+        """A GLB with an armature beside the mesh is not a rigged GLB."""
+        chunk = glb_json_chunk(self.outdir / ("%s Rigged.glb" % STEM))
+        self.assertTrue(chunk.get("skins"), "no skins in the exported glTF")
+        skinned = [m for m in chunk.get("nodes", []) if "skin" in m]
+        self.assertTrue(skinned, "no node references a skin")
+
+    def test_the_unrigged_shell_is_still_unrigged(self):
+        """Spec §6.1 lists Shell.glb as the unrigged one; it must stay that way."""
+        chunk = glb_json_chunk(self.outdir / ("%s Shell.glb" % STEM))
+        self.assertFalse(chunk.get("skins"))
+
+    def test_the_print_stl_is_unaffected(self):
+        """Spec §7.1: only Rigged.glb may depend on the transfer."""
+        self.assertGreater(stl_triangles(self.outdir / ("%s Print.stl" % STEM)), 0)
+
+
+@unittest.skipUnless(BLENDER, "Blender not installed")
+class TestAutomaticWeightsFallback(unittest.TestCase):
+    """The §7.1 fallback, built now so choosing it later costs nothing."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.outdir = Path(cls._tmp.name)
+        cls.report, cls.proc = run_assembly(
+            cls.outdir, "--rig", "--bind", "auto", "--no-render")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
+
+    def test_it_also_produces_a_skinned_glb(self):
+        self.assertEqual(self.proc.returncode, 0, self.proc.stderr[-3000:])
+        self.assertTrue(self.report["rigged"], self.report.get("rig_error"))
+        chunk = glb_json_chunk(self.outdir / ("%s Rigged.glb" % STEM))
+        self.assertTrue(chunk.get("skins"))
+
+    def test_it_leaves_no_vertex_unweighted(self):
+        self.assertEqual(self.report["unweighted"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

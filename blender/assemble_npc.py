@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import npc_mesh  # noqa: E402  (must follow the sys.path line)
 import npc_render  # noqa: E402
+import npc_rig  # noqa: E402
 
 
 def parse_argv(argv):
@@ -49,6 +50,13 @@ def parse_argv(argv):
                         "GL context and is what the tests use")
     p.add_argument("--samples", type=int, default=16,
                    help="render samples (default: %(default)s)")
+    p.add_argument("--rig", action="store_true",
+                   help="also bind the shell to the base's armature and export "
+                        "a rigged GLB (spec §7.1 - the unproven half)")
+    p.add_argument("--bind", default="transfer", choices=npc_rig.BINDS,
+                   help="how to weight the shell: 'transfer' copies the base's "
+                        "own vertex groups by proximity, 'auto' solves for the "
+                        "bones directly (default: %(default)s)")
     return p.parse_args(argv)
 
 
@@ -104,6 +112,44 @@ def main():
     npc_mesh.export_stl(shell, print_stl, args.print_height_mm)
     files.append(print_stl.name)
 
+    rigged = False
+    rig_error = None
+    bones = 0
+    unweighted = None
+    if args.rig:
+        bone_names = npc_rig.deform_bones(armature)
+        bones = len(bone_names)
+        if not bones:
+            rig_error = "the base armature has no deform bones"
+        else:
+            if args.bind == "transfer":
+                npc_rig.transfer_weights(body, shell)
+                npc_rig.bind(shell, armature)
+            else:
+                npc_rig.auto_weights(shell, armature)
+            unweighted = npc_rig.unweighted_vertices(shell, set(bone_names))
+            if unweighted:
+                # Spec §6 step 7. Emitting a mesh where part of the figure
+                # does not follow the skeleton is worse than emitting none:
+                # the failure only shows up once someone animates it.
+                rig_error = (
+                    "%d of %d shell vertices carry no weight - the bind did not "
+                    "reach the whole mesh. Try --bind auto."
+                    % (unweighted, len(shell.data.vertices)))
+            else:
+                rigged_glb = args.outdir / ("%s Rigged.glb" % args.stem)
+                npc_mesh.export_glb([armature, shell], rigged_glb)
+                files.append(rigged_glb.name)
+                rigged = True
+
+        if rig_error:
+            # Not a SystemExit: spec §7.1's containment is that only
+            # Rigged.glb depends on this. The shell, the STL and the
+            # turnarounds are already correct and already on disk, and
+            # throwing them away because the rigging failed would be the
+            # opposite of containment. Loud, and recorded, and no file.
+            print("! rigging failed: %s" % rig_error, file=sys.stderr)
+
     if not args.no_render:
         files += npc_render.turnaround(
             shell, args.outdir, args.stem, size=args.turnaround_size,
@@ -114,7 +160,10 @@ def main():
         "shell_height_m": round(npc_mesh.height_of(shell), 4),
         "components_dropped": dropped,
         "non_manifold": non_manifold,
-        "rigged": False,
+        "rigged": rigged,
+        "bones": bones,
+        "unweighted": unweighted,
+        "rig_error": rig_error,
     }))
 
 
