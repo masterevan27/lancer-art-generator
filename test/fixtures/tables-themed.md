@@ -255,6 +255,11 @@ which is the flag the mil-Role armed guarantee reads.
 - a sealed avionics case at the hip || @gundam
 - a wrapped bundle carried across both arms || hands @neosamurai
 
+## Glow placement
+- falls across one side of {possessive} face against warm dim ambient light on the other
+- rims {possessive} shoulders and hair from behind
+- washes across the scene behind {object} || scene
+
 ## Backdrop
 
 - A half-body character portrait || Behind {object} is a plain riveted wall.

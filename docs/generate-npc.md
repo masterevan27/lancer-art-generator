@@ -293,6 +293,41 @@ trailing clause:
 A colour flagged `older` — greying, salt-and-pepper — is dropped when the Age
 roll came up `young`, mirroring the `figure`/`young` pairing exactly.
 
+## Glow placement
+
+Colour and placement roll separately, for the same reason cut and colour do:
+a new placement is one bullet rather than a rewrite of every shade.
+
+The portrait's glow sentence used to be a single fixed phrase baked into the
+template — the light fell across one side of the subject's face in every render
+the generator had ever produced. That phrasing is still in the table, as one
+weighted bullet among ten.
+
+A bullet is written as the **predicate** of `A faint {glow} glow ___.`, so it
+begins with a verb and carries its own contrast clause where it wants one. It
+must not name the colour: the template has already said it, and saying it twice
+is how a frame ends up with two glows — the same failure the `Glow colour`
+table's own comment records for naming a light-emitting phenomenon instead of a
+hue.
+
+A placement flagged `scene` puts the light out in the environment — on a wall,
+in the air, across the ground. The glow has two possible sources, and only one
+of them can do that:
+
+| Source | Example | Can light a wall? |
+| --- | --- | --- |
+| Equipped — worn or carried | a lit visor, glowing cabling, an instrument panel | no |
+| The Backdrop itself | a neon sign, a burning wreck, a lit corridor | yes |
+
+So a `scene` placement is dropped unless the rolled Backdrop is what casts the
+light. `Glow placement` is rolled immediately **after** `Backdrop` in
+`REQUIRED_TABLES` precisely so that the scene is known in time to test it —
+the same ordering dependency `Role` has on `Faction` and `Outfit`.
+
+The token prompt gets no placement at all. It renders on flat white with no
+scene to place anything against, so it keeps the unplaced wording it always
+had.
+
 ## Where the entries came from
 
 Many were reverse-engineered from authored prompts already on this machine, read

@@ -92,10 +92,16 @@ exists to prevent cannot be produced at all.
 ## Glow colour
 - teal-green
 
+## Glow placement
+- falls across one side of {possessive} face against warm dim ambient light on the other
+- rims {possessive} shoulders and hair from behind
+- washes across the scene behind {object} || scene
+
 ## Backdrop
 - A half-body character portrait || Behind {object} is a plain wall.
 - A character portrait || {Subject} {is_are} in a temple courtyard. || weather @alpha
 - A character portrait || {Subject} {is_are} firing a sidearm down a corridor. || nogear
+- A character portrait || {Subject} {is_are} under a neon sign in the rain. || weather
 
 ## Weather
 - in steady rain

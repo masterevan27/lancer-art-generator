@@ -118,7 +118,7 @@ REQUIRED_TABLES = [
     "Build", "Height", "Skin", "Hair", "Hair colour", "Eyes", "Feature",
     "Demeanor", "Role",
     "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Glow colour", "Backdrop",
-    "Weather", "Stance",
+    "Glow placement", "Weather", "Stance",
 ]
 
 # The tables a rolled Theme gates. Everything else - names, age, build, height,
@@ -428,9 +428,26 @@ TOKEN_TEMPLATE = (
 # line's claim that the glow is the ONLY saturated colour stops being true when
 # the uniform has one, so {other} softens it. Four constants and one slot
 # rather than eight constants.
+# {placement} is the rolled '## Glow placement' bullet, which is written as the
+# predicate of this sentence and carries its own contrast clause. It used to be
+# the fixed phrase "falls across one side of {possessive} face against warm dim
+# ambient light on the other", which put the light on the face of every single
+# portrait; that phrasing is still in the table, as one weighted bullet among
+# ten rather than as the only option.
+# What a stored NPC with no rolled placement gets. An entry written before
+# '## Glow placement' existed still regenerates through build_prompts(), and
+# this is the wording it would have had - the fixed phrase that used to be
+# baked into GLOW_PORTRAIT. Deliberately placeholder-free where the original
+# read "{possessive} face": a manifest's traits have already had their pronouns
+# substituted by the time they are stored, so nothing re-runs the substitution
+# on the regen path and a placeholder here would ship a literal brace to the
+# image model. Same defensive shape as npc.get("Weapon", "") below.
+LEGACY_GLOW_PLACEMENT = (
+    "falls across one side of the face against warm dim ambient light on the other"
+)
+
 GLOW_PORTRAIT = (
-    "A faint {glow} glow falls across one side of {possessive} face against "
-    "warm dim ambient light on the other. Keep the palette restrained - greys, "
+    "A faint {glow} glow {placement}. Keep the palette restrained - greys, "
     "olive drab and rust - with {glow} the only {other}saturated color in the frame."
 )
 GLOW_TOKEN = (
@@ -811,6 +828,18 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
             free = [x for x in options if "hands" not in split_flags(x)[1]]
             options = free or options      # never filter the pool down to nothing
 
+        # A placement flagged 'scene' puts the light out in the environment -
+        # on a wall, in the air, across the ground - so it only makes sense
+        # when the BACKDROP is what casts it. The alternative source is
+        # something the NPC wears or carries, and a lit visor does not light
+        # the wall behind them. Glow placement follows Backdrop in
+        # REQUIRED_TABLES precisely so the rolled scene is readable here, the
+        # same way Role precedes Faction and Outfit.
+        if name == "Glow placement" and not has_light_source(
+                split_backdrop(npc["Backdrop"])[1]):
+            on_figure = [x for x in options if "scene" not in split_flags(x)[1]]
+            options = on_figure or options   # never filter the pool down to nothing
+
         # The Weapon policy runs BEFORE 'notac' below, and the order is
         # load-bearing: being armed is a guarantee, 'notac' is only a
         # preference, so the guarantee gets to pick the pool first. Run the
@@ -874,7 +903,7 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
         # reason - its own flags gate the Stance roll further down, so it is
         # split there instead.
         if name in ("Age", "Build", "Role", "Outfit",
-                    "Hair", "Feature", "Headgear", "Weapon"):
+                    "Hair", "Feature", "Headgear", "Weapon", "Glow placement"):
             value, flags = split_flags(value)
             if name == "Age":
                 young = "young" in flags
@@ -1247,6 +1276,7 @@ def build_prompts(npc):
         "weapon": weapon,
         "gear": npc["Gear"],
         "glow": npc["Glow colour"],
+        "placement": npc.get("Glow placement", LEGACY_GLOW_PLACEMENT),
         "shot": shot,
         "backdrop": scene,
         "stance": npc["Stance"],
