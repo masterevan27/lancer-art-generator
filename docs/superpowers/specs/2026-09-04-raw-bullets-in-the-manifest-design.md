@@ -31,6 +31,15 @@ manifest key of its own, written alongside the traits, because the Age bullet's
 flag was gone by the time the entry was saved. That is the pattern this
 generalises.
 
+It has since met it a second time. The [headgear/outfit register
+spec](2026-09-04-headgear-outfit-register-design.md) gates `Headgear` on the
+Outfit's `notac` flag, which would have pushed `Headgear` out of
+`REROLLABLE_TRAITS` — so it records `outfit_notac` as a second key of exactly
+this kind. When this spec lands, `outfit_notac` and `young` are both subsumed:
+§2.1 deletes the hand-written filter rebuilds in `reroll_trait()`, and the
+`Headgear` branch goes with the other eleven. The two keys stay written for the
+benefit of entries and readers that predate `rawTraits`.
+
 ### Goals
 
 - Every rolled trait becomes re-rollable, under the same filters a fresh roll
