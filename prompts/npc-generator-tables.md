@@ -1421,7 +1421,7 @@ ignored — so notes like this one are safe to leave inline.
 - Harrison Armory || sharply pressed, high collar and polished fittings, in imperial green and gold || mil palette
 - Smith-Shimano Corpro || precisely tailored with fine seam piping, in white and pale pastels || civ palette
 - IPS-Northstar || riveted and salt-stained heavy canvas, in rust orange || civ palette
-- Karrakin Trade Baronies || formal heraldic livery with a stiff standing collar, in deep crimson and gold || palette
+- Karrakin Trade Baronies || heavy brocade and gold braid, an heraldic crest at the shoulder, in deep crimson || palette
 - Colonial militia || mismatched surplus, webbing straps and taped-over insignia || mil
 - Unregistered || ||
 

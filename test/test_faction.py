@@ -115,12 +115,15 @@ class TestFactionPigment(unittest.TestCase):
     def test_a_pigment_faction_with_no_glow_drops_the_no_stray_colour_claim(self):
         """'no stray saturated color' contradicts a uniform that has one.
 
-        has_light_source() reads Weapon, Gear, Outfit, Headgear, Feature and
-        Eyes (generate-npc.py, LIGHT_SOURCE_WORDS) - so all six are pinned
-        here to glow-free fixture values. Leaving any of them to the roll
-        would make this test flaky by seed: the fixture's Outfit table has a
-        "neon techwear jacket" bullet that would flip has_light_source() true
-        and falsify the very claim this test checks.
+        equipped_glow's has_light_source() call reads Weapon, Gear, Outfit,
+        Headgear, Feature and Eyes (generate-npc.py, LIGHT_SOURCE_WORDS), so
+        all six are pinned here to glow-free fixture values - the fixture's
+        Outfit table has a "neon techwear jacket" bullet that would otherwise
+        flip has_light_source() true by seed and falsify the very claim this
+        test checks. portrait_glow adds one more source on top of those six -
+        has_light_source(scene), the rolled Backdrop - so Backdrop is pinned
+        too, to a glow-free bullet with no 'nogear' flag, closing that window
+        for both prompts rather than just the token half.
         """
         npc = gen.roll_npc(TABLES, random.Random(0), {
             "Faction": "Harrison Armory || in imperial green and gold || mil palette",
@@ -130,6 +133,7 @@ class TestFactionPigment(unittest.TestCase):
             "Headgear": "{Subject} {is_are} bare-headed.",
             "Feature": "a scar across one cheek",
             "Eyes": "grey eyes",
+            "Backdrop": "A half-body character portrait || Behind {object} is a plain wall.",
         })
         portrait, token = gen.build_prompts(npc)
         for prompt in (portrait, token):
