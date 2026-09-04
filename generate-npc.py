@@ -266,7 +266,15 @@ LEGACY_TRAIT_NAMES = {
 
 
 def migrate_traits(traits):
-    """A stored manifest trait dict brought forward to current table names."""
+    """A stored manifest trait dict brought forward to current table names
+    and value shapes.
+
+    Two jobs: rename any trait key listed in LEGACY_TRAIT_NAMES to its
+    current heading, and repair a Faction value stored before the
+    name/visual split existed (a bare string with no '||') into the
+    current 'name || visual' shape, so a regenerated prompt reproduces the
+    original one.
+    """
     out = dict(traits)
     for old, new in LEGACY_TRAIT_NAMES.items():
         if old in out:
@@ -295,7 +303,7 @@ def migrate_traits(traits):
     # below is what surfaces a wrong guess instead of leaving it a mystery.
     if "Faction" in out and "||" not in out["Faction"]:
         print("! stored Faction %r has no '||' - assuming this entry "
-              "predates the Task 7 name/visual split and treating the whole "
+              "predates Faction's name/visual split and treating the whole "
               "value as the visual signature, so the original prompt "
               "reproduces. If this entry was rolled after that split from a "
               "genuinely bare Faction bullet, this is wrong - check the "

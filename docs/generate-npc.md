@@ -49,8 +49,8 @@ verbatim, so an NPC you like can be re-rolled or hand-edited later.
 
 `prompts/npc-generator-tables.md` holds the tables — names, callsigns,
 pronouns, theme, age, build, skin, hair, hair colour, eyes, distinguishing
-feature, demeanor, role, faction, outfit, headgear, weapon, gear, accent
-color, portrait backdrop, portrait weather, token stance.
+feature, demeanor, role, faction, outfit, headgear, weapon, gear, glow
+colour, portrait backdrop, portrait weather, token stance.
 Every `##` heading is a table and every `-` bullet under it is one option, so
 adding options needs no code change.
 
@@ -219,6 +219,62 @@ common case. A `mil` Role never reaches it: `apply_weapon_policy` restricts
 that pool to `sidearm`-flagged bullets, so the "always armed" guarantee is
 stronger after the split than before it.
 
+`apply_weapon_policy` also tiers the pool by Role, not just by mil/civ. The
+`Officials` category almost never carries anything dangerous, and never
+anything but a pocketable weapon when it does; `Criminals` usually carry
+something. Every other Role — most of them — falls to `civilian`, the
+default tier for any Role neither of those two named categories claims: it
+stacks extra copies of the unarmed bullets into the pool so an ordinary Role
+comes out unarmed more often than not. That default used to be no policy at
+all, which is why seven civilian Roles — dockworker, chief mechanic,
+freelance salvager and the like — came out armed 65% of the time; `civilian`
+brings that down to roughly a third.
+
+`--unarmed` forces the `Weapon` roll empty outright, but not for everyone: a
+`mil` Role keeps its guaranteed sidearm and `Criminals` keep whatever
+`armed_bias` gave them, since a soldier's sidearm and a pirate's armament are
+what make the two read as one rather than an accessory that just didn't
+roll. Every other Role, `Officials` included, comes up with nothing in hand.
+`Stance`'s `armed` flag — the wider sibling of `gun`, marking a pose that
+references a weapon of any kind rather than a firearm specifically — reads
+off the same roll, so an NPC `--unarmed` disarms is never posed brandishing
+something nothing in the prompt names.
+
+## Faction
+
+`Faction` is a **three-segment** table too — `name || visual || flags` —
+the same shape `Backdrop` and `Hair colour` use. The name is what the
+dossier prints under "Affiliation" and what the byline names; the visual is
+the only part that reaches the image prompt, dropped into the clothing
+sentence in place of the name.
+
+The split exists because the single-segment form put a garment *category* —
+"corporate wear", "service dress" — right after `Outfit`'s specific garment
+description, competing for the same slot and losing every time; deleting the
+whole `Faction` clause from a prompt used to change the render not at all.
+A visual is written to describe what `Outfit` doesn't: fabric, tailoring,
+insignia, patina, and where the faction has one, colour — never a garment
+category.
+
+Two entries, the non-affiliations `Unaligned` and `Unregistered`, have
+nothing to show and leave the visual empty on purpose; `build_prompts` drops
+the clause entirely rather than leave a doubled comma. `Faction` also carries
+the `civ`/`mil` split `Outfit` does, filtered by Role the same way, and a
+`palette` flag: five factions assert pigment of their own (dye in cloth,
+distinct from `Glow colour`'s light), which softens the closing palette
+line's claim from "the only saturated color" to "the only *other* saturated
+color" so the prompt stops contradicting a uniform it just described.
+
+**`--set-trait Faction=` needs that same shape.** A bare string — the form
+every example below used before this table gained a visual segment — parses
+as the name with an empty visual, so the faction clause silently disappears
+from the prompt instead of erroring. Paste a whole bullet, or write your own
+`name || visual` pair:
+
+```bash
+python generate-npc.py --set-trait Faction="Harrison Armory || sharply pressed, high collar and polished fittings, in imperial green and gold || mil palette"
+```
+
 ## Hair colour
 
 Cut and colour roll separately, so a new shade is one bullet rather than a
@@ -248,8 +304,8 @@ prosthetics, hacker den, mech-companion staging and ruined-city scenes).
 Two edits are applied to everything lifted that way:
 
 - **Glow and neon colors are stripped.** The palette sentence already makes the
-  rolled `Accent` the only saturated color, so "glowing cable tubing" picks it
-  up instead of fighting it with a hardcoded red.
+  rolled `Glow colour` the only saturated color, so "glowing cable tubing" picks
+  it up instead of fighting it with a hardcoded red.
 - **Only content is taken, never rendering style.** Those references are
   saturated cel/anime; the campaign is painterly with halftone and a restrained
   palette. Prosthetics, kit and staging carry over; the look does not.
@@ -510,6 +566,7 @@ is the problem.
 | `--name "Ivo Karras"` | Use this name instead of rolling one. Single NPC only. |
 | `--pronouns she` | Roll only NPCs with that subject pronoun — `she`, `he` or `they`. Matched against the first field of the `Pronouns` table, so it gates every gendered variant table too. |
 | `--set-trait Table=value` | Force one rolled trait, e.g. `--set-trait Role="a field medic"`. Repeatable across tables, but naming the same table twice is an error rather than a silent last-wins. |
+| `--unarmed` | Roll every NPC unarmed, except `mil` Roles and `Criminals` — a soldier's sidearm and a pirate's armament are what make the two read as one. See [Weapon and Gear](#weapon-and-gear). |
 | `--tables PATH` | A different tables file. |
 | `--no-portrait` / `--no-token` | Generate only one of the two. |
 | `--keep-raw-token` | Also save the token's opaque pre-RMBG render. |
@@ -534,7 +591,7 @@ python generate-npc.py --dry-run --count 5
 python generate-npc.py --count 3
 python generate-npc.py --count 5 --pronouns she   # women only
 python generate-npc.py --seed 4242            # re-roll a specific NPC
-python generate-npc.py --set-trait Faction="in Harrison Armory service dress, imperial and immaculate"
+python generate-npc.py --set-trait Faction="IPS-Northstar || riveted and salt-stained heavy canvas, in rust orange || civ palette"
 
 python generate-npc.py --dry-run --count 6 --seed 42   # which workflow each NPC gets
 python generate-npc.py --count 4 --pronouns he         # never opens the women's workflow
@@ -571,16 +628,19 @@ four fields (`subject/object/possessive/noun`); `she/her` alone leaves
 `{possessive}` empty and the prompt reads "in  mid-thirties".
 
 ```
-python generate-npc.py --count 5 --seed 1000   --set-trait Pronouns="she/her/her/woman"   --set-trait Role="a Union marine soldier"   --set-trait Faction="in worn Union Administrative Department kit"
+python generate-npc.py --count 5 --seed 1000   --set-trait Pronouns="she/her/her/woman"   --set-trait Role="a Union marine soldier"   --set-trait Faction="Union Administrative Department || issued and worn thin, in faded institutional blue-grey || mil palette"
 ```
 
 **A mercenary crew — one outfit, mixed people, varied jobs.** Roles differ, so
-this is three runs sharing a faction. Pronouns are left to roll.
+this is three runs sharing a faction. Pronouns are left to roll. `Unaligned`'s
+visual segment is deliberately empty — see [Faction](#faction) — so this pins
+the dossier's "Affiliation" line without adding a clothing sentence; `Outfit`
+alone carries the look.
 
 ```
-python generate-npc.py --count 2 --seed 1100 --set-trait Faction="unaligned and freelance" --set-trait Role="a mercenary squad lead"
-python generate-npc.py --count 2 --seed 1200 --set-trait Faction="unaligned and freelance" --set-trait Role="a mercenary sniper"
-python generate-npc.py --count 2 --seed 1300 --set-trait Faction="unaligned and freelance" --set-trait Role="an elite mercenary pilot"
+python generate-npc.py --count 2 --seed 1100 --set-trait Faction="Unaligned || || civ" --set-trait Role="a mercenary squad lead"
+python generate-npc.py --count 2 --seed 1200 --set-trait Faction="Unaligned || || civ" --set-trait Role="a mercenary sniper"
+python generate-npc.py --count 2 --seed 1300 --set-trait Faction="Unaligned || || civ" --set-trait Role="an elite mercenary pilot"
 ```
 
 **A corpo delegation — SSC, immaculate, all in the same room.** Pinning
@@ -589,7 +649,7 @@ a delegation rather than six portraits. Backdrop bullets carry both halves of th
 shot split on `||`, so paste a whole bullet:
 
 ```
-python generate-npc.py --count 4 --seed 1400   --set-trait Role="a corporate liaison officer"   --set-trait Faction="in Smith-Shimano Corpro corporate wear, sleek and expensive"   --set-trait Backdrop="A half-body character portrait || Behind {object}, softly blurred well out of focus, is a station corridor lined with conduit and hazard striping."
+python generate-npc.py --count 4 --seed 1400   --set-trait Role="a corporate liaison officer"   --set-trait Faction="Smith-Shimano Corpro || precisely tailored with fine seam piping, in white and pale pastels || civ palette"   --set-trait Backdrop="A half-body character portrait || Behind {object}, softly blurred well out of focus, is a station corridor lined with conduit and hazard striping."
 ```
 
 **An EVA salvage crew — everyone weightless.** Same trick, pointed at one of the
@@ -619,7 +679,7 @@ it takes — the run switches per NPC. Worth a `--dry-run` first, since the two
 workflows need not be the same speed:
 
 ```
-python generate-npc.py --dry-run --count 8 --seed 2300 --set-trait Faction="in worn Union Administrative Department kit"
+python generate-npc.py --dry-run --count 8 --seed 2300 --set-trait Faction="Union Administrative Department || issued and worn thin, in faded institutional blue-grey || mil palette"
 ```
 
 **The same crew twice, to compare the two workflows.** A pinned seed and pinned
@@ -637,7 +697,7 @@ from zero, so the third NPC of the fireteam above is seed 1002. Re-run it alone
 with the same pins and you get that exact person back:
 
 ```
-python generate-npc.py --count 1 --seed 1002   --set-trait Pronouns="she/her/her/woman"   --set-trait Role="a Union marine soldier"   --set-trait Faction="in worn Union Administrative Department kit"
+python generate-npc.py --count 1 --seed 1002   --set-trait Pronouns="she/her/her/woman"   --set-trait Role="a Union marine soldier"   --set-trait Faction="Union Administrative Department || issued and worn thin, in faded institutional blue-grey || mil palette"
 ```
 
 Give each group a base seed far enough apart that their blocks don't overlap —
