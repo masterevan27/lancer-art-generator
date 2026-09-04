@@ -846,14 +846,19 @@ re-draws it either way, and printing only the movers would make an unlucky
 run look smaller than it was:
 
 ```
-re-rolled Role: 'a colonial administrator' -> 'a Union marine soldier'
-  with Faction: 'IPS-Northstar' -> 'Union Administrative Department'
-  with Outfit: 'a tailored jacket cut close to the body' -> 'issued fatigues, pressed and creased'
-  with Weapon: '-' -> 'a service rifle, slung low'
-  with Headgear: '-' -> '-'
-  with Gear: 'a data-slate' -> '-'
-  with Stance: 'standing at ease, hands loose' -> 'standing at a low ready, weapon angled down'
+re-rolled Role: 'a smuggler' -> 'an elite mercenary pilot'
+  with Faction: 'Karrakin Trade Baronies || heavy brocade…' -> 'Union Administrative Department || issued and worn thin…'
+  with Outfit: 'a fitted black tactical bodysuit…' -> 'an armored softshell greatcoat…'
+  with Headgear: 'He wears a sleek black mechanical headset…' -> 'He wears a bulky visored rig…'
+  with Weapon: 'a holstered sidearm and a suppressed carbine…' -> 'a service pistol worn openly…'
+  with Gear: 'a caged inspection lamp…' -> 'a scarred pilot helmet…'
+  with Stance: 'leaning low into a forward sprint…' -> 'kneeling in profile with head bowed low…'
 ```
+
+(Truncated with `…` for space; the real output prints each bullet in full.
+The tables drift as bullets are added or edited, the same drift [What one run
+produces](#what-one-run-produces) is subject to, so treat this as the shape
+of the report rather than a promise about its wording.)
 
 **A known limit: `--unarmed` does not survive a `Weapon` re-roll.**
 `--unarmed` is a run flag, read once when an NPC is first rolled, and nothing
