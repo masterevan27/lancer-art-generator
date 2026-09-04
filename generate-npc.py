@@ -118,7 +118,7 @@ REQUIRED_TABLES = [
     "Build", "Height", "Skin", "Hair", "Hair colour", "Eyes", "Feature",
     "Demeanor", "Role",
     "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Glow colour", "Backdrop",
-    "Weather", "Stance",
+    "Glow placement", "Weather", "Stance",
 ]
 
 # The tables a rolled Theme gates. Everything else - names, age, build, height,
@@ -428,9 +428,26 @@ TOKEN_TEMPLATE = (
 # line's claim that the glow is the ONLY saturated colour stops being true when
 # the uniform has one, so {other} softens it. Four constants and one slot
 # rather than eight constants.
+# {placement} is the rolled '## Glow placement' bullet, which is written as the
+# predicate of this sentence and carries its own contrast clause. It used to be
+# the fixed phrase "falls across one side of {possessive} face against warm dim
+# ambient light on the other", which put the light on the face of every single
+# portrait; that phrasing is still in the table, as one weighted bullet among
+# ten rather than as the only option.
+# What a stored NPC with no rolled placement gets. An entry written before
+# '## Glow placement' existed still regenerates through build_prompts(), and
+# this is the wording it would have had - the fixed phrase that used to be
+# baked into GLOW_PORTRAIT. Deliberately placeholder-free where the original
+# read "{possessive} face": a manifest's traits have already had their pronouns
+# substituted by the time they are stored, so nothing re-runs the substitution
+# on the regen path and a placeholder here would ship a literal brace to the
+# image model. Same defensive shape as npc.get("Weapon", "") below.
+LEGACY_GLOW_PLACEMENT = (
+    "falls across one side of the face against warm dim ambient light on the other"
+)
+
 GLOW_PORTRAIT = (
-    "A faint {glow} glow falls across one side of {possessive} face against "
-    "warm dim ambient light on the other. Keep the palette restrained - greys, "
+    "A faint {glow} glow {placement}. Keep the palette restrained - greys, "
     "olive drab and rust - with {glow} the only {other}saturated color in the frame."
 )
 GLOW_TOKEN = (
@@ -811,6 +828,18 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
             free = [x for x in options if "hands" not in split_flags(x)[1]]
             options = free or options      # never filter the pool down to nothing
 
+        # A placement flagged 'scene' puts the light out in the environment -
+        # on a wall, in the air, across the ground - so it only makes sense
+        # when the BACKDROP is what casts it. The alternative source is
+        # something the NPC wears or carries, and a lit visor does not light
+        # the wall behind them. Glow placement follows Backdrop in
+        # REQUIRED_TABLES precisely so the rolled scene is readable here, the
+        # same way Role precedes Faction and Outfit.
+        if name == "Glow placement" and not has_light_source(
+                split_backdrop(npc["Backdrop"])[1]):
+            on_figure = [x for x in options if "scene" not in split_flags(x)[1]]
+            options = on_figure or options   # never filter the pool down to nothing
+
         # The Weapon policy runs BEFORE 'notac' below, and the order is
         # load-bearing: being armed is a guarantee, 'notac' is only a
         # preference, so the guarantee gets to pick the pool first. Run the
@@ -874,7 +903,7 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
         # reason - its own flags gate the Stance roll further down, so it is
         # split there instead.
         if name in ("Age", "Build", "Role", "Outfit",
-                    "Hair", "Feature", "Headgear", "Weapon"):
+                    "Hair", "Feature", "Headgear", "Weapon", "Glow placement"):
             value, flags = split_flags(value)
             if name == "Age":
                 young = "young" in flags
@@ -1247,6 +1276,7 @@ def build_prompts(npc):
         "weapon": weapon,
         "gear": npc["Gear"],
         "glow": npc["Glow colour"],
+        "placement": npc.get("Glow placement", LEGACY_GLOW_PLACEMENT),
         "shot": shot,
         "backdrop": scene,
         "stance": npc["Stance"],
@@ -1552,6 +1582,16 @@ def parse_args(argv=None):
                             "entry either way, so a different seed renders the same character "
                             "with new noise instead of a new roll")
 
+    regen.add_argument("--reroll-trait", metavar="TABLE",
+                       help="re-roll ONE trait of the regenerated NPC instead of reproducing "
+                            "it - e.g. --reroll-trait Hair to give an existing character a new "
+                            "haircut and nothing else. Everything else comes from the entry as "
+                            "usual, and the result overwrites the same folder and manifest id. "
+                            "Only some traits can be re-rolled alone: the manifest stores "
+                            "bullets with their flags stripped, so a trait whose filters need "
+                            "another trait's flags is refused with the reason. Re-rollable: "
+                            + ", ".join(REROLLABLE_TRAITS))
+
     run = p.add_argument_group("run mode")
     run.add_argument("--server", help="ComfyUI address, e.g. 127.0.0.1:8000")
     run.add_argument("--dry-run", action="store_true",
@@ -1687,6 +1727,130 @@ def load_workflows(args, rolled):
     return loaded
 
 
+# Which traits --reroll-trait can re-roll from a stored manifest entry.
+#
+# A reroll re-rolls ONE trait and keeps every other, so it has to apply the
+# same filters the original roll applied - and roll_npc() strips a bullet's
+# flags before storing it, so the manifest is a lossy record of the roll. A
+# trait is rerollable only when every filter gating it can be rebuilt from what
+# the entry DOES carry: the rolled Theme, the recorded 'young' flag, the stored
+# Backdrop scene, the stored Pronouns.
+#
+# The repo already met this problem once and solved it one flag at a time:
+# 'young' is a manifest key of its own precisely because the Age bullet's flag
+# was gone by the time it was stored. Storing the raw bullets would make every
+# trait rerollable and is worth doing; it is a manifest format change and is
+# deliberately not in this change.
+REROLLABLE_TRAITS = (
+    "Callsigns", "Build", "Height", "Skin", "Hair", "Eyes", "Feature",
+    "Demeanor", "Headgear", "Glow colour", "Glow placement",
+)
+
+# Why each of the others is refused, printed verbatim so the answer to "why
+# not hair colour" is in the error rather than in this file.
+UNREROLLABLE_REASONS = {
+    "Given names": "the NPC's folder and manifest id are derived from its name, "
+                   "so re-rolling one would not be a change in place",
+    "Family names": "the NPC's folder and manifest id are derived from its name, "
+                    "so re-rolling one would not be a change in place",
+    "Pronouns": "every per-pronoun variant table is selected by it, so the whole "
+                "NPC would have to re-roll with it",
+    "Theme": "it gates seven appearance tables, which would all have to re-roll with it",
+    "Role": "it gates Faction, Outfit and Weapon, which would all have to re-roll with it",
+    "Age": "its pairing with Build needs that bullet's 'figure' flag, and the "
+           "manifest stores Build with its flags already stripped",
+    "Hair colour": "the rolled cut has the colour substituted into it and its "
+                   "'{colour}' slot is gone, so there is nowhere to put a new one - "
+                   "re-roll Hair instead, which picks a new cut in the same colour",
+    "Faction": "its civ/mil filter needs the Role bullet's 'mil' flag, and the "
+               "manifest stores Role with its flags already stripped",
+    "Outfit": "its civ/mil filter needs the Role bullet's 'mil' flag, and the "
+              "manifest stores Role with its flags already stripped",
+    "Weapon": "its policy needs the Role bullet's 'mil' flag and the Outfit's "
+              "'notac', and the manifest stores both with their flags stripped",
+    "Gear": "its filter needs the Weapon bullet's 'hands' flag and the Outfit's "
+            "'notac', and the manifest stores both with their flags stripped",
+    "Stance": "its filter needs the Weapon and Gear 'hands'/'gun' flags, and the "
+              "manifest stores both with their flags stripped",
+    "Backdrop": "Glow placement and Weather are both filtered against it, so "
+                "re-rolling it would leave those two asserting a scene that is gone",
+    "Weather": "it is gated by the Backdrop bullet's 'weather' flag, and the "
+               "manifest stores Backdrop without its flag segment",
+}
+
+
+def hair_colour_tail(tables, subject, base):
+    """The trailing clause belonging to a stored Hair colour base, or ''.
+
+    roll_npc() splits a Hair colour into base and tail, stores only the base
+    under 'Hair colour', and appends the tail to the rendered Hair phrase - so
+    a stored NPC's tail exists only inside a cut that is about to be replaced.
+    Recovering it by base is exact rather than approximate: the bases are
+    distinct shades, so at most one bullet matches.
+    """
+    for bullet in variant_table(tables, "Hair colour", subject):
+        candidate, tail, _ = split_hair_colour(bullet)
+        if candidate == base:
+            return tail
+    return ""
+
+
+def reroll_trait(tables, npc, name, rng):
+    """Re-roll one trait of an already-rolled NPC in place, and return it.
+
+    Applies the same filters roll_npc() would, for the subset of them that can
+    be rebuilt from a stored entry - see REROLLABLE_TRAITS. Mutates `npc`.
+    """
+    if name not in REROLLABLE_TRAITS:
+        reason = UNREROLLABLE_REASONS.get(
+            name, "it is not a trait this script rolls")
+        raise SystemExit(
+            "--reroll-trait %s: cannot re-roll that one on its own, because %s.\n"
+            "Re-rollable: %s" % (name, reason, ", ".join(REROLLABLE_TRAITS)))
+
+    subject = npc["Pronouns"].split("/")[0].strip().lower()
+    options = variant_table(tables, name, subject)
+
+    # Theme is stored as a trait, so its filter rebuilds exactly.
+    if name in THEMED_TABLES:
+        theme = npc.get("Theme", "-")
+        options = filter_by_theme(options, theme, name)
+        options = apply_theme_share(options, theme, name)
+
+    # 'figure' against the recorded 'young' flag - the one flag the manifest
+    # already stores separately, for this same reason.
+    if name == "Build" and npc.get("_young"):
+        grown = [x for x in options if "figure" not in split_flags(x)[1]]
+        options = grown or options
+
+    # 'scene' against the stored Backdrop, which keeps its scene segment.
+    if name == "Glow placement" and not has_light_source(
+            split_backdrop(npc["Backdrop"])[1]):
+        on_figure = [x for x in options if "scene" not in split_flags(x)[1]]
+        options = on_figure or options
+
+    value = split_flags(rng.choice(options))[0]
+
+    # A new cut takes the NPC's existing colour, and the tail that colour
+    # carries - otherwise re-rolling the hair would quietly drop a gradient.
+    if name == "Hair":
+        base = npc["Hair colour"]
+        value = value.replace("{colour}", base)
+        tail = hair_colour_tail(tables, subject, base)
+        if tail:
+            value = "%s, %s" % (value, tail)
+
+    if "{" in value:
+        try:
+            value = value.format(**npc["_pronouns"])
+        except (KeyError, IndexError, ValueError) as exc:
+            raise SystemExit(
+                "table %r, option %r: %s is not a pronoun placeholder."
+                % (name, value, exc))
+    npc[name] = value
+    return value
+
+
 def regenerate_one(args):
     """Re-render one NPC's portrait and/or token from a stored manifest entry.
 
@@ -1716,6 +1880,21 @@ def regenerate_one(args):
               "regenerating without one; re-roll instead of regenerating to pick one up."
               % args.regen_id, file=sys.stderr)
         npc["Height"] = "of average height"
+
+    # One trait re-rolled, everything else reproduced. Seeded from the entry's
+    # own seed so the same reroll of the same NPC is repeatable, unless
+    # --new-seed asks for a different draw.
+    rerolled = None
+    if args.reroll_trait:
+        if not args.tables.exists():
+            raise SystemExit("--reroll-trait needs the tables file: %s" % args.tables)
+        tables = parse_tables(args.tables)
+        check_tables(tables, args.tables, getattr(parse_tables, "repeated", ()))
+        before = npc.get(args.reroll_trait)
+        rerolled = reroll_trait(
+            tables, npc, args.reroll_trait,
+            random.Random(args.new_seed if args.new_seed is not None else entry["seed"]))
+        print("re-rolled %s: %r -> %r" % (args.reroll_trait, before, rerolled))
 
     seed = args.new_seed if args.new_seed is not None else entry["seed"]
     prompts = build_prompts(npc)
@@ -1814,6 +1993,10 @@ def regenerate_one(args):
     entry["token"] = token_file
     entry["tokenPrompt"] = token_prompt
     entry["young"] = npc["_young"]
+    # Only when a trait actually changed: a plain regen reproduces the entry
+    # and rewriting traits it did not touch would just churn the manifest.
+    if rerolled is not None:
+        entry["traits"] = {k: v for k, v in npc.items() if not k.startswith("_")}
     entry["when"] = time.strftime("%Y-%m-%d %H:%M:%S")
     manifest[folder_path] = entry
     art.save_manifest(args.regen_manifest, manifest)

@@ -293,6 +293,41 @@ trailing clause:
 A colour flagged `older` — greying, salt-and-pepper — is dropped when the Age
 roll came up `young`, mirroring the `figure`/`young` pairing exactly.
 
+## Glow placement
+
+Colour and placement roll separately, for the same reason cut and colour do:
+a new placement is one bullet rather than a rewrite of every shade.
+
+The portrait's glow sentence used to be a single fixed phrase baked into the
+template — the light fell across one side of the subject's face in every render
+the generator had ever produced. That phrasing is still in the table, as one
+weighted bullet among ten.
+
+A bullet is written as the **predicate** of `A faint {glow} glow ___.`, so it
+begins with a verb and carries its own contrast clause where it wants one. It
+must not name the colour: the template has already said it, and saying it twice
+is how a frame ends up with two glows — the same failure the `Glow colour`
+table's own comment records for naming a light-emitting phenomenon instead of a
+hue.
+
+A placement flagged `scene` puts the light out in the environment — on a wall,
+in the air, across the ground. The glow has two possible sources, and only one
+of them can do that:
+
+| Source | Example | Can light a wall? |
+| --- | --- | --- |
+| Equipped — worn or carried | a lit visor, glowing cabling, an instrument panel | no |
+| The Backdrop itself | a neon sign, a burning wreck, a lit corridor | yes |
+
+So a `scene` placement is dropped unless the rolled Backdrop is what casts the
+light. `Glow placement` is rolled immediately **after** `Backdrop` in
+`REQUIRED_TABLES` precisely so that the scene is known in time to test it —
+the same ordering dependency `Role` has on `Faction` and `Outfit`.
+
+The token prompt gets no placement at all. It renders on flat white with no
+scene to place anything against, so it keeps the unplaced wording it always
+had.
+
 ## Where the entries came from
 
 Many were reverse-engineered from authored prompts already on this machine, read
@@ -336,17 +371,31 @@ doesn't already exist rather than inventing one.
 
 ## Name the number
 
-Every `Age` bullet names a decade. Two once described only a *look* — "old
-enough that the war stories are first-hand, face heavily creased" — and the
-model, given nothing numeric to hold, ignored them: that bullet rendered a
-smooth-faced twenty-something whenever the `Hair` roll suggested one. Both now
-say a decade ("in her sixties", "in her forties but weathered well past it") and
-land. Keep new bullets numeric.
+Every `Age` bullet names a decade, and *only* a decade. Two once described a
+look instead — "old enough that the war stories are first-hand, face heavily
+creased" — and the model, given nothing numeric to hold, ignored them: that
+bullet rendered a smooth-faced twenty-something whenever the `Hair` roll
+suggested one.
 
-The under-twenty bullets name the actual number for the same reason — "sixteen
-or seventeen", "just nineteen" — rather than leaving "late teens" to carry it
-alone. They also carry the `young` flag; see
+Naming the decade fixed those two, but the look-clauses stayed on every other
+bullet as a trailing description — "the first lines already setting around the
+eyes", "face lean and weathered", "grey coming in at the temples". They are
+gone now, and the same finding is why: a clause describing skin, lines or
+weathering is the part the model was already demonstrated to ignore, so it
+bought nothing and spent tokens on a prompt that runs close to Krea 2's 512
+ceiling. Trimming them dropped the portrait's over-budget share from 0.3% to
+0.1% and its p99 from 496 to 487. A bullet is now the decade and nothing else:
+"in her mid-twenties", "in her sixties".
+
+The under-twenty bullets are the one exception, and keep their explicit number
+— "sixteen or seventeen", "just nineteen" — rather than leaving "late teens"
+to carry it alone. That is not decoration: the templates assert `a fully grown
+adult` in the highest-signal position in the prompt, and without a number to
+argue against it the model believes the assertion over the age. They also carry
+the `young` flag; see
 [Keeping figures adult and on-model](#keeping-figures-adult-and-on-model).
+
+So: name the decade, name the number under twenty, and describe nothing else.
 
 ## Period vocabulary matters
 
@@ -561,6 +610,51 @@ Sizes are unaffected: 1024×1024 and 1024×1280 are written into whichever
 workflow renders them. A file with no `EmptyLatentImage` gives up that control
 and prints a warning naming itself, so a two-workflow run says which of the two
 is the problem.
+
+## Re-rolling one trait
+
+`--reroll-trait TABLE`, alongside `--regen-manifest`/`--regen-id`, re-rolls a
+single trait of an already-generated NPC and reproduces every other one, then
+re-renders into the same folder under the same manifest id:
+
+```bash
+python generate-npc.py --regen-manifest .generated-npcs.json     --regen-id npc-Nadia-Okonkwo-1234 --reroll-trait Hair
+```
+
+Only some traits can be re-rolled alone, and the reason is worth knowing
+because it is not a matter of taste. **The manifest is a lossy record of a
+roll**: `roll_npc()` strips a bullet's flags before storing it, so an entry
+carries `a colonial administrator`, not `a colonial administrator || mil`. A
+trait whose filters need another trait's flags therefore cannot be re-rolled
+correctly from an entry — re-rolling `Outfit` without knowing whether the Role
+was `mil` produces a civilian in a service uniform.
+
+The script already met this once and solved it one flag at a time: `young` is a
+manifest key of its own precisely because the Age bullet's flag was gone by the
+time it was stored.
+
+| | |
+| --- | --- |
+| **Re-rollable** | `Callsigns`, `Build`, `Height`, `Skin`, `Hair`, `Eyes`, `Feature`, `Demeanor`, `Headgear`, `Glow colour`, `Glow placement` |
+| **Refused** | everything else, each with its own reason — see `UNREROLLABLE_REASONS` |
+
+The filters that *do* rebuild are the ones whose inputs survive storage: the
+rolled `Theme` is a stored trait, `young` is a stored key, and the stored
+`Backdrop` keeps its scene segment, which is what `Glow placement`'s `scene`
+flag is tested against.
+
+`Hair` is the fiddly one and worth describing. `roll_npc()` substitutes the
+colour into the cut and appends the colour's trailing clause to the whole
+phrase, storing only the bare base under `Hair colour` — so a new cut is
+re-filled from that base, and the tail is recovered from the table *by* that
+base. Without the recovery step, re-rolling someone's haircut would silently
+drop a gradient they had. `Hair colour` itself is refused for the mirror-image
+reason: the stored cut has the colour already substituted in and its
+`{colour}` slot is gone, so there is nowhere to put a new one. Re-roll `Hair`
+instead, which picks a new cut in the same colour.
+
+The re-roll draws from `--new-seed` (or the entry's seed), so the same re-roll
+of the same NPC is repeatable.
 
 ## Options
 

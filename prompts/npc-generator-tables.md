@@ -26,7 +26,7 @@ bullet. Anything after the weight is used verbatim in the prompt, so write
 bullets as sentence fragments that read correctly when dropped into the
 templates at the bottom of this file.
 
-`||` splits a bullet into segments. Eleven tables use it:
+`||` splits a bullet into segments. Twelve tables use it:
 
 - **Age** and **Build** bullets carry a paired flag. `|| young` on an Age entry
   is an NPC under twenty: it swaps the prompt's "a fully grown adult" opening
@@ -89,6 +89,16 @@ templates at the bottom of this file.
   insignia, patina — since the two used to compete for the same slot and the
   more specific Outfit clause always won; a visual segment left empty writes
   the middle segment blank, the same idiom Hair colour uses above.
+- **Glow placement** bullets may end `|| scene`, marking a placement that
+  puts the light out in the environment - on a wall, in the air, across the
+  ground. The glow has two possible sources: something the NPC wears or
+  carries, or the Backdrop itself. Only the second can light a wall behind
+  them, so a `scene` placement is dropped unless the rolled Backdrop is what
+  casts the light (`has_light_source()` again, the same test that decides
+  whether there is a glow sentence at all). An unflagged bullet keeps the
+  light on or immediately around the figure and is reachable either way -
+  most should stay that way, since the equipped source is the common one.
+  The table is rolled *after* Backdrop for exactly this reason.
 - **Weather** bullets may end `|| clear`, meaning the bullet contributes nothing
   to the prompt. Weather only reaches a portrait whose Backdrop is flagged
   `weather`, and never reaches the token at all.
@@ -883,19 +893,27 @@ ignored — so notes like this one are safe to leave inline.
   Weights keep the roster mostly adult: these are soldiers, technicians and
   officers, so a late-teen NPC should read as the youngest person in the room
   rather than the median.
+
+  A bullet names a decade and nothing else. The trailing look-clauses these
+  used to carry - "the first lines already setting around the eyes", "face
+  lean and weathered" - are the part the model was already shown to ignore
+  when a bullet gave it nothing numeric to hold, so they bought no render and
+  spent tokens against Krea 2's 512 ceiling. The two under-twenty bullets are
+  the exception and keep their explicit number, because the templates assert
+  "a fully grown adult" in the highest-signal position and the model believes
+  that over a bare "late teens". See "Name the number" in docs/generate-npc.md.
 -->
 
-- in {possessive} late teens, sixteen or seventeen, face still soft and unlined || young
-- x2 just nineteen, newly in uniform and still growing into it || young
-- x2 in {possessive} early twenties, jaw and cheekbones fully adult
-- x2 twenty-one or twenty-two, fully grown for a couple of years now, the face still unlined and unweathered
-- x3 in {possessive} mid-twenties, fully grown but not yet weathered
-- x2 in {possessive} late twenties, jaw and cheekbones fully adult
-- x3 in {possessive} early thirties, the first lines already setting around the eyes
-- x2 in {possessive} mid-thirties, face lean and weathered
-- in {possessive} forties, grey coming in at the temples
-- in {possessive} fifties, weathered but unslowed, deeply lined
-- in {possessive} sixties, face deeply creased, old enough that the war stories are first-hand
+- in {possessive} late teens, sixteen or seventeen || young
+- x2 just nineteen || young
+- x4 twenty-one or twenty-two
+- x3 in {possessive} mid-twenties
+- x2 in {possessive} late twenties
+- x3 in {possessive} early thirties
+- x2 in {possessive} mid-thirties
+- in {possessive} forties
+- in {possessive} fifties
+- in {possessive} sixties
 
 ## Build
 
@@ -1148,12 +1166,23 @@ ignored — so notes like this one are safe to leave inline.
 - pale lavender
 - pale mint-green
 - pale seafoam-green
-- dusty pink
 - magenta-tinted black
 - two-tone || dark over a bleached pale underlayer
 - pale silver-white || fading to green at the tips
 - fiery orange-red || fading to dark roots
 - dirty-blonde || fading pale at the tips
+
+## Hair colour (she) +
+
+<!--
+  Added to the shared colours above rather than replacing them - a woman rolls
+  every neutral shade as well as these.
+
+  Three segments, exactly as the base table: colour || trailing clause || flags.
+  See the Hair colour item near the top of this file.
+-->
+
+- dusty pink
 
 ## Eyes
 
@@ -1771,6 +1800,43 @@ ignored — so notes like this one are safe to leave inline.
 - vivid cobalt blue
 - magenta-pink
 - bright cyan
+
+## Glow placement
+
+<!--
+  WHERE the rolled Glow colour falls in the portrait. The colour and its
+  placement are separate rolls for the same reason Hair colour split away from
+  Hair: a new placement is one bullet here rather than a rewrite of every
+  shade.
+
+  Portrait only. The token renders on flat white with no scene at all, so it
+  keeps the single unplaced "a single {glow} glow" wording it always had.
+
+  Each bullet is the PREDICATE of "A faint {glow} glow ___." - it starts with a
+  verb and carries its own contrast clause where it wants one. Do not name the
+  colour; the template has already said it, and saying it twice is how the
+  frame ends up with two glows.
+
+  '|| scene' marks a placement that puts the light out in the environment -
+  on a wall, in the air, across the ground. Those are only reachable when the
+  BACKDROP is what casts the light, since the alternative source is something
+  the NPC wears or carries (a lit visor, glowing cabling, an instrument panel)
+  and that cannot light a wall behind them. An unflagged bullet keeps the light
+  on or immediately around the figure and is reachable either way - most
+  should stay that way, since the equipped case is the common one. See
+  has_light_source() in generate-npc.py.
+-->
+
+- x2 falls across one side of {possessive} face against warm dim ambient light on the other
+- rakes across {possessive} chest and shoulder, the face left in warmer shadow
+- catches {possessive} jaw and one shoulder from below
+- rims {possessive} shoulders and hair from behind, the face lit only by what spills around it
+- falls across {possessive} back and one shoulder, the front of the figure in warm shadow
+- cuts across the frame at an angle, catching {possessive} profile and one hand
+- washes across the scene behind {object}, throwing {possessive} outline into near-silhouette || scene
+- pools on the ground around {object} and throws colour up onto {possessive} hands || scene
+- stripes the wall behind {object} and catches one side of {possessive} face || scene
+- hangs in the air as a haze across the whole depth of the shot || scene
 
 ## Backdrop
 

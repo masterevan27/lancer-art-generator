@@ -99,5 +99,46 @@ class TestTheLiveHairBulletsKeepTheirSlot(unittest.TestCase):
                 "roll colourless hair and nothing would raise: %r" % bullet)
 
 
+class TestLiveGenderedHairColours(unittest.TestCase):
+    """Colours that only read on one gender live in that gender's variant.
+
+    The file's standing rule - "when a bullet only makes sense on one gender,
+    move it into that gender's variant rather than leaving it in the shared
+    pool" - applied to Hair colour, which had no variant table at all until
+    'dusty pink' needed one. variant_table() is generic, so authoring the
+    heading is the whole change; these tests are what stops the bullet
+    drifting back into the shared pool in a later edit, which would fail
+    silently in the render rather than loudly here.
+    """
+
+    def _colours_for(self, subject):
+        return {gen.split_hair_colour(bullet)[0]
+                for bullet in gen.variant_table(LIVE, "Hair colour", subject)}
+
+    def test_dusty_pink_reaches_a_woman(self):
+        self.assertIn("dusty pink", self._colours_for("she"))
+
+    def test_dusty_pink_never_reaches_a_man(self):
+        self.assertNotIn("dusty pink", self._colours_for("he"))
+
+    def test_no_gendered_colour_is_also_left_in_the_shared_pool(self):
+        """A variant bullet duplicated in the base table would defeat the move.
+
+        variant_table() *appends* a '+' variant to the base pool, so a colour
+        left in both is still reachable by every pronoun set - the move would
+        read as done in the file and do nothing in the roll.
+        """
+        base = {gen.split_hair_colour(b)[0] for b in LIVE["Hair colour"]}
+        variants = [k for k in LIVE if k.startswith("Hair colour (")]
+        self.assertTrue(variants, "no gendered Hair colour variant authored")
+        for key in variants:
+            for bullet in LIVE[key]:
+                colour = gen.split_hair_colour(bullet)[0]
+                self.assertNotIn(
+                    colour, base,
+                    "%r sits in both '## %s' and the shared '## Hair colour' "
+                    "pool, so moving it gendered nothing" % (colour, key))
+
+
 if __name__ == "__main__":
     unittest.main()
