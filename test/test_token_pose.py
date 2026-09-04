@@ -56,8 +56,14 @@ class TestTokenTemplatePose(unittest.TestCase):
                       gen.TOKEN_TEMPLATE)
 
     def test_the_shot_distance_leads_the_closing_tags(self):
-        """Ahead of "centered composition", not buried after the style words."""
-        tags = gen.TOKEN_TEMPLATE[gen.TOKEN_TEMPLATE.index("no environment."):]
+        """Ahead of "centered composition", not buried after the style words.
+
+        Anchored on the end of the background sentence, which is what the tag
+        block opens after. That sentence used to end "no environment." and now
+        ends "plain white void." - the negations it was built from are gone,
+        for the reason TOKEN_TEMPLATE's comment gives. Only the anchor moved.
+        """
+        tags = gen.TOKEN_TEMPLATE[gen.TOKEN_TEMPLATE.index("plain white void."):]
         self.assertLess(tags.index("Full-length wide shot"),
                         tags.index("centered composition"))
 
