@@ -150,6 +150,16 @@ def main():
             # opposite of containment. Loud, and recorded, and no file.
             print("! rigging failed: %s" % rig_error, file=sys.stderr)
 
+    # bpy.ops.render.render() renders the WHOLE SCENE, not just the object
+    # npc_render.turnaround() frames the camera on - the base body is still
+    # sitting inside the shell at this point and would render right along
+    # with it, visible through every gap the shell's own geometry leaves
+    # (measured on a real reconstruction: the bare leg showing through the
+    # shell's crotch gap changed 2.33% of angle 000's pixels and 2.45% of
+    # angle 180's). It must stay visible, not be removed or hidden earlier,
+    # because --bind transfer above needs it present as the weight source.
+    body.hide_render = True
+
     if not args.no_render:
         files += npc_render.turnaround(
             shell, args.outdir, args.stem, size=args.turnaround_size,

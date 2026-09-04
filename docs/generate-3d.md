@@ -95,7 +95,15 @@ the two workflow files and the A-pose stance text - so the dossier keeps
 recording everything needed to reproduce its own output. Re-running replaces
 that section rather than stacking a second one.
 
-Roughly 20-40 MB per NPC. No ignore rules are needed: NPC folders live under
+Measured on a real reconstruction (Lucia Vos): 63.8 MB of deliverables per
+NPC — `Shell.glb` 33.4 MB, `Print.stl` 29.2 MB, the four 768px turnaround
+PNGs 1.2 MB combined — plus 22.7 MB of intermediates (`apose.png`,
+`_shell.glb`, `_base.glb`) that this tool does **not** clean up, for
+**86.5 MB per NPC**, or **139.4 MB with `--rig`** (the rigged GLB adds
+another ~53 MB). Across a 160-NPC batch that is roughly **13.8 GB**, or
+**22.3 GB with `--rig`** — plan storage against these figures, not the
+spec's original 20-40 MB estimate, which measured only the deliverables and
+undercounted them besides. No ignore rules are needed: NPC folders live under
 `output/`, which is already ignored, or under ComfyUI's own output directory
 outside the repo, and `3d/` inherits both.
 
@@ -145,6 +153,22 @@ rig that looks complete by every check this stage runs and only reveals its
 damage once someone poses it; `auto` does not ship a rig at all. That is why
 `--rig` is opt-in rather than on-by-default: a print mini, a clean shell and
 four turnarounds are unaffected by any of this and should not wait on it.
+
+This is a verdict on *this configuration* of proximity-based weight
+transfer, not on the technique itself. The base→shell nearest-surface
+correspondence measured on the real pair is a median gap of 0.090 m, a p90
+of 0.159 m and a max of 0.244 m on a 1.571 m figure — the jacket sits 9 to
+16 cm proud of the body it is draped over. `npc_rig.py`'s
+`transfer_weights()` uses `vert_mapping='POLYINTERP_NEAREST'`, which maps
+each shell vertex onto the nearest *face*, not the nearest *bone region*;
+across a 9-16 cm gap near the armpit, a sleeve vertex's nearest base face is
+routinely on the torso rather than the upper arm, which is the textbook
+cause of exactly the shoulder tearing measured above. Untried knobs worth a
+look before writing this approach off entirely: a normal-projected or
+ray-projected vertex mapping (which would follow the surface outward from
+the body rather than by raw Euclidean distance), or transferring onto a
+shrink-wrapped proxy mesh pulled in against the body first so the gap that
+is confusing `POLYINTERP_NEAREST` is mostly gone before the transfer runs.
 
 Spec §7.1 named a deeper fallback for exactly this outcome: retargeting an
 existing armature to the shell — deforming a rig that is already known-good

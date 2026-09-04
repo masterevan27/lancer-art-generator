@@ -159,7 +159,18 @@ def should_skip(folder, args):
     An EMPTY 3d/ folder does not count: it is what a crashed run leaves
     behind, and skipping on it would make every such NPC permanently
     unbuildable without --overwrite.
+
+    Only applies when --stage is the full default set of all three stages.
+    The docstring above and docs/generate-3d.md both advertise running
+    `--stage apose`, inspecting the result, then `--stage mesh` as the normal
+    way to iterate - and that sequence is exactly what this skip used to
+    break: the second command would see apose.png already on disk and skip
+    the NPC entirely. A narrowed --stage means the caller is deliberately
+    iterating on one stage, and skipping on leftover output from a previous
+    stage would defeat the reason they narrowed it in the first place.
     """
+    if set(args.stage) != set(STAGES):
+        return False
     return folder.exists() and any(folder.iterdir()) and not args.overwrite
 
 
@@ -622,6 +633,31 @@ def parse_args(argv=None):
     return args
 
 
+def preflight(args):
+    """A SystemExit naming what is missing, for whatever the selected stages need.
+
+    find_blender(), ASSEMBLE_SCRIPT.exists() and the workflow-file checks
+    already live inside stage_assemble()/stage_mesh()/stage_apose() and are
+    left there as defence in depth - but those run inside main()'s per-NPC
+    try/except, which per-NPC isolation (spec §8) requires to catch
+    SystemExit. The result: a mistyped --blender or a missing workflow file
+    does not fail once, it fails once PER NPC, each failure only surfacing
+    after that NPC has already burned a full A-pose render and two 3D
+    reconstructions. Checking here, before the loop even starts, turns that
+    into one fast, clear failure instead of N slow, identical ones.
+    """
+    if "apose" in args.stage and not args.rmbg.exists():
+        raise SystemExit("Background-removal workflow not found: %s" % args.rmbg)
+    if "mesh" in args.stage:
+        for workflow in (MESH_WORKFLOW, RIG_WORKFLOW):
+            if not workflow.exists():
+                raise SystemExit("Workflow not found: %s" % workflow)
+    if "assemble" in args.stage:
+        find_blender(args.blender)
+        if not ASSEMBLE_SCRIPT.exists():
+            raise SystemExit("assembly script not found: %s" % ASSEMBLE_SCRIPT)
+
+
 def main(argv=None):
     args = parse_args(argv)
 
@@ -641,6 +677,8 @@ def main(argv=None):
             print("  stages: %s" % ", ".join(args.stage))
             print("  A-pose token prompt:\n%s" % apose_prompt(entry))
         return 0
+
+    preflight(args)
 
     comfy = art.find_server(args.server)
     print("ComfyUI: %s" % comfy.base)
@@ -716,8 +754,14 @@ def main(argv=None):
             continue
         done += 1
 
-    print("\ndone: %d built (%d without a rig), %d skipped, %d failed, %.1f min"
-          % (done, warned, skipped, failed, (time.time() - started) / 60))
+    # The "(N without a rig)" parenthetical only means anything when rigging
+    # was actually attempted. warned counts rig attempts that failed, and
+    # --rig defaults off - so on a normal, unrigged run warned is always 0,
+    # and "0 without a rig" reads as "all of them got rigged" when in fact
+    # none did. Print it only when --rig was passed.
+    rig_note = " (%d without a rig)" % warned if args.rig else ""
+    print("\ndone: %d built%s, %d skipped, %d failed, %.1f min"
+          % (done, rig_note, skipped, failed, (time.time() - started) / 60))
     return 1 if failed else 0
 
 

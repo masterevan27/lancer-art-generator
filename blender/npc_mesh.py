@@ -28,6 +28,15 @@ def import_glb(path, guess_bind_pose=True):
     pose_position='REST' could no longer discard it.
     """
     before = set(bpy.data.objects)
+    # disable_bone_shape=True is LOAD-BEARING, not defensive hygiene - an
+    # earlier note claiming this was byte-identical to remove was tested only
+    # against a fixture with no custom bone shapes and does not hold on real
+    # input. Without it, the importer's hidden per-armature bone-shape
+    # Icosphere gets swept into base_body by join() and height_of() measures
+    # ITS 2.0 m instead of the real body's 1.571 m, mis-scaling the shell -
+    # measured on a real reconstruction, this took shell_height_m from 1.571
+    # to 2.0 and made weight transfer fail totally (292,296 of 292,296 shell
+    # vertices unweighted). Do not remove this flag.
     bpy.ops.import_scene.gltf(filepath=str(path), guess_original_bind_pose=guess_bind_pose,
                               disable_bone_shape=True)
     added = [o for o in bpy.data.objects if o not in before]

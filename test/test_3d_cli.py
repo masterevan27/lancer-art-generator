@@ -118,6 +118,31 @@ class TestSkipping(unittest.TestCase):
             folder.mkdir()
             self.assertFalse(d3.should_skip(folder, d3.parse_args([])))
 
+    def test_a_narrowed_stage_is_never_skipped(self):
+        """--stage apose, then --stage mesh, is the documented iteration flow.
+
+        should_skip() must not defeat it: the second command sees apose.png
+        already on disk from the first, and would skip the NPC outright if
+        the skip applied to a narrowed --stage the same way it applies to a
+        full default run.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp) / "3d"
+            folder.mkdir()
+            (folder / "apose.png").write_bytes(b"")
+            self.assertFalse(
+                d3.should_skip(folder, d3.parse_args(["--stage", "mesh"])))
+
+    def test_all_three_stages_explicitly_still_skip(self):
+        """Naming all three stages by hand is the same as the default."""
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp) / "3d"
+            folder.mkdir()
+            (folder / "apose.png").write_bytes(b"")
+            args = d3.parse_args(
+                ["--stage", "apose", "--stage", "mesh", "--stage", "assemble"])
+            self.assertTrue(d3.should_skip(folder, args))
+
 
 class TestDossierSection(unittest.TestCase):
     FILES = ["Jules Sokolova Rigged.glb", "Jules Sokolova Print.stl"]
@@ -210,7 +235,13 @@ class TestBatchIsolation(unittest.TestCase):
             path.write_text(json.dumps(manifest), encoding="utf-8")
 
             with mock.patch.object(d3.art, "find_server", return_value=fake_comfy), \
-                 mock.patch.object(d3, "stage_apose", side_effect=fake_stage_apose):
+                 mock.patch.object(d3, "stage_apose", side_effect=fake_stage_apose), \
+                 mock.patch.object(d3, "find_blender", return_value=Path("blender.exe")):
+                # find_blender is mocked so this test's hermeticity does not
+                # depend on Blender being installed on whatever machine runs
+                # it - preflight() (generate-3d.py) checks it before the loop
+                # starts, and this test is about per-NPC isolation of
+                # stage_apose's own failure, not about preflight.
                 buffer = io.StringIO()
                 try:
                     with redirect_stdout(buffer):
@@ -223,6 +254,106 @@ class TestBatchIsolation(unittest.TestCase):
                          "both NPCs must be attempted, not just the first")
         self.assertIn("2 failed", buffer.getvalue())
         self.assertEqual(code, 1)
+
+
+class TestPreflight(unittest.TestCase):
+    """Regression test for a Final review finding: find_blender() and the
+    workflow-file checks used to live only inside stage_assemble()/
+    stage_mesh()/stage_apose(), which run inside main()'s per-NPC try/except
+    - so a mistyped --blender failed once per NPC, each failure only
+    surfacing after that NPC had already burned a full A-pose render and two
+    3D reconstructions. preflight() must catch a missing precondition once,
+    before any NPC is attempted at all.
+    """
+
+    def test_a_missing_precondition_fails_before_any_npc_is_attempted(self):
+        a = manifest_entry(51)
+        b = manifest_entry(52)
+        attempted = []
+
+        def fake_stage_apose(comfy, args, entry, folder):
+            attempted.append(entry["name"])
+            return Path(str(folder)) / "apose.png"
+
+        fake_comfy = mock.Mock()
+        fake_comfy.base = "http://fake"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = {str(Path(tmp) / a["name"]): a, str(Path(tmp) / b["name"]): b}
+            path = Path(tmp) / "manifest.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            with mock.patch.object(d3.art, "find_server", return_value=fake_comfy), \
+                 mock.patch.object(d3, "stage_apose", side_effect=fake_stage_apose), \
+                 mock.patch.object(d3, "find_blender",
+                                   side_effect=SystemExit("Blender not found: nope.exe")):
+                with self.assertRaises(SystemExit):
+                    d3.main(["--manifest", str(path)])
+
+        self.assertEqual(attempted, [],
+                         "no NPC should be attempted once a global "
+                         "precondition has already failed")
+
+    def test_a_narrowed_apose_only_run_does_not_check_blender(self):
+        """--stage apose does not reach assemble, so it must not require it."""
+        with mock.patch.object(
+                d3, "find_blender",
+                side_effect=AssertionError(
+                    "find_blender must not run for a --stage apose-only preflight")):
+            d3.preflight(d3.parse_args(["--stage", "apose"]))
+
+    def test_a_missing_rmbg_workflow_is_caught_for_the_apose_stage(self):
+        args = d3.parse_args(["--stage", "apose", "--rmbg", "no/such/file.json"])
+        with self.assertRaises(SystemExit):
+            d3.preflight(args)
+
+    def test_a_missing_mesh_workflow_is_caught_for_the_mesh_stage(self):
+        args = d3.parse_args(["--stage", "mesh"])
+        with mock.patch.object(d3, "MESH_WORKFLOW", Path("no/such/mesh.json")):
+            with self.assertRaises(SystemExit):
+                d3.preflight(args)
+
+
+class TestRunSummary(unittest.TestCase):
+    """Regression test for a Final review finding: warned counts FAILED rig
+    attempts, and --rig defaults off - so on an ordinary, unrigged run
+    warned is always 0, and printing "(0 without a rig)" unconditionally
+    reads as "every NPC got rigged" when in fact rigging was never
+    attempted. The parenthetical must appear only when --rig was passed.
+    """
+
+    def run_main(self, extra_args, report):
+        a = manifest_entry(61)
+        fake_comfy = mock.Mock()
+        fake_comfy.base = "http://fake"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = {str(Path(tmp) / a["name"]): a}
+            path = Path(tmp) / "manifest.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            with mock.patch.object(d3.art, "find_server", return_value=fake_comfy), \
+                 mock.patch.object(d3, "find_blender", return_value=Path("blender.exe")), \
+                 mock.patch.object(d3, "stage_apose",
+                                   return_value=Path(tmp) / "apose.png"), \
+                 mock.patch.object(d3, "stage_mesh",
+                                   return_value=(Path(tmp) / "_shell.glb",
+                                                 Path(tmp) / "_base.glb")), \
+                 mock.patch.object(d3, "stage_assemble", return_value=report):
+                buffer = io.StringIO()
+                with redirect_stdout(buffer):
+                    d3.main(["--manifest", str(path)] + extra_args)
+        return buffer.getvalue()
+
+    def test_the_rig_note_is_omitted_without_rig(self):
+        output = self.run_main([], {"files": ["Shell.glb"]})
+        self.assertNotIn("without a rig", output)
+        self.assertIn("done: 1 built,", output)
+
+    def test_the_rig_note_appears_with_rig(self):
+        output = self.run_main(
+            ["--rig"], {"files": ["Shell.glb"], "rig_error": "boom"})
+        self.assertIn("(1 without a rig)", output)
 
 
 class TestMultipart(unittest.TestCase):
