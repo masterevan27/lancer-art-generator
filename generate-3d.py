@@ -42,7 +42,8 @@ def _load_npc_generator():
     """
     path = SCRIPT_DIR / "generate-npc.py"
     if not path.exists():
-        raise SystemExit("generate-npc.py not found next to this script (%s)" % SCRIPT_DIR)
+        raise SystemExit(
+            "generate-npc.py not found next to this script (%s)" % SCRIPT_DIR)
     name = "lancer_generate_npc"
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
@@ -305,7 +306,8 @@ def select_entries(manifest, args):
         # indistinguishable from a run that had nothing to do.
         missing = sorted(wanted - found)
         if missing:
-            raise SystemExit("no manifest entry with id %s" % ", ".join(missing))
+            raise SystemExit("no manifest entry with id %s" %
+                             ", ".join(missing))
 
     def text(folder_path, entry):
         """What --filter and --exclude match against.
@@ -455,7 +457,8 @@ def _png_read(path):
                 elif filter_type == 4:
                     line[i] = (line[i] + paeth(a, b, c)) & 255
                 else:
-                    raise ValueError("%s uses PNG filter %d" % (path, filter_type))
+                    raise ValueError("%s uses PNG filter %d" %
+                                     (path, filter_type))
         rows.append(line)
         previous = line
     return width, height, rows
@@ -606,7 +609,8 @@ def render_apose(comfy, args, entry):
     job = art.build_job(template, slots,
                         npc_gen.entry_for(category, slug, "apose", prompt),
                         entry["seed"], knobs)
-    images = art.Comfy.images(comfy.wait(comfy.queue(job), timeout=args.timeout))
+    images = art.Comfy.images(comfy.wait(
+        comfy.queue(job), timeout=args.timeout))
     if not images:
         raise RuntimeError("the A-pose render produced no image")
     time.sleep(args.pause)
@@ -626,7 +630,8 @@ def cut_out(comfy, args, subject, source, folder):
     knobs = npc_gen.Knobs(args, npc_gen.TOKEN_SIZE, npc_gen.COMFY_PREFIX)
 
     if not args.rmbg.exists():
-        raise SystemExit("Background-removal workflow not found: %s" % args.rmbg)
+        raise SystemExit(
+            "Background-removal workflow not found: %s" % args.rmbg)
     post = art.load_api_workflow(args.rmbg)
     try:
         post_slots = art.locate_post_slots(post)
@@ -637,8 +642,10 @@ def cut_out(comfy, args, subject, source, folder):
         else art.image_ref(source)
     prefix = "%s/%s/%s/apose_rmbg" % (npc_gen.COMFY_PREFIX,
                                       subject.category, subject.slug)
-    cut_job = art.build_post_job(post, post_slots, ref, prefix, subject.seed, knobs)
-    cut = art.Comfy.images(comfy.wait(comfy.queue(cut_job), timeout=args.timeout))
+    cut_job = art.build_post_job(
+        post, post_slots, ref, prefix, subject.seed, knobs)
+    cut = art.Comfy.images(comfy.wait(
+        comfy.queue(cut_job), timeout=args.timeout))
     if not cut:
         raise RuntimeError("background removal produced no image")
     time.sleep(args.pause)
@@ -805,7 +812,8 @@ def stage_mesh(comfy, args, subject, folder, apose_png):
     # shell comes out wrong.
     square_png = folder / "apose_square.png"
     side = square_apose(apose_png, square_png)
-    print("    squared -> %s (%dx%d)" % (square_png.name, side, side), flush=True)
+    print("    squared -> %s (%dx%d)" %
+          (square_png.name, side, side), flush=True)
     ref = upload_image(comfy, square_png)
 
     written = []
@@ -857,7 +865,8 @@ def parse_report(stdout):
     try:
         return json.loads(lines[-1][len(REPORT_PREFIX):])
     except ValueError as exc:
-        raise RuntimeError("the Blender assembly's report was not JSON: %s" % exc)
+        raise RuntimeError(
+            "the Blender assembly's report was not JSON: %s" % exc)
 
 
 def assemble_command(blender, args, folder, stem, base, shell, height=None):
@@ -924,8 +933,10 @@ def stage_assemble(args, folder, stem, base, shell, height=None):
     if not ASSEMBLE_SCRIPT.exists():
         raise SystemExit("assembly script not found: %s" % ASSEMBLE_SCRIPT)
 
-    command = assemble_command(blender, args, folder, stem, base, shell, height)
-    proc = subprocess.run(command, capture_output=True, text=True, timeout=args.timeout)
+    command = assemble_command(
+        blender, args, folder, stem, base, shell, height)
+    proc = subprocess.run(command, capture_output=True,
+                          text=True, timeout=args.timeout)
     if proc.returncode != 0:
         raise RuntimeError("Blender assembly failed (%d):\n%s"
                            % (proc.returncode, proc.stderr[-2000:]))
@@ -937,9 +948,11 @@ def stage_assemble(args, folder, stem, base, shell, height=None):
               % (report["shell_height_m"], report.get("estimated_height_m", 0),
                  report.get("print_height_mm", 0)))
     if report.get("rig_error"):
-        print("    ! rigging failed: %s" % report["rig_error"], file=sys.stderr)
+        print("    ! rigging failed: %s" %
+              report["rig_error"], file=sys.stderr)
     elif report.get("rigged"):
-        print("      rigged: %d bones, every vertex weighted" % report["bones"])
+        print("      rigged: %d bones, every vertex weighted" %
+              report["bones"])
     return report
 
 
@@ -965,7 +978,8 @@ def parse_args(argv=None):
                            "matches - the path carries the role category")
     pick.add_argument("--exclude", metavar="REGEX",
                       help="skip NPCs matching the same three")
-    pick.add_argument("--limit", type=int, metavar="N", help="stop after N NPCs")
+    pick.add_argument("--limit", type=int, metavar="N",
+                      help="stop after N NPCs")
     pick.add_argument("--overwrite", action="store_true",
                       help="rebuild an NPC that already has a 3d/ folder")
 
@@ -1052,7 +1066,8 @@ def parse_args(argv=None):
         # --image supplies what stage apose exists to produce, so the default
         # set drops it. Named stages are left exactly as given: `--image X
         # --stage mesh` is a caller deliberately stopping before assembly.
-        args.stage = [s for s in STAGES if s != "apose"] if args.image else list(STAGES)
+        args.stage = [s for s in STAGES if s !=
+                      "apose"] if args.image else list(STAGES)
     elif args.image and "apose" in args.stage:
         p.error("--image supplies the A-pose and --stage apose renders one - "
                 "pass only one of them")
@@ -1088,7 +1103,8 @@ def parse_args(argv=None):
 
     # resolve_recorded_workflow() and workflow_for() read this off the args
     # object, so the same shape generate-npc.py builds has to be here too.
-    args.gender_workflows = dict(npc_gen.GENDER_WORKFLOWS, woman=args.workflow_woman)
+    args.gender_workflows = dict(
+        npc_gen.GENDER_WORKFLOWS, woman=args.workflow_woman)
     return args
 
 
@@ -1106,7 +1122,8 @@ def preflight(args):
     into one fast, clear failure instead of N slow, identical ones.
     """
     if ("apose" in args.stage or args.remove_bg) and not args.rmbg.exists():
-        raise SystemExit("Background-removal workflow not found: %s" % args.rmbg)
+        raise SystemExit(
+            "Background-removal workflow not found: %s" % args.rmbg)
     if "mesh" in args.stage:
         for workflow in (MESH_WORKFLOW, RIG_WORKFLOW):
             if not workflow.exists():
@@ -1161,7 +1178,8 @@ def main(argv=None):
     started = time.time()
     queued_any = False
     for folder, folder_path, entry in jobs:
-        subject = subject_of(entry, args) if entry else standalone_subject(args)
+        subject = subject_of(
+            entry, args) if entry else standalone_subject(args)
         if should_skip(folder, args):
             print("skip %s (3d/ exists; --overwrite to rebuild)" % subject.name)
             skipped += 1
