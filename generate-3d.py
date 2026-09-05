@@ -1238,6 +1238,12 @@ def texture_command(blender, args, folder, stem, shell, step,
                     "--size", str(args.texture_size)]
         if back is not None:
             command += ["--back", str(back)]
+        # Only when it is actually there: --rig writes no Rigged.glb when the
+        # bind left vertices unweighted, and naming a missing file would fail
+        # the texture stage over a rig that already failed on its own.
+        rigged = folder / ("%s Rigged.glb" % stem)
+        if args.rig and rigged.exists():
+            command += ["--rigged", str(rigged)]
     return command
 
 
@@ -1329,6 +1335,9 @@ def stage_texture(comfy, args, subject, folder, stem, entry=None,
     texture = folder / ("%s Texture.png" % stem)
     os.replace(folder / report["texture"], texture)
     os.replace(folder / report["shell"], shell)
+    if report.get("rigged"):
+        rigged = folder / ("%s Rigged.glb" % stem)
+        os.replace(folder / report["rigged"], rigged)
 
     report["files"] = [texture.name]
     report["back_stance"] = back_stance

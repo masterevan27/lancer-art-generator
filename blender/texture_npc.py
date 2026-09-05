@@ -56,6 +56,10 @@ def parse_argv(argv):
     p.add_argument("--back", type=Path, default=None,
                    help="the painted back view (step bake). Without it the "
                         "front is projected alone - spec §3.2's fallback")
+    p.add_argument("--rigged", type=Path, default=None,
+                   help="also re-export this rigged GLB with the baked "
+                        "texture (step bake). It is assembled BEFORE this "
+                        "stage runs, so without this it would ship grey")
     p.add_argument("--size", type=int, default=2048,
                    help="atlas size in pixels (default: %(default)s)")
     p.add_argument("--samples", type=int, default=1,
@@ -138,10 +142,58 @@ def step_bake(args):
     shell_name = "_%s Shell.glb" % args.stem
     npc_mesh.export_glb([shell], args.outdir / shell_name)
 
+    rigged_name = None
+    if args.rigged is not None and args.rigged.exists():
+        # A second import into the same scene, not a re-use of `shell`: the
+        # rigged export is a DIFFERENT object - it carries vertex groups and
+        # an armature modifier the plain shell does not - and re-deriving it
+        # from this one would mean redoing the bind that assemble already did.
+        # Its UVs and its material are what change, and finish_material() is
+        # exactly that change.
+        objects = npc_mesh.import_glb(args.rigged)
+        armature = npc_mesh.armature_of(objects)
+        meshes = npc_mesh.meshes_of(objects)
+        if armature is None or not meshes:
+            raise SystemExit(
+                "%s has no armature or no mesh - not a Rigged.glb"
+                % args.rigged.name)
+        rigged = npc_mesh.join(meshes, "rigged_shell")
+        # Weld exactly as load_shell() welds the plain shell import, and for
+        # the same reason: glTF stores attributes per face CORNER, so a round
+        # trip through export/import splits every triangle into its own three
+        # vertices. Without re-welding here, a real rigged export and its
+        # matching shell come back with DIFFERENT loop counts even though they
+        # started as the same mesh (measured on a real NPC: 511,839 loops
+        # unwelded against the shell's 511,791 welded) - which would trip the
+        # loop guard below on every real run, not just a genuine mismatch.
+        npc_mesh.weld(rigged, distance=0.0005)
+        # The bind is per vertex, and the rigged mesh is the same vertices in
+        # the same order as the shell it was bound from, so the atlas UVs
+        # transfer loop for loop. Asserted rather than assumed: a mismatch
+        # would silently texture the figure with someone else's unwrap.
+        if len(rigged.data.loops) != len(shell.data.loops):
+            raise SystemExit(
+                "%s has %d loops and the shell has %d - they are not the same "
+                "mesh, so the atlas cannot be transferred"
+                % (args.rigged.name, len(rigged.data.loops),
+                   len(shell.data.loops)))
+        atlas = (rigged.data.uv_layers.get("atlas")
+                 or rigged.data.uv_layers.new(name="atlas"))
+        source = shell.data.uv_layers["atlas"].data
+        for index, loop in enumerate(atlas.data):
+            loop.uv = source[index].uv
+        npc_texture.finish_material(rigged, image)
+        rigged_name = "_%s Rigged.glb" % args.stem
+        npc_mesh.export_glb([armature, rigged], args.outdir / rigged_name)
+
+    files = [texture_name, shell_name]
+    if rigged_name:
+        files.append(rigged_name)
     return {
-        "files": [texture_name, shell_name],
+        "files": files,
         "texture": texture_name,
         "shell": shell_name,
+        "rigged": rigged_name,
         "size": args.size,
         "islands": islands,
         "views": views,

@@ -1330,6 +1330,32 @@ class TestTextureCommand(unittest.TestCase):
             self.shell, "back")
         self.assertIn("Jules Sokolova", command)
 
+    def test_a_rigged_glb_is_passed_when_rig_is_on_and_it_exists(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        folder = Path(tmp.name)
+        (folder / "Name Rigged.glb").write_bytes(b"rigged")
+        command = d3.texture_command(
+            Path("blender.exe"), d3.parse_args(["--rig"]), folder, "Name",
+            folder / "Name Shell.glb", "bake", front=folder / "sq.png")
+        self.assertEqual(command[command.index("--rigged") + 1],
+                         str(folder / "Name Rigged.glb"))
+
+    def test_no_rigged_glb_without_rig(self):
+        self.assertNotIn("--rigged", self.build("bake", front=Path("/3d/sq.png")))
+
+    def test_no_rigged_glb_when_rig_was_asked_for_but_the_bind_failed(self):
+        """--rig writes no Rigged.glb when the bind left vertices unweighted.
+        Passing a path to a file that is not there would fail the whole
+        texture stage over a rig that already failed on its own."""
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        folder = Path(tmp.name)
+        command = d3.texture_command(
+            Path("blender.exe"), d3.parse_args(["--rig"]), folder, "Name",
+            folder / "Name Shell.glb", "bake", front=folder / "sq.png")
+        self.assertNotIn("--rigged", command)
+
 
 class TestTextureDossier(unittest.TestCase):
     def test_the_texture_file_is_listed(self):

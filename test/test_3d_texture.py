@@ -327,5 +327,90 @@ class TestTwoViewBake(unittest.TestCase):
         self.assertGreater(min(red, blue), len(texels) * 0.2)
 
 
+RIGGED = FIXTURES / "rigged.glb"
+
+
+@unittest.skipUnless(BLENDER, "Blender not installed")
+class TestRiggedCarriesTheTexture(unittest.TestCase):
+    """rigged.glb is shell.glb's own mesh, bound - which is the relationship
+    assemble --rig produces, and the one the loop-for-loop transfer needs."""
+
+    SIZE = 64
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.outdir = Path(cls._tmp.name)
+        front = cls.outdir / "front.png"
+        write_test_png(front, 128, (220, 30, 30, 255))
+        cls.report, cls.proc = run_blender(
+            TEXTURE_SCRIPT, SHELL, cls.outdir, "--stem", STEM,
+            "--step", "bake", "--front", front, "--front-margin", "1.06",
+            "--size", cls.SIZE, "--rigged", RIGGED)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
+
+    def rigged_path(self):
+        return self.outdir / ("_%s Rigged.glb" % STEM)
+
+    def test_it_exits_cleanly(self):
+        self.assertEqual(self.proc.returncode, 0, self.proc.stderr[-3000:])
+
+    def test_the_rigged_glb_is_re_exported(self):
+        self.assertTrue(self.rigged_path().exists(),
+                        sorted(p.name for p in self.outdir.iterdir()))
+
+    def test_it_carries_the_texture(self):
+        self.assertTrue(glb_holds_an_image(self.rigged_path()))
+
+    def test_it_is_still_rigged(self):
+        """A texture that costs the armature is not a win."""
+        self.assertTrue(glb_document(self.rigged_path()).get("skins"))
+
+    def test_the_report_names_it(self):
+        self.assertEqual(self.report["rigged"], "_%s Rigged.glb" % STEM)
+
+    def test_the_plain_shell_is_still_written(self):
+        self.assertTrue((self.outdir / ("_%s Shell.glb" % STEM)).exists())
+
+
+@unittest.skipUnless(BLENDER, "Blender not installed")
+class TestRiggedMismatchIsRefused(unittest.TestCase):
+    """A --rigged GLB that is not the same mesh must fail loudly, not
+    silently texture the figure with someone else's unwrap."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.outdir = Path(cls._tmp.name)
+        front = cls.outdir / "front.png"
+        write_test_png(front, 64, (220, 30, 30, 255))
+        # A deliberately wrong pairing: base.glb as the SHELL (180 loops,
+        # armature) and rigged.glb as the --rigged copy (240 loops, armature).
+        # Both have an armature, so the armature/mesh guard is satisfied and
+        # the loop-count guard is what fires - shell.glb cannot be paired here
+        # instead, since it has no armature and would trip the WRONG guard
+        # (see task-8-brief.md's ruling 1).
+        cls.proc = subprocess.run(
+            [str(BLENDER), "--background", "--factory-startup", "--python",
+             str(TEXTURE_SCRIPT), "--", str(FIXTURES / "base.glb"),
+             str(cls.outdir), "--stem", STEM, "--step", "bake",
+             "--front", str(front), "--front-margin", "1.06", "--size", "32",
+             "--rigged", str(RIGGED)],
+            capture_output=True, text=True, timeout=600)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
+
+    def test_it_exits_non_zero(self):
+        self.assertNotEqual(self.proc.returncode, 0)
+
+    def test_it_says_which_two_did_not_match(self):
+        self.assertIn("loops", self.proc.stderr + self.proc.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()
