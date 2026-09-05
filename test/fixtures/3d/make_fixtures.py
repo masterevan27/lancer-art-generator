@@ -13,6 +13,9 @@ base.glb  stands in for the SAM3DBody export: a rigged figure at real-world
 shell.glb stands in for the Hunyuan3D export: unit-scaled, unrigged, wider
           than the body it wraps (a jacket), and carrying one detached speck,
           which is the thing spec §2.3 measured 10,878 of.
+rigged.glb stands in for the Rigged.glb `assemble --rig` writes: shell.glb's
+          own mesh, bound to a small armature - the relationship the texture
+          stage's loop-for-loop atlas transfer depends on.
 """
 import math
 import sys
@@ -105,9 +108,61 @@ def make_shell():
                               export_texcoords=False)
 
 
+def make_rigged():
+    """Stands in for the Rigged.glb `assemble --rig` writes.
+
+    The SAME mesh as shell.glb - same cylinders, same order - bound to a
+    small armature. That sameness is the point: assemble exports Shell.glb
+    and Rigged.glb from one object, so the texture stage transfers the atlas
+    UVs loop for loop, and a fixture that merely resembled the shell would
+    test the mismatch guard instead of the transfer.
+    """
+    reset()
+    jacket = cylinder("jacket", 0.20, 1.0, (0, 0, 0.5))
+    speck = cylinder("speck", 0.01, 0.02, (0.6, 0, 0.5), vertices=6)
+
+    bpy.ops.object.select_all(action='DESELECT')
+    jacket.select_set(True)
+    speck.select_set(True)
+    bpy.context.view_layer.objects.active = jacket
+    bpy.ops.object.join()
+
+    bpy.ops.object.armature_add(location=(0, 0, 0))
+    armature = bpy.context.active_object
+    armature.name = "rig"
+    bpy.ops.object.mode_set(mode='EDIT')
+    root = armature.data.edit_bones[0]
+    root.name = "hips"
+    root.head, root.tail = (0, 0, 0), (0, 0, 1.0)
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+    bpy.ops.object.select_all(action='DESELECT')
+    jacket.select_set(True)
+    armature.select_set(True)
+    bpy.context.view_layer.objects.active = armature
+    # ARMATURE_NAME, not ARMATURE_AUTO. Automatic weights run a heat solver
+    # that cannot find a solution when the mesh has a disconnected component -
+    # and the speck is exactly that. It fails SILENTLY: parent_set returns
+    # cleanly having weighted nothing, the glTF export then writes no skins
+    # array, and the re-imported "armature" comes back as an EMPTY. Measured:
+    # 0 of 44 vertices weighted. Weighting by hand is what this fixture needs
+    # anyway - the quality of the bind is irrelevant here, only that there IS
+    # one, so the export carries a skin and the mesh stays shell.glb's mesh.
+    bpy.ops.object.parent_set(type='ARMATURE_NAME')
+    group = (jacket.vertex_groups.get("hips")
+             or jacket.vertex_groups.new(name="hips"))
+    group.add(range(len(jacket.data.vertices)), 1.0, 'REPLACE')
+
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.export_scene.gltf(filepath=str(OUT / "rigged.glb"),
+                              export_format='GLB', use_selection=True,
+                              export_texcoords=False)
+
+
 if __name__ == "__main__":
     make_base()
     make_shell()
-    for name in ("base.glb", "shell.glb"):
+    make_rigged()
+    for name in ("base.glb", "shell.glb", "rigged.glb"):
         print("wrote %s (%d bytes)" % (name, (OUT / name).stat().st_size),
               file=sys.stderr)

@@ -195,13 +195,19 @@ back-catalogue case need no special handling.
 
 `frame_camera(obj, angle)` builds an orthographic camera at
 `ortho_scale = max(obj.dimensions) * 1.25` about the **bounding-box centre**.
-`square_apose()` squares the subject on `max(subject_w, subject_h) * 1.12`
+`square_apose()` squares the subject on `max(subject_w, subject_h) * 1.06`
 about the **subject's alpha bounds**.
 
 These are the same rule — *the subject's own bounds, squared on the longer
 side* — stated with different constants. The projection camera is therefore
-`frame_camera` with `margin=1.12`, and the front camera and the reference image
+`frame_camera` with `margin=1.06`, and the front camera and the reference image
 frame the subject identically.
+
+> **Corrected during implementation (2026-09-05):** this section originally
+> said 1.12. `APOSE_MARGIN` is, and has always been, `0.06`, so the matching
+> camera margin is 1.06. The reasoning was right and the constant was not;
+> `generate-3d.py` now derives `FRONT_MARGIN = 1 + APOSE_MARGIN` so the two
+> cannot disagree again.
 
 **This is bounds-matching, not a calibrated camera.** Hunyuan3D is not a
 renderer and guarantees no metric correspondence between input pixel and output
@@ -216,10 +222,10 @@ before any of §4.3 is built.
 1. **Atlas UVs.** Smart UV Project over the shell. This is the deliverable's
    UV layer.
 2. **Per-view UVs.** One additional UV layer per view, from project-from-view
-   at that view's camera: `proj_front` at `frame_camera(shell, 0, 1.12)`,
+   at that view's camera: `proj_front` at `frame_camera(shell, 0, 1.06)`,
    `proj_back` at `frame_camera(shell, 180)` at the default margin.
 
-   The two margins differ on purpose. The front's is fixed at 1.12 because it
+   The two margins differ on purpose. The front's is fixed at 1.06 because it
    must match a reference image this pipeline did not frame (§4.2). The back's
    is free, because step A renders that image at the same camera the
    projection samples it with - so any margin works as long as the two agree,
