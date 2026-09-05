@@ -56,6 +56,29 @@ class TestTheLiveTable(unittest.TestCase):
                     "this placement names the colour the template already "
                     "supplied, so the prompt would assert it twice: %r" % bullet)
 
+    def test_no_unflagged_placement_throws_light_across_the_frame(self):
+        """An unflagged placement is reachable from an equipped source, and a
+        lit visor or a thruster vent cannot put a band of colour across the
+        whole shot.
+
+        One bullet used to read "cuts across the frame at an angle, catching
+        {possessive} profile and one hand". The scene filter passed it - it
+        carried no '|| scene' flag - so it fired off a pilot's glowing thruster
+        pack, and the model drew exactly what the words asked for: a hard cobalt
+        stripe running corner to corner behind him. The rest of the sentence was
+        fine; "across the frame" was the whole problem.
+        """
+        for bullet in LIVE_PLACEMENTS:
+            text, flags = gen.split_flags(bullet)
+            if "scene" in flags:
+                continue
+            for phrase in ("the frame", "the shot", "the scene"):
+                self.assertNotIn(
+                    phrase, text.lower(),
+                    "an unflagged placement is reachable from something the "
+                    "NPC wears or carries, which cannot light %s: %r"
+                    % (phrase, bullet))
+
     def test_every_placement_reads_as_a_predicate(self):
         """Each bullet completes "A faint {glow} glow ___." so it must not
         restate the subject: a bullet beginning "the light falls" would render

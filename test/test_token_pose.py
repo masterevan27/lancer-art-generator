@@ -29,12 +29,22 @@ class TestTokenTemplatePose(unittest.TestCase):
 
     def test_the_framing_assertion_survives(self):
         """Dropping the pose claim must not drop the full-body framing with it."""
-        for phrase in ("the whole figure in frame",
+        for phrase in ("whole figure in frame",
+                       "to the soles of {possessive} feet",
                        "clear empty space above and below",
-                       "seven to eight heads tall",
-                       "no leg wraps or puttees"):
+                       "seven to eight heads tall"):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, gen.TOKEN_TEMPLATE)
+
+    def test_the_framing_sentence_names_no_footwear(self):
+        """It used to say "plain modern boots, no leg wraps or puttees", which
+        is false for anyone barefoot, sandalled or in a sealed suit's integral
+        feet. Faction and Outfit now describe dress specifically enough that
+        the puttee drift the clause fought no longer happens, so the framing
+        asserts only that the feet are in shot."""
+        for phrase in ("boots", "puttees", "leg wraps"):
+            with self.subTest(phrase=phrase):
+                self.assertNotIn(phrase, gen.TOKEN_TEMPLATE)
 
     def test_a_crouching_stance_produces_no_contradiction(self):
         npc = gen.roll_npc(TABLES, random.Random(0),
