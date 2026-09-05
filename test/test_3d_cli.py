@@ -91,7 +91,7 @@ class TestStageFlag(unittest.TestCase):
 
     def test_an_unknown_stage_is_refused(self):
         with self.assertRaises(SystemExit):
-            d3.parse_args(["--stage", "texture"])
+            d3.parse_args(["--stage", "paint"])
 
 
 class TestSkipping(unittest.TestCase):
@@ -135,14 +135,15 @@ class TestSkipping(unittest.TestCase):
             self.assertFalse(
                 d3.should_skip(folder, d3.parse_args(["--stage", "mesh"])))
 
-    def test_all_three_stages_explicitly_still_skip(self):
-        """Naming all three stages by hand is the same as the default."""
+    def test_all_four_stages_explicitly_still_skip(self):
+        """Naming all four stages by hand is the same as the default."""
         with tempfile.TemporaryDirectory() as tmp:
             folder = Path(tmp) / "3d"
             folder.mkdir()
             (folder / "apose.png").write_bytes(b"")
             args = d3.parse_args(
-                ["--stage", "apose", "--stage", "mesh", "--stage", "assemble"])
+                ["--stage", "apose", "--stage", "mesh", "--stage", "assemble",
+                 "--stage", "texture"])
             self.assertTrue(d3.should_skip(folder, args))
 
 
@@ -317,11 +318,16 @@ class TestPreflight(unittest.TestCase):
 
 
 class TestRunSummary(unittest.TestCase):
-    """Regression test for a Final review finding: warned counts FAILED rig
-    attempts, and --rig defaults off - so on an ordinary, unrigged run
-    warned is always 0, and printing "(0 without a rig)" unconditionally
-    reads as "every NPC got rigged" when in fact rigging was never
-    attempted. The parenthetical must appear only when --rig was passed.
+    """Regression test for a Final review finding: warned counts contained
+    failures - a rig that did not bind, or (since the texture stage) a
+    texture that did not bake - and printing the parenthetical unconditionally
+    would read as "every NPC got a warning" when in fact none did. It must
+    appear only when a warning was actually recorded.
+
+    --no-texture is passed throughout: this class is about the rig-note
+    mechanism, and the texture stage - on by default - would otherwise add
+    its own contained failure (there is no real Shell.glb on disk here) and
+    confound the count these tests are checking.
     """
 
     def run_main(self, extra_args, report):
@@ -344,18 +350,18 @@ class TestRunSummary(unittest.TestCase):
                  mock.patch.object(d3, "stage_assemble", return_value=report):
                 buffer = io.StringIO()
                 with redirect_stdout(buffer):
-                    d3.main(["--manifest", str(path)] + extra_args)
+                    d3.main(["--manifest", str(path), "--no-texture"] + extra_args)
         return buffer.getvalue()
 
-    def test_the_rig_note_is_omitted_without_rig(self):
+    def test_the_rig_note_is_omitted_without_a_warning(self):
         output = self.run_main([], {"files": ["Shell.glb"]})
-        self.assertNotIn("without a rig", output)
+        self.assertNotIn("with a warning", output)
         self.assertIn("done: 1 built,", output)
 
-    def test_the_rig_note_appears_with_rig(self):
+    def test_the_rig_note_appears_with_a_warning(self):
         output = self.run_main(
             ["--rig"], {"files": ["Shell.glb"], "rig_error": "boom"})
-        self.assertIn("(1 without a rig)", output)
+        self.assertIn("(1 with a warning)", output)
 
 
 class TestMultipart(unittest.TestCase):
@@ -817,7 +823,7 @@ class TestImageFlag(unittest.TestCase):
     def test_an_image_skips_the_apose_stage_by_default(self):
         """The supplied image IS the A-pose; rendering one would discard it."""
         args = self.args(["--image", str(self.cutout)])
-        self.assertEqual(list(args.stage), ["mesh", "assemble"])
+        self.assertEqual(list(args.stage), ["mesh", "assemble", "texture"])
 
     def test_an_explicit_stage_still_wins(self):
         args = self.args(["--image", str(self.cutout), "--stage", "mesh"])
@@ -1196,3 +1202,225 @@ class TestStandalone(unittest.TestCase):
         seen = self.run_standalone()
         self.assertEqual(sorted(p.name for p in self.out.iterdir()), ["apose.png"])
         self.assertNotIn("dossier", seen["stdout"].lower())
+
+
+class TestTextureFlags(unittest.TestCase):
+    def test_texture_is_a_stage(self):
+        self.assertEqual(d3.STAGES, ("apose", "mesh", "assemble", "texture"))
+
+    def test_all_four_stages_by_default(self):
+        self.assertEqual(d3.parse_args([]).stage, list(d3.STAGES))
+
+    def test_texture_runs_in_isolation(self):
+        self.assertEqual(d3.parse_args(["--stage", "texture"]).stage, ["texture"])
+
+    def test_texturing_is_on_by_default(self):
+        """Unlike --rig. This is the point of the exercise, not an experiment."""
+        self.assertTrue(d3.parse_args([]).texture)
+
+    def test_no_texture_turns_it_off(self):
+        self.assertFalse(d3.parse_args(["--no-texture"]).texture)
+
+    def test_no_texture_leaves_the_stage_list_alone(self):
+        """should_skip() compares the stage set against STAGES. Dropping
+        'texture' from it would quietly stop a --no-texture batch skipping
+        NPCs that already have a 3d/ folder."""
+        self.assertEqual(d3.parse_args(["--no-texture"]).stage, list(d3.STAGES))
+
+    def test_no_texture_with_stage_texture_is_refused(self):
+        with self.assertRaises(SystemExit):
+            d3.parse_args(["--stage", "texture", "--no-texture"])
+
+    def test_the_atlas_defaults_to_2048(self):
+        self.assertEqual(d3.parse_args([]).texture_size, 2048)
+
+    def test_the_atlas_size_is_settable(self):
+        self.assertEqual(d3.parse_args(["--texture-size", "4096"]).texture_size,
+                         4096)
+
+    def test_the_back_view_is_on_by_default(self):
+        self.assertTrue(d3.parse_args([]).back_view)
+
+    def test_no_back_view_turns_it_off(self):
+        self.assertFalse(d3.parse_args(["--no-back-view"]).back_view)
+
+
+class TestFrontMargin(unittest.TestCase):
+    def test_it_is_squared_aposes_own_margin(self):
+        """Spec §4.2 says 1.12; square_apose() has always used 1.06. The two
+        framings are the same rule, so the camera takes the constant the image
+        was actually built with - derived, never restated."""
+        self.assertAlmostEqual(d3.FRONT_MARGIN, 1 + d3.APOSE_MARGIN)
+
+    def test_it_reaches_the_blender_command(self):
+        command = d3.texture_command(
+            Path("blender.exe"), d3.parse_args([]), Path("/3d"), "Name",
+            Path("/3d/Name Shell.glb"), "bake", front=Path("/3d/sq.png"))
+        self.assertEqual(command[command.index("--front-margin") + 1],
+                         str(d3.FRONT_MARGIN))
+
+
+class TestTextureCommand(unittest.TestCase):
+    def setUp(self):
+        self.args = d3.parse_args([])
+        self.shell = Path("/3d/Name Shell.glb")
+
+    def build(self, step, **kwargs):
+        return d3.texture_command(Path("blender.exe"), self.args, Path("/3d"),
+                                  "Name", self.shell, step, **kwargs)
+
+    def test_the_back_step_names_the_script_and_the_step(self):
+        command = self.build("back")
+        self.assertIn(str(d3.TEXTURE_SCRIPT), command)
+        self.assertEqual(command[command.index("--step") + 1], "back")
+
+    def test_the_back_step_passes_no_front(self):
+        self.assertNotIn("--front", self.build("back"))
+
+    def test_the_bake_step_passes_the_front_and_the_size(self):
+        command = self.build("bake", front=Path("/3d/sq.png"))
+        self.assertEqual(command[command.index("--front") + 1],
+                         str(Path("/3d/sq.png")))
+        self.assertEqual(command[command.index("--size") + 1], "2048")
+
+    def test_the_bake_step_omits_back_when_there_is_none(self):
+        self.assertNotIn("--back", self.build("bake", front=Path("/3d/sq.png")))
+
+    def test_the_bake_step_passes_back_when_there_is_one(self):
+        command = self.build("bake", front=Path("/3d/sq.png"),
+                             back=Path("/3d/back.png"))
+        self.assertEqual(command[command.index("--back") + 1],
+                         str(Path("/3d/back.png")))
+
+    def test_the_stem_reaches_the_command_unsplit(self):
+        """A two-word name must arrive as one argv element, not two."""
+        command = d3.texture_command(
+            Path("blender.exe"), self.args, Path("/3d"), "Jules Sokolova",
+            self.shell, "back")
+        self.assertIn("Jules Sokolova", command)
+
+
+class TestTextureDossier(unittest.TestCase):
+    def test_the_texture_file_is_listed(self):
+        body = d3.dossier_3d_section(
+            ["Name Shell.glb", "Name Texture.png"], [Path("A.json")], "standing")
+        self.assertIn("- `3d/Name Texture.png`", body)
+
+    def test_a_back_stance_is_recorded_when_there_was_one(self):
+        body = d3.dossier_3d_section(
+            ["Name Shell.glb"], [Path("A.json")], "standing",
+            back_stance="back to the viewer")
+        self.assertIn("back to the viewer", body)
+
+    def test_no_back_row_without_a_back_view(self):
+        body = d3.dossier_3d_section(
+            ["Name Shell.glb"], [Path("A.json")], "standing")
+        self.assertNotIn("Back-view stance", body)
+
+
+class TestTextureContainment(unittest.TestCase):
+    """Spec §5.3: a texture failure costs the texture and nothing else."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.folder = Path(self._tmp.name)
+        self.shell = self.folder / "Name Shell.glb"
+        self.shell.write_bytes(b"the good shell")
+        (self.folder / "apose_square.png").write_bytes(b"not really a png")
+        self.args = d3.parse_args(["--no-back-view"])
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_a_failed_bake_leaves_the_shell_untouched(self):
+        with mock.patch.object(d3, "run_texture_step",
+                               side_effect=RuntimeError("bake exploded")):
+            with self.assertRaises(RuntimeError):
+                d3.stage_texture(None, self.args, None, self.folder, "Name")
+        self.assertEqual(self.shell.read_bytes(), b"the good shell")
+
+    def test_a_crash_after_a_partial_write_leaves_the_shell_untouched(self):
+        def half_done(*a, **k):
+            (self.folder / "_Name Texture.png").write_bytes(b"partial")
+            raise RuntimeError("died during export")
+
+        with mock.patch.object(d3, "run_texture_step", side_effect=half_done):
+            with self.assertRaises(RuntimeError):
+                d3.stage_texture(None, self.args, None, self.folder, "Name")
+        self.assertEqual(self.shell.read_bytes(), b"the good shell")
+        self.assertFalse((self.folder / "Name Texture.png").exists())
+
+    def test_a_successful_bake_moves_both_temporaries_into_place(self):
+        def succeed(*a, **k):
+            (self.folder / "_Name Texture.png").write_bytes(b"the atlas")
+            (self.folder / "_Name Shell.glb").write_bytes(b"the textured shell")
+            return {"step": "bake", "texture": "_Name Texture.png",
+                    "shell": "_Name Shell.glb", "size": 2048, "islands": 12,
+                    "views": ["front"], "rigged": None,
+                    "files": ["_Name Texture.png", "_Name Shell.glb"]}
+
+        with mock.patch.object(d3, "run_texture_step", side_effect=succeed):
+            report = d3.stage_texture(None, self.args, None, self.folder, "Name")
+        self.assertEqual(self.shell.read_bytes(), b"the textured shell")
+        self.assertEqual((self.folder / "Name Texture.png").read_bytes(),
+                         b"the atlas")
+        self.assertEqual(report["files"], ["Name Texture.png"])
+        self.assertFalse((self.folder / "_Name Shell.glb").exists())
+
+    def test_no_back_view_queues_no_comfyui_job(self):
+        """comfy is None here: touching it at all is an AttributeError."""
+        def succeed(*a, **k):
+            (self.folder / "_Name Texture.png").write_bytes(b"a")
+            (self.folder / "_Name Shell.glb").write_bytes(b"b")
+            return {"texture": "_Name Texture.png", "shell": "_Name Shell.glb",
+                    "views": ["front"], "files": []}
+
+        with mock.patch.object(d3, "run_texture_step", side_effect=succeed):
+            d3.stage_texture(None, self.args, None, self.folder, "Name")
+
+    def test_a_missing_shell_names_the_stage_to_run(self):
+        self.shell.unlink()
+        with self.assertRaises(RuntimeError) as caught:
+            d3.stage_texture(None, self.args, None, self.folder, "Name")
+        self.assertIn("assemble", str(caught.exception))
+
+
+class TestReferenceImage(unittest.TestCase):
+    """The back-catalogue case: --stage texture on a folder built last week."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.folder = Path(self._tmp.name)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_an_existing_square_is_used_as_is(self):
+        square = self.folder / "apose_square.png"
+        square.write_bytes(b"already squared")
+        self.assertEqual(d3.reference_image(self.folder), square)
+
+    def test_it_is_rebuilt_from_apose_when_absent(self):
+        """A pure function of apose.png - requiring --stage mesh to have run
+        in this working copy would defeat the whole back-catalogue case."""
+        with mock.patch.object(d3, "square_apose", return_value=800) as squared:
+            (self.folder / "apose.png").write_bytes(b"a cutout")
+            result = d3.reference_image(self.folder)
+        squared.assert_called_once()
+        self.assertEqual(result, self.folder / "apose_square.png")
+
+    def test_neither_is_a_clear_failure(self):
+        with self.assertRaises(RuntimeError) as caught:
+            d3.reference_image(self.folder)
+        self.assertIn("apose", str(caught.exception))
+
+
+class TestTexturePreflight(unittest.TestCase):
+    def test_the_texture_stage_checks_blender(self):
+        args = d3.parse_args(["--stage", "texture"])
+        args.blender = Path("nowhere/blender.exe")
+        with self.assertRaises(SystemExit):
+            d3.preflight(args)
+
+    def test_no_texture_checks_nothing_it_will_not_open(self):
+        d3.preflight(d3.parse_args(["--no-texture", "--stage", "apose"]))
