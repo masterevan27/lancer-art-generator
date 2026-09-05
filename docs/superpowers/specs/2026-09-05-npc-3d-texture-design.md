@@ -195,13 +195,19 @@ back-catalogue case need no special handling.
 
 `frame_camera(obj, angle)` builds an orthographic camera at
 `ortho_scale = max(obj.dimensions) * 1.25` about the **bounding-box centre**.
-`square_apose()` squares the subject on `max(subject_w, subject_h) * 1.12`
+`square_apose()` squares the subject on `max(subject_w, subject_h) * 1.06`
 about the **subject's alpha bounds**.
 
 These are the same rule — *the subject's own bounds, squared on the longer
 side* — stated with different constants. The projection camera is therefore
-`frame_camera` with `margin=1.12`, and the front camera and the reference image
+`frame_camera` with `margin=1.06`, and the front camera and the reference image
 frame the subject identically.
+
+> **Corrected during implementation (2026-09-05):** this section originally
+> said 1.12. `APOSE_MARGIN` is, and has always been, `0.06`, so the matching
+> camera margin is 1.06. The reasoning was right and the constant was not;
+> `generate-3d.py` now derives `FRONT_MARGIN = 1 + APOSE_MARGIN` so the two
+> cannot disagree again.
 
 **This is bounds-matching, not a calibrated camera.** Hunyuan3D is not a
 renderer and guarantees no metric correspondence between input pixel and output
