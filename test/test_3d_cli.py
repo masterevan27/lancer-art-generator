@@ -1785,3 +1785,137 @@ class TestBackViewJob(unittest.TestCase):
         graph[encode]["inputs"]["image2"] = [not_a_loader, 0]
         with self.assertRaises(d3.art.WorkflowError):
             d3.backview_slots(graph)
+
+
+class TestGeneratedBackView(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.folder = Path(self._tmp.name)
+        (self.folder / "Name Shell.glb").write_bytes(b"shell")
+        (self.folder / "apose_square.png").write_bytes(b"square")
+        self.entry = manifest_entry(31)
+        self.args = d3.parse_args([])
+        self.subject = d3.subject_of(self.entry, self.args)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def run_stage(self, portrait=None, rear=False):
+        """stage_texture with every outside edge mocked. -> (report, calls)."""
+        calls = {"steps": [], "uploads": [], "jobs": []}
+        self.entry["traits"]["Backdrop"] = (
+            "A character portrait seen from behind || She is on a roof."
+            if rear else "A half-body character portrait || She is inside.")
+
+        def texture_step(a, folder, stem, shell, step, front=None, back=None):
+            calls["steps"].append((step, front, back))
+            if step == "back":
+                (folder / "_back_render.png").write_bytes(b"render")
+                return {"step": "back", "render": "_back_render.png",
+                        "files": ["_back_render.png"]}
+            (folder / "_Name Texture.png").write_bytes(b"atlas")
+            (folder / "_Name Shell.glb").write_bytes(b"textured")
+            return {"step": "bake", "texture": "_Name Texture.png",
+                    "shell": "_Name Shell.glb", "views": ["front", "back"],
+                    "islands": 9, "files": []}
+
+        def upload(comfy, path, subfolder="lancer3d"):
+            calls["uploads"].append(Path(path).name)
+            return "%s [input]" % Path(path).name
+
+        def fetch(comfy, image, target):
+            Path(target).write_bytes(b"back view")
+            return Path(target)
+
+        def job(template, refs, prompt, prefix, seed=None):
+            calls["jobs"].append({"refs": refs, "prompt": prompt,
+                                  "prefix": prefix, "seed": seed})
+            return {}
+
+        comfy = mock.MagicMock()
+        comfy.wait.return_value = {"outputs": {}}
+        with mock.patch.object(d3, "run_texture_step", side_effect=texture_step), \
+             mock.patch.object(d3, "upload_image", side_effect=upload), \
+             mock.patch.object(d3.npc_gen, "fetch", side_effect=fetch), \
+             mock.patch.object(d3.art.Comfy, "images",
+                               return_value=[{"filename": "back_0001.png"}]), \
+             mock.patch.object(d3, "build_backview_job", side_effect=job), \
+             mock.patch.object(d3.time, "sleep"):
+            report = d3.stage_texture(comfy, self.args, self.subject,
+                                      self.folder, "Name", self.entry, portrait)
+        return report, calls
+
+    def test_the_back_render_runs_before_the_bake(self):
+        _, calls = self.run_stage()
+        self.assertEqual([step for step, _, _ in calls["steps"]],
+                         ["back", "bake"])
+
+    def test_the_generated_back_reaches_the_bake(self):
+        _, calls = self.run_stage()
+        bake = next(c for c in calls["steps"] if c[0] == "bake")
+        self.assertEqual(Path(bake[2]).name, "back.png")
+
+    def test_the_render_and_the_reference_are_both_uploaded(self):
+        _, calls = self.run_stage()
+        self.assertIn("_back_render.png", calls["uploads"])
+        self.assertIn("apose_square.png", calls["uploads"])
+
+    def test_the_render_is_the_first_slot(self):
+        """§4.4: image1 is the image being EDITED, and that is what makes the
+        result registered to the mesh."""
+        _, calls = self.run_stage()
+        self.assertEqual(calls["jobs"][0]["refs"][0], "_back_render.png [input]")
+
+    def test_the_prompt_is_the_backview_prompt(self):
+        _, calls = self.run_stage()
+        self.assertEqual(calls["jobs"][0]["prompt"],
+                         d3.backview_prompt(self.entry))
+
+    def test_the_entrys_own_seed_is_used(self):
+        _, calls = self.run_stage()
+        self.assertEqual(calls["jobs"][0]["seed"], self.subject.seed)
+
+    def test_a_rear_facing_portrait_is_uploaded_as_the_third_slot(self):
+        portrait = self.folder / "Name Portrait.png"
+        portrait.write_bytes(b"portrait")
+        _, calls = self.run_stage(portrait=portrait, rear=True)
+        self.assertIn("Name Portrait.png", calls["uploads"])
+        self.assertIsNotNone(calls["jobs"][0]["refs"][2])
+
+    def test_a_front_facing_portrait_is_not_used(self):
+        portrait = self.folder / "Name Portrait.png"
+        portrait.write_bytes(b"portrait")
+        _, calls = self.run_stage(portrait=portrait, rear=False)
+        self.assertNotIn("Name Portrait.png", calls["uploads"])
+        self.assertIsNone(calls["jobs"][0]["refs"][2])
+
+    def test_a_missing_portrait_file_is_not_an_error(self):
+        """An NPC folder moved by hand into Foundry keeps its 3d/ and may have
+        left the portrait behind. The slot is optional anyway."""
+        _, calls = self.run_stage(portrait=self.folder / "gone.png", rear=True)
+        self.assertIsNone(calls["jobs"][0]["refs"][2])
+
+    def test_the_stance_is_reported_for_the_dossier(self):
+        report, _ = self.run_stage()
+        self.assertEqual(report["back_stance"], d3.BACKVIEW_STANCE)
+
+    def test_the_intermediates_are_kept_on_disk(self):
+        """Like _shell.glb: they are what you look at when a back comes out
+        wrong."""
+        self.run_stage()
+        self.assertTrue((self.folder / "back.png").exists())
+        self.assertTrue((self.folder / "_back_render.png").exists())
+
+    def test_a_job_that_produces_no_image_is_a_clear_failure(self):
+        with mock.patch.object(d3, "run_texture_step",
+                               side_effect=lambda *a, **k: (
+                                   (self.folder / "_back_render.png")
+                                   .write_bytes(b"r")
+                                   or {"render": "_back_render.png"})), \
+             mock.patch.object(d3, "upload_image", return_value="x [input]"), \
+             mock.patch.object(d3.art.Comfy, "images", return_value=[]), \
+             mock.patch.object(d3.time, "sleep"):
+            with self.assertRaises(RuntimeError) as caught:
+                d3.stage_texture(mock.MagicMock(), self.args, self.subject,
+                                 self.folder, "Name", self.entry)
+        self.assertIn("no image", str(caught.exception))

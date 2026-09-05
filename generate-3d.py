@@ -1288,11 +1288,58 @@ def generate_back_view(comfy, args, subject, folder, shell, stem, entry,
                        portrait):
     """Render the shell's 180-degree view and have ComfyUI paint it.
 
-    Filled in by Task 7. Until then the generated back view is unreachable and
-    --no-back-view is the only supported route.
+    -> (the back view's path, the stance that produced it).
+
+    The registration is structural, not prompted. What ComfyUI is given is a
+    render of THIS mesh at the camera the bake will sample the result with, so
+    whatever comes back lines up with the silhouette by construction - which
+    is the only reason this works with ControlNetLoader's enum empty (§2.2).
     """
-    raise RuntimeError("the generated back view is not implemented yet - "
-                       "pass --no-back-view")
+    print("    back render ...", flush=True)
+    run_texture_step(args, folder, stem, shell, "back")
+    render = folder / "_back_render.png"
+    if not render.exists():
+        raise RuntimeError("the back render produced no image")
+
+    if not BACKVIEW_WORKFLOW.exists():
+        raise SystemExit("Workflow not found: %s" % BACKVIEW_WORKFLOW)
+    template = art.load_api_workflow(BACKVIEW_WORKFLOW)
+
+    refs = [upload_image(comfy, render),
+            upload_image(comfy, reference_image(folder)),
+            None]
+    # The portrait is evidence only when it was composed from behind (§4.4). A
+    # missing file is not an error: an NPC folder moved by hand keeps its 3d/
+    # and may have left the portrait behind, and the slot is optional.
+    if entry is not None and portrait is not None and portrait.exists() \
+            and rear_facing(entry):
+        print("      portrait is rear-facing - using it as a third reference")
+        refs[2] = upload_image(comfy, portrait)
+
+    # A standalone --out run has no traits to build a prompt from, the same
+    # gap that makes --out require --image. The stance alone is what is left
+    # that is true about the figure.
+    prompt = (backview_prompt(entry) if entry is not None
+              else "the same figure seen from directly behind, %s"
+                   % BACKVIEW_STANCE)
+    prefix = "%s/%s/%s/back" % (npc_gen.COMFY_PREFIX,
+                                subject.category, subject.slug)
+    job = build_backview_job(template, tuple(refs), prompt, prefix,
+                             subject.seed)
+
+    print("    back view ...", flush=True)
+    images = art.Comfy.images(comfy.wait(comfy.queue(job),
+                                         timeout=args.timeout))
+    if not images:
+        raise RuntimeError("the back-view job produced no image")
+    # --pause-3d, not --pause: Qwen-Image-Edit 2509 at fp8 is large and this
+    # runs after two reconstructions in the same batch, which is exactly the
+    # window spec §7.4 flags.
+    time.sleep(args.pause_3d)
+
+    back = npc_gen.fetch(comfy, images[0], folder / "back.png")
+    print("      -> %s" % back.name)
+    return back, BACKVIEW_STANCE
 
 
 # --------------------------------------------------------------------------
