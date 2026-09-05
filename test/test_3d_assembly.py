@@ -296,3 +296,44 @@ class TestAutomaticWeightsFallback(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(BLENDER, "Blender not installed")
+class TestRealHeight(unittest.TestCase):
+    """--real-height-m overrides SAM3DBody's estimate, and the mini follows.
+
+    The fixture base is 1.73 m. Asking for 1.90 must move the shell, because
+    the shell is fitted to the base and the base is what gets rescaled - if
+    only one of them moved, the two would no longer be in the correspondence
+    a weight transfer depends on.
+    """
+
+    def test_the_shell_takes_the_given_height(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            report, proc = run_assembly(Path(tmp), "--no-render",
+                                        "--real-height-m", "1.90")
+        self.assertEqual(proc.returncode, 0, proc.stderr[-2000:])
+        self.assertAlmostEqual(report["shell_height_m"], 1.90, places=2)
+
+    def test_the_estimate_is_still_reported(self):
+        """Recorded, not discarded: it is the only way to see how far off the
+        reconstruction's own guess was."""
+        with tempfile.TemporaryDirectory() as tmp:
+            report, _ = run_assembly(Path(tmp), "--no-render",
+                                     "--real-height-m", "1.90")
+        self.assertAlmostEqual(report["estimated_height_m"], 1.73, places=2)
+
+    def test_a_shorter_npc_gets_a_shorter_mini(self):
+        """Spec: --print-height-mm is the height of a --nominal-height-m
+        figure, so a squad keeps its relative heights on the plate."""
+        with tempfile.TemporaryDirectory() as tmp:
+            report, _ = run_assembly(Path(tmp), "--no-render",
+                                     "--real-height-m", "1.524",       # 5'0"
+                                     "--nominal-height-m", "1.8288")   # 6'0"
+        self.assertAlmostEqual(report["print_height_mm"], 32.0 * 1.524 / 1.8288, places=1)
+
+    def test_without_the_flag_the_mini_is_exactly_the_asked_for_height(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            report, _ = run_assembly(Path(tmp), "--no-render")
+        self.assertAlmostEqual(report["print_height_mm"], 32.0, places=2)
+        self.assertAlmostEqual(report["shell_height_m"], 1.73, places=2)

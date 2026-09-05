@@ -78,10 +78,24 @@ class TestGraphShape(unittest.TestCase):
         self.assertEqual(
             node_named(GRAPHS["rig"], "BuildPoseFile")["inputs"]["track_index"], 0)
 
-    def test_the_specks_are_dropped_in_graph(self):
-        """Spec §2.3 measured 10,878 sub-20-face components on one token."""
-        remesh = node_named(GRAPHS["mesh"], "RemeshMesh")["inputs"]
-        self.assertGreater(remesh["drop_small_components"], 0)
+    def test_nothing_remeshes_between_the_voxels_and_the_save(self):
+        """RemeshMesh clipped every reconstruction to a half-unit box.
+
+        Measured on a real catalogue shell: straight off VoxelToMesh the
+        figure spanned y -0.978..0.986 - head, hands and feet all present -
+        and after RemeshMesh it spanned exactly y -0.503..0.504, flat-cut at
+        both ends. Every downstream symptom this project chased for two
+        phases (the torn "two half-figures", the missing head, the blank
+        turnarounds) was that clip. Spec §2.3's speck dropping, which is what
+        RemeshMesh was here for, now happens in npc_mesh.drop_small_components
+        by surface area - 895 specks off one shell, one component left.
+
+        The node stays out. If it ever comes back, it must be shown not to
+        clip: assert the saved GLB spans more than a unit box first.
+        """
+        classes = {d["class_type"] for d in GRAPHS["mesh"].values()}
+        self.assertNotIn("RemeshMesh", classes)
+        self.assertIn("VoxelToMesh", classes)
 
     def test_no_custom_node_pack_is_required(self):
         """Spec §2.1. Every class_type here ships with ComfyUI."""
@@ -89,7 +103,7 @@ class TestGraphShape(unittest.TestCase):
             "LoadImage", "SaveGLB", "KSampler", "ImageOnlyCheckpointLoader",
             "CLIPVisionEncode", "Hunyuan3Dv2ConditioningMultiView",
             "EmptyLatentHunyuan3Dv2",
-            "VAEDecodeHunyuan3D", "VoxelToMesh", "RemeshMesh", "DecimateMesh",
+            "VAEDecodeHunyuan3D", "VoxelToMesh", "DecimateMesh",
             "SAM3DBody_Loader", "SAM3DBody_Predict", "BuildPoseFile",
         }
         for label, graph in GRAPHS.items():

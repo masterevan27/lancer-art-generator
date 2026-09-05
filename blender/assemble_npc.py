@@ -36,11 +36,25 @@ def parse_argv(argv):
     p.add_argument("outdir", type=Path, help="where the deliverables are written")
     p.add_argument("--stem", required=True, help="the NPC's filename stem")
     p.add_argument("--print-height-mm", type=float, default=32.0,
-                   help="mini height in millimetres (default: %(default)s)")
+                   help="mini height in millimetres for a NOMINAL figure "
+                        "(default: %(default)s); with --real-height-m the "
+                        "actual mini is scaled in proportion, so a squad keeps "
+                        "its relative heights")
+    p.add_argument("--real-height-m", type=float, default=None,
+                   help="the character's true height in metres, from the NPC's "
+                        "rolled '## Height'. Overrides SAM3DBody's estimate, "
+                        "which infers metric scale from one image and guesses "
+                        "low (default: trust the estimate)")
+    p.add_argument("--nominal-height-m", type=float, default=1.8288,
+                   help="the height --print-height-mm describes, in metres "
+                        "(default: %(default)s, six feet)")
     p.add_argument("--weld", type=float, default=0.0005,
                    help="weld distance in metres (default: %(default)s)")
     p.add_argument("--voxel", type=float, default=0.0,
-                   help="voxel remesh size in metres; 0 disables (default: %(default)s)")
+                   help="voxel remesh size in metres, for the PRINTABLE copy "
+                        "only; 0 disables (default: %(default)s). Raise it, "
+                        "never lower it, when a remesh comes out destroyed - "
+                        "see npc_mesh.printable_copy()")
     p.add_argument("--no-render", action="store_true",
                    help="skip the turnarounds, for iterating on the mesh work")
     p.add_argument("--turnaround-size", type=int, default=768,
@@ -86,42 +100,67 @@ def main():
     if body_height <= 0:
         raise SystemExit("the base has no height")
 
+    # Before the shell is touched, so the frame the shell is fitted and aligned
+    # to is already the right size and every metre below means a real metre.
+    estimated_height = body_height
+    if args.real_height_m:
+        npc_mesh.rescale_base(armature, body, args.real_height_m)
+        body_height = npc_mesh.height_of(body)
+
     # The base is never transformed - it defines the frame, and moving its mesh
     # out from under its armature is the one way to break a rig invisibly. The
     # shell is what gets scaled and moved.
     shell_objects = npc_mesh.import_glb(args.shell)
     shell = npc_mesh.join(shell_objects, "shell")
-    dropped, parts = npc_mesh.clean_shell(shell, args.weld, args.voxel)
-    if parts > 1:
-        # Spec §6 step 7, the same contract as the non-manifold check below:
-        # the STL promises a single body, and the only honest way to keep that
-        # promise over a shell that came back in pieces is a remesh that
-        # unions them. Deleting all but one of them would keep the promise by
-        # throwing away the figure - which is exactly the silent failure the
-        # 50.4%-of-surface-area loss in drop_small_components() used to be.
-        raise SystemExit(
-            "the cleaned shell is still %d separate parts, none of them small "
-            "enough to be debris. Raise --voxel to union them into one body."
-            % parts)
-    npc_mesh.fit_to_height(shell, body_height)
+    # clean_shell() fits the height itself, between dropping the specks and
+    # welding, so that --weld and --voxel are both in metres. See its docstring.
+    dropped, parts = npc_mesh.clean_shell(
+        shell, args.weld, fit_height=body_height)
     npc_mesh.align_to(shell, body)
-
-    non_manifold = npc_mesh.non_manifold_edges(shell)
-    if non_manifold:
-        # Spec §6 step 7. A slicer given a leaking mesh produces a mini with
-        # holes in it, hours later, with no warning - so this fails here.
-        raise SystemExit(
-            "the cleaned shell has %d non-manifold edges; it would not print. "
-            "Raise --voxel to force a closed remesh." % non_manifold)
 
     files = []
     shell_glb = args.outdir / ("%s Shell.glb" % args.stem)
     npc_mesh.export_glb([shell], shell_glb)
     files.append(shell_glb.name)
 
-    print_stl = args.outdir / ("%s Print.stl" % args.stem)
-    npc_mesh.export_stl(shell, print_stl, args.print_height_mm)
-    files.append(print_stl.name)
+    # The STL gets its own mesh. Only the print needs a closed single body, and
+    # the remesh that guarantees one is what costs the detail the GLB and the
+    # turnarounds are for - so the two deliverables stopped sharing a mesh.
+    printable, print_parts = npc_mesh.printable_copy(shell, args.voxel)
+    try:
+        if print_parts > 1:
+            # Spec §6 step 7, the same contract as the non-manifold check
+            # below. The STL promises a single body, and the honest way to
+            # keep that promise over a shell that came back in pieces is a
+            # remesh that unions them - not deleting all but one, which keeps
+            # the promise by throwing the figure away.
+            raise SystemExit(
+                "the printable shell is still %d separate parts, none of them "
+                "small enough to be debris. Raise --voxel to union them into "
+                "one body." % print_parts)
+        non_manifold = npc_mesh.non_manifold_edges(printable)
+        if non_manifold:
+            # Spec §6 step 7. A slicer given a leaking mesh produces a mini
+            # with holes in it, hours later, with no warning - so this fails
+            # here instead.
+            raise SystemExit(
+                "the printable shell has %d non-manifold edges; it would not "
+                "print. Raise --voxel to force a closed remesh." % non_manifold)
+        # A 5'0" pilot and a 6'6" trooper used to come off the plate the same
+        # size, because every STL was scaled to exactly --print-height-mm. That
+        # is right for a mini printed alone and wrong for the squad this
+        # catalogue exists to produce, so when the real height is known the
+        # mini is scaled in proportion to it instead: --print-height-mm becomes
+        # the height of a --nominal-height-m figure, and everyone else is
+        # taller or shorter than that by however much they really are.
+        print_mm = args.print_height_mm
+        if args.real_height_m and args.nominal_height_m > 0:
+            print_mm *= body_height / args.nominal_height_m
+        print_stl = args.outdir / ("%s Print.stl" % args.stem)
+        npc_mesh.export_stl(printable, print_stl, print_mm)
+        files.append(print_stl.name)
+    finally:
+        npc_mesh.discard(printable)
 
     rigged = False
     rig_error = None
@@ -179,8 +218,11 @@ def main():
     print("LANCER3D " + json.dumps({
         "files": files,
         "shell_height_m": round(npc_mesh.height_of(shell), 4),
+        "estimated_height_m": round(estimated_height, 4),
+        "print_height_mm": round(print_mm, 2),
         "components_dropped": dropped,
         "shell_area": round(npc_mesh.surface_area(shell), 4),
+        "shell_faces": len(shell.data.polygons),
         "non_manifold": non_manifold,
         "rigged": rigged,
         "bones": bones,

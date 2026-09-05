@@ -22,6 +22,7 @@ import sys
 import time
 import urllib.request
 import uuid
+import zlib
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -106,6 +107,64 @@ def apose_npc(entry):
     npc["Weapon"] = ""
     npc["Gear"] = ""
     return npc
+
+
+# --------------------------------------------------------------------------
+# The NPC's real height
+# --------------------------------------------------------------------------
+
+FEET = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
+        "seven": 7, "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12}
+
+# Checked against the text BEFORE the feet-and-inches phrase, longest first so
+# that "just a few inches under six feet" reads as -3 and not as "just under".
+NUDGES = (
+    ("several inches over", 3), ("several inches under", -3),
+    ("a few inches over", 3), ("a few inches under", -3),
+    ("a little over", 1), ("a little under", -1),
+    ("a shade over", 1), ("a shade under", -1),
+    ("just over", 1), ("just under", -1),
+    ("close to", -1), ("brushing", -1), ("nearly", -1),
+)
+
+NOMINAL_HEIGHT_M = 1.8288   # six feet, what --print-height-mm describes
+
+
+def height_inches(bullet):
+    """A '## Height' bullet's height in inches, or None if it names none.
+
+    Parsed rather than looked up in a table of the twelve current bullets,
+    because generate-3d.py's whole premise is that the back catalogue is
+    eligible: a manifest entry stores the bullet text as it was when rolled,
+    and a bullet since reworded would miss an exact-match table without
+    anything noticing. Every bullet in both '## Height' tables says its height
+    in words, so reading it is more robust than indexing it.
+
+    None is not an error. 'of average height' is what regenerate_one() backfills
+    for an entry written before '## Height' existed, and it names no number;
+    the caller falls back to SAM3DBody's estimate rather than refusing to build
+    the NPC over a refinement.
+    """
+    text = bullet.lower()
+    match = re.search(r"\b(\w+)\s+and\s+a\s+half\s+feet\b", text)
+    if match and match.group(1) in FEET:
+        feet, extra = FEET[match.group(1)], 6
+    else:
+        match = re.search(r"\b(\w+)\s+(?:foot|feet)\b(?:\s+(\w+))?", text)
+        if not match or match.group(1) not in FEET:
+            return None
+        feet, extra = FEET[match.group(1)], FEET.get(match.group(2) or "", 0)
+    head = text[:match.start()].rstrip()
+    for phrase, delta in NUDGES:
+        if head.endswith(phrase):
+            return feet * 12 + extra + delta
+    return feet * 12 + extra
+
+
+def height_metres(bullet):
+    """Same, in metres, or None."""
+    inches = height_inches(bullet)
+    return None if inches is None else round(inches * 0.0254, 4)
 
 
 def apose_prompt(entry):
@@ -271,6 +330,160 @@ def append_dossier_3d(path, files, workflows, stance):
 # --------------------------------------------------------------------------
 
 
+# --------------------------------------------------------------------------
+# Squaring the A-pose for reconstruction
+# --------------------------------------------------------------------------
+#
+# CLIPVisionEncode's crop="center" scales the short side to the vision tower's
+# resolution and centre-crops the long one. apose.png is 1024x1280 with the
+# figure filling y 13..1265, so the crop kept rows 128..1151 and discarded 115
+# pixels off the top of the subject and 113 off the bottom - 9% at each end,
+# about six inches of a five-foot-nine figure. Hunyuan3D reconstructed exactly
+# what it was shown: a helmet sliced flat across the crown, and trouser legs
+# ending in stumps with no boots at all.
+#
+# Squaring the image first makes the crop a no-op. Done here rather than in the
+# graph because the crop has to be tight to the SUBJECT, and finding the
+# subject needs the alpha channel rmbg already produced - the core ComfyUI
+# nodes can pad to a fixed size but cannot measure a mask's bounds.
+#
+# PNG by hand because spec 2.2 rules out a dependency that needs a compiler and
+# Pillow is not installed. rmbg's output is always 8-bit RGBA and never
+# interlaced, so that one shape is all this has to understand.
+
+APOSE_MARGIN = 0.06     # breathing room around the subject, as a fraction
+
+
+def _png_read(path):
+    """-> (width, height, [bytearray rows]) for an 8-bit RGBA non-interlaced PNG."""
+    data = path.read_bytes()
+    position, idat, header = 8, [], None
+    while position < len(data):
+        length = int.from_bytes(data[position:position + 4], "big")
+        kind = data[position + 4:position + 8]
+        if kind == b"IHDR":
+            header = data[position + 8:position + 8 + length]
+        elif kind == b"IDAT":
+            idat.append(data[position + 8:position + 8 + length])
+        position += 12 + length
+    if header is None:
+        raise ValueError("%s has no IHDR - not a PNG" % path)
+    width = int.from_bytes(header[0:4], "big")
+    height = int.from_bytes(header[4:8], "big")
+    depth, colour, interlace = header[8], header[9], header[12]
+    if (depth, colour, interlace) != (8, 6, 0):
+        raise ValueError("%s is not 8-bit RGBA non-interlaced (depth=%d colour=%d "
+                         "interlace=%d)" % (path, depth, colour, interlace))
+    raw, stride = zlib.decompress(b"".join(idat)), width * 4
+
+    def paeth(a, b, c):
+        p = a + b - c
+        pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+        return a if pa <= pb and pa <= pc else (b if pb <= pc else c)
+
+    rows, previous, position = [], bytearray(stride), 0
+    for _ in range(height):
+        filter_type = raw[position]
+        position += 1
+        line = bytearray(raw[position:position + stride])
+        position += stride
+        if filter_type:
+            for i in range(stride):
+                a = line[i - 4] if i >= 4 else 0
+                b = previous[i]
+                c = previous[i - 4] if i >= 4 else 0
+                if filter_type == 1:
+                    line[i] = (line[i] + a) & 255
+                elif filter_type == 2:
+                    line[i] = (line[i] + b) & 255
+                elif filter_type == 3:
+                    line[i] = (line[i] + ((a + b) >> 1)) & 255
+                elif filter_type == 4:
+                    line[i] = (line[i] + paeth(a, b, c)) & 255
+                else:
+                    raise ValueError("%s uses PNG filter %d" % (path, filter_type))
+        rows.append(line)
+        previous = line
+    return width, height, rows
+
+
+def _png_write(path, width, height, rows):
+    """Write 8-bit RGBA rows as a PNG. Filter 0 throughout - zlib does the work."""
+    def chunk(kind, payload):
+        return (len(payload).to_bytes(4, "big") + kind + payload
+                + (zlib.crc32(kind + payload) & 0xffffffff).to_bytes(4, "big"))
+
+    raw = b"".join(bytes([0]) + bytes(row) for row in rows)
+    path.write_bytes(
+        bytes([137, 80, 78, 71, 13, 10, 26, 10])
+        + chunk(b"IHDR", width.to_bytes(4, "big") + height.to_bytes(4, "big")
+                + bytes((8, 6, 0, 0, 0)))
+        + chunk(b"IDAT", zlib.compress(raw, 6))
+        + chunk(b"IEND", b""))
+
+
+def subject_bounds(rows, width, height, threshold=16):
+    """(x0, y0, x1, y1) of everything more opaque than `threshold`, or None."""
+    x0, y0, x1, y1 = width, height, -1, -1
+    for y, row in enumerate(rows):
+        opaque = [x for x in range(width) if row[x * 4 + 3] > threshold]
+        if not opaque:
+            continue
+        if y < y0:
+            y0 = y
+        y1 = y
+        if opaque[0] < x0:
+            x0 = opaque[0]
+        if opaque[-1] > x1:
+            x1 = opaque[-1]
+    return None if x1 < 0 else (x0, y0, x1, y1)
+
+
+def square_apose(src, dst, margin=APOSE_MARGIN, threshold=16):
+    """Crop `src` to its subject and centre it on a square, uniform backdrop.
+
+    The WHOLE canvas is rebuilt, not just the added margin. Padding alone
+    leaves a seam where the flat fill meets the source's faintly textured
+    backdrop, and that rectangle is not ignored: Hunyuan3D reconstructed it as
+    a slab standing behind the figure. rmbg has already produced an exact alpha
+    cutout, so the subject is composited over one flat colour everywhere and no
+    edge is left to mistake for geometry. A soft alpha edge is blended rather
+    than thresholded, so the silhouette stays antialiased.
+
+    Returns the square's side in pixels.
+    """
+    width, height, rows = _png_read(src)
+    bounds = subject_bounds(rows, width, height, threshold)
+    if bounds is None:
+        raise RuntimeError(
+            "%s is entirely transparent - background removal ate the figure"
+            % src.name)
+    x0, y0, x1, y1 = bounds
+    subject_w, subject_h = x1 - x0 + 1, y1 - y0 + 1
+    side = int(max(subject_w, subject_h) * (1 + margin))
+
+    backdrop = (rows[0][0], rows[0][1], rows[0][2])
+    flat = bytes(backdrop + (0,))
+    out = [bytearray(flat * side) for _ in range(side)]
+    ox, oy = (side - subject_w) // 2, (side - subject_h) // 2
+    for y in range(subject_h):
+        source, target = rows[y0 + y], out[oy + y]
+        for x in range(subject_w):
+            si, di = (x0 + x) * 4, (ox + x) * 4
+            alpha = source[si + 3]
+            if not alpha:
+                continue
+            if alpha == 255:
+                target[di:di + 4] = source[si:si + 4]
+            else:
+                for c in range(3):
+                    target[di + c] = ((source[si + c] * alpha
+                                       + backdrop[c] * (255 - alpha)) // 255)
+                target[di + 3] = alpha
+    _png_write(dst, side, side, out)
+    return side
+
+
 def _multipart(fields, field_name, filename, blob):
     """A multipart/form-data (content_type, body) for one file plus fields.
 
@@ -430,7 +643,16 @@ def stage_mesh(comfy, args, entry, folder, apose_png):
     npc = apose_npc(entry)
     category = npc_gen.role_category(npc)
     slug = art._slug(npc["name"])
-    ref = upload_image(comfy, apose_png)
+
+    # Squared before upload, never the raw A-pose: CLIPVisionEncode centre-crops
+    # a 4:5 image and takes the head and the boots with it. Kept on disk beside
+    # apose.png rather than made in a temporary, because it is what the
+    # reconstruction actually saw and the one thing worth looking at when a
+    # shell comes out wrong.
+    square_png = folder / "apose_square.png"
+    side = square_apose(apose_png, square_png)
+    print("    squared -> %s (%dx%d)" % (square_png.name, side, side), flush=True)
+    ref = upload_image(comfy, square_png)
 
     written = []
     for workflow, label, target in (
@@ -483,7 +705,7 @@ def parse_report(stdout):
         raise RuntimeError("the Blender assembly's report was not JSON: %s" % exc)
 
 
-def assemble_command(blender, args, folder, stem, base, shell):
+def assemble_command(blender, args, folder, stem, base, shell, height=None):
     """The full argv for one headless assembly run.
 
     Split out from stage_assemble() because getting a flag to the far side of
@@ -505,12 +727,15 @@ def assemble_command(blender, args, folder, stem, base, shell):
         str(base), str(shell), str(folder), "--stem", stem,
         "--voxel", str(args.voxel),
     ]
+    if height is not None:
+        command += ["--real-height-m", str(height),
+                    "--nominal-height-m", str(NOMINAL_HEIGHT_M)]
     if args.rig:
         command += ["--rig", "--bind", args.bind]
     return command
 
 
-def stage_assemble(args, folder, stem, base, shell):
+def stage_assemble(args, folder, stem, base, shell, height=None):
     """Run headless Blender over the two GLBs. Returns the assembly's report.
 
     The whole report rather than just report["files"], because the caller has
@@ -522,19 +747,29 @@ def stage_assemble(args, folder, stem, base, shell):
     actual progress.
 
     --voxel is passed through explicitly rather than left to
-    assemble_npc.py's own default of 0.0. Run by hand against real Stage 0/1
-    output for a catalogue NPC: at 0.0 the cleaned shell had 3 non-manifold
-    edges and the stage correctly refused to write an unprintable STL; at
-    0.004 it produced a manifold result with 0 components dropped in a few
-    seconds. assemble_npc.py's own default is left alone deliberately - it is
-    a general-purpose tool with its own reviewed tests - and generate-3d.py
-    supplies the value that actually works for real reconstruction output.
+    assemble_npc.py's own default of 0.0, which would refuse to write an STL
+    at all: a real reconstruction is never closed on arrival. It applies to
+    the PRINTABLE copy only - the GLB and the turnarounds keep the full
+    ~162,000-face detail mesh - and it is in real metres, because
+    clean_shell() fits the height before anything measures a distance.
+
+    0.010 was measured against a real catalogue shell (Jules Sokolova), as the
+    fraction of the detail mesh's surface area that survives the remesh:
+
+        0.006 -> REFUSED (7%)    0.008 -> 96.1%, 63,624 faces
+        0.010 -> 92.7%, 39,488   0.015 -> 85.5%, 16,418
+
+    0.008 is the finest that works and 0.010 is what ships, because the cliff
+    below 0.008 is sheer - see npc_mesh.printable_copy() for why a FINER voxel
+    leaks where a coarser one does not - and 39,000 faces is already far more
+    than a 32 mm mini can resolve. A shell that still fails wants --voxel
+    RAISED, not lowered.
     """
     blender = find_blender(args.blender)
     if not ASSEMBLE_SCRIPT.exists():
         raise SystemExit("assembly script not found: %s" % ASSEMBLE_SCRIPT)
 
-    command = assemble_command(blender, args, folder, stem, base, shell)
+    command = assemble_command(blender, args, folder, stem, base, shell, height)
     proc = subprocess.run(command, capture_output=True, text=True, timeout=args.timeout)
     if proc.returncode != 0:
         raise RuntimeError("Blender assembly failed (%d):\n%s"
@@ -542,6 +777,10 @@ def stage_assemble(args, folder, stem, base, shell):
     report = parse_report(proc.stdout)
     print("      %d component(s) dropped, %d non-manifold edge(s)"
           % (report.get("components_dropped", 0), report.get("non_manifold", 0)))
+    if report.get("shell_height_m"):
+        print("      %.2f m tall (SAM3DBody estimated %.2f m), mini %.1f mm"
+              % (report["shell_height_m"], report.get("estimated_height_m", 0),
+                 report.get("print_height_mm", 0)))
     if report.get("rig_error"):
         print("    ! rigging failed: %s" % report["rig_error"], file=sys.stderr)
     elif report.get("rigged"):
@@ -581,11 +820,12 @@ def parse_args(argv=None):
                             "(repeatable; default: all of %s)" % ", ".join(STAGES))
     stage.add_argument("--blender", type=Path, default=None,
                        help="the Blender executable (default: %s)" % DEFAULT_BLENDER)
-    stage.add_argument("--voxel", type=float, default=0.004,
+    stage.add_argument("--voxel", type=float, default=0.013,
                        help="voxel remesh size in metres, forcing a closed, "
-                            "printable surface on the cleaned shell (default: "
-                            "%(default)s - raise it further if a mesh still "
-                            "reports non-manifold edges)")
+                            "printable surface on the STL's copy of the shell "
+                            "(default: %(default)s). RAISE it if a mesh comes "
+                            "back destroyed or non-manifold - lowering it "
+                            "makes both worse")
     stage.add_argument("--rig", action="store_true",
                        help="also bind the shell to the base's armature and "
                             "export a rigged GLB; off by default because both "
@@ -741,7 +981,14 @@ def main(argv=None):
             if "assemble" in args.stage:
                 print("    assembling ...", flush=True)
                 stem = npc_gen._safe(entry["name"])
-                report = stage_assemble(args, folder, stem, base, shell)
+                # The NPC's own rolled height, not SAM3DBody's guess at it.
+                # None for an entry whose Height names no number - the legacy
+                # 'of average height' backfill - and the estimate stands.
+                height = height_metres(apose_npc(entry)["Height"])
+                if height is None:
+                    print("    ! %s names no height - using SAM3DBody's estimate"
+                          % entry["name"], file=sys.stderr)
+                report = stage_assemble(args, folder, stem, base, shell, height)
                 built = report["files"]
                 for name in built:
                     print("      -> %s" % name)

@@ -110,6 +110,43 @@ def fit_to_height(obj, target_z):
     apply_transforms(obj)
 
 
+def rescale_base(armature, body, target_z):
+    """Scale the base rig so the body stands `target_z` metres tall.
+
+    SAM3DBody infers metric height from a single image with no scale reference
+    in it, and it guesses low: on Jules Sokolova it returned 1.5065 m for an
+    NPC whose rolled '## Height' says "a solid five foot nine or so", which is
+    1.753 m - a 25 cm error, 4'11" against 5'9". The estimate is self-
+    consistent, so nothing downstream ever noticed; it is just the wrong
+    person's height.
+
+    The base is rescaled rather than the shell, and rescaled BEFORE the shell
+    is touched, because the base defines the frame - see align_to(). Once it
+    stands at the right height, fit_to_height() brings the shell to meet it and
+    every metre-denominated setting after that (--weld, --voxel, the STL's
+    scale) is measured against a correctly sized human.
+
+    The armature is what carries the scale: the glTF importer parents a skinned
+    mesh to its armature, so scaling the armature object scales the mesh with
+    it and, crucially, keeps the two in the correspondence a weight transfer
+    depends on. The body is scaled directly only if it is somehow not a child.
+    Nothing is applied - object scale exports as node scale, and applying a
+    transform to a skinned mesh out from under its armature is the one way to
+    break a rig invisibly.
+    """
+    current = height_of(body)
+    if current <= 0:
+        raise RuntimeError("the base has no height to rescale")
+    factor = target_z / current
+    armature.scale = [component * factor for component in armature.scale]
+    armature.location = [component * factor for component in armature.location]
+    if body.parent is not armature:
+        body.scale = [component * factor for component in body.scale]
+        body.location = [component * factor for component in body.location]
+    bpy.context.view_layer.update()
+    return factor
+
+
 def world_bounds(obj):
     """The (min, max) corners of the object's world-space bounding box."""
     bpy.context.view_layer.update()
@@ -288,44 +325,81 @@ def non_manifold_edges(obj):
     return count
 
 
-def clean_shell(obj, weld_distance=0.0005, voxel_size=0.0, min_fraction=0.05,
-                min_area_kept=0.5):
-    """Specks dropped, welded, capped, optionally remeshed. -> (dropped, left)
+def clean_shell(obj, weld_distance=0.0005, min_fraction=0.05, fit_height=None):
+    """Specks dropped, scaled to `fit_height`, welded, capped. -> (dropped, left)
 
-    In that order: dropping the specks first means the weld and the hole fill
-    are not asked to reason about 10,000 stray triangles, and the remesh - when
-    it is asked for at all - runs on a surface that is already nearly closed.
+    This is the DETAIL mesh - the one the GLB and the turnarounds want. It is
+    not remeshed and makes no promise of being closed; printable_copy() is what
+    produces the single closed body the STL needs, from this.
 
-    The remesh is checked, not trusted. Blender's voxel remesh goes through an
-    OpenVDB mesh-to-volume, and on a surface with a large open boundary that
-    conversion does not fail - it returns a scatter of small closed fragments
-    that is manifold, is the right bounding box, and is not a figure. Measured
-    on the Jules Sokolova shell at --voxel 0.004: 99,057 polygons over 0.836
-    units of surface went in and 1,468 polygons over 0.003 units came out,
-    non_manifold_edges() reported 0 because every crumb was closed, and the
-    turnarounds rendered a blank frame with specks in it. Surface area is what
-    separates the two cases - a healthy remesh keeps essentially all of it -
-    so a remesh that loses more than half of it raises here, where the mesh is
-    still in hand, rather than downstream where the only symptom is an empty
-    render.
+    The order matters twice over. The specks come off first so that the height
+    the scale is fitted to is the figure's and not some stray triangle's, and
+    so the weld and the hole fill are not asked to reason about 10,000 loose
+    fragments. The scale is fixed second so that every distance after it - the
+    weld here, the voxel size in printable_copy() - is in real-world metres.
+    Before this ordering existed, `--weld 0.0005` and `--voxel 0.004` were both
+    documented as metres and both applied at whatever arbitrary scale the
+    reconstruction happened to come out at: Hunyuan3D normalises to roughly two
+    units for a 1.5 m person, so the numbers were quietly off by a third.
     """
     dropped, remaining = drop_small_components(obj, min_fraction)
+    if fit_height is not None:
+        fit_to_height(obj, fit_height)
     weld(obj, weld_distance)
     fill_holes(obj)
-    if voxel_size > 0:
-        before = surface_area(obj)
-        remesh(obj, voxel_size)
-        after = surface_area(obj)
-        if before > 0 and after < before * min_area_kept:
-            raise RuntimeError(
-                "the voxel remesh at %g destroyed the shell: %.4f of %.4f "
-                "units of surface area survived (%.1f%%). The mesh going in "
-                "was too open for a volume conversion - lower --voxel, or fix "
-                "the reconstruction." % (voxel_size, after, before,
-                                         100 * after / before))
-        dropped_after, remaining = drop_small_components(obj, min_fraction)
-        dropped += dropped_after
     return dropped, remaining
+
+
+def printable_copy(obj, voxel_size, min_area_kept=0.5, min_fraction=0.05):
+    """A closed, single-body copy of `obj` for the STL. -> (copy, parts)
+
+    A copy, because the caller still wants the detailed original for the GLB
+    and the turnarounds, and the voxel remesh that makes a mesh printable is
+    exactly what costs it its detail: measured on the Jules Sokolova shell,
+    162,058 polygons of cleaned surface remesh down to 29,458. A print at
+    32 mm cannot show the difference and a 768-pixel turnaround plainly can,
+    so they no longer share a mesh. The caller must discard() the copy.
+
+    The remesh is checked, not trusted. Blender's voxel remesh goes through an
+    OpenVDB mesh-to-volume whose narrow band is a fixed number of VOXELS, so
+    the band's real width shrinks with voxel_size - and on a surface that still
+    has open boundary, a band too thin to bridge the holes lets the volume leak
+    and returns a scatter of small closed fragments. That result is manifold,
+    is the right bounding box, and is not a figure, so nothing downstream
+    catches it: the four turnarounds render a blank frame with specks in it.
+    Measured on one real shell with 555 boundary edges left after hole filling,
+    as the fraction of surface area surviving the remesh:
+
+        0.004 m -> 0.7%      0.008 m -> 7.7%
+        0.015 m -> 91.0%     0.030 m -> 80.7%
+
+    Finer is emphatically not better here, which is why the check is on area
+    rather than on the voxel size being "reasonable".
+    """
+    copy = obj.copy()
+    copy.data = obj.data.copy()
+    copy.name = "%s_print" % obj.name
+    bpy.context.collection.objects.link(copy)
+    if voxel_size > 0:
+        before = surface_area(copy)
+        remesh(copy, voxel_size)
+        after = surface_area(copy)
+        if before > 0 and after < before * min_area_kept:
+            discard(copy)
+            raise RuntimeError(
+                "the voxel remesh at %g m destroyed the shell: %.4f of %.4f "
+                "square metres of surface survived (%.1f%%). The mesh going in "
+                "was too open for a volume conversion; RAISE --voxel rather "
+                "than lower it - a finer voxel has a thinner band and leaks "
+                "more, not less." % (voxel_size, after, before,
+                                     100 * after / before))
+    _, parts = drop_small_components(copy, min_fraction)
+    return copy, parts
+
+
+def discard(obj):
+    """Remove one object and its mesh from the file."""
+    bpy.data.objects.remove(obj, do_unlink=True)
 
 
 def export_glb(objects, path):

@@ -78,27 +78,150 @@ The consequence is that the 3D model's pose does not match the NPC's portrait.
 For a rigged character that is correct; a static print mini is posed afterwards
 in Blender.
 
-### Why `--voxel` defaults to 0.004, not 0
+### Why the A-pose is squared before it is uploaded
 
-`blender/assemble_npc.py` cleans the reconstructed shell and refuses to export
-a mesh with non-manifold edges - one that would not print - unless `--voxel`
-is raised above its own default of `0.0` to force a closed remesh. That
-script's default is correct for *it*: it is a general-purpose tool with its
-own tests, and 0 is the right value to leave untouched rather than never
-running.
+`CLIPVisionEncode` uses `crop: "center"`, which scales the short side to the
+vision tower's resolution and centre-crops the long one. `apose.png` is
+1024x1280 with the figure filling y 13..1265, so the crop kept rows 128..1151
+and threw away **115 pixels off the top of the subject and 113 off the bottom**
+- 9% at each end, about six inches of a five-foot-nine figure.
 
-`generate-3d.py` passes `--voxel` through explicitly instead of leaving it at
-that default, because the default fails on real data. Run by hand against a
-real catalogue NPC's Stage 0/1 output: at `--voxel 0.0` the cleaned shell had
-3 non-manifold edges and `assemble_npc.py` correctly exited 1 rather than
-write an unprintable STL; at `--voxel 0.004` the same shell came out with 0
-non-manifold edges and 0 components dropped, in a few seconds. The committed
-test fixtures are clean enough to pass at 0, which is why the hermetic suite
-alone would never have caught this - only a real reconstruction did. `0.004`
-is `generate-3d.py`'s own default, passed on the command line like any other
-option; `--voxel 0` (or any other value) still works if a particular mesh
-wants it, and raising it further is the right move if a mesh still reports
-non-manifold edges.
+The model reconstructed exactly what it was shown. The helmet came back sliced
+flat across the crown, and the trouser legs ended in flat stumps with no boots
+at all - both clean planar cuts, which is the signature.
+
+`square_apose()` in `generate-3d.py` crops to the subject's alpha bounds,
+composites it over a uniform backdrop and centres it on a square with 6%
+margin, and Stage 1 uploads that instead of the raw A-pose. `crop: "center"`
+then has nothing to remove. The squared image is kept on disk as
+`3d/apose_square.png` - it is what the reconstruction actually saw, and the
+first thing worth looking at when a shell comes out wrong.
+
+Two details are load-bearing:
+
+- **The whole canvas is rebuilt, not just the padding.** A first attempt padded
+  the 1024x1280 out to a square and left the source's own faintly textured
+  backdrop in the middle. The seam between the two is a rectangle, and
+  Hunyuan3D reconstructed it as **a flat slab standing behind the figure**.
+  rmbg has already produced an exact alpha cutout, so the subject is
+  composited over one flat colour everywhere and no edge remains to be
+  mistaken for geometry.
+- **The crop is tight to the SUBJECT, so it happens in Python.** Core ComfyUI
+  can pad to a fixed size (`EmptyImage` + `ImageCompositeMasked`) but cannot
+  measure a mask's bounds, and spec 2.1 rules out a custom node pack. PNG is
+  read and written by hand for the same reason spec 2.2 gives - no dependency
+  that needs a compiler, and Pillow is not installed. rmbg output is always
+  8-bit RGBA and never interlaced, so that one shape is all the codec
+  understands; anything else raises.
+
+There is a real cost. Showing a whole standing figure inside a square leaves
+the subject at ~54% of the frame width where the uncropped 4:5 gave it 66%, so
+the model has less to work with and the surface comes back thinner and more
+open (1,355 boundary edges against 555). That is what `octree_resolution` and
+`--voxel` below are tuned around, and it is plainly the better trade: a
+complete figure with a softer surface beats a detailed torso with no head.
+
+### `octree_resolution` is the detail lever, and 384 is its ceiling here
+
+`VAEDecodeHunyuan3D.octree_resolution` is the SDF grid the mesh is extracted
+from, and it - not the input image's pixel count - is what controls geometric
+detail. Upscaling the A-pose does nothing: `CLIPVisionEncode` resizes to the
+vision tower's native resolution first and the extra pixels are discarded.
+
+Measured on the squared Jules A-pose:
+
+| `octree_resolution` | result |
+|---|---|
+| 256 (was the default) | 30,083 triangles, 44 s |
+| **384** | **119,921 triangles, 73 s** |
+| 512 | **OOM** - `VoxelToMesh` tried to allocate 25.9 GB |
+
+384 ships. The allocation goes as the cube of the resolution, so 512 is not
+reachable on this machine and probably not on any machine this project will
+run on.
+
+### Scale: the NPC's own height, not the estimate of it
+
+SAM3DBody infers metric height from one image with no scale reference in it,
+and it guesses low. On Jules Sokolova it returned **1.5065 m** — 4'11" — for
+an NPC whose rolled `## Height` reads *"a solid five foot nine or so"*, which
+is **1.753 m**. A 25 cm error, and an invisible one: the estimate is
+self-consistent, so the rig, the shell and the turnarounds all agreed with
+each other and all described the wrong person.
+
+`generate-3d.py` now reads the height out of the NPC's own Height bullet and
+passes it as `--real-height-m`. The **base** is what gets rescaled, before the
+shell is touched, so the frame the shell is fitted and aligned to is already
+the right size and every metre after that is a real metre. The armature
+carries the scale — the glTF importer parents a skinned mesh to its armature —
+which keeps base and shell in the correspondence a weight transfer needs.
+
+The bullet is **parsed**, not looked up in a table of the twelve current ones.
+A manifest entry stores the bullet as it was when rolled, and this tool's whole
+premise is that the back catalogue is eligible, so a since-reworded bullet must
+not quietly stop resolving. Every bullet in both Height tables states its
+height in words, including the hedges — *"just a few inches under six feet"* is
+5'9", *"close to six and a half feet"* is 6'5". A bullet that names no number
+at all (`of average height`, the legacy backfill) falls back to the estimate
+with a warning rather than failing the NPC over a refinement.
+`test_every_height_bullet_in_the_tables_parses` fails loudly if a bullet stops
+resolving.
+
+### The mini scales with the character
+
+`--print-height-mm` (32 mm) is now the height of a **nominal** figure,
+`--nominal-height-m` (1.8288 m, six feet). Each mini is scaled in proportion to
+its own character, so Jules at 5'9" prints **30.67 mm** and someone at 6'5"
+prints 35.7 mm. A 5'0" pilot and a 6'6" trooper used to come off the plate
+identical, which is right for a mini printed alone and wrong for the squad this
+catalogue exists to produce.
+
+Without `--real-height-m` the old behaviour stands: exactly `--print-height-mm`,
+every time. That is deliberate — with no known height the only alternative is
+to scale by the estimator's noise, which is worse than uniform.
+
+### Why `--voxel` defaults to 0.010, and why lowering it is the wrong move
+
+`--voxel` applies to the **printable copy only**. The GLB and the turnarounds
+keep the full ~162,000-face detail mesh; only the STL is remeshed, because
+only the print needs a closed single body and the remesh is what costs the
+detail (162,058 faces in, 39,488 out at 0.010).
+
+It is in real metres. `clean_shell()` fits the shell to the base's height
+before anything measures a distance, so `--weld` and `--voxel` both mean what
+they say. They did not always: the fit used to happen *after* the clean, and
+Hunyuan3D normalises to roughly two units for a 1.5 m person, so both numbers
+were quietly a third smaller than documented.
+
+`assemble_npc.py`'s own default of `0.0` is left alone - it is a
+general-purpose tool with its own tests - but it refuses to write an STL from
+a real reconstruction, which is never closed on arrival. `generate-3d.py`
+passes a working value explicitly. Measured on a real catalogue shell (Jules
+Sokolova), as the fraction of the detail mesh's surface area surviving:
+
+| `--voxel` | area kept | print faces |
+|---|---|---|
+| 0.004 | 32.2% | — |
+| 0.008 | 38.9% | 48,734 |
+| **0.013** | **~67%** | **~27,000** |
+| 0.030 | 60.1% | 6,350 |
+
+A **finer** voxel is worse, not better, and the cliff is sheer. An earlier
+revision defaulted to 0.010 on the strength of a 92.7% reading; that was taken
+against the pre-squaring shell, which was denser and much less open, and it
+does not survive the squared one.
+Blender's voxel remesh converts through an OpenVDB volume whose narrow band is
+a fixed number of *voxels*, so its real width shrinks with the voxel size; on
+a surface that still has open boundary, a band too thin to bridge the holes
+lets the volume leak and returns a scatter of small closed fragments. That
+result is manifold and correctly bounded and is not a figure. So when a shell
+comes back destroyed or non-manifold, **raise** `--voxel`. 0.010 ships rather
+than the finer 0.008 to keep a step of clearance from the cliff; 39,000 faces
+is already far more than a 32 mm mini can resolve.
+
+`npc_mesh.printable_copy()` measures surface area across the remesh and
+refuses anything that loses more than half of it, so this failure is loud
+instead of arriving as four blank PNGs.
 
 ## Outputs
 
@@ -106,8 +229,8 @@ Written into `<NPC folder>/3d/`, beside the portrait and the token:
 
 | File | What it is |
 |---|---|
-| `<Name> Shell.glb` | Clothed mesh, cleaned, unrigged |
-| `<Name> Print.stl` | Manifold single body, scaled to 32 mm |
+| `<Name> Shell.glb` | Clothed mesh, cleaned, unrigged - the full-detail one |
+| `<Name> Print.stl` | Manifold single body, voxel-remeshed, scaled to 32 mm |
 | `<Name> Turnaround_{000,090,180,270}.png` | Orbit renders |
 | `<Name> Rigged.glb` | Clothed shell, bound to the base's 127-bone armature — only with `--rig`, and only if the bind fully succeeded (see [Rigging](#rigging)) |
 
@@ -116,15 +239,17 @@ the two workflow files and the A-pose stance text - so the dossier keeps
 recording everything needed to reproduce its own output. Re-running replaces
 that section rather than stacking a second one.
 
-Measured on a real reconstruction (Lucia Vos): 63.8 MB of deliverables per
-NPC — `Shell.glb` 33.4 MB, `Print.stl` 29.2 MB, the four 768px turnaround
-PNGs 1.2 MB combined — plus 22.7 MB of intermediates (`apose.png`,
-`_shell.glb`, `_base.glb`) that this tool does **not** clean up, for
-**86.5 MB per NPC**, or **139.4 MB with `--rig`** (the rigged GLB adds
-another ~53 MB). Across a 160-NPC batch that is roughly **13.8 GB**, or
-**22.3 GB with `--rig`** — plan storage against these figures, not the
-spec's original 20-40 MB estimate, which measured only the deliverables and
-undercounted them besides. No ignore rules are needed: NPC folders live under
+Measured on Jules Sokolova with the pipeline as it now stands: `Shell.glb`
+13.8 MB (162,056 faces), `Print.stl` 4.0 MB (39,488 faces), the four 640px
+turnarounds 0.8 MB combined — about **19 MB of deliverables**, plus ~22 MB of
+intermediates (`apose.png`, `_shell.glb`, `_base.glb`) this tool does **not**
+clean up, for roughly **41 MB per NPC** or **6.6 GB across a 160-NPC batch**.
+
+An earlier revision of this section quoted 86.5 MB per NPC and 13.8 GB per
+batch, measured on Lucia Vos before the `RemeshMesh` clip was found. Those
+numbers described a `Shell.glb` and an STL that were the *same* remeshed mesh;
+splitting them and dropping the in-graph remesh changed both. No ignore rules
+are needed: NPC folders live under
 `output/`, which is already ignored, or under ComfyUI's own output directory
 outside the repo, and `3d/` inherits both.
 
@@ -220,64 +345,87 @@ already is.
 
 ## Known limits
 
-### Measured: the checkpoint is being driven off-label
+### Measured: `RemeshMesh` was clipping every reconstruction to a half-unit box
 
-`Util_Image_to_Mesh_Hunyuan3D_v1.json` loads `hunyuan3d-dit-v2-mv_fp16` - the
-**multi-view** checkpoint - and conditions it through the single-view
-`Hunyuan3Dv2Conditioning` node. ComfyUI ships
-`Hunyuan3Dv2ConditioningMultiView` (front / left / back / right) and it is
-present on this install.
+This was the root cause of everything below it, and it took two phases of
+chasing symptoms to find. Straight off `VoxelToMesh` a real shell spanned
+y −0.978..0.986 — a whole figure, head and hands and feet. After `RemeshMesh`
+it spanned exactly y −0.503..0.504, flat-cut at both ends. The head, the
+forearms and everything below mid-thigh were being sliced off in-graph.
 
-Swapping that one node, with the same `apose.png` and the same seed
-(Jules Sokolova, 3958386534):
+Nine reconstructions of the same NPC, one variable at a time, all with the
+same seed (3958386534):
+
+| Probe | Setup | Result |
+|---|---|---|
+| A | four perfectly registered orthographic views | torso, y ±0.503 |
+| C | front + back only (no left/right ambiguity) | torso, y ±0.504 |
+| F | single-view conditioning node | torso, y ±0.50 |
+| G | `CLIPVisionEncode crop: "none"` | torso, y ±0.50 |
+| **H** | **`RemeshMesh` bypassed, one view** | **whole figure, y −0.978..0.986** |
+
+`RemeshMesh` is out of the graph. `DecimateMesh` now takes `VoxelToMesh`
+directly. The speck dropping it was there for (`drop_small_components: 0.02`,
+spec §2.3) happens in `npc_mesh.drop_small_components()` instead, by surface
+area — 895 specks off one real shell, one component left, 91.5% of the
+vertices retained. If the node is ever reinstated, prove it does not clip
+first: `test_nothing_remeshes_between_the_voxels_and_the_save` guards it.
+
+### Measured: the checkpoint was being driven off-label
+
+`Util_Image_to_Mesh_Hunyuan3D_v1.json` loads `hunyuan3d-dit-v2-mv_fp16` — the
+**multi-view** checkpoint — and used to condition it through the single-view
+`Hunyuan3Dv2Conditioning` node. It now uses
+`Hunyuan3Dv2ConditioningMultiView` with `front` alone. Same image, same seed:
 
 | | single-view node | multi-view node, `front` only |
 |---|---|---|
-| Components in the raw shell | **9** (two at 49.6% / 50.2% of area - torn halves) | **1** (100%) |
-| Surface area surviving the 0.004 remesh | 0.4% | ~100% |
-| `Shell.glb` | 159 KB | **31.9 MB** |
-| `Print.stl` | 146 KB | **26.7 MB** |
-| Turnarounds | blank frames with specks | a clean, closed, printable figure |
+| Components in the raw shell | **9** (two at 49.6% / 50.2% of area — torn halves) | **1** (100%) |
+| Surface area surviving the remesh | 0.4% | ~100% |
 
-So the torn double-shell is the node mismatch, not the reconstruction being
-hard. Fixing it is a one-node edit and does not need new views.
+This is a real improvement and it stays, but note what it is *not*: with
+`RemeshMesh` still in the graph both variants were clipped to a torso, so the
+node swap fixed the tearing and not the truncation. The two are independent.
 
-What one view still cannot do is complete the figure: the multi-view result is
-a clean torso from shoulders to mid-thigh with **no head, no hands and no
-feet**. The model is asking for the views it was trained on.
+### Not measured: whether extra views would help
 
-A second run that also square-padded the input in-graph (`EmptyImage` +
-`ImageCompositeMasked`, 1024x1280 -> 1280x1280, so `crop: "center"` stops
-trimming) came out **worse**, not better - 3.60 units of surface area against
-6.99, and a sheared, lopsided torso. Hunyuan3D wants the subject filling the
-frame; do not pad it. Ruled out, do not retry.
+Four registered views produced exactly the same clipped torso as one, so this
+project has **no evidence either way** on multi-view input. The obvious next
+experiment — Qwen-Image-Edit 2509 is installed, with the full UNET / text
+encoder / VAE stack and `TextEncodeQwenImageEditPlus` taking three reference
+images — is worth doing only after the single-view pipeline has been measured
+across several NPCs, since the reason for wanting it has gone away.
 
-- **The single-view shell can fail completely, not just fragment the head.**
-  Measured on Jules Sokolova (`run1/Pilots`): the Hunyuan3D shell came back as
-  nine components whose two largest were 49.6% and 50.2% of the surface area -
-  two overlapping, torn half-figures rather than one body - and no amount of
-  cleanup downstream recovers a figure from that. The assembly now refuses it
-  (see below) instead of shipping the crumbs.
-- **Faces are not good.** Hunyuan3D fragments the head; at token and mini
-  scale it reads acceptably, in close-up it does not. The real fix is
-  multi-view conditioning, which needs consistent left/back/right views and is
-  a design problem of its own. Note that
-  `Util_Image_to_Mesh_Hunyuan3D_v1.json` already loads the **multi-view**
-  checkpoint (`hunyuan3d-dit-v2-mv_fp16`) but drives it through the
-  single-view `Hunyuan3Dv2Conditioning` node; ComfyUI ships
-  `Hunyuan3Dv2ConditioningMultiView` (front / left / back / right) and it is
-  present on this install.
+An earlier revision of this file claimed square-padding the input was "ruled
+out, do not retry", on the strength of one padded run coming out worse than
+one unpadded run. Both runs were clipped by `RemeshMesh`, so the comparison
+measured nothing. It is **untested**, not ruled out.
+
+### Fixed along the way
+
 - **A destroyed shell used to pass every check.** The manifold check asks
   whether every edge has two faces, and a scatter of small closed fragments
-  answers yes. At `--voxel 0.004` the Jules shell went into the remesh with
-  99,057 polygons over 0.836 units of area and came out with 1,468 polygons
-  over 0.003 units - manifold, correctly bounded, and blank in every
-  turnaround. `clean_shell()` now measures surface area across the remesh and
-  raises when more than half of it is gone, and `assemble_npc.py` refuses a
-  shell that is still in more than one appreciable part.
-- **Turnaround lighting used to be fixed in world space**, so angles 180 and
-  270 rendered as black silhouettes on transparent - half of every turnaround
-  set was unreadable. The key and fill now swing with the camera.
+  answers yes: 99,057 polygons over 0.836 units of area went into a remesh and
+  1,468 polygons over 0.003 units came out, manifold, correctly bounded, and
+  blank in every turnaround. `printable_copy()` now measures surface area
+  across the remesh and refuses anything that loses more than half of it.
+- **`keep_largest_component` deleted half of every torn shell**, silently —
+  50.4% of the surface area on the Jules reconstruction. It drops specks by
+  area now, and the assembly refuses a print mesh still in more than one
+  appreciable part rather than resolving it by deletion.
+- **Turnaround lighting was fixed in world space**, so angles 180 and 270
+  rendered as black silhouettes on transparent — half of every turnaround set
+  was unreadable. The key and fill swing with the camera now.
+- **`frame_camera` aimed at the object origin**, not the bounding-box centre,
+  so a mesh whose origin was not at its centre rendered cropped and shoved
+  against the edge of frame.
+
+### Still true
+
+- **Faces are soft.** Hunyuan3D does not resolve a head well. It is present,
+  with hands and feet, now that nothing clips it — but at close range it
+  reads as a blob. Multi-view conditioning is the plausible fix and is
+  untested; see above.
 - **The rigged character has no texture.** Texture baking wanted dependencies
   that cannot be built on this machine.
 - **Rigging ships off, and was measured on exactly one NPC.** `--rig

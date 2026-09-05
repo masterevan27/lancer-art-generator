@@ -39,33 +39,15 @@
   },
   "7": {
     "class_type": "VAEDecodeHunyuan3D",
-    "inputs": {"samples": ["6", 0], "vae": ["2", 2], "num_chunks": 8000, "octree_resolution": 256}
+    "inputs": {"samples": ["6", 0], "vae": ["2", 2], "num_chunks": 8000, "octree_resolution": 384}
   },
   "8": {
     "class_type": "VoxelToMesh",
     "inputs": {"voxel": ["7", 0], "algorithm": "surface net", "threshold": 0.6}
   },
-  "9": {
-    "class_type": "RemeshMesh",
-    "_meta": {"title": "Remesh - drops the specks, closes the surface"},
-    "inputs": {
-      "mesh": ["8", 0],
-      "resolution": 512,
-      "sign_mode": "udf",
-      "sign_mode.qef": false,
-      "sign_mode.drop_inverted_components": true,
-      "sign_mode.drop_enclosed_components": true,
-      "band": 1.0,
-      "project_back": 1.0,
-      "fix_poles": true,
-      "smooth_iters": 2,
-      "drop_small_components": 0.02,
-      "precluster_max_verts": 20000000
-    }
-  },
   "10": {
     "class_type": "DecimateMesh",
-    "inputs": {"mesh": ["9", 0], "target_face_count": 200000, "placement_mode": "midpoint"}
+    "inputs": {"mesh": ["8", 0], "target_face_count": 200000, "placement_mode": "midpoint"}
   },
   "11": {
     "class_type": "SaveGLB",

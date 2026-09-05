@@ -6,13 +6,14 @@ a --dry-run has to get right for the run that follows to be worth starting.
 """
 import io
 import json
+import re
 import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
 
-from test.helpers import load_3d, manifest_entry
+from test.helpers import REPO, load_3d, manifest_entry
 
 d3 = load_3d()
 
@@ -503,19 +504,27 @@ class TestStageAssemble(unittest.TestCase):
             d3.stage_assemble(args, Path("/npcs/x/3d"), "X", Path("base.glb"), Path("shell.glb"))
         return run.call_args[0][0]
 
-    def test_voxel_defaults_to_0_004(self):
-        """0.0, assemble_npc.py's own default, left a real cleaned shell with 3
-        non-manifold edges; 0.004 was the value that measurably fixed it."""
-        self.assertEqual(d3.parse_args([]).voxel, 0.004)
+    def test_voxel_defaults_to_0_013(self):
+        """0.0, assemble_npc.py's own default, refuses to write an STL at all -
+        a real reconstruction is never closed on arrival.
+
+        A finer voxel has a thinner narrow band and leaks where a coarser one
+        does not, so this sits clear of the cliff rather than on the finest
+        value that happened to work once. Measured as the fraction of surface
+        area surviving the remesh, on the square-framed shell the pipeline now
+        produces: 0.004 kept 32%, 0.008 kept 39%, 0.013 kept ~67%. The earlier
+        0.010 was tuned against the pre-squaring shell, which was denser and
+        less open, and does not survive on this one."""
+        self.assertEqual(d3.parse_args([]).voxel, 0.013)
 
     def test_the_command_passes_voxel_through(self):
-        command = self._command_for(["--voxel", "0.01"])
+        command = self._command_for(["--voxel", "0.02"])
         self.assertIn("--voxel", command)
-        self.assertEqual(command[command.index("--voxel") + 1], "0.01")
+        self.assertEqual(command[command.index("--voxel") + 1], "0.02")
 
     def test_the_default_voxel_reaches_the_command_untouched(self):
         command = self._command_for([])
-        self.assertEqual(command[command.index("--voxel") + 1], "0.004")
+        self.assertEqual(command[command.index("--voxel") + 1], "0.013")
 
 
 class TestRigFlags(unittest.TestCase):
@@ -562,3 +571,191 @@ class TestRigFlags(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRealHeight(unittest.TestCase):
+    """The NPC's rolled '## Height' beats SAM3DBody's estimate of it.
+
+    SAM3DBody infers metric scale from a single image with no reference in it
+    and guesses low - 1.5065 m for an NPC whose Height bullet says "a solid
+    five foot nine or so", which is 1.753 m. The estimate is self-consistent,
+    so nothing downstream ever caught it; it is simply the wrong person.
+    """
+
+    def test_every_height_bullet_in_the_tables_parses(self):
+        """The guard that matters. A reworded bullet must not silently stop
+        resolving and drop that NPC back onto the estimate."""
+        text = (REPO / "prompts" / "npc-generator-tables.md").read_text(encoding="utf-8")
+        bullets = []
+        for heading in ("## Height\n", "## Height (she)\n"):
+            start = text.index(heading)
+            end = text.index("\n## ", start + len(heading))
+            bullets += [re.sub(r"^- (?:x\d+ )?", "", line)
+                        for line in text[start:end].splitlines()
+                        if line.startswith("- ")]
+        self.assertGreaterEqual(len(bullets), 12, "both Height tables should be found")
+        for bullet in bullets:
+            with self.subTest(bullet=bullet):
+                inches = d3.height_inches(bullet)
+                self.assertIsNotNone(inches, "names no parseable height")
+                # 4'0" to 7'0" - wide enough for any bullet anyone would write,
+                # narrow enough to catch a parse that grabbed the wrong number.
+                self.assertGreaterEqual(inches, 48)
+                self.assertLessEqual(inches, 84)
+
+    def test_the_nudge_words_move_the_number(self):
+        self.assertEqual(d3.height_inches("a solid six feet even"), 72)
+        self.assertEqual(d3.height_inches("just under six feet"), 71)
+        self.assertEqual(d3.height_inches("standing several inches over six feet"), 75)
+        self.assertEqual(d3.height_inches("standing just a few inches under six feet"), 69)
+        self.assertEqual(d3.height_inches("close to six and a half feet"), 77)
+        self.assertEqual(d3.height_inches("a shade over five feet"), 61)
+
+    def test_a_bullet_with_no_number_is_none_not_an_error(self):
+        """'of average height' is regenerate_one()'s backfill for an entry
+        written before '## Height' existed. It must fall back, not fail."""
+        self.assertIsNone(d3.height_inches("of average height"))
+        self.assertIsNone(d3.height_metres("of average height"))
+
+    def test_five_foot_nine_is_one_point_seven_five_metres(self):
+        self.assertAlmostEqual(d3.height_metres("a solid five foot nine or so"),
+                               1.7526, places=3)
+
+
+class TestRealHeightReachesBlender(unittest.TestCase):
+    def _command(self, height):
+        args = d3.parse_args([])
+        fake = mock.Mock(returncode=0, stdout='LANCER3D {"files": []}\n', stderr="")
+        with mock.patch.object(d3, "find_blender", return_value=Path("blender.exe")), \
+             mock.patch.object(d3.subprocess, "run", return_value=fake) as run:
+            d3.stage_assemble(args, Path("/npcs/x/3d"), "X",
+                              Path("base.glb"), Path("shell.glb"), height)
+        return run.call_args[0][0]
+
+    def test_a_known_height_is_passed_through(self):
+        command = self._command(1.7526)
+        self.assertEqual(command[command.index("--real-height-m") + 1], "1.7526")
+        self.assertEqual(command[command.index("--nominal-height-m") + 1],
+                         str(d3.NOMINAL_HEIGHT_M))
+
+    def test_an_unknown_height_passes_no_flag_at_all(self):
+        """Absent, not zero: assemble_npc.py falls back to the estimate on
+        None, and --real-height-m 0 would scale the figure out of existence."""
+        self.assertNotIn("--real-height-m", self._command(None))
+
+    def test_the_nominal_height_is_six_feet(self):
+        self.assertAlmostEqual(d3.NOMINAL_HEIGHT_M, 1.8288, places=4)
+
+
+class TestSquareApose(unittest.TestCase):
+    """The A-pose is squared before it reaches CLIPVisionEncode.
+
+    crop="center" scales the short side to the vision tower's resolution and
+    centre-crops the long one, so a 4:5 A-pose loses 9% off each end of the
+    subject - the helmet crown and the whole boot. Every reconstruction came
+    back with a flat-sliced head and legs ending in stumps until this landed.
+    """
+
+    def _tall_subject(self, path, width=100, height=200,
+                      box=(30, 10, 69, 189), backdrop=(236, 230, 232)):
+        """A PNG with an opaque red rectangle on a transparent backdrop."""
+        x0, y0, x1, y1 = box
+        rows = []
+        for y in range(height):
+            row = bytearray(bytes(backdrop + (0,)) * width)
+            if y0 <= y <= y1:
+                for x in range(x0, x1 + 1):
+                    row[x * 4:x * 4 + 4] = bytes((255, 0, 0, 255))
+            rows.append(row)
+        d3._png_write(path, width, height, rows)
+        return box
+
+    def test_the_png_helpers_round_trip(self):
+        """Written by hand, so the writer and the reader have to agree."""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "a.png"
+            self._tall_subject(path)
+            width, height, rows = d3._png_read(path)
+            self.assertEqual((width, height), (100, 200))
+            self.assertEqual(tuple(rows[100][30 * 4:30 * 4 + 4]), (255, 0, 0, 255))
+            self.assertEqual(rows[0][3], 0)
+
+    def test_it_finds_the_subject(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "a.png"
+            box = self._tall_subject(path)
+            width, height, rows = d3._png_read(path)
+            self.assertEqual(d3.subject_bounds(rows, width, height), box)
+
+    def test_the_result_is_square_and_holds_the_whole_subject(self):
+        """The point of the exercise: nothing of the figure may be cut."""
+        with tempfile.TemporaryDirectory() as tmp:
+            src, dst = Path(tmp) / "a.png", Path(tmp) / "b.png"
+            self._tall_subject(src)                      # subject is 40 x 180
+            side = d3.square_apose(src, dst, margin=0.06)
+            width, height, rows = d3._png_read(dst)
+            self.assertEqual(width, height, "not square")
+            self.assertEqual(width, side)
+            x0, y0, x1, y1 = d3.subject_bounds(rows, width, height)
+            self.assertEqual((x1 - x0 + 1, y1 - y0 + 1), (40, 180),
+                             "the subject changed size")
+            self.assertGreaterEqual(y0, 1, "subject touches the top edge")
+            self.assertLessEqual(y1, height - 2, "subject touches the bottom edge")
+
+    def test_the_subject_is_centred(self):
+        """Off-centre in, centred out - the centre crop is only a no-op if the
+        subject actually sits in the middle of the square."""
+        with tempfile.TemporaryDirectory() as tmp:
+            src, dst = Path(tmp) / "a.png", Path(tmp) / "b.png"
+            self._tall_subject(src, box=(0, 10, 39, 189))     # hard against the left
+            side = d3.square_apose(src, dst)
+            width, height, rows = d3._png_read(dst)
+            x0, y0, x1, y1 = d3.subject_bounds(rows, width, height)
+            self.assertLessEqual(abs((x0 + x1) / 2 - (side - 1) / 2), 1.0)
+            self.assertLessEqual(abs((y0 + y1) / 2 - (side - 1) / 2), 1.0)
+
+    def test_the_backdrop_is_uniform_everywhere(self):
+        """Not just in the padding. A seam between the added fill and the
+        source's own faintly textured backdrop is a rectangle, and Hunyuan3D
+        reconstructed one as a slab standing behind the figure."""
+        with tempfile.TemporaryDirectory() as tmp:
+            src, dst = Path(tmp) / "a.png", Path(tmp) / "b.png"
+            self._tall_subject(src)
+            d3.square_apose(src, dst)
+            width, height, rows = d3._png_read(dst)
+            backdrop = set()
+            for row in rows:
+                for x in range(width):
+                    if row[x * 4 + 3] == 0:
+                        backdrop.add(tuple(row[x * 4:x * 4 + 3]))
+            self.assertEqual(backdrop, {(236, 230, 232)},
+                             "more than one backdrop colour: %s" % backdrop)
+
+    def test_a_soft_alpha_edge_is_blended_not_thresholded(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            src, dst = Path(tmp) / "a.png", Path(tmp) / "b.png"
+            rows = []
+            for y in range(20):
+                row = bytearray(bytes((200, 200, 200, 0)) * 20)
+                if 5 <= y <= 14:
+                    for x in range(5, 15):
+                        row[x * 4:x * 4 + 4] = bytes((0, 0, 0, 128))
+                rows.append(row)
+            d3._png_write(src, 20, 20, rows)
+            d3.square_apose(src, dst, threshold=16)
+            _, _, out = d3._png_read(dst)
+            blended = [tuple(r[x * 4:x * 4 + 4]) for r in out for x in range(len(r) // 4)
+                       if r[x * 4 + 3] == 128]
+            self.assertTrue(blended, "the soft pixels vanished")
+            # 0 over 200 at alpha 128, integer-blended: 200*127//255 = 99.
+            # The point is that it is neither pure black nor the flat backdrop.
+            self.assertEqual(blended[0][:3], (99, 99, 99))
+
+    def test_an_empty_cutout_is_a_loud_failure(self):
+        """Background removal eating the figure must not reach ComfyUI as a
+        blank square that reconstructs into nothing."""
+        with tempfile.TemporaryDirectory() as tmp:
+            src, dst = Path(tmp) / "a.png", Path(tmp) / "b.png"
+            d3._png_write(src, 8, 8, [bytearray(bytes((0, 0, 0, 0)) * 8) for _ in range(8)])
+            with self.assertRaises(RuntimeError):
+                d3.square_apose(src, dst)
