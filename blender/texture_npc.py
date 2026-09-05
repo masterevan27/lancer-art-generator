@@ -77,7 +77,17 @@ def script_argv():
 
 def load_shell(path):
     npc_mesh.clear_scene()
-    return npc_mesh.join(npc_mesh.import_glb(path), "shell")
+    shell = npc_mesh.join(npc_mesh.import_glb(path), "shell")
+    # Re-weld what the GLB round trip split. assemble's clean_shell() welds at
+    # this same distance, but glTF stores attributes per face CORNER, so
+    # exporting and re-importing gives every triangle its own three vertices -
+    # measured on a real shell, 501,763 verts for 170,613 faces against 85,515
+    # distinct positions. Smart UV Project cannot build islands from a mesh
+    # with no shared vertices: it produced 167,154 islands (one per triangle)
+    # and an atlas that was almost entirely island margin. Welding first takes
+    # it to 4,713.
+    npc_mesh.weld(shell, distance=0.0005)
+    return shell
 
 
 def step_back(args):
