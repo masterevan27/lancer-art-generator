@@ -244,9 +244,23 @@ def projection_material(obj, front, back=None):
     # t = smoothstep(0, 1, 0.5 + 0.5 * Ny)
     half = maths('MULTIPLY_ADD', a=split.outputs["Y"],
                  value_b=0.5, value_c=0.5)
-    t = maths('SMOOTHSTEP', a=half.outputs["Value"],
-              value_b=0.0, value_c=1.0)
-    one_minus_t = maths('SUBTRACT', value_a=1.0, b=t.outputs["Value"])
+    # ShaderNodeMath has no SMOOTHSTEP operation - verified against this
+    # Blender (5.2.1 LTS, the same binary the suite launches): its operation
+    # enum has SMOOTH_MIN/SMOOTH_MAX but no true smoothstep, and assigning
+    # 'SMOOTHSTEP' raises TypeError. ShaderNodeMapRange's interpolation_type
+    # carries it instead. Its inputs are read by index, not by name (a Map
+    # Range node carries both float and vector sockets under the same
+    # display names, so inputs["From Min"] is ambiguous), and its output
+    # socket is "Result", not "Value" - every downstream read of `t` follows
+    # that. Do not "simplify" this back to a Math node.
+    t = tree.nodes.new("ShaderNodeMapRange")
+    t.interpolation_type = 'SMOOTHSTEP'
+    t.inputs[1].default_value = 0.0  # From Min
+    t.inputs[2].default_value = 1.0  # From Max
+    t.inputs[3].default_value = 0.0  # To Min
+    t.inputs[4].default_value = 1.0  # To Max
+    tree.links.new(half.outputs["Value"], t.inputs[0])  # Value
+    one_minus_t = maths('SUBTRACT', value_a=1.0, b=t.outputs["Result"])
 
     def weight(geometric, alpha):
         floored = maths('MULTIPLY_ADD', a=alpha, value_b=0.999, value_c=0.001)
@@ -254,7 +268,7 @@ def projection_material(obj, front, back=None):
 
     front_weight = weight(one_minus_t.outputs["Value"],
                           front_texture.outputs["Alpha"])
-    back_weight = weight(t.outputs["Value"], back_texture.outputs["Alpha"])
+    back_weight = weight(t.outputs["Result"], back_texture.outputs["Alpha"])
     total = maths('ADD', a=front_weight.outputs["Value"],
                   b=back_weight.outputs["Value"])
 

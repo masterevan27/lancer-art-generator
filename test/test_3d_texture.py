@@ -234,5 +234,56 @@ class TestBake(unittest.TestCase):
             [])
 
 
+@unittest.skipUnless(BLENDER, "Blender not installed")
+class TestTwoViewBake(unittest.TestCase):
+    """A bake with both views wired up. The blend's exact shape is Task 7's;
+    this is that both images reach the atlas at all."""
+
+    SIZE = 64
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.outdir = Path(cls._tmp.name)
+        front = cls.outdir / "front.png"
+        back = cls.outdir / "back.png"
+        write_test_png(front, 128, (220, 30, 30, 255))
+        write_test_png(back, 128, (30, 30, 220, 255))
+        cls.report, cls.proc = run_blender(
+            TEXTURE_SCRIPT, SHELL, cls.outdir, "--stem", STEM,
+            "--step", "bake", "--front", front, "--front-margin", "1.06",
+            "--back", back, "--size", cls.SIZE)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
+
+    def test_it_exits_cleanly(self):
+        self.assertEqual(self.proc.returncode, 0, self.proc.stderr[-3000:])
+
+    def test_the_report_lists_both_views(self):
+        self.assertEqual(self.report["views"], ["front", "back"])
+
+    def test_both_source_colours_reach_the_atlas(self):
+        """A red front and a blue back on a cylinder: the atlas must carry
+        both, or the blend collapsed to one view."""
+        _, _, rows = d3._png_read(self.outdir / ("_%s Texture.png" % STEM))
+        texels = [(row[x * 4], row[x * 4 + 1], row[x * 4 + 2])
+                  for row in rows for x in range(self.SIZE)
+                  if row[x * 4 + 3] > 16]
+        self.assertTrue(any(r > b + 40 for r, _, b in texels), "no red texels")
+        self.assertTrue(any(b > r + 40 for r, _, b in texels), "no blue texels")
+
+    def test_neither_view_swamps_the_other(self):
+        """A smooth blend, not a hard switch: on a symmetric cylinder the two
+        must come out comparable in area."""
+        _, _, rows = d3._png_read(self.outdir / ("_%s Texture.png" % STEM))
+        texels = [(row[x * 4], row[x * 4 + 2]) for row in rows
+                  for x in range(self.SIZE) if row[x * 4 + 3] > 16]
+        red = sum(1 for r, b in texels if r > b)
+        blue = len(texels) - red
+        self.assertGreater(min(red, blue), len(texels) * 0.2)
+
+
 if __name__ == "__main__":
     unittest.main()
