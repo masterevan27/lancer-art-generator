@@ -22,6 +22,14 @@ LIVE = gen.parse_tables(REPO / "prompts" / "npc-generator-tables.md")
 
 LIVE_PLACEMENTS = bullets_for(LIVE, "Glow placement")
 
+# Phrases that describe light at the scale of the whole shot. Banned from any
+# unflagged placement below, and required to be documented in the import skill
+# further down - one tuple, so the rule and the instruction cannot disagree.
+WHOLE_SHOT_PHRASES = ("the frame", "the shot", "the scene")
+
+SKILL_PATH = REPO / ".claude" / "skills" / "npc-trait-import" / "SKILL.md"
+SKILL = SKILL_PATH.read_text(encoding="utf-8") if SKILL_PATH.exists() else ""
+
 
 def roll(seed, **overrides):
     return gen.roll_npc(TABLES, random.Random(seed), overrides or None)
@@ -72,7 +80,7 @@ class TestTheLiveTable(unittest.TestCase):
             text, flags = gen.split_flags(bullet)
             if "scene" in flags:
                 continue
-            for phrase in ("the frame", "the shot", "the scene"):
+            for phrase in WHOLE_SHOT_PHRASES:
                 self.assertNotIn(
                     phrase, text.lower(),
                     "an unflagged placement is reachable from something the "
@@ -221,6 +229,56 @@ class TestRenderedPrompt(unittest.TestCase):
         self.assertNotIn("{", portrait)
         self.assertNotIn("{", token)
         self.assertNotIn("{", gen.LEGACY_GLOW_PLACEMENT)
+
+
+class TestTheImportSkillTeachesTheSameRule(unittest.TestCase):
+    """The rule above rejects a bad placement; the skill is what stops one
+    being written.
+
+    New placements arrive through the npc-trait-import skill, which stages
+    candidate bullets from reference images and validates them against its own
+    checklist before handing them over. That checklist is the only thing
+    standing between a reference photo of a light bar across a wall and a
+    bullet reading "cuts across the frame at an angle" - which is precisely
+    the bullet that shipped, fired off a pilot's glowing thruster pack, and
+    put a hard cobalt stripe corner to corner behind him.
+
+    Test above and skill are two halves of one rule, and the half that stops
+    the work happening is the documented one. So the phrases are asserted to
+    appear in the skill, read from the same tuple the check uses, rather than
+    trusting whoever adds a fourth phrase to remember the other file exists.
+    """
+
+    def test_the_skill_file_is_where_this_test_expects_it(self):
+        self.assertTrue(
+            SKILL_PATH.exists(),
+            "%s is missing. If the skill moved, move this test with it; if it "
+            "was deleted, delete this class too." % SKILL_PATH)
+
+    def test_the_skill_names_every_phrase_this_file_rejects(self):
+        for phrase in WHOLE_SHOT_PHRASES:
+            self.assertIn(
+                '"%s"' % phrase, SKILL,
+                "the import skill does not quote %r as a phrase an unflagged "
+                "Glow placement must avoid, so a staging run can write one and "
+                "pass its own §7 checklist. The bullet then reaches a render "
+                "before anything notices." % phrase)
+
+    def test_the_skill_gives_the_reason_and_not_just_the_list(self):
+        """A list of three banned strings invites working around it - "spans
+        the whole image" passes the letter of it. The reason is what
+        generalises: an unflagged placement is reachable from something worn or
+        carried, and a lit visor cannot light a wall.
+        """
+        self.assertIn(
+            "scene", SKILL,
+            "the skill must explain the 'scene' flag alongside the phrase list")
+        self.assertRegex(
+            SKILL, r"(?s)unflagged placement.{0,600}(visor|carries|carried|"
+                   r"wears|worn|equipped)",
+            "the skill lists the banned phrases without saying why an "
+            "unflagged placement cannot claim the whole shot. Without the "
+            "reason, a run rephrases around the list rather than obeying it.")
 
 
 if __name__ == "__main__":

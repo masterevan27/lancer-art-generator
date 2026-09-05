@@ -1,6 +1,6 @@
 ---
 name: npc-trait-import
-description: Extract Backdrop scenes, Stance poses, Weapon and Gear items, Outfit, Headgear, Hair, Hair colour, Feature, Demeanor (facial expression), Faction, Glow colour and Glow placement entries from reference images and stage them as importable candidate entries in a timestamped JSON file, for later selective review/import into npc-generator-tables.md (by the import webpage or by hand) rather than editing that file directly. Use whenever the user shares one or more reference images (pasted inline or given as file paths) from this Lancer campaign's ComfyUI/Krea pipeline and asks to add, extract, stage, or import backdrops, scenes, poses, weapons, gear, outfits, headgear, hairstyles, hair colours, scars or prosthetics, expressions, or where a glow or rim light falls "from these" or "in our house style" into the NPC generator.
+description: Extract Backdrop scenes, Stance poses, Weapon and Gear items, Outfit, Headgear, Hair, Hair colour, Feature, Demeanor (facial expression), Faction, Glow colour and Glow placement entries from reference images and stage them as importable candidate entries in a timestamped JSON file, for later selective review/import into npc-generator-tables.md (by the import webpage or by hand) rather than editing that file directly. Reads the live Theme table so every '@theme' tag it writes names a real theme, and where one run's images evidence a coherent visual world none of the live themes covers, stages a new named Theme entry alongside them. Use whenever the user shares one or more reference images (pasted inline or given as file paths) from this Lancer campaign's ComfyUI/Krea pipeline and asks to add, extract, stage, or import backdrops, scenes, poses, weapons, gear, outfits, headgear, hairstyles, hair colours, scars or prosthetics, expressions, themes or a new visual style, or where a glow or rim light falls "from these" or "in our house style" into the NPC generator.
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 argument-hint: [image paths or a directory, or omit to use images already shown in the conversation]
 model: sonnet
@@ -30,7 +30,8 @@ Before writing anything, read `## How the script reads this file` at the top
 of `npc-generator-tables.md` in full, **and the HTML comment above whichever
 tables you're writing into** — the Weapon, Gear, Outfit, Faction and Hair
 colour comments carry flag rules that the top-of-file section only
-summarizes.
+summarizes, and the `## Theme` comment carries the weighting policy and the
+reason there is deliberately no ninth "grounded" theme, which §4.8 needs.
 
 That file is the authoritative spec for `xN` weights, the `||` flag
 conventions, and the pronoun placeholders. As of this writing the flags are:
@@ -60,9 +61,15 @@ conventions, and the pronoun placeholders. As of this writing the flags are:
 | `@<theme>` | Hair, Hair colour, Feature, Outfit, Headgear, Weapon, Backdrop — **and nowhere else** | A *theme tag*, not a behavioural flag: the bullet belongs to that visual world. Untagged is neutral and reachable from every theme. `Gear` is deliberately not on this list — it split away from `Weapon` precisely because it isn't theme-defining. See the trap below before using one. |
 
 Run `python -c "import importlib.util,sys,pathlib;s=importlib.util.spec_from_file_location('g','generate-npc.py');m=importlib.util.module_from_spec(s);sys.modules['g']=m;s.loader.exec_module(m);print(sorted(set(m.parse_tables(pathlib.Path('prompts/npc-generator-tables.md'))['Theme'])))"`
-to get the live list of theme names. Never invent one — a misspelled theme is
-matched literally, belongs to no theme, and quietly excludes the bullet from
-every roll but its own typo.
+at the **start** of every run, to get the live list of theme names. That list
+is what every `@` tag you write is checked against.
+
+Never invent one *in a tag*. A misspelled theme is matched literally, belongs
+to no theme, and quietly excludes the bullet from every roll but its own typo.
+A visual world the live list genuinely does not cover is a different thing
+from a typo, and it has a route: **§4.8**, which stages the theme itself as
+its own candidate. That section is the only way a name absent from the live
+list may appear anywhere in a staged file, and it has a gate in front of it.
 
 **Treat that table as a mirror that has already gone stale once, not as the
 spec.** It previously omitted `weapon`, `simple`, `sidearm` and `notac`
@@ -231,7 +238,8 @@ subagents, but hold these lines, all of which have failed in practice:
 | A scar, tattoo, prosthetic, implant or other mark carried on the body | **Feature** (or `Feature (she) +` / `Feature (he) +`) | Noun phrase, no behavioural flags — but it *is* one of the seven themed tables, so a mark strongly of one look may carry a `@theme` tag. Distinct from `Demeanor`, which is the expression, and from `Headgear`, which is worn and removable: a cybernetic optic wired into the face is a Feature, a visor strapped over the eyes is Headgear. |
 | An insignia, unit livery, or faction-defining look | **Faction** | `name || visual || flags` — the name is dossier-only; the visual is the only part that reaches the prompt, and it must describe fabric, tailoring, insignia or patina, **never a garment category** (that loses to `Outfit` every time). Tag `palette` if the faction asserts colours of its own, `dressy` if the livery is ceremonial. See §4 for the full shape. |
 | A distinctive glow/neon color with nothing else new | **Glow colour** | Just the color name — see the palette-strip rule below before adding one. |
-| A distinctive *placement* of the glow — rim light from behind, colour pooling on the ground, a haze hanging in the air | **Glow placement** | Portrait only. The predicate of "A faint {glow} glow ___", so it starts with a verb and never names the colour. Tag `scene` only if the light lands out in the environment rather than on the figure. |
+| A distinctive *placement* of the glow — rim light from behind, colour pooling on the ground, a haze hanging in the air | **Glow placement** | Portrait only. The predicate of "A faint {glow} glow ___", so it starts with a verb and never names the colour. Tag `scene` only if the light lands out in the environment rather than on the figure, and never let an unflagged one claim the whole shot — see §4. |
+| A coherent *visual world* that none of the live themes covers, showing up across several images and several tables | **Theme** | The one table here you are normally forbidden to write to, and it is gated: read **§4.8** in full before staging one. A single striking image is never enough, and most apparent new worlds are an existing theme seen from an odd angle. |
 
 Most reference images you'll be handed for this campaign are wide "hero
 shot" environments (a mech towering over a street, a ruin, a battlefield) —
@@ -370,10 +378,109 @@ the image will not fit this file. Apply all of these:
   ground); a placement on or immediately around the figure stays unflagged and
   is reachable either way, which is what most should be.
 
+  **An unflagged placement must not describe light at the scale of the whole
+  shot.** It is reachable from an equipped source — a lit visor, glowing
+  cabling, a thruster vent — and none of those can throw colour across a
+  starfield. So an unflagged bullet never says "the frame", "the shot" or
+  "the scene": `test_glow_placement.py` rejects those three literally, and the
+  reason is what generalises past them, so don't rephrase around the list.
+  One bullet read "cuts across the frame at an angle, catching {possessive}
+  profile and one hand", fired off a pilot's glowing thruster pack, and the
+  model drew exactly that — a hard cobalt stripe running corner to corner
+  behind him. It was reworded, not flagged `scene`: a corner-to-corner beam is
+  not a placement anyone wants even when a backdrop can motivate it. If a
+  reference image shows light genuinely filling the environment, that is a
+  `scene` placement; if it rakes across a figure, say what it touches.
+- **Theme**: `<one lowercase word>` — a bare name, no segments, no flags, no
+  `xN`. Gated: read §4.8 before writing one at all.
+
 This is the exact text that will eventually follow `- ` in the table file —
 write it as that final form, not a description of it. Only use a placeholder
 from the table in §0 — an unlisted one raises a hard error at generation time
 rather than failing quietly.
+
+### 4.8 Proposing a new theme
+
+A theme is the visual world an NPC comes from, rolled once and honoured by
+every appearance table — it is what makes a rolled NPC read as one character
+rather than a bag of independent traits. Which themes exist is whatever §0's
+one-liner prints — read it, never recall it. Staging a new one is allowed, and
+it is the one thing in this skill with a hard bar in front of it, because the cost of a wrong one is paid by every future roll: the
+Theme roll is a fixed-size pie, and a theme that shouldn't exist takes its
+slice from the ones that should.
+
+**The gate.** Stage a `Theme` entry only when this run produces at least
+**4 candidates across 2 of the seven themed tables** — `Hair`, `Hair colour`,
+`Feature`, `Outfit`, `Headgear`, `Weapon`, `Backdrop` — that all read as one
+visual world, and that world is not one of the live themes. Below that bar,
+stage the candidates **untagged** and say so in §8: "these three read as a
+coherent look with no home, worth watching." A theme is a container, and one
+with nothing in it is worse than no theme at all — it dilutes the roll and
+delivers an NPC indistinguishable from a neutral one.
+
+**Three filters, in order. Most apparent new worlds do not survive them.**
+
+1. **Is it a visual world, or something the file already models?** A theme is
+   silhouette, materials and era-register. It is not a faction (that table
+   exists, and carries livery and insignia), not an occupation (`Role`), not a
+   colour (`Glow colour`), and not one striking object (that is a `Weapon`,
+   `Headgear` or `Feature` bullet doing its job). "Everyone in these images
+   wears the same unit patch" is a Faction. "Everything in these images is
+   made of the same stuff, cut the same way" is a theme.
+2. **Is it actually one of the live themes?** Check that list from §0 against
+   the images before deciding it is absent, and be uncharitable to yourself
+   here — a shrine-punk look is `neosamurai`, a rusted-salvage look is `scav`,
+   a clean corporate-security look is `corporate` or `tactical`. Coining a
+   synonym for a theme that already exists is the expected failure of this
+   section, and it is worse than doing nothing: it splits one world's content
+   across two names, and each half then loses to the neutral floor.
+3. **Does it survive the neutral test?** Themes and the untagged floor are in
+   tension — roughly 45% of appearance bullets stay untagged on purpose, and
+   that pool is the campaign's plain worn-industrial look. If the candidates
+   would look fine on an NPC of any theme, they are neutral bullets and there
+   is no theme here. A theme's content must look *wrong* in another theme.
+
+**Naming it.** One lowercase word, no spaces and no hyphens, matching the form
+of the live entries (`gundam`, `tactical`, `neosamurai`, `cyberpunk`,
+`neogothic`, `grimdark`, `corporate`, `scav`). This is not a style preference:
+the name is the literal string after every `@`, flags are matched literally
+and a space would split the flag segment outright. Prefer an existing genre
+term a reader already knows over a coinage — the name has to mean the same
+thing to whoever authors the next twenty bullets for it. Keep it short; it
+gets typed on every tag.
+
+**No weight.** Write the bullet as the bare name with no `xN`. That table's
+comment sets weights proportional to how much content a theme has, and a brand
+new theme has the least in the file — it starts rare and the user raises it as
+they author. Its `bookkeeping_note` should point at that comment, since the
+weights paragraph there is what a reviewer will want to revisit later.
+
+**The dependency, and why it needs shouting about.** Take `kitbash` as the
+worked example throughout — a name deliberately not in the live table, since
+this is the one section about a theme that does not exist yet. A candidate
+tagged `@kitbash` is only correct if the `Theme` entry is imported too. If a
+reviewer takes the Outfit bullets and passes on the theme, those bullets carry
+a tag matched against nothing: they belong to no theme, they are not untagged
+either, and they are excluded from every roll from then on, silently. The
+staged format has no way to express "import this one first" — the importer
+reads entries independently — so the protocol is convention, and it has to be
+loud:
+
+- The `Theme` entry is **`entries[0]`**, with the id **`t1`**. Ids beginning
+  `t` are reserved for theme entries and `e` for everything else, so the two
+  never collide and a reviewer can find the theme without reading the file.
+- Every candidate tagged with it opens its `notes` with this exact line,
+  filled in and nothing else changed:
+
+  `DEPENDS ON t1 (new theme @kitbash) — import t1 first, or drop this tag.`
+
+- §8 leads with it, before the counts. A reviewer who reads only the chat
+  summary must still learn that this run contains an ordering constraint.
+
+Be honest about the limit when you report it: this is a note a person has to
+read, not a check the importer runs. That is the argument for the gate rather
+than a reason to relax it — a run that stages one well-evidenced theme is one
+note to honour, and a run that stages three is a trap.
 
 ## 5. Record placement and bookkeeping context — don't discard it
 
@@ -429,7 +536,9 @@ Write one JSON file per skill run to
 Field notes:
 
 - `id` — short, unique within the file (`e1`, `e2`, ...); stable so a reviewer
-  can refer to one entry unambiguously.
+  can refer to one entry unambiguously. A `Theme` entry staged under §4.8 is
+  `t1` instead and sits first in `entries`, so the entry other entries depend
+  on is findable without reading the file.
 - `table` — the *exact* `##` heading this targets, including any variant
   suffix (`"Outfit (she) +"`, `"Hair"`, `"Demeanor (she) +"`) — this is what
   tells the later import step which table to insert into.
@@ -514,13 +623,15 @@ against the file you just wrote and fix anything they surface:
    matched exactly including any variant suffix. The importer refuses
    anything else.
 3. **Every flag is in §0's table.** Unknown flags fail quietly forever.
-4. **Every `@theme` tag names a real theme** from the live `## Theme` table
-   (get the list with the one-liner in §0), **and sits on one of the seven
-   tables that read it** — `Hair`, `Hair colour`, `Feature`, `Outfit`,
-   `Headgear`, `Weapon`, `Backdrop` (**not** `Gear`), counting variant
-   suffixes (`Outfit (she) +` reads tags; `Eyes (she) +` does not). Both
-   failures are silent at render time, and the second renders the tag as
-   literal prompt text.
+4. **Every `@theme` tag resolves** — to a theme in the live `## Theme` table
+   (get the list with the one-liner in §0) **or** to a `Theme` entry staged in
+   this same file under §4.8. A tag matching neither is the silent-exclusion
+   bug: the bullet belongs to no theme, is not untagged either, and never
+   rolls again. And every tag **sits on one of the seven tables that read
+   it** — `Hair`, `Hair colour`, `Feature`, `Outfit`, `Headgear`, `Weapon`,
+   `Backdrop` (**not** `Gear`), counting variant suffixes (`Outfit (she) +`
+   reads tags; `Eyes (she) +` does not). Both failures are silent at render
+   time, and the second renders the tag as literal prompt text.
 5. **The run did not over-tag.** Count the tagged candidates against the
    untagged ones for the seven themed tables. If most of this run's
    appearance candidates carry a tag, stop and re-read the over-tagging trap
@@ -557,16 +668,45 @@ against the file you just wrote and fix anything they surface:
     token has no environment to put them in, and CFG 1.0 with no negative
     prompt means the template cannot argue them back out.
 
-14. **Every referenced `source_image` has a copy under `refs/<stem>/`**, with
+14. **Any staged `Theme` entry clears §4.8's gate.** It carries at least
+    4 candidates across 2 of the seven themed tables in this same file, its
+    name is one lowercase word, it has no `xN`, its id is `t1`, and it is
+    first in `entries`. A theme below the bar is not a smaller version of a
+    good one — delete it and untag its candidates, which are then perfectly
+    good neutral bullets.
+15. **Every candidate tagged with a staged theme carries the `DEPENDS ON`
+    line** as the opening of its `notes`, naming the right id and theme. This
+    is the only thing standing between a partial import and a set of bullets
+    excluded from every roll, and it is a string a person reads — check it
+    literally, not approximately.
+16. **No unflagged `Glow placement` candidate claims the whole shot.** None
+    contains "the frame", "the shot" or "the scene" unless it carries `scene`;
+    `test_glow_placement.py` rejects those three literally. Read for the rule
+    rather than the three strings — "spans the whole image" passes the grep
+    and fails the point. Every placement also starts lowercase, since each one
+    is mid-sentence.
+17. **Every referenced `source_image` has a copy under `refs/<stem>/`**, with
     a byte-identical name and a non-zero size — the §6.1 copy step, checked
     rather than assumed. Any that are missing go in the §8 report by name;
     they are a degraded preview, not a broken run, so don't fail on them.
 
-A short script is the fast way to do most of these — 13 is a read, not a
-regex; if the run was small enough to eyeball, eyeball it. Report what you
+A short script is the fast way to do most of these — 13, and the judgement
+halves of 14 and 16, are a read rather than a regex; if the run was small
+enough to eyeball, eyeball it. Report what you
 checked, not just that you checked.
 
 ## 8. Tell the user what you staged
+
+**If this run staged a `Theme` entry, say so first, before the counts.** Name
+the theme, say what evidence cleared §4.8's gate (which candidates, which
+tables), say which of the eight live themes you considered it against and why
+it isn't one of them, and state the ordering constraint plainly: import `t1`
+first, or reject the tagged candidates along with it, because a tag naming a
+theme that isn't in the table excludes its bullet from every roll. That last
+part is a convention the importer cannot enforce, so the user hearing it is
+the enforcement. If the run found a coherent look that did *not* clear the
+gate, say that too, in a sentence — it is the user's call whether to keep
+watching for it, and they can only make it if each run reports the near-miss.
 
 After writing the file, summarize in chat: how many candidates, which tables
 they target, how many images were skipped and why (in categories, not one
