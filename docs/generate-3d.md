@@ -21,15 +21,104 @@ not modify it, and it never writes to the manifest.
 
 ## Usage
 
+You select an **NPC**, not an image file - the whole rebuild starts from a
+manifest entry, and the image it reconstructs from is one this tool renders
+for itself (see [Input](#input-one-image-and-this-tool-renders-it)).
+
 ```
-python generate-3d.py --filter Sokolova
+# one NPC by manifest id - the unambiguous form
 python generate-3d.py --id npc-jules-sokolova-40213
+
+# by name, callsign or role category - a case-insensitive regex
+python generate-3d.py --filter Sokolova
+python generate-3d.py --filter Crew
+
+# preview what a batch would build, without building any of it
 python generate-3d.py --limit 5 --dry-run
-python generate-3d.py --id npc-... --stage apose      # iterate on one stage
+
+# the whole catalogue except the pilots
+python generate-3d.py --exclude Pilots
+
+# rebuild an NPC that already has a 3d/ folder
+python generate-3d.py --id npc-jules-sokolova-40213 --overwrite
+
+# iterate: render the A-pose, look at it, then reconstruct from it
+python generate-3d.py --id npc-... --stage apose
+python generate-3d.py --id npc-... --stage mesh --stage assemble
+
+# opt in to rigging - off by default, and read Rigging below before you do
+python generate-3d.py --id npc-... --rig
+
+# a long unattended batch on a machine with VRAM headroom
+python generate-3d.py --limit 40 --pause-3d 0
 ```
 
-An NPC that already has a `3d/` folder is skipped unless `--overwrite`. One
-NPC's failure is logged and the batch continues.
+`--id` and `--stage` are both repeatable. An unknown `--id` is a hard error
+rather than a run that quietly builds nothing.
+
+`--filter` and `--exclude` match against the folder path, the name and the
+callsign together, so `--filter Crew` selects a whole role category off the
+path (`output/LancerNPCs/run3/Crew/...`) without the manifest entry needing
+to store one.
+
+An NPC that already has a non-empty `3d/` folder is skipped unless
+`--overwrite`. That skip only applies when all three stages are running: a
+narrowed `--stage` means you are deliberately iterating, so leftover output
+from an earlier stage does not skip the NPC. One NPC's failure is logged and
+the batch continues.
+
+### Input: one image, and this tool renders it
+
+**One image, not several.** Stage `apose` renders the NPC's token again in a
+forced A-pose, cuts the background, and squares the result; that single
+square PNG is what conditions *both* reconstructions - Hunyuan3D for the
+clothed shell and SAM3DBody for the rigged body.
+
+There is no way to hand it several images, and no evidence that doing so
+would help: four perfectly registered orthographic views produced exactly the
+same result as one (probe A against probe F under
+[Known limits](#known-limits)). The reason that comparison proved nothing is
+that both were being clipped in-graph by a node that has since been removed -
+so multi-view input is **untested**, not ruled out.
+
+#### Specifying a specific image
+
+There is **no `--image` flag**. The stages hand work to each other as plain
+files in the NPC's `3d/` folder, though, so an image you supply yourself goes
+in the same place stage `apose` would have written one:
+
+1. Put your image at `<NPC folder>/3d/apose.png`.
+2. Run the stages that consume it:
+
+```
+python generate-3d.py --id npc-... --stage mesh --stage assemble
+```
+
+Stage `mesh` reads `apose.png` from that folder and does not care who wrote
+it; if it is missing you get `no apose.png in <folder> - run --stage apose
+first`. Narrowing `--stage` also disables the already-has-output skip, so a
+folder with deliverables already in it will not bypass the run.
+
+Match what the pipeline expects of that file:
+
+- **8-bit RGBA, non-interlaced.** `square_apose()` reads and writes PNG by
+  hand (spec 2.2 - no dependency needing a compiler, and Pillow is not
+  installed), so that one shape is all the codec understands. Anything else
+  raises `is not 8-bit RGBA non-interlaced` rather than being converted.
+- **A real alpha cutout, and no background of your own.** The subject's alpha
+  bounds are what the square gets built around. Do not pre-pad the image or
+  leave a backdrop in it - a seam between your backdrop and the added margin
+  is a rectangle, and Hunyuan3D reconstructs one as a flat slab standing
+  behind the figure. Give it the figure on transparency and let
+  `square_apose()` rebuild the whole canvas.
+- **A full standing figure**, ideally in an A-pose with empty hands. The pose
+  is not cosmetic - the weight transfer is proximity-based, and a pose
+  mismatch between shell and base smears the shoulders. See
+  [Why the A-pose re-render](#why-the-a-pose-re-render).
+
+What lands beside it is `3d/apose_square.png`: the squared, recomposited
+image the reconstruction actually saw. It is the first thing worth looking at
+when a shell comes out wrong.
 
 ### Pacing a batch: `--pause` and `--pause-3d`
 
@@ -38,7 +127,7 @@ A-pose render and the background cut. `--pause-3d` (default 15 s) is the gap
 after each *reconstruction* job, and between one NPC and the next.
 
 They are separate because the two reconstructions are not the same weight as
-a render: Hunyuan3D holds a 3072-token latent through a 256^3 octree decode
+a render: Hunyuan3D holds a 3072-token latent through a 384^3 octree decode
 and SAM3DBody runs a DINOv3 backbone at batch 64, and ComfyUI reports a job
 finished when its last node returns, not when the VRAM it held has been given
 back. Queueing the next reconstruction into that window is what makes a long
@@ -180,12 +269,13 @@ Without `--real-height-m` the old behaviour stands: exactly `--print-height-mm`,
 every time. That is deliberate — with no known height the only alternative is
 to scale by the estimator's noise, which is worse than uniform.
 
-### Why `--voxel` defaults to 0.010, and why lowering it is the wrong move
+### Why `--voxel` defaults to 0.013, and why lowering it is the wrong move
 
 `--voxel` applies to the **printable copy only**. The GLB and the turnarounds
 keep the full ~162,000-face detail mesh; only the STL is remeshed, because
 only the print needs a closed single body and the remesh is what costs the
-detail (162,058 faces in, 39,488 out at 0.010).
+detail (162,058 faces in, 39,488 out at 0.010; roughly 27,000 at the 0.013
+that now ships).
 
 It is in real metres. `clean_shell()` fits the shell to the base's height
 before anything measures a distance, so `--weld` and `--voxel` both mean what
@@ -215,8 +305,8 @@ a fixed number of *voxels*, so its real width shrinks with the voxel size; on
 a surface that still has open boundary, a band too thin to bridge the holes
 lets the volume leak and returns a scatter of small closed fragments. That
 result is manifold and correctly bounded and is not a figure. So when a shell
-comes back destroyed or non-manifold, **raise** `--voxel`. 0.010 ships rather
-than the finer 0.008 to keep a step of clearance from the cliff; 39,000 faces
+comes back destroyed or non-manifold, **raise** `--voxel`. 0.013 ships rather
+than the finer 0.008 to keep a step of clearance from the cliff; ~27,000 faces
 is already far more than a 32 mm mini can resolve.
 
 `npc_mesh.printable_copy()` measures surface area across the remesh and
@@ -239,11 +329,14 @@ the two workflow files and the A-pose stance text - so the dossier keeps
 recording everything needed to reproduce its own output. Re-running replaces
 that section rather than stacking a second one.
 
-Measured on Jules Sokolova with the pipeline as it now stands: `Shell.glb`
-13.8 MB (162,056 faces), `Print.stl` 4.0 MB (39,488 faces), the four 640px
-turnarounds 0.8 MB combined — about **19 MB of deliverables**, plus ~22 MB of
-intermediates (`apose.png`, `_shell.glb`, `_base.glb`) this tool does **not**
-clean up, for roughly **41 MB per NPC** or **6.6 GB across a 160-NPC batch**.
+Measured on Jules Sokolova: `Shell.glb` 13.8 MB (162,056 faces), `Print.stl`
+4.0 MB (39,488 faces), the four 640px turnarounds 0.8 MB combined — about
+**19 MB of deliverables**, plus ~22 MB of intermediates (`apose.png`,
+`_shell.glb`, `_base.glb`) this tool does **not** clean up, for roughly
+**41 MB per NPC** or **6.6 GB across a 160-NPC batch**. The STL there was
+remeshed at `--voxel` 0.010; the default has since moved to 0.013, which is a
+coarser print mesh (~27,000 faces), so treat these as a ceiling rather than
+as the current figure.
 
 An earlier revision of this section quoted 86.5 MB per NPC and 13.8 GB per
 batch, measured on Lucia Vos before the `RemeshMesh` clip was found. Those
