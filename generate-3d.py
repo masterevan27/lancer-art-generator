@@ -448,7 +448,14 @@ def stage_mesh(comfy, args, entry, folder, apose_png):
             raise RuntimeError("the %s job produced no .glb" % label)
         written.append(npc_gen.fetch(comfy, files[0], target))
         print("      -> %s" % target.name)
-        time.sleep(args.pause)
+        # --pause-3d, not --pause. These two jobs are an order of magnitude
+        # heavier than a text-to-image render - Hunyuan3D holds a 3072-token
+        # latent and a 256^3 octree decode, SAM3DBody a DINOv3 backbone at
+        # batch 64 - and ComfyUI reports a job "done" when the last node
+        # returns, not when the VRAM it held has actually been freed. Queueing
+        # the next reconstruction into that window is what makes a long
+        # unattended batch OOM on a machine that runs any single NPC fine.
+        time.sleep(args.pause_3d)
 
     return tuple(written)
 
@@ -614,6 +621,11 @@ def parse_args(argv=None):
                      help="per-job timeout in seconds (default: %(default)s)")
     run.add_argument("--pause", type=float, default=2.0,
                      help="seconds to sleep after each ComfyUI job (default: %(default)s)")
+    run.add_argument("--pause-3d", type=float, default=15.0, metavar="SECONDS",
+                     help="seconds to sleep after each RECONSTRUCTION job, and "
+                          "between NPCs - the 3D jobs are far heavier than a "
+                          "render and the host needs time to give the VRAM back "
+                          "(default: %(default)s)")
 
     args = p.parse_args(argv)
 
@@ -685,12 +697,24 @@ def main(argv=None):
 
     done = failed = skipped = warned = 0
     started = time.time()
+    queued_any = False
     for folder_path, entry in picked:
         folder = npc_3d_folder(folder_path)
         if should_skip(folder, args):
             print("skip %s (3d/ exists; --overwrite to rebuild)" % entry["name"])
             skipped += 1
             continue
+
+        # Between NPCs, not just between jobs. The last thing the previous NPC
+        # did was a headless Blender assembly, which competes with ComfyUI for
+        # the same machine; going straight from that into the next A-pose
+        # render is the batch's tightest moment. Gated on queued_any so a
+        # single-NPC run - the way this is normally driven by hand - pays
+        # nothing for it, and skipped NPCs (which touch neither) do not
+        # either.
+        if queued_any:
+            time.sleep(args.pause_3d)
+        queued_any = True
 
         print("\n%s  \"%s\"  -> %s" % (entry["name"], entry.get("callsign", ""), folder))
         folder.mkdir(parents=True, exist_ok=True)

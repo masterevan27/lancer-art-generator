@@ -31,6 +31,27 @@ python generate-3d.py --id npc-... --stage apose      # iterate on one stage
 An NPC that already has a `3d/` folder is skipped unless `--overwrite`. One
 NPC's failure is logged and the batch continues.
 
+### Pacing a batch: `--pause` and `--pause-3d`
+
+`--pause` (default 2 s) is the gap after each ordinary ComfyUI job - the
+A-pose render and the background cut. `--pause-3d` (default 15 s) is the gap
+after each *reconstruction* job, and between one NPC and the next.
+
+They are separate because the two reconstructions are not the same weight as
+a render: Hunyuan3D holds a 3072-token latent through a 256^3 octree decode
+and SAM3DBody runs a DINOv3 backbone at batch 64, and ComfyUI reports a job
+finished when its last node returns, not when the VRAM it held has been given
+back. Queueing the next reconstruction into that window is what makes a long
+unattended batch OOM on a machine that builds any single NPC without
+complaint. The between-NPC gap covers the batch's tightest moment for the
+same reason from the other side - the previous NPC's last act is a headless
+Blender assembly, which competes with ComfyUI for the same machine.
+
+Neither costs anything on a single-NPC run driven by hand: the between-NPC
+sleep is skipped before the first NPC and for every skipped one. Lower them
+on a machine with headroom (`--pause-3d 0`), raise them if a batch still
+falls over.
+
 ## The stages
 
 | Stage | What it does | Output |
@@ -199,10 +220,64 @@ already is.
 
 ## Known limits
 
+### Measured: the checkpoint is being driven off-label
+
+`Util_Image_to_Mesh_Hunyuan3D_v1.json` loads `hunyuan3d-dit-v2-mv_fp16` - the
+**multi-view** checkpoint - and conditions it through the single-view
+`Hunyuan3Dv2Conditioning` node. ComfyUI ships
+`Hunyuan3Dv2ConditioningMultiView` (front / left / back / right) and it is
+present on this install.
+
+Swapping that one node, with the same `apose.png` and the same seed
+(Jules Sokolova, 3958386534):
+
+| | single-view node | multi-view node, `front` only |
+|---|---|---|
+| Components in the raw shell | **9** (two at 49.6% / 50.2% of area - torn halves) | **1** (100%) |
+| Surface area surviving the 0.004 remesh | 0.4% | ~100% |
+| `Shell.glb` | 159 KB | **31.9 MB** |
+| `Print.stl` | 146 KB | **26.7 MB** |
+| Turnarounds | blank frames with specks | a clean, closed, printable figure |
+
+So the torn double-shell is the node mismatch, not the reconstruction being
+hard. Fixing it is a one-node edit and does not need new views.
+
+What one view still cannot do is complete the figure: the multi-view result is
+a clean torso from shoulders to mid-thigh with **no head, no hands and no
+feet**. The model is asking for the views it was trained on.
+
+A second run that also square-padded the input in-graph (`EmptyImage` +
+`ImageCompositeMasked`, 1024x1280 -> 1280x1280, so `crop: "center"` stops
+trimming) came out **worse**, not better - 3.60 units of surface area against
+6.99, and a sheared, lopsided torso. Hunyuan3D wants the subject filling the
+frame; do not pad it. Ruled out, do not retry.
+
+- **The single-view shell can fail completely, not just fragment the head.**
+  Measured on Jules Sokolova (`run1/Pilots`): the Hunyuan3D shell came back as
+  nine components whose two largest were 49.6% and 50.2% of the surface area -
+  two overlapping, torn half-figures rather than one body - and no amount of
+  cleanup downstream recovers a figure from that. The assembly now refuses it
+  (see below) instead of shipping the crumbs.
 - **Faces are not good.** Hunyuan3D fragments the head; at token and mini
   scale it reads acceptably, in close-up it does not. The real fix is
   multi-view conditioning, which needs consistent left/back/right views and is
-  a design problem of its own.
+  a design problem of its own. Note that
+  `Util_Image_to_Mesh_Hunyuan3D_v1.json` already loads the **multi-view**
+  checkpoint (`hunyuan3d-dit-v2-mv_fp16`) but drives it through the
+  single-view `Hunyuan3Dv2Conditioning` node; ComfyUI ships
+  `Hunyuan3Dv2ConditioningMultiView` (front / left / back / right) and it is
+  present on this install.
+- **A destroyed shell used to pass every check.** The manifold check asks
+  whether every edge has two faces, and a scatter of small closed fragments
+  answers yes. At `--voxel 0.004` the Jules shell went into the remesh with
+  99,057 polygons over 0.836 units of area and came out with 1,468 polygons
+  over 0.003 units - manifold, correctly bounded, and blank in every
+  turnaround. `clean_shell()` now measures surface area across the remesh and
+  raises when more than half of it is gone, and `assemble_npc.py` refuses a
+  shell that is still in more than one appreciable part.
+- **Turnaround lighting used to be fixed in world space**, so angles 180 and
+  270 rendered as black silhouettes on transparent - half of every turnaround
+  set was unreadable. The key and fill now swing with the camera.
 - **The rigged character has no texture.** Texture baking wanted dependencies
   that cannot be built on this machine.
 - **Rigging ships off, and was measured on exactly one NPC.** `--rig

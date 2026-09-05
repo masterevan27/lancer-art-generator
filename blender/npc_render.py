@@ -40,12 +40,29 @@ def setup(engine, size, samples):
     world.color = (0.05, 0.05, 0.06)
     scene.world = world
 
-    light_data = bpy.data.lights.new("key", type='SUN')
-    light_data.energy = 4.0
-    light = bpy.data.objects.new("key", light_data)
-    light.rotation_euler = (math.radians(55), 0, math.radians(35))
-    bpy.context.collection.objects.link(light)
-    return scene
+    # A key and a dimmer fill, both returned so turnaround() can swing them
+    # with the camera. Left fixed in world space - which is what they used to
+    # be - they light angle 000 and leave 180 and 270 as black silhouettes on
+    # transparent, because the world is near-black by design and a SUN lights
+    # one side of a figure only. A turnaround whose back half is unreadable is
+    # half a turnaround.
+    lights = []
+    for name, energy, offset in (("key", 4.0, 35.0), ("fill", 1.2, -110.0)):
+        data = bpy.data.lights.new(name, type='SUN')
+        data.energy = energy
+        light = bpy.data.objects.new(name, data)
+        light["offset"] = offset
+        bpy.context.collection.objects.link(light)
+        lights.append(light)
+    aim_lights(lights, 0)
+    return scene, lights
+
+
+def aim_lights(lights, angle_deg):
+    """Point every light at the subject from `angle_deg`'s point of view."""
+    for light in lights:
+        light.rotation_euler = (
+            math.radians(55), 0, math.radians(angle_deg + light["offset"]))
 
 
 def frame_camera(obj, angle_deg, margin=1.25):
@@ -57,7 +74,20 @@ def frame_camera(obj, angle_deg, margin=1.25):
     """
     bpy.context.view_layer.update()
     size = max(obj.dimensions)
-    centre = obj.matrix_world.translation + Vector((0, 0, obj.dimensions.z / 2))
+    # The BOUNDING BOX centre, not the object origin. An imported reconstruction
+    # carries whatever origin its exporter chose, and it is generally nowhere
+    # near the mesh: measured on a real Hunyuan3D shell, the origin sat at
+    # (0, 0, 0) while the mesh occupied y -0.500..-0.288, z -0.496..0.496, so
+    # `origin + dimensions.z / 2` aimed the camera at the top of the head and
+    # 0.39 units off to one side, and the figure rendered cropped and shoved
+    # against the edge of the frame. align_to() happens to hide most of this in
+    # the full pipeline by recentring the shell on the base; nothing guarantees
+    # that, and turnaround() is called on whatever object it is handed.
+    corners = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    centre = Vector((
+        (min(c.x for c in corners) + max(c.x for c in corners)) / 2,
+        (min(c.y for c in corners) + max(c.y for c in corners)) / 2,
+        (min(c.z for c in corners) + max(c.z for c in corners)) / 2))
 
     data = bpy.data.cameras.new("turnaround")
     data.type = 'ORTHO'
@@ -80,10 +110,11 @@ def frame_camera(obj, angle_deg, margin=1.25):
 def turnaround(obj, outdir, stem, angles=(0, 90, 180, 270), size=768,
                engine='BLENDER_EEVEE', samples=16):
     """Render `obj` from each angle. Returns the filenames written."""
-    setup(engine, size, samples)
+    _, lights = setup(engine, size, samples)
     written = []
     for angle in angles:
         camera = frame_camera(obj, angle)
+        aim_lights(lights, angle)
         name = "%s Turnaround_%03d.png" % (stem, angle)
         bpy.context.scene.render.filepath = str(outdir / name)
         bpy.ops.render.render(write_still=True)

@@ -87,7 +87,8 @@ class TestGraphShape(unittest.TestCase):
         """Spec §2.1. Every class_type here ships with ComfyUI."""
         native = {
             "LoadImage", "SaveGLB", "KSampler", "ImageOnlyCheckpointLoader",
-            "CLIPVisionEncode", "Hunyuan3Dv2Conditioning", "EmptyLatentHunyuan3Dv2",
+            "CLIPVisionEncode", "Hunyuan3Dv2ConditioningMultiView",
+            "EmptyLatentHunyuan3Dv2",
             "VAEDecodeHunyuan3D", "VoxelToMesh", "RemeshMesh", "DecimateMesh",
             "SAM3DBody_Loader", "SAM3DBody_Predict", "BuildPoseFile",
         }

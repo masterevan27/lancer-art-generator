@@ -14,8 +14,9 @@
     "inputs": {"clip_vision": ["2", 1], "image": ["1", 0], "crop": "center"}
   },
   "4": {
-    "class_type": "Hunyuan3Dv2Conditioning",
-    "inputs": {"clip_vision_output": ["3", 0]}
+    "class_type": "Hunyuan3Dv2ConditioningMultiView",
+    "_meta": {"title": "front only for now - see docs/generate-3d.md"},
+    "inputs": {"front": ["3", 0]}
   },
   "5": {
     "class_type": "EmptyLatentHunyuan3Dv2",

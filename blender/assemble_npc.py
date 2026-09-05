@@ -91,7 +91,18 @@ def main():
     # shell is what gets scaled and moved.
     shell_objects = npc_mesh.import_glb(args.shell)
     shell = npc_mesh.join(shell_objects, "shell")
-    dropped = npc_mesh.clean_shell(shell, args.weld, args.voxel)
+    dropped, parts = npc_mesh.clean_shell(shell, args.weld, args.voxel)
+    if parts > 1:
+        # Spec §6 step 7, the same contract as the non-manifold check below:
+        # the STL promises a single body, and the only honest way to keep that
+        # promise over a shell that came back in pieces is a remesh that
+        # unions them. Deleting all but one of them would keep the promise by
+        # throwing away the figure - which is exactly the silent failure the
+        # 50.4%-of-surface-area loss in drop_small_components() used to be.
+        raise SystemExit(
+            "the cleaned shell is still %d separate parts, none of them small "
+            "enough to be debris. Raise --voxel to union them into one body."
+            % parts)
     npc_mesh.fit_to_height(shell, body_height)
     npc_mesh.align_to(shell, body)
 
@@ -169,6 +180,7 @@ def main():
         "files": files,
         "shell_height_m": round(npc_mesh.height_of(shell), 4),
         "components_dropped": dropped,
+        "shell_area": round(npc_mesh.surface_area(shell), 4),
         "non_manifold": non_manifold,
         "rigged": rigged,
         "bones": bones,

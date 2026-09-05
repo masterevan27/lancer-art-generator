@@ -177,26 +177,77 @@ def _components(bm):
     return groups
 
 
-def keep_largest_component(obj):
-    """Delete every loose part but the biggest. Returns how many were dropped.
+def surface_area(obj):
+    """Total polygon area, in the object's own units.
+
+    Scale-free enough to compare a mesh against itself across an operation,
+    which is the only thing it is used for - see clean_shell().
+    """
+    return sum(polygon.area for polygon in obj.data.polygons)
+
+
+def drop_small_components(obj, min_fraction=0.05):
+    """Delete loose parts under `min_fraction` of the biggest. -> (dropped, left)
 
     Spec §2.3 measured 10,895 components on a raw reconstruction with 83.5% of
     the faces in one of them. RemeshMesh's drop_small_components removes most
-    of that in-graph; this is the backstop for whatever survives, and it is why
-    the STL can promise a single body.
+    of that in-graph; this is the backstop for whatever survives.
+
+    It drops SPECKS. It is deliberately not "keep only the biggest", which is
+    what this used to do and what a reconstruction that comes back torn in two
+    punishes silently: measured on a real Hunyuan3D shell (Jules Sokolova),
+    the mesh arrived as 9 components whose two largest held 49.6% and 50.2% of
+    the surface area - two overlapping halves of one figure - and keeping only
+    the biggest deleted half the figure with nothing downstream able to tell.
+    A part that is an appreciable fraction of the whole is geometry, not
+    debris; the voxel remesh in clean_shell() is what unions such parts back
+    into the single body the STL promises, and assemble_npc.py is what refuses
+    to ship the result if they are still separate afterwards.
+
+    Measured by AREA, not by vertex count, because vertex count does not
+    separate the two cases at all: the committed test fixture's one detached
+    speck is 27.3% of that mesh's vertices and 0.12% of its surface area, so a
+    vertex-count threshold loose enough to keep a torn half is also loose
+    enough to keep the speck. Every real case measured - fixture speck 0.12%,
+    the four Jules specks 0.13% and below, the two Jules halves ~50% each -
+    sits two orders of magnitude clear of a 5% area threshold.
     """
     bm = bmesh.new()
     bm.from_mesh(obj.data)
     bm.verts.ensure_lookup_table()
     groups = _components(bm)
-    if len(groups) > 1:
-        biggest = max(groups, key=len)
-        doomed = [v for v in bm.verts if v.index not in biggest]
+    if len(groups) < 2:
+        bm.free()
+        return 0, len(groups)
+
+    index_of = {}
+    for number, group in enumerate(groups):
+        for vertex in group:
+            index_of[vertex] = number
+    areas = [0.0] * len(groups)
+    for face in bm.faces:
+        areas[index_of[face.verts[0].index]] += face.calc_area()
+
+    biggest = max(areas)
+    if biggest <= 0:
+        # A shell with no area at all is not something a threshold can rank;
+        # leave it whole and let the caller's own checks reject it.
+        bm.free()
+        return 0, len(groups)
+
+    keep = set()
+    kept = 0
+    for group, area in zip(groups, areas):
+        if area >= biggest * min_fraction:
+            keep |= group
+            kept += 1
+    doomed = [v for v in bm.verts if v.index not in keep]
+    if doomed:
         bmesh.ops.delete(bm, geom=doomed, context='VERTS')
         bm.to_mesh(obj.data)
         obj.data.update()
     bm.free()
-    return max(len(groups) - 1, 0)
+    return len(groups) - kept, kept
 
 
 def weld(obj, distance=0.0005):
@@ -237,19 +288,44 @@ def non_manifold_edges(obj):
     return count
 
 
-def clean_shell(obj, weld_distance=0.0005, voxel_size=0.0):
-    """Largest part only, welded, capped, optionally remeshed. Returns drops.
+def clean_shell(obj, weld_distance=0.0005, voxel_size=0.0, min_fraction=0.05,
+                min_area_kept=0.5):
+    """Specks dropped, welded, capped, optionally remeshed. -> (dropped, left)
 
     In that order: dropping the specks first means the weld and the hole fill
     are not asked to reason about 10,000 stray triangles, and the remesh - when
     it is asked for at all - runs on a surface that is already nearly closed.
+
+    The remesh is checked, not trusted. Blender's voxel remesh goes through an
+    OpenVDB mesh-to-volume, and on a surface with a large open boundary that
+    conversion does not fail - it returns a scatter of small closed fragments
+    that is manifold, is the right bounding box, and is not a figure. Measured
+    on the Jules Sokolova shell at --voxel 0.004: 99,057 polygons over 0.836
+    units of surface went in and 1,468 polygons over 0.003 units came out,
+    non_manifold_edges() reported 0 because every crumb was closed, and the
+    turnarounds rendered a blank frame with specks in it. Surface area is what
+    separates the two cases - a healthy remesh keeps essentially all of it -
+    so a remesh that loses more than half of it raises here, where the mesh is
+    still in hand, rather than downstream where the only symptom is an empty
+    render.
     """
-    dropped = keep_largest_component(obj)
+    dropped, remaining = drop_small_components(obj, min_fraction)
     weld(obj, weld_distance)
     fill_holes(obj)
     if voxel_size > 0:
+        before = surface_area(obj)
         remesh(obj, voxel_size)
-    return dropped
+        after = surface_area(obj)
+        if before > 0 and after < before * min_area_kept:
+            raise RuntimeError(
+                "the voxel remesh at %g destroyed the shell: %.4f of %.4f "
+                "units of surface area survived (%.1f%%). The mesh going in "
+                "was too open for a volume conversion - lower --voxel, or fix "
+                "the reconstruction." % (voxel_size, after, before,
+                                         100 * after / before))
+        dropped_after, remaining = drop_small_components(obj, min_fraction)
+        dropped += dropped_after
+    return dropped, remaining
 
 
 def export_glb(objects, path):
