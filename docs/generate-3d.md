@@ -46,6 +46,10 @@ python generate-3d.py --id npc-jules-sokolova-40213 --overwrite
 python generate-3d.py --id npc-... --stage apose
 python generate-3d.py --id npc-... --stage mesh --stage assemble
 
+# skip the render entirely: reconstruct from an A-pose you already have
+python generate-3d.py --id npc-... --image apose.png
+python generate-3d.py --id npc-... --image render.png --remove-bg
+
 # opt in to rigging - off by default, and read Rigging below before you do
 python generate-3d.py --id npc-... --rig
 
@@ -67,12 +71,13 @@ narrowed `--stage` means you are deliberately iterating, so leftover output
 from an earlier stage does not skip the NPC. One NPC's failure is logged and
 the batch continues.
 
-### Input: one image, and this tool renders it
+### Input: one image, rendered here or supplied by you
 
 **One image, not several.** Stage `apose` renders the NPC's token again in a
 forced A-pose, cuts the background, and squares the result; that single
 square PNG is what conditions *both* reconstructions - Hunyuan3D for the
-clothed shell and SAM3DBody for the rigged body.
+clothed shell and SAM3DBody for the rigged body. `--image` puts your own
+image in that one slot instead.
 
 There is no way to hand it several images, and no evidence that doing so
 would help: four perfectly registered orthographic views produced exactly the
@@ -81,23 +86,53 @@ same result as one (probe A against probe F under
 that both were being clipped in-graph by a node that has since been removed -
 so multi-view input is **untested**, not ruled out.
 
-#### Specifying a specific image
+#### Specifying a specific image: `--image`
 
-There is **no `--image` flag**. The stages hand work to each other as plain
-files in the NPC's `3d/` folder, though, so an image you supply yourself goes
-in the same place stage `apose` would have written one:
-
-1. Put your image at `<NPC folder>/3d/apose.png`.
-2. Run the stages that consume it:
+`--image PATH` reconstructs from an A-pose you already have instead of
+rendering one. Nothing is generated - no prompt, no seed, no token render -
+so this is also the fastest way in: one already-cut-out PNG straight to a
+finished GLB and STL.
 
 ```
-python generate-3d.py --id npc-... --stage mesh --stage assemble
+# an A-pose that already has its background removed
+python generate-3d.py --id npc-... --image path/to/apose.png
+
+# one that still has a background - cut it out first, through --rmbg
+python generate-3d.py --id npc-... --image path/to/render.png --remove-bg
 ```
 
-Stage `mesh` reads `apose.png` from that folder and does not care who wrote
-it; if it is missing you get `no apose.png in <folder> - run --stage apose
-first`. Narrowing `--stage` also disables the already-has-output skip, so a
-folder with deliverables already in it will not bypass the run.
+The image is **copied** to `<NPC folder>/3d/apose.png`; your file is not
+touched. Copying rather than reading it in place is deliberate - everything
+downstream (`apose_square.png` beside it, the already-has-output skip, the
+dossier's 3D section) treats `3d/` as the record of what the reconstruction
+was built from, and a path that only ever existed in one shell history is not
+that record.
+
+Four things follow from that, all of them checked before any job is queued:
+
+- **It implies skipping stage `apose`.** The default becomes `mesh` and
+  `assemble`. Naming `--stage apose` alongside `--image` is refused: one
+  supplies the A-pose, the other renders one. A narrower `--stage mesh` is
+  still honoured if you want to stop before assembly.
+- **It only ever means one NPC.** One image is one person. If the selection
+  resolves to more than one, the run is refused rather than giving forty NPCs
+  the same body - narrow it with `--id`.
+- **It will not clobber a render you already have.** An existing
+  `3d/apose.png` stops the run unless you pass `--overwrite`.
+- **A fully opaque image is refused**, naming `--remove-bg`. An image with no
+  transparent pixel anywhere still has its background, and that failure is
+  otherwise silent: the mesh comes back looking like a successful run with a
+  flat slab standing behind the figure.
+
+`--remove-bg` uploads your image, runs the same background-removal workflow
+stage `apose` uses (`--rmbg`), and lands *that* result as `apose.png`. It is
+allowed on an already-cut-out image too, for when you do not trust the alpha
+you have. Without it, no ComfyUI job runs before the mesh stage at all.
+
+You can still do it by hand - the stages hand work to each other as plain
+files, so putting your own PNG at `<NPC folder>/3d/apose.png` and running
+`--stage mesh --stage assemble` works exactly as it always did, with none of
+the checks above.
 
 Match what the pipeline expects of that file:
 
@@ -146,6 +181,7 @@ falls over.
 | Stage | What it does | Output |
 |---|---|---|
 | `apose` | Re-renders the NPC's token in a forced A-pose with empty hands, and cuts out the background | `3d/apose.png` |
+| — | `--image` replaces this stage with an A-pose you supply, cutting it out first only if `--remove-bg` | `3d/apose.png` |
 | `mesh` | That one image through Hunyuan3D (clothed shell) and SAM3DBody (rigged body) | `3d/_shell.glb`, `3d/_base.glb` |
 | `assemble` | Headless Blender: rest-pose the base, clean the shell, align, export | the deliverables below |
 

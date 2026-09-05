@@ -11,6 +11,7 @@ slow and failure-prone, and it must never be able to break art generation.
 
     python generate-3d.py --filter Sokolova
     python generate-3d.py --id npc-jules-sokolova-40213 --stage apose
+    python generate-3d.py --id npc-jules-sokolova-40213 --image apose.png
 """
 import argparse
 import importlib.util
@@ -526,19 +527,20 @@ def upload_image(comfy, path, subfolder="lancer3d"):
     return "%s [input]" % name.replace("\\", "/")
 
 
-def stage_apose(comfy, args, entry, folder):
-    """Render this NPC's token again in the A-pose, cut out. -> <folder>/apose.png
+def render_apose(comfy, args, entry):
+    """Render this NPC's token again in the A-pose. -> the raw ComfyUI image dict.
 
     Renders through the entry's OWN recorded workflow and its own seed, so the
     figure is the same person the token shows - only the pose and the empty
     hands differ. The portrait half of build_prompts() is discarded; nothing
     downstream has a use for a backdrop.
+
+    Still has its background: cut_out() is the other half.
     """
     npc = apose_npc(entry)
     prompt = npc_gen.build_prompts(npc)[1]
     category = npc_gen.role_category(npc)
     slug = art._slug(npc["name"])
-    seed = entry["seed"]
     knobs = npc_gen.Knobs(args, npc_gen.TOKEN_SIZE, npc_gen.COMFY_PREFIX)
 
     workflow_path = npc_gen.resolve_recorded_workflow(entry, npc, args)
@@ -549,11 +551,30 @@ def stage_apose(comfy, args, entry, folder):
         raise SystemExit("%s: %s" % (workflow_path.name, exc))
 
     job = art.build_job(template, slots,
-                        npc_gen.entry_for(category, slug, "apose", prompt), seed, knobs)
+                        npc_gen.entry_for(category, slug, "apose", prompt),
+                        entry["seed"], knobs)
     images = art.Comfy.images(comfy.wait(comfy.queue(job), timeout=args.timeout))
     if not images:
         raise RuntimeError("the A-pose render produced no image")
     time.sleep(args.pause)
+    return images[0]
+
+
+def cut_out(comfy, args, entry, source, folder):
+    """Run `source` through --rmbg. -> <folder>/apose.png
+
+    `source` is either an image already sitting on the server - what
+    render_apose() returns, referenced in place - or a Path on this machine,
+    which is uploaded first. Both arrive at the same rmbg graph; the two
+    callers differ only in where their image starts out, and making that the
+    argument's business rather than each caller's is what lets --remove-bg
+    reuse the half of stage apose that does the actual cutting.
+    """
+    npc = apose_npc(entry)
+    category = npc_gen.role_category(npc)
+    slug = art._slug(npc["name"])
+    seed = entry["seed"]
+    knobs = npc_gen.Knobs(args, npc_gen.TOKEN_SIZE, npc_gen.COMFY_PREFIX)
 
     if not args.rmbg.exists():
         raise SystemExit("Background-removal workflow not found: %s" % args.rmbg)
@@ -563,15 +584,95 @@ def stage_apose(comfy, args, entry, folder):
     except art.WorkflowError as exc:
         raise SystemExit("%s: %s" % (args.rmbg.name, exc))
 
+    ref = upload_image(comfy, source) if isinstance(source, Path) \
+        else art.image_ref(source)
     prefix = "%s/%s/%s/apose_rmbg" % (npc_gen.COMFY_PREFIX, category, slug)
-    cut_job = art.build_post_job(
-        post, post_slots, art.image_ref(images[0]), prefix, seed, knobs)
+    cut_job = art.build_post_job(post, post_slots, ref, prefix, seed, knobs)
     cut = art.Comfy.images(comfy.wait(comfy.queue(cut_job), timeout=args.timeout))
     if not cut:
         raise RuntimeError("background removal produced no image")
     time.sleep(args.pause)
 
     return npc_gen.fetch(comfy, cut[0], folder / "apose.png")
+
+
+def stage_apose(comfy, args, entry, folder):
+    """Render this NPC's token again in the A-pose, cut out. -> <folder>/apose.png"""
+    return cut_out(comfy, args, entry, render_apose(comfy, args, entry), folder)
+
+
+# --------------------------------------------------------------------------
+# Stage 0, the other way in: an A-pose the caller already has
+# --------------------------------------------------------------------------
+
+
+def has_cutout(path, threshold=16):
+    """True when `path` has real transparency - a figure standing on nothing.
+
+    The one property that separates an A-pose ready to reconstruct from a
+    render that still has its backdrop, and it cannot be inferred from the
+    filename. An image with no transparent pixel anywhere has a background,
+    and square_apose() will build its square around the whole canvas rather
+    than around the subject - which is how a flat slab ends up standing
+    behind the figure in the finished mesh.
+    """
+    width, _, rows = _png_read(path)
+    return any(row[x * 4 + 3] <= threshold for row in rows for x in range(width))
+
+
+def check_image(args, picked):
+    """A SystemExit naming why --image cannot be used for this run.
+
+    Every one of these is cheap to check and expensive to discover later: a
+    reconstruction takes minutes on the GPU and answers a wrong input with a
+    plausible-looking wrong mesh rather than an error. Checked once here,
+    against the selection, rather than inside the per-NPC loop that catches
+    SystemExit and turns a global mistake into one failure per NPC.
+    """
+    if not args.image:
+        return
+
+    if len(picked) != 1:
+        raise SystemExit(
+            "--image is one person's A-pose, but %d NPCs are selected - "
+            "narrow the run with --id" % len(picked))
+
+    # Broad on purpose: _png_read() raises ValueError for a shape it refuses,
+    # but a truncated or non-PNG file reaches it as a zlib error or an index
+    # out of range instead, and all three mean the same thing to the caller.
+    try:
+        _png_read(args.image)
+    except Exception as exc:
+        raise SystemExit("--image cannot be read as an 8-bit RGBA non-interlaced "
+                         "PNG: %s" % exc)
+
+    if not args.remove_bg and not has_cutout(args.image):
+        raise SystemExit(
+            "--image has no transparent pixels, so it still has a background. "
+            "A backdrop reconstructs as a flat slab behind the figure; pass "
+            "--remove-bg to cut it out first, or supply a cut-out image.")
+
+    apose = npc_3d_folder(picked[0][0]) / "apose.png"
+    if apose.exists() and not args.overwrite:
+        raise SystemExit("%s already exists - pass --overwrite to replace it "
+                         "with --image" % apose)
+
+
+def install_image(comfy, args, entry, folder):
+    """Put --image at <folder>/apose.png, cutting it out first if asked.
+
+    Copied into the NPC's own folder rather than read where it lies: every
+    stage downstream - apose_square.png beside it, should_skip(), the dossier
+    section - treats 3d/ as the record of what this reconstruction was built
+    from, and a source path that only ever existed in one shell history is not
+    that record.
+    """
+    target = folder / "apose.png"
+    if args.remove_bg:
+        print("    cutting out %s ..." % args.image.name, flush=True)
+        return cut_out(comfy, args, entry, args.image, folder)
+    target.write_bytes(args.image.read_bytes())
+    return target
 
 
 # --------------------------------------------------------------------------
@@ -838,6 +939,17 @@ def parse_args(argv=None):
                             "proximity, 'auto' solves for the bones directly "
                             "(default: %(default)s)")
 
+    supplied = p.add_argument_group("an A-pose you supply instead")
+    supplied.add_argument("--image", type=Path, default=None, metavar="PATH",
+                          help="reconstruct from THIS image rather than rendering "
+                               "an A-pose. It is copied to the NPC's 3d/apose.png "
+                               "and must already be a cut-out - a figure on "
+                               "transparency, 8-bit RGBA, non-interlaced. Implies "
+                               "skipping stage apose, and only ever means one NPC")
+    supplied.add_argument("--remove-bg", action="store_true",
+                          help="the --image still has a background: cut it out "
+                               "through --rmbg first, and use that result")
+
     gen = p.add_argument_group("the A-pose render")
     gen.add_argument("--workflow", type=Path, default=art.DEFAULT_WORKFLOW,
                      help="fallback generation workflow, for an entry that records none")
@@ -870,7 +982,18 @@ def parse_args(argv=None):
     args = p.parse_args(argv)
 
     if args.stage is None:
-        args.stage = list(STAGES)
+        # --image supplies what stage apose exists to produce, so the default
+        # set drops it. Named stages are left exactly as given: `--image X
+        # --stage mesh` is a caller deliberately stopping before assembly.
+        args.stage = [s for s in STAGES if s != "apose"] if args.image else list(STAGES)
+    elif args.image and "apose" in args.stage:
+        p.error("--image supplies the A-pose and --stage apose renders one - "
+                "pass only one of them")
+    if args.image and not args.image.exists():
+        p.error("--image not found: %s" % args.image)
+    if args.remove_bg and not args.image:
+        p.error("--remove-bg has nothing to cut out without --image "
+                "(stage apose already cuts out its own render)")
     if args.limit is not None and args.limit < 1:
         p.error("--limit must be at least 1")
 
@@ -898,7 +1021,7 @@ def preflight(args):
     reconstructions. Checking here, before the loop even starts, turns that
     into one fast, clear failure instead of N slow, identical ones.
     """
-    if "apose" in args.stage and not args.rmbg.exists():
+    if ("apose" in args.stage or args.remove_bg) and not args.rmbg.exists():
         raise SystemExit("Background-removal workflow not found: %s" % args.rmbg)
     if "mesh" in args.stage:
         for workflow in (MESH_WORKFLOW, RIG_WORKFLOW):
@@ -927,9 +1050,14 @@ def main(argv=None):
                   % (entry["name"], entry.get("callsign", ""),
                      npc_3d_folder(folder_path)))
             print("  stages: %s" % ", ".join(args.stage))
-            print("  A-pose token prompt:\n%s" % apose_prompt(entry))
+            if args.image:
+                print("  A-pose supplied: %s%s"
+                      % (args.image, " (cut out first)" if args.remove_bg else ""))
+            else:
+                print("  A-pose token prompt:\n%s" % apose_prompt(entry))
         return 0
 
+    check_image(args, picked)
     preflight(args)
 
     comfy = art.find_server(args.server)
@@ -960,7 +1088,10 @@ def main(argv=None):
         folder.mkdir(parents=True, exist_ok=True)
         try:
             apose = None
-            if "apose" in args.stage:
+            if args.image:
+                apose = install_image(comfy, args, entry, folder)
+                print("      -> %s (from %s)" % (apose.name, args.image.name))
+            elif "apose" in args.stage:
                 print("    A-pose render ...", flush=True)
                 apose = stage_apose(comfy, args, entry, folder)
                 print("      -> %s" % apose.name)
