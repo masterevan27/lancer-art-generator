@@ -1,8 +1,16 @@
 # Re-rolling Theme, and the twelve traits that go with it
 
-> **Status:** design, not started 2026-09-04. Depends on
-> [raw bullets in the manifest](2026-09-04-raw-bullets-in-the-manifest-design.md),
-> whose collection half already shipped with `--trait-odds`.
+> **Status:** shipped 2026-09-04, in `generate-npc.py`, except §5. Landed wider
+> than titled: measurement during implementation found that a pinned re-roll
+> only filters the freed trait against the pinned ones, never the reverse, so
+> the feature generalised to *every* re-roll freeing its own cascade
+> (`TRAIT_DEPENDENTS`, `trait_cascade()`) rather than Theme alone.
+> `THEME_CASCADE` is `trait_cascade("Theme")`, derived rather than typed out,
+> and comes out to exactly the twelve traits §3 names by hand. §5, the import
+> GUI's confirmation dialog, is **outstanding** — it lives in the separate
+> `lancer-npc-import-gui` repository, which this repo has no counterpart for.
+> Verification items 1–6 are covered by this repo's test suite; 7–8 depend on
+> §5 and are outstanding with it.
 
 ## 1. Problem
 
@@ -91,6 +99,29 @@ Kept — thirteen: `Given names`, `Family names`, `Callsigns`, `Pronouns`, `Age`
 `Glow colour`. None is themed, and none is filtered by anything being
 re-rolled. `Faction`'s civ/mil filter reads `Role`'s `mil` flag, but `Faction`
 is not being drawn, so no filter runs.
+
+**This table was written to justify Theme's twelve, not as a complete
+dependency graph — read the implementation's `TRAIT_DEPENDENTS` for that.**
+An audit of `roll_npc()`'s full filter chain, done while generalising this
+into every re-roll freeing its own cascade, found two live dependency edges
+this table omits, neither of which involves `Theme` and so neither of which
+changes the twelve above:
+
+- `Age` → `Hair colour`. An `older` colour — greying, salt-and-pepper —
+  asserts an age the `young` Age clause contradicts, the same `young` flag
+  `Age` → `Build` already reads one table over. Freeing `Age` alone stranded
+  one in 3–5 per 400 on the live tables.
+- `Backdrop` → `Gear`. A `nogear` Backdrop fills the subject's hands, so
+  `roll_npc()` corrects for it by re-rolling a `hands` Gear onto a bullet that
+  leaves them free — but that correction runs *before* the pinned overrides
+  are pasted back over the roll, so a pinned Gear survives a scene that
+  forbids it. Freeing `Backdrop` alone stranded 23–24 per 400.
+
+Both are now edges in `TRAIT_DEPENDENTS`, in `generate-npc.py`. The lesson for
+the next person editing either table is to re-audit the filter chain rather
+than copy this one: a table like this one can justify a specific cascade
+without being exhaustive, and nothing here would have flagged the gap short
+of measuring the actual contradictions.
 
 ## 4. Approach
 

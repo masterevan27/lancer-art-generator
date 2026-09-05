@@ -710,60 +710,200 @@ workflow renders them. A file with no `EmptyLatentImage` gives up that control
 and prints a warning naming itself, so a two-workflow run says which of the two
 is the problem.
 
-## Re-rolling one trait
+## Re-rolling a trait
 
-`--reroll-trait TABLE`, alongside `--regen-manifest`/`--regen-id`, re-rolls a
-single trait of an already-generated NPC and reproduces every other one, then
+`--reroll-trait TABLE`, alongside `--regen-manifest`/`--regen-id`, re-rolls
+one named trait of an already-generated NPC - and, on an entry that recorded
+its raw bullets, anything whose filters read a flag from it - then
 re-renders into the same folder under the same manifest id:
 
 ```bash
 python generate-npc.py --regen-manifest .generated-npcs.json     --regen-id npc-Nadia-Okonkwo-1234 --reroll-trait Hair
 ```
 
-Only some traits can be re-rolled alone, and the reason is worth knowing
-because it is not a matter of taste. **The manifest is a lossy record of a
-roll**: `roll_npc()` strips a bullet's flags before storing it, so an entry
-carries `a colonial administrator`, not `a colonial administrator || mil`. A
-trait whose filters need another trait's flags therefore cannot be re-rolled
-correctly from an entry — re-rolling `Outfit` without knowing whether the Role
-was `mil` produces a civilian in a service uniform.
+How much of the NPC keeps its old value depends on whether the entry
+recorded `rawTraits`, and how much moves along with the named trait depends
+on the cascade below ("Cascades: what else moves with it"). Both are worth
+knowing before spending a render to find out the hard way.
 
-The script already met this once and solved it one flag at a time: `young` is a
-manifest key of its own precisely because the Age bullet's flag was gone by the
-time it was stored.
+**The manifest used to be a lossy record of a roll**, and the reason is worth
+knowing because it is not a matter of taste. `roll_npc()` strips a bullet's
+flag segment before storing it, so an entry carried `a colonial
+administrator`, not `a colonial administrator || mil`. A trait whose filters
+need another trait's flags cannot be re-rolled correctly without them —
+re-rolling `Outfit` with no way to know whether the Role was `mil` would
+produce a civilian in a service uniform, exactly the pairing the flag exists
+to prevent.
+
+The script had already met this once and solved it one flag at a time:
+`young` and `outfit_notac` are manifest keys of their own, written beside
+`traits`, precisely because the Age bullet's `young` flag and the Outfit
+bullet's `notac` flag were both gone by the time the entry was saved.
+
+**`rawTraits` generalises that fix instead of adding a third flag to it.** It
+stores every bullet exactly as it was rolled, flags included, beside the
+`traits` an entry has always carried:
+
+```json
+{
+  "traits":    { "Role": "a colonial administrator", "...": "..." },
+  "rawTraits": { "Role": "a colonial administrator || mil", "...": "..." }
+}
+```
+
+With it, `--reroll-trait` stops needing hand-written per-trait filter
+rebuilds. A re-roll becomes a fresh roll with every trait but the target (and
+its cascade — see below) pinned as an override, which is the same path
+`--set-trait` already documents: a bullet handed over verbatim, with its
+flags. Every filter then runs exactly as it does for a fresh roll, because
+it *is* one.
+
+**An entry rolled before `rawTraits` existed has none, and keeps today's
+reduced behaviour with a clear refusal rather than a silent partial
+re-roll.** It can still re-roll the eleven traits whose filters rebuild from
+what it *does* carry — `Callsigns`, `Build`, `Height`, `Skin`, `Hair`,
+`Eyes`, `Feature`, `Demeanor`, `Headgear`, `Glow colour`, `Glow placement` —
+and refuses the rest, naming the reason and, where raw bullets are the actual
+fix, the cure:
+
+```
+--reroll-trait Theme: cannot re-roll that one from this entry, because this NPC
+was generated before raw bullets were recorded, so its Role's 'mil' flag is
+gone and a themed re-roll of its Outfit and Weapon could contradict it.
+Re-roll the NPC to record them, or re-roll a single trait from: Callsigns,
+Build, Height, Skin, Hair, Eyes, Feature, Demeanor, Headgear, Glow colour,
+Glow placement
+```
+
+Two of the eleven show the shape of what `rawTraits` actually buys.
+`Headgear` is on the list *because* of the second stored key: it is gated on
+the Outfit bullet's `notac` flag, which the manifest otherwise stores
+stripped. An entry from before that key exists reads back as `None` rather
+than `False` — not the same claim — and re-rolls headgear unrestricted,
+saying so on stderr rather than fabricating a `False` over the gap. `Hair
+colour` is refused even here, for the mirror-image reason `Hair` is allowed:
+the stored cut already has the colour substituted into its `{colour}` slot,
+so a legacy re-roll has nowhere to put a new one, and re-rolling `Hair`
+instead picks a new cut in the same colour. An entry *with* `rawTraits` does
+not need that workaround — its `Hair colour` re-roll cascades to `Hair` (see
+below) and closes the slot correctly, so `Hair colour` is not on the refused
+list at all once raw bullets exist.
+
+**An entry with `rawTraits` re-rolls everything except three traits, and
+those three are refused whatever the entry recorded:**
 
 | | |
 | --- | --- |
-| **Re-rollable** | `Callsigns`, `Build`, `Height`, `Skin`, `Hair`, `Eyes`, `Feature`, `Demeanor`, `Headgear`, `Glow colour`, `Glow placement` |
-| **Refused** | everything else, each with its own reason — see `UNREROLLABLE_REASONS` |
+| **Refused always** | `Given names`, `Family names` — the NPC's folder and manifest id are derived from the name, so changing one in place isn't a re-roll, it's a new NPC wearing the old one's folder |
+| | `Pronouns` — it selects every per-pronoun variant table, which takes the name with it for the same reason |
+| **Re-rollable** | everything else — all 22 of the remaining 25 traits, `Theme` included |
 
-The filters that *do* rebuild are the ones whose inputs survive storage: the
-rolled `Theme` is a stored trait, `young` and `outfit_notac` are stored keys,
-and the stored `Backdrop` keeps its scene segment, which is what
-`Glow placement`'s `scene` flag is tested against.
+The re-roll draws from `--new-seed` (or the entry's seed), so the same
+re-roll of the same NPC is repeatable.
 
-`Headgear` is on the re-rollable list *because* of that second key. It is gated
-by the Outfit bullet's `notac` flag, and the manifest stores Outfit with its
-flags already stripped — the exact condition that refuses `Weapon`, `Gear` and
-`Stance`. `outfit_notac` is therefore written beside `young`, for the reason
-`young` is written at all. An entry from before that key exists reads back as
-`None` rather than `False`, which is not the same claim: it re-rolls headgear
-unrestricted, exactly as it did before the register existed, and says so on
-stderr; a regen of such an entry declines to write a fabricated `False` over
-the gap.
+### Cascades: what else moves with it
 
-`Hair` is the fiddly one and worth describing. `roll_npc()` substitutes the
-colour into the cut and appends the colour's trailing clause to the whole
-phrase, storing only the bare base under `Hair colour` — so a new cut is
-re-filled from that base, and the tail is recovered from the table *by* that
-base. Without the recovery step, re-rolling someone's haircut would silently
-drop a gradient they had. `Hair colour` itself is refused for the mirror-image
-reason: the stored cut has the colour already substituted in and its
-`{colour}` slot is gone, so there is nowhere to put a new one. Re-roll `Hair`
-instead, which picks a new cut in the same colour.
+Re-rolling a trait pins every other raw bullet and draws the named one
+against them — but pinning only filters in *one* direction. The freed trait
+is drawn against everything pinned and every filter narrows its pool
+correctly; nothing runs the other way, because a pinned trait is never
+drawn, so no filter re-checks it against the value that just changed
+underneath it.
 
-The re-roll draws from `--new-seed` (or the entry's seed), so the same re-roll
-of the same NPC is repeatable.
+Measured rather than assumed. Freeing `Role` alone and keeping everything
+else left the kept `Faction` on the wrong side of the civ/mil split **138
+times in 400** on the live tables — a colonial administrator flying a marine
+corps banner, exactly the pairing `filter_by_mil()` exists to stop, arriving
+through the one path that skips it.
+
+The fix is to free the trait's *dependents* along with it: everything whose
+correctness reads a flag from the trait being re-rolled, so each one is
+drawn fresh under the filter that would otherwise have had nothing left to
+check it against. `TRAIT_DEPENDENTS` in `generate-npc.py` names each edge and
+the filter behind it, and `trait_cascade(name)` is its transitive closure:
+re-rolling `Role` also re-rolls `Outfit` because `Role` gates it, then
+`Headgear`, `Weapon` and `Gear` because the new `Outfit` gates *them*, then
+`Stance` because the new `Weapon` and `Gear` do. A trait nothing depends on
+closes to itself, which is why the eleven traits that already re-rolled
+cleanly before still move nothing but themselves on one click.
+
+Every re-roll's actual size, on the live tables:
+
+| Re-roll | Also re-rolls | Total |
+| --- | --- | --- |
+| `Theme` | the 7 theme-gated tables, plus `Gear`, `Stance`, `Glow placement`, `Weather` | 12 |
+| `Role` | `Faction`, `Outfit`, `Weapon`, `Headgear`, `Gear`, `Stance` | 7 |
+| `Outfit` | `Headgear`, `Weapon`, `Gear`, `Stance` | 5 |
+| `Backdrop` | `Weather`, `Glow placement`, `Gear`, `Stance` | 5 |
+| `Age` | `Build`, `Hair colour`, `Hair` | 4 |
+| `Weapon` | `Gear`, `Stance` | 3 |
+| `Hair colour` | `Hair` | 2 |
+| `Gear` | `Stance` | 2 |
+| everything else | — | 1 |
+
+The CLI names what travelled rather than counting it, so a re-roll is
+legible before it becomes a render. Every trait the cascade drew prints on
+its own line, even one that happened to come back unchanged — a cascade
+re-draws it either way, and printing only the movers would make an unlucky
+run look smaller than it was:
+
+```
+re-rolled Role: 'a smuggler' -> 'an elite mercenary pilot'
+  with Faction: 'Karrakin Trade Baronies || heavy brocade…' -> 'Union Administrative Department || issued and worn thin…'
+  with Outfit: 'a fitted black tactical bodysuit…' -> 'an armored softshell greatcoat…'
+  with Headgear: 'He wears a sleek black mechanical headset…' -> 'He wears a bulky visored rig…'
+  with Weapon: 'a holstered sidearm and a suppressed carbine…' -> 'a service pistol worn openly…'
+  with Gear: 'a caged inspection lamp…' -> 'a scarred pilot helmet…'
+  with Stance: 'leaning low into a forward sprint…' -> 'kneeling in profile with head bowed low…'
+```
+
+(Truncated with `…` for space; the real output prints each bullet in full.
+The tables drift as bullets are added or edited, the same drift [What one run
+produces](#what-one-run-produces) is subject to, so treat this as the shape
+of the report rather than a promise about its wording.)
+
+**A known limit: `--unarmed` does not survive a `Weapon` re-roll.**
+`--unarmed` is a run flag, read once when an NPC is first rolled, and nothing
+records it per entry — there is no manifest key for it the way there is for
+`young` or `outfit_notac`. A re-roll that frees `Weapon`, whether on its own
+or through `Role`'s, `Outfit`'s or `Theme`'s cascade, draws from the ordinary
+armed pool with no memory that this NPC was rolled unarmed, and can come back
+carrying something. This is the same shape `young` was in before it got a
+manifest key of its own; fixing it the same way would need a key no spec has
+asked for yet, so it stays a documented limit rather than a silently fixed
+one.
+
+**A re-roll is not reversible from the manifest.** A cascade rewrites every
+trait it drew, plus both prompts, and the old bullets are gone the moment the
+new ones are written — there is no undo short of re-rolling back to the old
+values by hand. Worth knowing before spending a render on a re-roll just to
+see whether you liked it better before.
+
+### The Theme cascade
+
+`Theme` is the largest cascade, and the one worth naming on its own: it is
+the trait a GM most wants to change, since it's the whole visual world the
+NPC comes from, and "re-roll the entire NPC" is not a substitute — it throws
+away the name, the role and the face that made the character worth keeping.
+
+`--reroll-trait Theme` re-rolls **twelve** traits — `Theme` itself, the seven
+theme-gated tables (`Hair`, `Hair colour`, `Feature`, `Outfit`, `Headgear`,
+`Weapon`, `Backdrop`), and the four that depend on those (`Gear`, `Stance`,
+`Glow placement`, `Weather`) — and keeps **thirteen**: `Given names`, `Family
+names`, `Callsigns`, `Pronouns`, `Age`, `Build`, `Height`, `Skin`, `Eyes`,
+`Demeanor`, `Role`, `Faction`, `Glow colour`. The NPC stays the same person;
+only the world they're standing in, and what that world put them in, changes.
+
+The new theme is always a *different* one from the stored theme — the draw
+excludes it and picks from what's left, rather than repeating until it
+differs, since the two are distribution-equivalent and only one of them can't
+spin forever on a tables file with a single theme. Without that exclusion, a
+re-roll could spend twelve traits and a render producing a
+differently-dressed version of the idea it already had, which is not what the
+button says it does. (A tables file offering only one theme has no different
+theme to give: the re-roll proceeds within it anyway — the seven theme-gated
+tables and their four dependents still draw again — and says so on stderr
+rather than silently pretending the theme changed.)
 
 ## What a bullet's real odds are
 

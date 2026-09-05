@@ -146,6 +146,27 @@ class TestRenderedPrompt(unittest.TestCase):
             self.assertIn("rims", portrait)
         self.assertTrue(checked, "no roll produced a glow sentence to check")
 
+    def test_a_forced_placement_arrives_stripped(self):
+        """The 'scene' flag came off the rolled placement but not the forced one.
+
+        Glow placement sits in roll_npc()'s in-loop strip block, and was missed
+        from the block that re-strips after npc.update(overrides) - so
+        --set-trait "Glow placement=... || scene" shipped the literal '|| scene'
+        into the portrait prompt and the dossier, and so did a re-roll that
+        pins the stored bullet straight back in. The sweep below happens to
+        cover it only because some seed rolls a flagged bullet; this forces one
+        and asserts it every run.
+        """
+        flagged = next(b for b in bullets_for(TABLES, "Glow placement")
+                       if "scene" in gen.split_flags(b)[1])
+        npc = roll(0, **{"Glow placement": flagged})
+        self.assertNotIn("||", npc["Glow placement"])
+        # Not "the bullet minus its flags" spelled out here: rendered() is what
+        # every other comparison against a source bullet in this suite uses,
+        # and it substitutes the pronouns this one's '{object}' needs.
+        self.assertIn(npc["Glow placement"],
+                      rendered(TABLES, "Glow placement", flagged))
+
     def test_no_flag_segment_reaches_a_prompt(self):
         """A rolled placement is dropped into the prompt verbatim, so an
         unstripped '|| scene' would ship the literal words to the image model

@@ -1,12 +1,16 @@
 # Storing raw bullets in the manifest, so any trait can be re-rolled
 
-> **Status:** design, not started 2026-09-04. Follow-up to `--reroll-trait`,
-> which shipped covering 11 of 24 traits; this is what the other 13 need.
+> **Status:** shipped 2026-09-04. `rawTraits` is written by both entry writers
+> and `reroll_trait()` prefers it, covering all but three of the 25 rolled
+> traits (`Given names`, `Family names`, `Pronouns`) once an entry carries it;
+> an entry written before this lands keeps the 11-trait fallback described
+> below. See also [the Theme cascade](2026-09-04-theme-reroll-cascade-design.md),
+> which builds on this and shipped alongside it.
 
 ## 1. Problem
 
 `--reroll-trait` re-rolls one trait of a stored NPC and keeps the rest. It
-refuses 13 of the 24 rolled traits, and the refusal is honest rather than
+refuses 14 of the 25 rolled traits, and the refusal is honest rather than
 conservative: **the manifest is a lossy record of the roll.**
 
 `roll_npc()` strips a bullet's flag segment before storing it, for the nine
