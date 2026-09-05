@@ -14,7 +14,13 @@ HTTP (`/prompt`, `/history`, `/view`).
 - ComfyUI running. The script probes `127.0.0.1:8000-8015` — the same range
   `StackLauncher.ps1` watches, since Comfy Desktop walks upward when 8000 is
   busy — and exits with a clear message if nothing answers. Use `--server` for
-  anything else.
+  anything else. Either of the stack launcher's two ComfyUI modes — the Comfy
+  Desktop app, or its headless "Server only" mode — serves the same API on the
+  same port, so it makes no difference here which one started the server. It
+  does matter to whoever maintains the launcher: headless mode's flags are a
+  hardcoded copy of Comfy Desktop's, so a ComfyUI setting changed in the desktop
+  app has to be mirrored into `StackLauncher.ps1` by hand, or the two modes
+  generate under different flags.
 - The models the workflow references. The default template wants
   `krea2TurboOfficialComfy_krea2TurboInt8`, `qwen3vl_4b_bf16`,
   `qwen_image_vae`, and the `detail_slider_krea2` LoRA.
