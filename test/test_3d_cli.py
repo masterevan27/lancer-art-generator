@@ -1424,3 +1424,100 @@ class TestTexturePreflight(unittest.TestCase):
 
     def test_no_texture_checks_nothing_it_will_not_open(self):
         d3.preflight(d3.parse_args(["--no-texture", "--stage", "apose"]))
+
+
+class TestDeliverables3d(unittest.TestCase):
+    """deliverables_3d(): what the dossier's '## 3D' section should list.
+
+    A deliverable is named after the NPC; the intermediates kept beside it
+    (apose.png, apose_square.png, _shell.glb, _base.glb) are not - that is
+    the whole discriminator, and these confirm it both ways.
+    """
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.folder = Path(self._tmp.name)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_it_lists_files_named_after_the_stem(self):
+        (self.folder / "Name Shell.glb").write_bytes(b"")
+        (self.folder / "Name Print.stl").write_bytes(b"")
+        self.assertEqual(d3.deliverables_3d(self.folder, "Name"),
+                         ["Name Print.stl", "Name Shell.glb"])
+
+    def test_it_excludes_intermediates(self):
+        (self.folder / "Name Shell.glb").write_bytes(b"")
+        for name in ("apose.png", "apose_square.png", "_shell.glb", "_base.glb",
+                     "back.png", "_back_render.png"):
+            (self.folder / name).write_bytes(b"")
+        self.assertEqual(d3.deliverables_3d(self.folder, "Name"),
+                         ["Name Shell.glb"])
+
+    def test_a_missing_folder_is_empty(self):
+        self.assertEqual(d3.deliverables_3d(self.folder / "absent", "Name"), [])
+
+
+class TestDossierPreservation(unittest.TestCase):
+    """Regression test for an Important review finding: a narrowed --stage
+    texture run only ever builds the texture itself, but append_dossier_3d()
+    REPLACES the whole '## 3D' section rather than appending to it. Listing
+    only what THIS run built (`built`) would rewrite six true rows - an
+    older Shell.glb, a Print.stl, four turnarounds - down to one. The
+    section must be built from deliverables_3d(), which reads the folder,
+    not from what ran.
+    """
+
+    def test_a_narrowed_texture_run_keeps_the_older_deliverables(self):
+        a = manifest_entry(91)
+        stem = d3.npc_gen._safe(a["name"])
+        fake_comfy = mock.Mock()
+        fake_comfy.base = "http://fake"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            folder_path = Path(tmp) / a["name"]
+            folder = folder_path / "3d"
+            folder.mkdir(parents=True)
+
+            # What an earlier, wider run (--stage assemble and beyond) left
+            # on disk. This run only narrows to --stage texture.
+            (folder / ("%s Shell.glb" % stem)).write_bytes(b"the old shell")
+            (folder / ("%s Print.stl" % stem)).write_bytes(b"the stl")
+            (folder / ("%s Turnaround_000.png" % stem)).write_bytes(b"a turnaround")
+            (folder / "apose_square.png").write_bytes(b"not really a png")
+
+            dossier = folder_path / ("%s.md" % stem)
+            dossier.write_text(
+                "# %s\n\n## 3D\n\n"
+                "- `3d/%s Shell.glb`\n"
+                "- `3d/%s Print.stl`\n"
+                "- `3d/%s Turnaround_000.png`\n"
+                % (a["name"], stem, stem, stem), encoding="utf-8")
+
+            manifest_path = Path(tmp) / "manifest.json"
+            manifest_path.write_text(
+                json.dumps({str(folder_path): a}), encoding="utf-8")
+
+            def fake_run_texture_step(args, folder_, stem_, shell, step,
+                                      front=None, back=None):
+                (folder_ / ("_%s Texture.png" % stem_)).write_bytes(b"the atlas")
+                (folder_ / ("_%s Shell.glb" % stem_)).write_bytes(b"the new shell")
+                return {"texture": "_%s Texture.png" % stem_,
+                        "shell": "_%s Shell.glb" % stem_,
+                        "islands": 12, "views": ["front"], "files": []}
+
+            with mock.patch.object(d3.art, "find_server", return_value=fake_comfy), \
+                 mock.patch.object(d3, "find_blender",
+                                   return_value=Path("blender.exe")), \
+                 mock.patch.object(d3, "run_texture_step",
+                                   side_effect=fake_run_texture_step):
+                d3.main(["--manifest", str(manifest_path), "--stage", "texture",
+                        "--no-back-view"])
+
+            section = dossier.read_text(encoding="utf-8")
+
+        for name in ("%s Shell.glb" % stem, "%s Print.stl" % stem,
+                     "%s Turnaround_000.png" % stem, "%s Texture.png" % stem):
+            with self.subTest(name=name):
+                self.assertIn("`3d/%s`" % name, section)

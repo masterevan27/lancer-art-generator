@@ -276,7 +276,7 @@ def should_skip(folder, args):
     behind, and skipping on it would make every such NPC permanently
     unbuildable without --overwrite.
 
-    Only applies when --stage is the full default set of all three stages.
+    Only applies when --stage is the full default set of all four stages.
     The docstring above and docs/generate-3d.md both advertise running
     `--stage apose`, inspecting the result, then `--stage mesh` as the normal
     way to iterate - and that sequence is exactly what this skip used to
@@ -288,6 +288,25 @@ def should_skip(folder, args):
     if set(args.stage) != set(STAGES):
         return False
     return folder.exists() and any(folder.iterdir()) and not args.overwrite
+
+
+def deliverables_3d(folder, stem):
+    """Every 3D deliverable currently in `folder`.
+
+    The dossier's '## 3D' section exists to describe what is on disk (see
+    append_dossier_3d, which REPLACES it for exactly that reason), but a
+    narrowed run knows only what it built itself: `--stage texture` on a
+    folder assembled last week would rewrite six true rows down to one. So
+    the list is read off the folder rather than accumulated from this run.
+
+    A deliverable is named after the NPC - `<stem> Shell.glb` - and the
+    intermediates kept beside it are not (apose.png, _shell.glb, back.png),
+    which is the whole distinction.
+    """
+    if not folder.exists():
+        return []
+    return sorted(p.name for p in folder.iterdir()
+                  if p.is_file() and p.name.startswith(stem))
 
 
 def select_entries(manifest, args):
@@ -1062,6 +1081,18 @@ def stage_texture(comfy, args, subject, folder, stem, entry=None,
     print("    baking a %dpx atlas ..." % args.texture_size, flush=True)
     report = run_texture_step(args, folder, stem, shell, "bake", front, back)
 
+    # Checked before either file is moved: the two os.replace calls below are
+    # not jointly atomic, so a malformed report missing one key must not be
+    # allowed to replace the texture and then raise on the shell (or the
+    # reverse), leaving one updated and the other not. Shell.glb is never
+    # DAMAGED either way - os.replace only ever swaps in a whole, complete
+    # file - but "nothing moved until everything succeeded" should mean it.
+    for key in ("texture", "shell"):
+        if key not in report:
+            raise RuntimeError(
+                "the Blender texturing report has no %r - refusing to move "
+                "anything into place" % key)
+
     # Everything above wrote only underscore-prefixed files. This is the one
     # point at which a good deliverable is replaced, and os.replace is atomic
     # on the same filesystem on every platform this runs on.
@@ -1461,8 +1492,15 @@ def main(argv=None):
             if folder_path is not None and built:
                 dossier = folder_path / ("%s.md" % stem)
                 if dossier.exists():
-                    append_dossier_3d(dossier, built, workflows,
-                                      APOSE_STANCE, back_stance)
+                    # deliverables_3d(), not `built`: a narrowed --stage
+                    # texture run only ever built the texture, but assemble's
+                    # Shell.glb, Print.stl and the turnarounds are still on
+                    # disk from a run days or weeks earlier, and
+                    # append_dossier_3d() REPLACES the section rather than
+                    # appending to it. Listing only `built` would rewrite six
+                    # true rows down to one.
+                    append_dossier_3d(dossier, deliverables_3d(folder, stem),
+                                      workflows, APOSE_STANCE, back_stance)
                 else:
                     # Not an error: an NPC folder moved by hand into Foundry
                     # keeps its art and loses nothing by having no dossier.
