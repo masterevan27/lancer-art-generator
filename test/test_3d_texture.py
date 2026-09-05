@@ -118,5 +118,121 @@ class TestProjectedUVs(unittest.TestCase):
         self.assertGreater(self.report["max_y"] - self.report["min_y"], 0.9)
 
 
+def glb_document(path):
+    """The JSON chunk of a binary glTF, as a dict.
+
+    Parsed by hand rather than re-imported through Blender: the promise is
+    that a consumer opening this file finds a texture in it, and the 12-byte
+    header plus chunk table is small enough to read without a dependency.
+    """
+    data = path.read_bytes()
+    if data[:4] != b"glTF":
+        raise AssertionError("%s is not a binary glTF" % path)
+    length = int.from_bytes(data[12:16], "little")
+    if data[16:20] != b"JSON":
+        raise AssertionError("%s's first chunk is not JSON" % path)
+    return json.loads(data[20:20 + length].decode("utf-8"))
+
+
+def glb_holds_an_image(path):
+    document = glb_document(path)
+    return bool(document.get("images")) and bool(document.get("materials"))
+
+
+@unittest.skipUnless(BLENDER, "Blender not installed")
+class TestBake(unittest.TestCase):
+    """One front-only bake - the --no-back-view path, end to end in Blender."""
+
+    SIZE = 64          # small on purpose: this is a Cycles bake in test time
+    RED = (220, 30, 30, 255)
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.outdir = Path(cls._tmp.name)
+        cls.front = cls.outdir / "apose_square.png"
+        write_test_png(cls.front, 128, cls.RED)
+        cls.report, cls.proc = run_blender(
+            TEXTURE_SCRIPT, SHELL, cls.outdir, "--stem", STEM,
+            "--step", "bake", "--front", cls.front,
+            "--front-margin", "1.06", "--size", cls.SIZE)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
+
+    def texture_path(self):
+        return self.outdir / ("_%s Texture.png" % STEM)
+
+    def test_it_exits_cleanly(self):
+        self.assertEqual(self.proc.returncode, 0, self.proc.stderr[-3000:])
+
+    def test_the_texture_is_written(self):
+        self.assertTrue(self.texture_path().exists(),
+                        sorted(p.name for p in self.outdir.iterdir()))
+        self.assertGreater(self.texture_path().stat().st_size, 0)
+
+    def test_the_texture_is_the_size_that_was_asked_for(self):
+        width, height, _ = d3._png_read(self.texture_path())
+        self.assertEqual((width, height), (self.SIZE, self.SIZE))
+
+    def test_the_reference_colour_survives_the_bake(self):
+        """Not 'a texture exists' - the RIGHT pixels, in colour.
+
+        A flat red source must bake to a red atlas. Anything that inverts the
+        colour management - a tone-mapped view transform, a linear buffer
+        saved as sRGB - shows up here and nowhere else.
+        """
+        _, _, rows = d3._png_read(self.texture_path())
+        opaque = [(row[x * 4], row[x * 4 + 1], row[x * 4 + 2])
+                  for row in rows for x in range(self.SIZE)
+                  if row[x * 4 + 3] > 16]
+        self.assertTrue(opaque, "the atlas is entirely transparent")
+        strong = [rgb for rgb in opaque
+                  if rgb[0] > 150 and rgb[1] < 110 and rgb[2] < 110]
+        self.assertGreater(
+            len(strong), len(opaque) * 0.5,
+            "most opaque texels should carry the source red, got %r"
+            % (opaque[:5],))
+
+    def test_the_shell_is_re_exported(self):
+        path = self.outdir / ("_%s Shell.glb" % STEM)
+        self.assertTrue(path.exists())
+        self.assertGreater(path.stat().st_size, 0)
+
+    def test_the_exported_glb_embeds_a_material_and_an_image(self):
+        self.assertTrue(glb_holds_an_image(self.outdir / ("_%s Shell.glb" % STEM)))
+
+    def test_the_exported_glb_carries_exactly_one_uv_set(self):
+        """The projection layers are working data and must not ship."""
+        document = glb_document(self.outdir / ("_%s Shell.glb" % STEM))
+        for mesh in document["meshes"]:
+            for primitive in mesh["primitives"]:
+                attributes = [k for k in primitive["attributes"]
+                              if k.startswith("TEXCOORD")]
+                with self.subTest(attributes=attributes):
+                    self.assertEqual(attributes, ["TEXCOORD_0"])
+
+    def test_the_report_names_both_temporaries(self):
+        """generate-3d.py moves exactly these into place; it must not guess."""
+        self.assertEqual(self.report["texture"], "_%s Texture.png" % STEM)
+        self.assertEqual(self.report["shell"], "_%s Shell.glb" % STEM)
+
+    def test_the_report_says_which_views_were_used(self):
+        self.assertEqual(self.report["views"], ["front"])
+
+    def test_the_atlas_unwrap_produced_islands(self):
+        self.assertGreater(self.report["islands"], 0)
+
+    def test_nothing_unprefixed_is_written(self):
+        """This stage rewrites a deliverable. Nothing lands under a
+        deliverable's name until generate-3d.py moves it there."""
+        self.assertEqual(
+            sorted(p.name for p in self.outdir.iterdir()
+                   if not p.name.startswith("_")
+                   and p.name != "apose_square.png"),
+            [])
+
+
 if __name__ == "__main__":
     unittest.main()
