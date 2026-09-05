@@ -1892,7 +1892,7 @@ ignored — so notes like this one are safe to leave inline.
 - catches {possessive} jaw and one shoulder from below
 - rims {possessive} shoulders and hair from behind, the face lit only by what spills around it
 - falls across {possessive} back and one shoulder, the front of the figure in warm shadow
-- cuts across the frame at an angle, catching {possessive} profile and one hand
+- catches {possessive} profile and one hand at a sharp angle, the rest of the figure left in shadow
 - washes across the scene behind {object}, throwing {possessive} outline into near-silhouette || scene
 - pools on the ground around {object} and throws colour up onto {possessive} hands || scene
 - stripes the wall behind {object} and catches one side of {possessive} face || scene
@@ -2318,10 +2318,10 @@ glow could land on a face with nothing nearby to cast it.
 > **{AGE}**, rendered in a detailed painterly illustration style with fine
 > grain texture, clean linework and halftone dot shading worked into the
 > shadows, moody cinematic lighting on the figure. {SUBJECT} is facing the
-> viewer, the whole figure in frame from the top of {POSSESSIVE} head to the
-> soles of {POSSESSIVE} plain modern boots, no leg wraps or puttees, with clear
-> empty space above and below, in realistic adult proportions roughly seven to
-> eight heads tall. {SUBJECT} is **{HEIGHT}**, **{BUILD}**, with **{TRAITS}**
+> viewer, {POSSESSIVE} whole figure in frame from the top of {POSSESSIVE} head to
+> the soles of {POSSESSIVE} feet, with clear empty space above and below, in
+> realistic adult proportions roughly seven to eight heads tall. {SUBJECT}
+> is **{HEIGHT}**, **{BUILD}**, with **{TRAITS}**
 > **{SKIN}**, **{HAIR}**, **{EYES}**, and **{FEATURE}**, wearing **{OUTFIT}**,
 > **{FACTION_LINE}**the clothing following the shape of that frame. **{HEADGEAR}**
 > {POSSESSIVE} face carries **{DEMEANOR}**. {SUBJECT} carries **{GEAR}**.
@@ -2352,13 +2352,14 @@ rolled Gear, Outfit, Headgear, Feature or Eyes.
 
 See the portrait section above for the light-implying word list.
 
-The token template names the footwear outright - "plain modern boots, no leg
-wraps or puttees" - because with nothing said about them the campaign's
-painterly style kept defaulting to wrapped WWI-style puttees rising from the
-boot tops, the same kind of drift the Age table fights with an explicit "fully
-grown adult". Outfit bullets that specify their own footwear (the knee boots,
-thigh-high boots and so on in `Outfit (she) +`) still win, since they land
-later in the prompt and are far more specific.
+The framing sentence names no footwear. It used to - "plain modern boots, no
+leg wraps or puttees" - back when the painterly style kept defaulting to
+wrapped WWI-style puttees rising from the boot tops with nothing said about
+them. The Faction and Outfit tables now describe each faction's dress
+specifically enough that the drift no longer happens, and the old clause was
+actively wrong for any character who isn't in boots at all. "the soles of
+{POSSESSIVE} feet" asserts the framing - the feet are in shot - and leaves
+what is on them to Outfit.
 
 The opening sentence asserts framing, not pose. It used to read "standing at
 full height", which fought the rolled Stance on every crouching, kneeling or
