@@ -1379,6 +1379,7 @@ ignored — so notes like this one are safe to leave inline.
 - {Subject} {wear} a broad woven hat bristling with jagged spikes at the crown, its brim battered and weathered.
 - {Subject} {wear} a broad dark hat trimmed with hanging chain ornaments and a feather crest, the brim shadowing {possessive} eyes.
 - {Subject} {wear} a wide straw hat over a patterned cloth headband tied at the brow.
+- {Subject} {wear} a horned kabuto-style helmet with a riveted neck guard and cheek plates framing {possessive} face.
 
 ## Headgear (she) +
 
@@ -1811,7 +1812,7 @@ ignored — so notes like this one are safe to leave inline.
 - a cigarette burned nearly to the filter, held forgotten || hands
 - nothing at all, hands loose and empty
 - a bundle of rolled schematics under one arm || hands
-- a heavy pry bar hooked through a belt loop
+<!-- - a heavy pry bar hooked through a belt loop -->
 - a caged inspection lamp trailing a length of cable || hands
 - a bandolier of tool bits worn across the chest
 - a sealed sample case cuffed to one wrist
