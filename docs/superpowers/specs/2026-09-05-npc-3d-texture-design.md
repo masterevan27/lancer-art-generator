@@ -222,10 +222,10 @@ before any of §4.3 is built.
 1. **Atlas UVs.** Smart UV Project over the shell. This is the deliverable's
    UV layer.
 2. **Per-view UVs.** One additional UV layer per view, from project-from-view
-   at that view's camera: `proj_front` at `frame_camera(shell, 0, 1.12)`,
+   at that view's camera: `proj_front` at `frame_camera(shell, 0, 1.06)`,
    `proj_back` at `frame_camera(shell, 180)` at the default margin.
 
-   The two margins differ on purpose. The front's is fixed at 1.12 because it
+   The two margins differ on purpose. The front's is fixed at 1.06 because it
    must match a reference image this pipeline did not frame (§4.2). The back's
    is free, because step A renders that image at the same camera the
    projection samples it with - so any margin works as long as the two agree,
