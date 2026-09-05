@@ -419,7 +419,7 @@ Measured on Jules Sokolova: `Shell.glb` 13.8 MB (162,056 faces), `Print.stl`
 4.0 MB (39,488 faces), the four 640px turnarounds 0.8 MB combined — about
 **19 MB of deliverables**, plus ~22 MB of intermediates (`apose.png`,
 `_shell.glb`, `_base.glb`, and, when a back view was generated,
-`3d/_back_render.png` and `3d/back.png`) this tool does **not** clean up, for
+`_back_render.png` and `back.png`) this tool does **not** clean up, for
 roughly **41 MB per NPC** or **6.6 GB across a 160-NPC batch**. The STL there was
 remeshed at `--voxel` 0.010; the default has since moved to 0.013, which is a
 coarser print mesh (~27,000 faces), so treat these as a ceiling rather than
@@ -540,7 +540,7 @@ any resolution. Projection puts them on the model directly.
 # the default - a front projected from the reference, plus a generated back
 python generate-3d.py --id npc-jules-sokolova-40213 --stage texture
 
-# no ComfyUI at all: the front is exact, the back is the right palette
+# no ComfyUI job at all: the front is exact, the back is the right palette
 python generate-3d.py --id npc-jules-sokolova-40213 --stage texture --no-back-view
 
 # a back view you made yourself, instead of a generated one
@@ -558,6 +558,12 @@ before this landed can be textured with `--stage texture` alone, reading
 `Shell.glb` and `apose_square.png` off disk; and a texture failure is
 contained the way a rigging failure is - it costs the texture and nothing
 else, and every grey deliverable stays exactly as it was.
+
+`--stage texture` alone re-textures `Shell.glb` but leaves an existing
+`Rigged.glb` grey - `texture_command` only passes `--rigged` when `--rig` is
+also given, deliberately, so a freshly-reassembled shell is never paired with
+a stale rig by default. `--stage texture --rig` is what re-textures an NPC
+that already has a rigged export.
 
 ### How the front registers
 

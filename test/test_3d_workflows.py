@@ -179,6 +179,29 @@ class TestBackViewGraph(unittest.TestCase):
             with self.subTest(node=nid):
                 self.assertNotIn(".", node["class_type"])
 
+    def test_the_cfg_is_pinned_to_one(self):
+        """The negative encoder carries no vae and no images. That is valid
+        only at cfg 1.0, where the negative branch cancels - see node 13's
+        _meta. Raising cfg without rewiring node 12 silently degrades the
+        conditioning, and nothing else would catch it."""
+        sampler = next(d for d in self.graph.values()
+                       if d["class_type"] == "KSampler")
+        self.assertEqual(sampler["inputs"]["cfg"], 1.0)
+
+    def test_the_negative_encoder_carries_no_images_or_vae(self):
+        """The other half of the cfg==1.0 invariant: build_backview_job's
+        docstring and node 13's _meta both depend on the negative encoder
+        being a no-op. If someone wires it up with real images and a vae
+        without also lowering cfg off 1.0, that has to fail somewhere - this
+        is that somewhere. Found by following the sampler's 'negative' link,
+        not by node id, since a re-export renumbers everything."""
+        sampler = next(d for d in self.graph.values()
+                       if d["class_type"] == "KSampler")
+        negative = self.graph[sampler["inputs"]["negative"][0]]
+        self.assertNotIn("vae", negative["inputs"])
+        for key in ("image1", "image2", "image3"):
+            self.assertNotIn(key, negative["inputs"])
+
 
 @unittest.skipUnless(server_is_up(), "no ComfyUI on 127.0.0.1:8000")
 class TestAgainstLiveObjectInfo(unittest.TestCase):
