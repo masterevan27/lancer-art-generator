@@ -9,6 +9,7 @@ import json
 import re
 import tempfile
 import unittest
+import zlib
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
@@ -759,3 +760,253 @@ class TestSquareApose(unittest.TestCase):
             d3._png_write(src, 8, 8, [bytearray(bytes((0, 0, 0, 0)) * 8) for _ in range(8)])
             with self.assertRaises(RuntimeError):
                 d3.square_apose(src, dst)
+
+
+def write_png(path, width=8, height=8, alpha=255, blob=None):
+    """An 8-bit RGBA PNG. `alpha` fills the canvas; `blob` is an opaque box.
+
+    Two shapes matter to --image: a fully opaque image - one that still has a
+    background - and a real cutout, a figure standing on transparency. Both
+    come from the same primitive so a test names which one it means.
+    """
+    rows = []
+    for y in range(height):
+        row = bytearray()
+        for x in range(width):
+            a = alpha
+            if blob and blob[0] <= x <= blob[2] and blob[1] <= y <= blob[3]:
+                a = 255
+            row += bytes((200, 200, 200, a))
+        rows.append(row)
+    d3._png_write(path, width, height, rows)
+    return path
+
+
+class TestImageFlag(unittest.TestCase):
+    """--image: reconstruct from an A-pose the caller supplies.
+
+    The whole point of stage apose is to produce one cut-out A-pose PNG. When
+    the caller already has that image, every check here exists to make the
+    ways it can be the WRONG image fail before a reconstruction is queued -
+    each of them costs minutes on the GPU and produces a plausible-looking
+    wrong answer rather than an error.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.cutout = write_png(self.root / "cutout.png", alpha=0, blob=(2, 2, 5, 5))
+        self.opaque = write_png(self.root / "opaque.png", alpha=255)
+        self.entry = manifest_entry(11)
+        self.folder_path = self.root / "npc"
+        self.picked = [(str(self.folder_path), self.entry)]
+
+    def args(self, argv):
+        return d3.parse_args(argv)
+
+    # -- the flag itself ---------------------------------------------------
+
+    def test_the_path_is_read_onto_the_args(self):
+        args = self.args(["--image", str(self.cutout)])
+        self.assertEqual(Path(args.image), self.cutout)
+
+    def test_no_image_by_default(self):
+        self.assertIsNone(self.args([]).image)
+
+    def test_an_image_skips_the_apose_stage_by_default(self):
+        """The supplied image IS the A-pose; rendering one would discard it."""
+        args = self.args(["--image", str(self.cutout)])
+        self.assertEqual(list(args.stage), ["mesh", "assemble"])
+
+    def test_an_explicit_stage_still_wins(self):
+        args = self.args(["--image", str(self.cutout), "--stage", "mesh"])
+        self.assertEqual(args.stage, ["mesh"])
+
+    def test_an_image_with_stage_apose_is_refused(self):
+        """One supplies the A-pose, the other generates it. Naming both is a typo."""
+        with self.assertRaises(SystemExit):
+            self.args(["--image", str(self.cutout), "--stage", "apose"])
+
+    def test_a_missing_image_fails_at_parse_time(self):
+        with self.assertRaises(SystemExit):
+            self.args(["--image", str(self.root / "nope.png")])
+
+    def test_remove_bg_without_an_image_is_refused(self):
+        """There is nothing for it to cut out - stage apose already cuts its own."""
+        with self.assertRaises(SystemExit):
+            self.args(["--remove-bg"])
+
+    # -- what the image has to be ------------------------------------------
+
+    def test_a_cutout_passes_the_check(self):
+        d3.check_image(self.args(["--image", str(self.cutout)]), self.picked)
+
+    def test_an_opaque_image_names_remove_bg(self):
+        """docs/generate-3d.md: a leftover backdrop reconstructs as a slab
+        standing behind the figure. It looks like a successful run."""
+        args = self.args(["--image", str(self.opaque)])
+        with self.assertRaises(SystemExit) as caught:
+            d3.check_image(args, self.picked)
+        self.assertIn("--remove-bg", str(caught.exception))
+
+    def test_an_opaque_image_is_fine_with_remove_bg(self):
+        d3.check_image(
+            self.args(["--image", str(self.opaque), "--remove-bg"]), self.picked)
+
+    def test_a_cutout_with_remove_bg_is_allowed(self):
+        """Cutting an already-cut image is wasteful, not wrong - rmbg is
+        idempotent on transparency, and refusing it would block the caller
+        who knows their alpha is unreliable."""
+        d3.check_image(
+            self.args(["--image", str(self.cutout), "--remove-bg"]), self.picked)
+
+    def test_an_unreadable_png_is_refused(self):
+        """square_apose() reads PNG by hand and understands one shape only."""
+        bad = self.root / "bad.png"
+        bad.write_bytes(b"not a png at all")
+        with self.assertRaises(SystemExit):
+            d3.check_image(self.args(["--image", str(bad)]), self.picked)
+
+    def test_a_non_rgba_png_is_refused_before_the_gpu_sees_it(self):
+        """8-bit greyscale: a real PNG that _png_read cannot decode."""
+        grey = self.root / "grey.png"
+        payload = zlib.compress(b"".join(bytes([0]) + bytes(8) for _ in range(8)), 6)
+
+        def chunk(kind, body):
+            return (len(body).to_bytes(4, "big") + kind + body
+                    + (zlib.crc32(kind + body) & 0xffffffff).to_bytes(4, "big"))
+
+        grey.write_bytes(
+            bytes([137, 80, 78, 71, 13, 10, 26, 10])
+            + chunk(b"IHDR", (8).to_bytes(4, "big") + (8).to_bytes(4, "big")
+                    + bytes((8, 0, 0, 0, 0)))
+            + chunk(b"IDAT", payload) + chunk(b"IEND", b""))
+        with self.assertRaises(SystemExit):
+            d3.check_image(self.args(["--image", str(grey)]), self.picked)
+
+    # -- how many NPCs it can mean -----------------------------------------
+
+    def test_two_npcs_and_one_image_is_refused(self):
+        """One image cannot be the A-pose of two different people, and a batch
+        that quietly gave all of them the same body would look like it worked."""
+        args = self.args(["--image", str(self.cutout)])
+        picked = self.picked + [(str(self.root / "other"), manifest_entry(12))]
+        with self.assertRaises(SystemExit) as caught:
+            d3.check_image(args, picked)
+        self.assertIn("2", str(caught.exception))
+
+    # -- not clobbering a render already on disk ---------------------------
+
+    def test_an_existing_apose_is_not_clobbered(self):
+        folder = d3.npc_3d_folder(self.folder_path)
+        folder.mkdir(parents=True)
+        write_png(folder / "apose.png", alpha=0, blob=(1, 1, 3, 3))
+        with self.assertRaises(SystemExit) as caught:
+            d3.check_image(self.args(["--image", str(self.cutout)]), self.picked)
+        self.assertIn("--overwrite", str(caught.exception))
+
+    def test_overwrite_replaces_it(self):
+        folder = d3.npc_3d_folder(self.folder_path)
+        folder.mkdir(parents=True)
+        write_png(folder / "apose.png", alpha=0, blob=(1, 1, 3, 3))
+        d3.check_image(
+            self.args(["--image", str(self.cutout), "--overwrite"]), self.picked)
+
+    # -- installing it ------------------------------------------------------
+
+    def test_a_cutout_is_copied_into_the_npc_folder(self):
+        """Copied, not read in place: everything downstream - apose_square.png,
+        the skip check, the dossier - assumes the 3d/ folder holds the record
+        of what the reconstruction was built from."""
+        folder = d3.npc_3d_folder(self.folder_path)
+        folder.mkdir(parents=True)
+        args = self.args(["--image", str(self.cutout)])
+        apose = d3.install_image(None, args, self.entry, folder)
+        self.assertEqual(apose, folder / "apose.png")
+        self.assertEqual(apose.read_bytes(), self.cutout.read_bytes())
+
+    def test_the_source_image_is_left_alone(self):
+        folder = d3.npc_3d_folder(self.folder_path)
+        folder.mkdir(parents=True)
+        before = self.cutout.read_bytes()
+        d3.install_image(None, self.args(["--image", str(self.cutout)]),
+                         self.entry, folder)
+        self.assertEqual(self.cutout.read_bytes(), before)
+
+    def test_remove_bg_routes_the_image_through_the_cut(self):
+        """--remove-bg must not copy the raw image; it must upload it, run the
+        rmbg workflow and land THAT result as apose.png."""
+        folder = d3.npc_3d_folder(self.folder_path)
+        folder.mkdir(parents=True)
+        args = self.args(["--image", str(self.opaque), "--remove-bg"])
+        cut = write_png(self.root / "cut-result.png", alpha=0, blob=(1, 1, 4, 4))
+
+        def fake_cut(comfy, args_, entry, source, folder_):
+            (folder_ / "apose.png").write_bytes(cut.read_bytes())
+            return folder_ / "apose.png"
+
+        with mock.patch.object(d3, "cut_out", side_effect=fake_cut) as cut_out:
+            apose = d3.install_image(mock.Mock(), args, self.entry, folder)
+        self.assertTrue(cut_out.called, "--remove-bg did not run the cut")
+        self.assertEqual(apose.read_bytes(), cut.read_bytes())
+        self.assertNotEqual(apose.read_bytes(), self.opaque.read_bytes())
+
+    def test_without_remove_bg_no_server_is_touched(self):
+        """A cut-out image needs no ComfyUI job at all before the mesh stage."""
+        folder = d3.npc_3d_folder(self.folder_path)
+        folder.mkdir(parents=True)
+        with mock.patch.object(d3, "cut_out",
+                               side_effect=AssertionError("cut_out must not run")):
+            d3.install_image(None, self.args(["--image", str(self.cutout)]),
+                             self.entry, folder)
+
+    # -- end to end through main() -----------------------------------------
+
+    def test_dry_run_names_the_image_instead_of_a_prompt(self):
+        """--image means no prompt is ever built, so printing one would be
+        describing a render that is not going to happen."""
+        entry = manifest_entry(72)
+        manifest_path = self.root / "dry.json"
+        manifest_path.write_text(
+            json.dumps({str(self.root / "run" / entry["name"]): entry}),
+            encoding="utf-8")
+        buffer = io.StringIO()
+        with redirect_stdout(buffer):
+            code = d3.main(["--manifest", str(manifest_path), "--dry-run",
+                            "--image", str(self.cutout)])
+        self.assertEqual(code, 0)
+        self.assertIn(str(self.cutout), buffer.getvalue())
+        self.assertNotIn("A-pose token prompt", buffer.getvalue())
+
+    def test_main_reconstructs_from_the_supplied_image(self):
+        """No A-pose render is queued, and stage_mesh sees the copied file."""
+        entry = manifest_entry(71)
+        manifest_path = self.root / "manifest.json"
+        folder_path = self.root / "run" / entry["name"]
+        manifest_path.write_text(
+            json.dumps({str(folder_path): entry}), encoding="utf-8")
+        seen = {}
+
+        def fake_mesh(comfy, args, entry_, folder, apose_png):
+            seen["apose"] = Path(apose_png)
+            return folder / "_shell.glb", folder / "_base.glb"
+
+        fake_comfy = mock.Mock()
+        fake_comfy.base = "http://fake"
+        with mock.patch.object(d3.art, "find_server", return_value=fake_comfy), \
+             mock.patch.object(d3, "find_blender", return_value=Path("blender.exe")), \
+             mock.patch.object(d3, "stage_apose",
+                               side_effect=AssertionError(
+                                   "--image must not render an A-pose")), \
+             mock.patch.object(d3, "stage_mesh", side_effect=fake_mesh), \
+             mock.patch.object(d3, "stage_assemble",
+                               return_value={"files": ["X.glb"]}):
+            buffer = io.StringIO()
+            with redirect_stdout(buffer):
+                code = d3.main(["--manifest", str(manifest_path),
+                                "--image", str(self.cutout)])
+
+        self.assertEqual(code, 0, buffer.getvalue())
+        self.assertEqual(seen["apose"].read_bytes(), self.cutout.read_bytes())
+        self.assertEqual(seen["apose"].name, "apose.png")
