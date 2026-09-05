@@ -67,11 +67,12 @@
   },
   "12": {
     "class_type": "TextEncodeQwenImageEditPlus",
-    "_meta": {"title": "negative - empty prompt, no reference images"},
+    "_meta": {"title": "negative - empty prompt, no vae, no image links. Valid ONLY at KSampler(13).cfg == 1.0 - see that node's title"},
     "inputs": {"clip": ["8", 0], "prompt": ""}
   },
   "13": {
     "class_type": "KSampler",
+    "_meta": {"title": "cfg is pinned to 1.0 by construction. At cfg 1.0 the negative branch (node 12) is algebraically eliminated - pred = uncond + cfg*(cond-uncond) - so node 12 was left with no vae and no image links, which is what lets build_backview_job() delete the orphaned portrait LoadImage when there is no portrait. Raise cfg (the official 50-step/cfg-4.0 or fp8 20-step/cfg-2.5 configs both need it) and node 12 must be rewired with real image references first, or the graph silently stops matching the template's intended conditioning"},
     "inputs": {
       "model": ["7", 0],
       "seed": 0,

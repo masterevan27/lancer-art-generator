@@ -931,6 +931,22 @@ def build_backview_job(template, refs, prompt, prefix, seed=None):
     order §4.4 fixes: the render being EDITED first, because that is what makes
     the result registered to the mesh; then the character's colours; then the
     optional rear-facing portrait.
+
+    The graph's negative TextEncodeQwenImageEditPlus deliberately carries no
+    vae and no image1/2/3 links at all - unlike the template it was built
+    from, which feeds both encoders the same three images. This is only
+    correct because the graph's KSampler is pinned to cfg 1.0: at cfg 1.0,
+    pred = uncond + cfg*(cond - uncond) reduces to pred = cond, so the
+    negative branch is algebraically eliminated regardless of what it
+    contains. It is built this way, rather than mirroring the positive
+    encoder's images, because sharing image3 would leave the orphan-deletion
+    below unable to tell "nothing else needs this loader" from "the negative
+    encoder still needs it" - it would never fire, and a run with no portrait
+    would ship a dangling image3 input pointed at a placeholder file. Raising
+    cfg off 1.0 (the official 50-step/cfg-4.0 or fp8 20-step/cfg-2.5 configs
+    both do) makes the negative branch real again, and the negative encoder
+    would need its own image references wired back up first - see the
+    matching note on the graph's own KSampler node.
     """
     graph = json.loads(json.dumps(template))
     slots = backview_slots(graph)
@@ -947,7 +963,10 @@ def build_backview_job(template, refs, prompt, prefix, seed=None):
         # Omitted, not faked (§4.4). The input goes, and so does the loader it
         # was the only reference to - a node left dangling in an API-format
         # graph is executed anyway, and would load whatever placeholder the
-        # template shipped with.
+        # template shipped with. This is also why the negative encoder (see
+        # the docstring above) has no image3 link of its own: if it did, this
+        # orphan check would always find a reference and never delete the
+        # loader.
         orphan = slots["image3"]
         del graph[slots["encode"]]["inputs"]["image3"]
         if not any(isinstance(v, list) and v and v[0] == orphan

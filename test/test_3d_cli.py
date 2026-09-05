@@ -316,6 +316,37 @@ class TestPreflight(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 d3.preflight(args)
 
+    def test_a_missing_backview_workflow_is_caught_for_the_texture_stage(self):
+        """Regression test: this exact check was already removed once on this
+        branch (Task 4 had to delete it because the workflow file did not
+        exist yet), so a silent re-regression is a demonstrated risk, not a
+        hypothetical one."""
+        args = d3.parse_args(["--stage", "texture"])
+        with mock.patch.object(d3, "find_blender", return_value=Path("blender.exe")), \
+             mock.patch.object(d3, "BACKVIEW_WORKFLOW", Path("no/such/backview.json")):
+            with self.assertRaises(SystemExit):
+                d3.preflight(args)
+
+    def test_no_back_view_does_not_need_the_backview_workflow(self):
+        """--no-back-view generates no back view at all, so a missing
+        BACKVIEW_WORKFLOW must not block a run that will never open it."""
+        args = d3.parse_args(["--stage", "texture", "--no-back-view"])
+        with mock.patch.object(d3, "find_blender", return_value=Path("blender.exe")), \
+             mock.patch.object(d3, "BACKVIEW_WORKFLOW", Path("no/such/backview.json")):
+            d3.preflight(args)
+
+    def test_a_supplied_back_image_does_not_need_the_backview_workflow(self):
+        """--back-image supplies the back view directly - no ComfyUI job, so
+        no need for the workflow that would have built one."""
+        with tempfile.TemporaryDirectory() as tmp:
+            back = Path(tmp) / "back.png"
+            back.write_bytes(b"\x89PNG\r\n\x1a\n")
+            args = d3.parse_args(
+                ["--stage", "texture", "--back-image", str(back)])
+            with mock.patch.object(d3, "find_blender", return_value=Path("blender.exe")), \
+                 mock.patch.object(d3, "BACKVIEW_WORKFLOW", Path("no/such/backview.json")):
+                d3.preflight(args)
+
 
 class TestRunSummary(unittest.TestCase):
     """Regression test for a Final review finding: warned counts contained
@@ -1733,5 +1764,24 @@ class TestBackViewJob(unittest.TestCase):
         sampler = next(n for n, d in graph.items()
                        if d["class_type"] == "KSampler")
         graph["9999"] = json.loads(json.dumps(graph[sampler]))
+        with self.assertRaises(d3.art.WorkflowError):
+            d3.backview_slots(graph)
+
+    def test_a_ksampler_whose_positive_is_not_a_link_is_refused(self):
+        graph = json.loads(json.dumps(self.template))
+        sampler = next(n for n, d in graph.items()
+                       if d["class_type"] == "KSampler")
+        graph[sampler]["inputs"]["positive"] = "not-a-link"
+        with self.assertRaises(d3.art.WorkflowError):
+            d3.backview_slots(graph)
+
+    def test_an_image_slot_pointing_at_a_non_load_image_is_refused(self):
+        graph = json.loads(json.dumps(self.template))
+        sampler = next(n for n, d in graph.items()
+                       if d["class_type"] == "KSampler")
+        encode = graph[sampler]["inputs"]["positive"][0]
+        not_a_loader = next(n for n, d in graph.items()
+                            if d["class_type"] != "LoadImage" and n != encode)
+        graph[encode]["inputs"]["image2"] = [not_a_loader, 0]
         with self.assertRaises(d3.art.WorkflowError):
             d3.backview_slots(graph)
