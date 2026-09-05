@@ -235,6 +235,48 @@ class TestBake(unittest.TestCase):
 
 
 @unittest.skipUnless(BLENDER, "Blender not installed")
+class TestBackRender(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.outdir = Path(cls._tmp.name)
+        cls.report, cls.proc = run_blender(
+            TEXTURE_SCRIPT, SHELL, cls.outdir, "--stem", STEM,
+            "--step", "back", "--render-engine", "CYCLES",
+            "--render-samples", "1")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
+
+    def test_it_exits_cleanly(self):
+        self.assertEqual(self.proc.returncode, 0, self.proc.stderr[-3000:])
+
+    def test_the_back_render_is_written(self):
+        path = self.outdir / "_back_render.png"
+        self.assertTrue(path.exists(),
+                        sorted(p.name for p in self.outdir.iterdir()))
+        self.assertGreater(path.stat().st_size, 0)
+
+    def test_it_is_square_and_the_size_the_module_declares(self):
+        width, height, _ = d3._png_read(self.outdir / "_back_render.png")
+        self.assertEqual(width, height)
+        self.assertEqual(width, 1024)
+
+    def test_it_keeps_its_alpha(self):
+        """film_transparent, so the silhouette is a usable mask - and so
+        _png_read, which only accepts RGBA, can read it back at all."""
+        width, _, rows = d3._png_read(self.outdir / "_back_render.png")
+        alphas = {row[x * 4 + 3] for row in rows for x in range(0, width, 8)}
+        self.assertIn(0, alphas)
+        self.assertTrue(any(a > 200 for a in alphas))
+
+    def test_the_report_names_it(self):
+        self.assertEqual(self.report["render"], "_back_render.png")
+        self.assertEqual(self.report["step"], "back")
+
+
+@unittest.skipUnless(BLENDER, "Blender not installed")
 class TestTwoViewBake(unittest.TestCase):
     """A bake with both views wired up. The blend's exact shape is Task 7's;
     this is that both images reach the atlas at all."""

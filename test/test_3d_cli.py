@@ -1521,3 +1521,72 @@ class TestDossierPreservation(unittest.TestCase):
                      "%s Turnaround_000.png" % stem, "%s Texture.png" % stem):
             with self.subTest(name=name):
                 self.assertIn("`3d/%s`" % name, section)
+
+
+class TestBackImageFlag(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.folder = Path(self._tmp.name)
+        self.back = self.folder / "back.png"
+        self.back.write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * 32)
+        self.shell = self.folder / "Name Shell.glb"
+        self.shell.write_bytes(b"shell")
+        (self.folder / "apose_square.png").write_bytes(b"square")
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_no_back_image_by_default(self):
+        self.assertIsNone(d3.parse_args([]).back_image)
+
+    def test_the_path_is_read_onto_the_args(self):
+        self.assertEqual(
+            d3.parse_args(["--back-image", str(self.back)]).back_image,
+            self.back)
+
+    def test_a_missing_back_image_fails_at_parse_time(self):
+        with self.assertRaises(SystemExit):
+            d3.parse_args(["--back-image", str(self.folder / "nope.png")])
+
+    def test_back_image_with_no_back_view_is_refused(self):
+        with self.assertRaises(SystemExit):
+            d3.parse_args(["--back-image", str(self.back), "--no-back-view"])
+
+    def test_back_image_with_no_texture_is_refused(self):
+        with self.assertRaises(SystemExit):
+            d3.parse_args(["--back-image", str(self.back), "--no-texture"])
+
+    def test_a_non_png_is_refused_before_the_gpu_sees_it(self):
+        junk = self.folder / "junk.png"
+        junk.write_bytes(b"this is not a png at all")
+        args = d3.parse_args(["--back-image", str(junk)])
+        with self.assertRaises(SystemExit):
+            d3.check_image(args, [self.folder])
+
+    def test_an_opaque_rgb_png_is_accepted(self):
+        """Unlike --image. A generated back view is very often opaque RGB,
+        which _png_read refuses by design and Blender loads without
+        complaint."""
+        args = d3.parse_args(["--back-image", str(self.back)])
+        d3.check_image(args, [self.folder])
+
+    def test_two_npcs_and_one_back_image_is_refused(self):
+        args = d3.parse_args(["--back-image", str(self.back)])
+        with self.assertRaises(SystemExit):
+            d3.check_image(args, [self.folder, self.folder])
+
+    def test_a_supplied_back_view_reaches_the_bake_and_queues_nothing(self):
+        args = d3.parse_args(["--back-image", str(self.back)])
+        seen = {}
+
+        def record(a, folder, stem, shell, step, front=None, back=None):
+            seen["step"], seen["back"] = step, back
+            (folder / "_Name Texture.png").write_bytes(b"a")
+            (folder / "_Name Shell.glb").write_bytes(b"b")
+            return {"texture": "_Name Texture.png", "shell": "_Name Shell.glb",
+                    "views": ["front", "back"], "files": []}
+
+        with mock.patch.object(d3, "run_texture_step", side_effect=record):
+            d3.stage_texture(None, args, None, self.folder, "Name")
+        self.assertEqual(seen["step"], "bake")
+        self.assertEqual(seen["back"], self.back)

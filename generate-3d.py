@@ -718,7 +718,7 @@ def has_cutout(path, threshold=16):
 
 
 def check_image(args, folders):
-    """A SystemExit naming why --image cannot be used for this run.
+    """A SystemExit naming why --image or --back-image cannot be used.
 
     Every one of these is cheap to check and expensive to discover later: a
     reconstruction takes minutes on the GPU and answers a wrong input with a
@@ -726,6 +726,17 @@ def check_image(args, folders):
     against the run's target folders, rather than inside the per-NPC loop that
     catches SystemExit and turns a global mistake into one failure per NPC.
     """
+    if args.back_image is not None:
+        if len(folders) != 1:
+            raise SystemExit(
+                "--back-image is one person's back view, but %d NPCs are "
+                "selected - narrow the run with --id" % len(folders))
+        # Deliberately NOT _png_read: a generated back view is very often an
+        # opaque RGB PNG, which that reader refuses by design, and Blender
+        # loads any PNG it is handed. The signature is the whole check.
+        if args.back_image.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
+            raise SystemExit("--back-image is not a PNG: %s" % args.back_image)
+
     if not args.image:
         return
 
