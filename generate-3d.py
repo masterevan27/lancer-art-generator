@@ -143,9 +143,63 @@ def backview_npc(entry):
     return npc
 
 
+# The frame the back view is edited toward. An EDIT instruction, not a
+# generation brief: it says what to do to the supplied image, not what to
+# draw from nothing.
+#
+# Deliberately NOT built through build_prompts()/TOKEN_TEMPLATE, which is
+# where the earlier version of this function got its prompt from. That
+# template hardcodes "facing the viewer" in its opening framing sentence -
+# true of every rolled Stance and of APOSE_STANCE, but flatly false once
+# Stance is replaced with BACKVIEW_STANCE, and a real ComfyUI run confirmed
+# what the resulting contradiction does at cfg 1.0/denoise 1.0: the edit
+# model followed the front-facing framing and the "character illustration"
+# generation-brief opening rather than the two reference images, and painted
+# an unrelated scene - a different pose, a different background, no relation
+# to the shell's own silhouette (spec §2.2's structural-registration argument
+# depends on the opposite happening). Composing the fields directly here,
+# from the same traits build_prompts() would have used, keeps the fix
+# targeted at the actual defect - the framing sentence - without touching the
+# working front/token prompt.
+BACKVIEW_TEMPLATE = (
+    "Edit the supplied photograph so the same figure is shown turned around, "
+    "seen from directly behind, matching the pose described below - this is "
+    "a photo edit of the reference image, not a new illustration, and "
+    "nothing about the person or the scene changes except the facing. "
+    "{Subject} {is_are} {height}, {build}, with {hair}, wearing {outfit}, "
+    "{faction_line}the clothing following the shape of {possessive} frame "
+    "from behind. {headgear} {Subject} {is_are} {stance}, both feet in "
+    "frame. Keep the exact same outfit, hair, colours and body proportions "
+    "as the reference image, against a plain flat background with no added "
+    "scenery or props."
+)
+
+
 def backview_prompt(entry):
-    """The token prompt the back view is edited toward."""
-    return npc_gen.build_prompts(backview_npc(entry))[1]
+    """The edit instruction ComfyUI's back-view job is prompted with.
+
+    See BACKVIEW_TEMPLATE for why this does not route through
+    build_prompts()/TOKEN_TEMPLATE.
+    """
+    npc = backview_npc(entry)
+    fields = dict(npc["_pronouns"])
+    _, faction_visual, faction_flags = npc_gen.split_faction(npc["Faction"])
+    # Same "dressy Faction, practical Role" softening build_prompts() applies
+    # to the front prompts (see its own comment) - a back view should not
+    # invent baronial regalia for a role the front never gave one either.
+    if ("dressy" in faction_flags
+            and npc_gen.dress_policy_for(npc_gen.role_category(npc)) == "plain"):
+        faction_visual = ""
+    fields.update({
+        "height": npc["Height"],
+        "build": npc["Build"],
+        "hair": npc["Hair"],
+        "outfit": npc["Outfit"],
+        "headgear": npc["Headgear"],
+        "stance": npc["Stance"],
+        "faction_line": "%s, " % faction_visual if faction_visual else "",
+    })
+    return BACKVIEW_TEMPLATE.format(**fields)
 
 
 # The Backdrop phrases that mean the rolled portrait shows the character's

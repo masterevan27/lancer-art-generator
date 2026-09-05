@@ -1654,6 +1654,40 @@ class TestBackViewPrompt(unittest.TestCase):
                 with self.subTest(key=key):
                     self.assertEqual(apose[key], back[key])
 
+    def test_the_prompt_is_an_edit_instruction_not_a_generation_brief(self):
+        """A real ComfyUI run showed what routing this prompt through
+        build_prompts()/TOKEN_TEMPLATE does: that template's opening
+        sentence hardcodes "facing the viewer", which contradicts
+        BACKVIEW_STANCE, and its "A full-body character illustration of..."
+        framing reads as a brief to draw a new scene rather than an
+        instruction to edit the supplied one. At cfg 1.0/denoise 1.0 the edit
+        model followed the contradiction and painted an unrelated scene,
+        which is exactly what spec 2.2's structural-registration argument
+        depends on not happening."""
+        prompt = d3.backview_prompt(self.entry)
+        self.assertNotIn("facing the viewer", prompt)
+        self.assertNotIn("illustration of", prompt)
+        self.assertTrue(prompt.lower().startswith("edit the supplied"))
+
+    def test_the_prompt_still_carries_identifying_appearance(self):
+        """The back is only recognisable as the same person if the edit
+        instruction still names what is visible from behind: the outfit,
+        the headgear, the hair."""
+        npc = d3.backview_npc(self.entry)
+        prompt = d3.backview_prompt(self.entry)
+        for key in ("Outfit", "Headgear", "Hair"):
+            with self.subTest(key=key):
+                self.assertIn(npc[key], prompt)
+
+    def test_the_prompt_asks_to_keep_the_reference_colours_and_a_plain_background(self):
+        """Spec 4.3 step 4 weights each view by its sampled alpha, and the
+        generated back comes back fully opaque - an invented backdrop would
+        project onto the mesh wherever the silhouette overshoots, and the
+        alpha term cannot rescue a view that is opaque everywhere."""
+        prompt = d3.backview_prompt(self.entry)
+        self.assertIn("same outfit, hair, colours", prompt)
+        self.assertIn("plain flat background", prompt)
+
 
 class TestRearFacing(unittest.TestCase):
     def entry_with(self, backdrop):
