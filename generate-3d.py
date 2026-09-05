@@ -112,6 +112,70 @@ def apose_npc(entry):
     return npc
 
 
+# The Stance the back view is rendered in. Spec §4.4.
+#
+# Written as an ordinary Stance bullet for the same reason APOSE_STANCE is -
+# lowercase, no trailing period, no pronoun placeholders - so it composes with
+# the token template's "{Subject} {is_are} {stance}, both feet in frame"
+# exactly as a rolled bullet does.
+#
+# It describes the SAME jig from the other side: everything that made the
+# A-pose a good reconstruction source - limbs clear of the torso, both feet in
+# frame, squarely on to the camera - still holds, and only the facing changes.
+BACKVIEW_STANCE = (
+    "standing straight with the back squarely to the viewer and the face "
+    "turned fully away, seen from directly behind, arms held slightly away "
+    "from the sides with the palms facing backward, feet shoulder-width apart"
+)
+
+
+def backview_npc(entry):
+    """apose_npc(), turned around.
+
+    Built ON apose_npc rather than beside it so the two descriptions cannot
+    drift: the emptied hands, the Height backfill and the migrate_traits pass
+    are all decisions that belong to reconstruction, not to which way the
+    figure faces, and restating them here would be a second thing to keep in
+    step with the tables (§4.4).
+    """
+    npc = apose_npc(entry)
+    npc["Stance"] = BACKVIEW_STANCE
+    return npc
+
+
+def backview_prompt(entry):
+    """The token prompt the back view is edited toward."""
+    return npc_gen.build_prompts(backview_npc(entry))[1]
+
+
+# The Backdrop phrases that mean the rolled portrait shows the character's
+# back. Read off the live tables, which compose a rear shot three ways: a
+# "seen from behind" shot phrase, a "rear-view" one, and a scene that puts the
+# subject's "back to the viewer" under a front-ish shot.
+#
+# Deliberately NOT a bare "behind": half the Backdrop table describes
+# something standing behind the subject, which says nothing about the camera.
+REAR_FACING_PHRASES = ("seen from behind", "rear-view", "rear view",
+                       "back to the viewer")
+
+
+def rear_facing(entry):
+    """True when this NPC's rolled portrait is composed from behind.
+
+    Where it is, the portrait is real evidence about the character's back -
+    the fall of the hair, the print across the jacket, what is slung over the
+    shoulders - and §4.4 gives it the third reference slot. Where it is not,
+    the slot is omitted rather than filled with a front view, which the edit
+    model would read as the thing to reproduce.
+    """
+    backdrop = (entry.get("traits") or {}).get("Backdrop", "") if entry else ""
+    if not backdrop:
+        return False
+    shot, scene, _ = npc_gen.split_backdrop(backdrop)
+    text = ("%s || %s" % (shot, scene)).lower()
+    return any(phrase in text for phrase in REAR_FACING_PHRASES)
+
+
 # --------------------------------------------------------------------------
 # The NPC's real height
 # --------------------------------------------------------------------------
@@ -816,6 +880,88 @@ def build_mesh_job(template, ref, prefix, seed=None):
     return graph
 
 
+def backview_slots(graph):
+    """Where build_backview_job patches, found by following links.
+
+    NOT node_of(). The back-view graph has three LoadImage nodes and two
+    TextEncodeQwenImageEditPlus nodes - a positive and a negative - so
+    addressing either class by class_type finds three or two and raises. The
+    unique node is KSampler, and everything else hangs off it: its 'positive'
+    input names the encoder, and the encoder's image1/2/3 inputs name the
+    three loaders.
+
+    This keeps the property node_of() exists for - a re-export from the
+    ComfyUI editor renumbers every node and this still resolves - while
+    failing just as loudly on a graph that is not the shape this code expects.
+    """
+    samplers = [n for n, d in graph.items()
+                if d.get("class_type") == "KSampler"]
+    if len(samplers) != 1:
+        raise art.WorkflowError(
+            "expected exactly one KSampler node, found %d" % len(samplers))
+    positive = graph[samplers[0]]["inputs"].get("positive")
+    if not isinstance(positive, list) or positive[0] not in graph:
+        raise art.WorkflowError("the KSampler's positive input is not a link")
+    encode = positive[0]
+
+    slots = {"encode": encode, "save": node_of(graph, "SaveImage")}
+    for key in ("image1", "image2", "image3"):
+        ref = graph[encode]["inputs"].get(key)
+        if ref is None:
+            slots[key] = None
+            continue
+        if not isinstance(ref, list) or ref[0] not in graph:
+            raise art.WorkflowError("%s.%s is not a link" % (encode, key))
+        if graph[ref[0]]["class_type"] != "LoadImage":
+            raise art.WorkflowError(
+                "%s.%s points at a %s, not a LoadImage"
+                % (encode, key, graph[ref[0]]["class_type"]))
+        slots[key] = ref[0]
+    if slots["image1"] is None or slots["image2"] is None:
+        raise art.WorkflowError(
+            "the back-view encoder needs image1 (the render being edited) and "
+            "image2 (the A-pose reference)")
+    return slots
+
+
+def build_backview_job(template, refs, prompt, prefix, seed=None):
+    """One queueable back-view job. The template is left untouched.
+
+    `refs` is (back render, A-pose reference, portrait or None), in the slot
+    order §4.4 fixes: the render being EDITED first, because that is what makes
+    the result registered to the mesh; then the character's colours; then the
+    optional rear-facing portrait.
+    """
+    graph = json.loads(json.dumps(template))
+    slots = backview_slots(graph)
+    back_ref, apose_ref, portrait_ref = refs
+
+    graph[slots["image1"]]["inputs"]["image"] = back_ref
+    graph[slots["image2"]]["inputs"]["image"] = apose_ref
+    graph[slots["encode"]]["inputs"]["prompt"] = prompt
+    graph[slots["save"]]["inputs"]["filename_prefix"] = prefix
+
+    if portrait_ref is not None and slots["image3"] is not None:
+        graph[slots["image3"]]["inputs"]["image"] = portrait_ref
+    elif slots["image3"] is not None:
+        # Omitted, not faked (§4.4). The input goes, and so does the loader it
+        # was the only reference to - a node left dangling in an API-format
+        # graph is executed anyway, and would load whatever placeholder the
+        # template shipped with.
+        orphan = slots["image3"]
+        del graph[slots["encode"]]["inputs"]["image3"]
+        if not any(isinstance(v, list) and v and v[0] == orphan
+                   for node in graph.values()
+                   for v in node["inputs"].values()):
+            del graph[orphan]
+
+    if seed is not None:
+        for node in graph.values():
+            if node.get("class_type") == "KSampler":
+                node["inputs"]["seed"] = seed
+    return graph
+
+
 def mesh_outputs(record, suffix=".glb"):
     """Every saved file in a history record whose filename ends in `suffix`.
 
@@ -1350,13 +1496,9 @@ def preflight(args):
         find_blender(args.blender)
         if not TEXTURE_SCRIPT.exists():
             raise SystemExit("texture script not found: %s" % TEXTURE_SCRIPT)
-        # No BACKVIEW_WORKFLOW check here: generate_back_view() is Task 7's
-        # placeholder until then, and it already fails - contained, per NPC,
-        # inside stage_texture()'s own try/except - regardless of whether the
-        # workflow file exists. Checking it here, before it has any real
-        # implementation to protect, would turn every default invocation of
-        # this whole tool (back_view is on by default) into an immediate,
-        # global SystemExit until Task 7 lands - the opposite of front-only.
+        if args.back_view and args.back_image is None \
+                and not BACKVIEW_WORKFLOW.exists():
+            raise SystemExit("Workflow not found: %s" % BACKVIEW_WORKFLOW)
 
 
 def main(argv=None):

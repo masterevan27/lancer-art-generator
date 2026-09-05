@@ -1590,3 +1590,148 @@ class TestBackImageFlag(unittest.TestCase):
             d3.stage_texture(None, args, None, self.folder, "Name")
         self.assertEqual(seen["step"], "bake")
         self.assertEqual(seen["back"], self.back)
+
+
+class TestBackViewPrompt(unittest.TestCase):
+    def setUp(self):
+        self.entry = manifest_entry(21)
+
+    def test_the_stance_is_replaced_not_appended(self):
+        prompt = d3.backview_prompt(self.entry)
+        self.assertIn(d3.BACKVIEW_STANCE, prompt)
+        self.assertNotIn(d3.APOSE_STANCE, prompt)
+
+    def test_the_hands_are_still_empty(self):
+        """backview_npc builds on apose_npc, which empties them - a figure
+        holding a carbine cannot hold a back-facing A-pose either."""
+        npc = d3.backview_npc(self.entry)
+        self.assertEqual(npc["Weapon"], "")
+        self.assertEqual(npc["Gear"], "")
+
+    def test_the_stance_composes_as_a_bullet(self):
+        """Lowercase, no trailing period, no pronoun placeholders - the
+        template supplies '{Subject} {is_are} {stance}, both feet in frame'."""
+        self.assertEqual(d3.BACKVIEW_STANCE[0], d3.BACKVIEW_STANCE[0].lower())
+        self.assertFalse(d3.BACKVIEW_STANCE.endswith("."))
+        self.assertNotIn("{", d3.BACKVIEW_STANCE)
+
+    def test_the_rest_of_the_character_is_unchanged(self):
+        apose = d3.apose_npc(self.entry)
+        back = d3.backview_npc(self.entry)
+        for key in ("Outfit", "Headgear", "Hair", "Glow colour"):
+            if key in apose:
+                with self.subTest(key=key):
+                    self.assertEqual(apose[key], back[key])
+
+
+class TestRearFacing(unittest.TestCase):
+    def entry_with(self, backdrop):
+        entry = manifest_entry(22)
+        entry["traits"]["Backdrop"] = backdrop
+        return entry
+
+    def test_a_seen_from_behind_shot_is_rear_facing(self):
+        self.assertTrue(d3.rear_facing(self.entry_with(
+            "A character portrait seen from behind || She is on a roof.")))
+
+    def test_a_rear_view_shot_is_rear_facing(self):
+        self.assertTrue(d3.rear_facing(self.entry_with(
+            "A dynamic, three-quarter rear-view character portrait || "
+            "She glances back.")))
+
+    def test_a_back_to_the_viewer_scene_is_rear_facing(self):
+        self.assertTrue(d3.rear_facing(self.entry_with(
+            "A dramatic low-angle character portrait || She stands, her back "
+            "to the viewer, in the rain.")))
+
+    def test_a_plain_portrait_is_not(self):
+        self.assertFalse(d3.rear_facing(self.entry_with(
+            "A half-body character portrait || She is in a corridor.")))
+
+    def test_a_scene_that_merely_mentions_something_behind_her_is_not(self):
+        """'behind {object}' describes the BACKDROP, not the camera. This is
+        why the phrase list cannot just be 'behind'."""
+        self.assertFalse(d3.rear_facing(self.entry_with(
+            "A character portrait || She stands squared to the viewer, a ship "
+            "descending directly behind her.")))
+
+    def test_an_entry_with_no_backdrop_is_not(self):
+        entry = manifest_entry(23)
+        entry["traits"].pop("Backdrop", None)
+        self.assertFalse(d3.rear_facing(entry))
+
+    def test_a_standalone_run_has_no_entry_and_is_not(self):
+        self.assertFalse(d3.rear_facing(None))
+
+    def test_the_live_tables_contain_both_kinds(self):
+        """Guards the phrase list against the tables being reworded: if a
+        rewrite made every Backdrop read the same way to this, the third
+        reference slot would silently stop being used - or start being used on
+        front-facing portraits."""
+        from test.helpers import load_generator
+        gen = load_generator()
+        tables = gen.parse_tables(REPO / "prompts" / "npc-generator-tables.md")
+        verdicts = {d3.rear_facing({"traits": {"Backdrop": b}})
+                    for b in tables["Backdrop"]}
+        self.assertEqual(verdicts, {True, False})
+
+
+class TestBackViewJob(unittest.TestCase):
+    def setUp(self):
+        self.template = json.loads(
+            d3.BACKVIEW_WORKFLOW.read_text(encoding="utf-8"))
+
+    def build(self, portrait="p.png [input]"):
+        return d3.build_backview_job(
+            self.template, ("back.png [input]", "sq.png [input]", portrait),
+            "a back view of her", "LancerNPCs/Crew/x/back", 7)
+
+    def test_each_image_slot_is_patched(self):
+        job = self.build()
+        slots = d3.backview_slots(job)
+        self.assertEqual(job[slots["image1"]]["inputs"]["image"],
+                         "back.png [input]")
+        self.assertEqual(job[slots["image2"]]["inputs"]["image"],
+                         "sq.png [input]")
+        self.assertEqual(job[slots["image3"]]["inputs"]["image"],
+                         "p.png [input]")
+
+    def test_the_prompt_is_patched(self):
+        job = self.build()
+        self.assertEqual(
+            job[d3.backview_slots(job)["encode"]]["inputs"]["prompt"],
+            "a back view of her")
+
+    def test_the_output_prefix_is_patched(self):
+        job = self.build()
+        self.assertEqual(
+            job[d3.node_of(job, "SaveImage")]["inputs"]["filename_prefix"],
+            "LancerNPCs/Crew/x/back")
+
+    def test_the_seed_reaches_the_sampler(self):
+        sampler = next(d for d in self.build().values()
+                       if d["class_type"] == "KSampler")
+        self.assertEqual(sampler["inputs"]["seed"], 7)
+
+    def test_no_portrait_drops_the_slot_and_its_node(self):
+        """§4.4: the portrait is OMITTED when it is not rear-facing, not faked
+        with a front view the model would read as the thing to copy."""
+        job = self.build(portrait=None)
+        slots = d3.backview_slots(job)
+        self.assertIsNone(slots["image3"])
+        self.assertNotIn("image3", job[slots["encode"]]["inputs"])
+        loads = [n for n, d in job.items() if d["class_type"] == "LoadImage"]
+        self.assertEqual(len(loads), 2)
+
+    def test_the_template_on_disk_is_not_mutated(self):
+        before = json.dumps(self.template, sort_keys=True)
+        self.build()
+        self.assertEqual(json.dumps(self.template, sort_keys=True), before)
+
+    def test_a_graph_with_two_ksamplers_is_refused(self):
+        graph = json.loads(json.dumps(self.template))
+        sampler = next(n for n, d in graph.items()
+                       if d["class_type"] == "KSampler")
+        graph["9999"] = json.loads(json.dumps(graph[sampler]))
+        with self.assertRaises(d3.art.WorkflowError):
+            d3.backview_slots(graph)
