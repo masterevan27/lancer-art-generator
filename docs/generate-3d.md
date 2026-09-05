@@ -404,7 +404,8 @@ Written into `<NPC folder>/3d/`, beside the portrait and the token:
 
 | File | What it is |
 |---|---|
-| `<Name> Shell.glb` | Clothed mesh, cleaned, unrigged - the full-detail one |
+| `<Name> Shell.glb` | Clothed mesh, cleaned, unrigged - the full-detail one, with UVs, a Principled material and the texture packed in |
+| `<Name> Texture.png` | The baked colour atlas, projected from the A-pose reference |
 | `<Name> Print.stl` | Manifold single body, voxel-remeshed, scaled to 32 mm |
 | `<Name> Turnaround_{000,090,180,270}.png` | Orbit renders |
 | `<Name> Rigged.glb` | Clothed shell, bound to the base's 127-bone armature — only with `--rig`, and only if the bind fully succeeded (see [Rigging](#rigging)) |
@@ -417,8 +418,9 @@ that section rather than stacking a second one.
 Measured on Jules Sokolova: `Shell.glb` 13.8 MB (162,056 faces), `Print.stl`
 4.0 MB (39,488 faces), the four 640px turnarounds 0.8 MB combined — about
 **19 MB of deliverables**, plus ~22 MB of intermediates (`apose.png`,
-`_shell.glb`, `_base.glb`) this tool does **not** clean up, for roughly
-**41 MB per NPC** or **6.6 GB across a 160-NPC batch**. The STL there was
+`_shell.glb`, `_base.glb`, and, when a back view was generated,
+`3d/_back_render.png` and `3d/back.png`) this tool does **not** clean up, for
+roughly **41 MB per NPC** or **6.6 GB across a 160-NPC batch**. The STL there was
 remeshed at `--voxel` 0.010; the default has since moved to 0.013, which is a
 coarser print mesh (~27,000 faces), so treat these as a ceiling rather than
 as the current figure.
@@ -521,6 +523,142 @@ out crouched with the fingers splayed — and was never the valuable part: a
 rigged character wants a neutral bind pose, which is what the rest position
 already is.
 
+## Texturing
+
+Every reconstruction used to come out grey. It no longer does: the `texture`
+stage projects the reference image the shell was built from back onto the
+shell, and bakes it to an atlas.
+
+The reference is not an interpretation of the character - it is the render
+that produced the geometry, with the rolled skin, hair, eyes, outfit, headgear
+and glow colour already resolved and painted. Much of what a reconstruction
+loses is carried there as *paint rather than form*: unit patches, a stencilled
+number, a hazard triangle, boot laces, wear. Geometry cannot recover those at
+any resolution. Projection puts them on the model directly.
+
+```bash
+# the default - a front projected from the reference, plus a generated back
+python generate-3d.py --id npc-jules-sokolova-40213 --stage texture
+
+# no ComfyUI at all: the front is exact, the back is the right palette
+python generate-3d.py --id npc-jules-sokolova-40213 --stage texture --no-back-view
+
+# a back view you made yourself, instead of a generated one
+python generate-3d.py --id npc-jules-sokolova-40213 --stage texture \
+    --back-image back.png
+
+# back to grey
+python generate-3d.py --filter Crew --no-texture
+```
+
+`texture` is a stage of its own rather than part of `assemble`, for three
+reasons: it needs a ComfyUI round trip in the middle of Blender work and
+`assemble` is deliberately one offline run with no network; an NPC built
+before this landed can be textured with `--stage texture` alone, reading
+`Shell.glb` and `apose_square.png` off disk; and a texture failure is
+contained the way a rigging failure is - it costs the texture and nothing
+else, and every grey deliverable stays exactly as it was.
+
+### How the front registers
+
+Nothing between reconstruction and export rotates the shell - `clean_shell`
+scales, `align_to` translates - so the shell sits in world space at
+Hunyuan3D's own orientation and `frame_camera(shell, 0)` looks straight down
+the axis the reconstruction was conditioned from. The projection camera is
+`frame_camera` with one changed constant.
+
+That constant is `FRONT_MARGIN`, and it is **derived, not chosen**:
+`square_apose()` squares the subject on `max(w, h) * (1 + APOSE_MARGIN)` and
+`frame_camera` sets `ortho_scale` to `max(dimensions) * margin`. They are the
+same rule - the subject's own bounds, squared on the longer side - so the
+camera must use the constant the image was built with. Change `APOSE_MARGIN`
+and the camera follows.
+
+This is bounds-matching, not a calibrated camera: Hunyuan3D is not a
+renderer and guarantees no metric correspondence between input pixel and
+output vertex.
+
+Spec §8.1's probe settled the open question rather than leaving it assumed.
+Rendered against Jules Sokolova's own shell (501,763 vertices, 0.944 x 0.499
+x 1.753 m) and its own `apose_square.png`, the projection landed where it
+should - the eyes on the eyes; the shoulder patches, the "20" chest patch,
+the hazard triangle, the stencil block, the belt and the thigh chevron all on
+the right garment at the right height; boot colour bounded cleanly at the
+ankle. **Verdict: PASS.** `FRONT_MARGIN` stays 1.06, derived rather than
+measured (`1 + APOSE_MARGIN`); the probe's PARTIAL branch, which would have
+bracketed the margin between 1.00 and 1.12, was not needed. At that margin
+the projected UVs fill 94.3% of the frame vertically (span 0.9434 over
+0.0283..0.9717) and 50.8% horizontally, against an `ortho_scale` of 1.8578.
+
+### How the back is invented
+
+An independently generated back view would not line up with the mesh. The
+usual fix is structural conditioning and it is not available here:
+`ControlNetLoader`'s enum is empty, no models on disk. So the back view is not
+generated from scratch. The shell's own 180-degree view is *rendered*, and
+Qwen-Image-Edit 2509 paints that render. The output is registered to the mesh
+by construction, because it is that image with paint on it.
+
+Three references go in: the render being edited, `apose_square.png` for the
+character's colours and materials, and - only when the rolled portrait is
+composed from behind - the portrait, which is then real evidence about the
+character's back. The prompt is the NPC's own A-pose prompt with its stance
+clause replaced, so there is one description of the character rather than two
+to keep in step.
+
+### Why the shell has to be re-welded before it can be unwrapped
+
+The first attempt at the atlas unwrap produced **167,154 islands on 170,613
+faces** - about one island per triangle - and a bake that came back almost
+entirely black, because there was nothing in the atlas but island margin.
+Smart UV Project was not at fault. glTF stores every attribute per face
+*corner*, so exporting a shell and reading the GLB back in splits every
+triangle into three vertices that belong to no other triangle: the
+reimported shell carries 501,763 vertices for 170,613 faces, against only
+85,515 distinct positions. With no vertex shared between adjacent triangles,
+the unwrapper cannot form an island bigger than one face - it has no shared
+edges to grow one across.
+
+`texture_npc.load_shell()` re-welds the import at 0.0005 - the same distance
+`assemble`'s `clean_shell()` uses - restoring the topology the GLB round trip
+destroyed. That takes the same shell to 4,713 islands, and it's why the
+`--rigged` import gets the identical weld. Remove it and the atlas goes black
+again with no error pointing at why.
+
+### The blend
+
+With the front camera at -Y looking +Y, a surface's facing is its world
+normal's Y component alone. `t = 0.5 + 0.5 * Ny` runs 0 at dead-front to 1 at
+dead-back; smoothstepped, that is the mix. Deliberately not `max(0, ±Ny)`,
+whose weights both reach zero at the silhouette - which is exactly where a
+naive blend tears.
+
+Each view's weight is then multiplied by its own sampled alpha, so where the
+mesh's silhouette overshoots the image's, the texel falls to the other view
+instead of sampling backdrop grey.
+
+Not mirroring. Mirroring the front across the sagittal plane would put an open
+jacket and a visible tank top on the character's *back*, which is wrong in a
+way edge-wrap is not.
+
+### Resolution
+
+`--texture-size` defaults to 2048. The shell is roughly 1.9 m² of surface, so
+a 2048² atlas is about 0.7 mm/texel against the reference's own ~1.3 mm/px -
+the atlas is finer than its source, which is the right side of the trade.
+
+Vertex colours were considered and rejected on the same arithmetic: ~81,000
+vertices over that area is ~5 mm between samples, roughly 4× coarser than the
+reference, which would blur precisely the patches and stencils that motivate
+the work.
+
+Measured on Jules Sokolova's 170,597-face shell: the front-only run produced
+4,713 UV islands (~36 faces per island) and a 3,906,958-byte `Texture.png`.
+Adding a generated back view grew that to 4,382,290 bytes, and took
+`Shell.glb` from 14,090,784 to 22,533,860 bytes. The ComfyUI back-view job
+plus the bake took 1.6 minutes end to end, and the default `--pause-3d`
+(15.0 s) was enough for it - it did not have to be raised.
+
 ## Known limits
 
 ### Measured: `RemeshMesh` was clipping every reconstruction to a half-unit box
@@ -579,6 +717,71 @@ out, do not retry", on the strength of one padded run coming out worse than
 one unpadded run. Both runs were clipped by `RemeshMesh`, so the comparison
 measured nothing. It is **untested**, not ruled out.
 
+### Accepted: concavities get the wrong colour
+
+Project-from-view ignores depth. A texel that faces the front camera but is
+**occluded** from it - under the jacket flap, under the chin, between the
+legs, inside the collar - samples whatever front pixel sits at that screen
+position, which belongs to the surface in front of it.
+
+Normal-weighting handles the front/back split correctly. It does not handle
+this. Doing so properly means per-texel ray-cast visibility, which is a
+significantly larger piece of work. The refinement is additive when it comes:
+a visibility term multiplies into the same weights the blend already computes.
+
+### The generated back does not agree with the front in detail
+
+A Qwen back view will not place the jacket's seams, the hair's fall or the
+wear pattern where a real turn of the character would. The blend is smooth,
+so it reads as a soft transition rather than a seam - confirmed by eye on
+every render produced so far - but the back is a plausible invention, and
+nothing about it is evidence of what the character's back is actually like.
+The front is the reference's own pixels. The back is not.
+
+Two things follow from sampling two cameras rather than sculpting a seam by
+hand. A surface near 90 degrees to both cameras - the sides of the torso, the
+outer arm - is sampled at a grazing angle by both views, so detail there
+comes out stretched and smeared. That is inherent to two-view projection, not
+a defect in this implementation. And the invented back-view lettering is
+garbled, because diffusion models cannot spell - it reads as weathered
+stencilling on a tabletop miniature rather than legible text.
+
+With `--no-back-view` there is no second camera at all -
+`projection_material`'s `back=None` path emits the front view directly,
+extended past its own edge instead of blended against a second image. The
+back comes out the right palette, with the front's own detail carried around
+the silhouette by that edge-extension - plausible at a glance, wrong in any
+detail that would need a real photograph of the character's back. That is
+the documented fallback working as designed, not a defect.
+
+### Real risk: the back-view job can run short of memory, and `--pause-3d` is the lever
+
+Three ComfyUI jobs failed during this work with `RuntimeError:
+hostbuf_file_reader_read failed` at the sampler - the back-view render's
+failure signature. It happened with the machine down to 4.1 GB of 33.4 GB
+RAM and 5.8 GB of 12.9 GB VRAM free, because something else (a browser, in
+this case) was holding memory a prior reconstruction job had not yet given
+back. With that headroom restored - 15.3 GB RAM, 11.7 GB VRAM free - the same
+back-view job succeeded twice in a row, with no change to `--pause-3d`.
+
+So the risk is real and its signature is that error at the sampler - but it
+is a headroom problem on a machine already under pressure, not a ceiling this
+stage runs into on any given card. `--pause-3d` is the lever if it recurs: it
+exists for exactly this class of problem, a job ComfyUI reports finished
+before the VRAM it held is actually released.
+
+### Quantified: Smart UV Project packs the atlas about half full
+
+Spec §7.3 left this unmeasured; it no longer is. On the real shell - once
+`load_shell()`'s re-weld restores the topology a GLB round trip destroys (see
+[Texturing](#texturing)) - Smart UV Project produces 4,713 islands across
+170,597 faces (~36 faces per island), and the resulting atlas is roughly half
+empty at 2048²: island margin and unused packing space, plus a long tail of
+tiny 1-2 face slivers. That costs texture resolution, not correctness - every
+face still samples its own island regardless of how small it is. If it turns
+out to matter in practice, the levers are a larger `--texture-size`, or
+unwrapping the printable (welded, closed) copy and transferring.
+
 ### Fixed along the way
 
 - **A destroyed shell used to pass every check.** The manifold check asks
@@ -604,8 +807,10 @@ measured nothing. It is **untested**, not ruled out.
   with hands and feet, now that nothing clips it — but at close range it
   reads as a blob. Multi-view conditioning is the plausible fix and is
   untested; see above.
-- **The rigged character has no texture.** Texture baking wanted dependencies
-  that cannot be built on this machine.
+- **~~The rigged character has no texture.~~** Fixed - see
+  [Texturing](#texturing). `Shell.glb` and, with `--rig`, `Rigged.glb` now
+  carry a baked atlas projected from the A-pose reference. `Print.stl` does
+  not, and will not: a print has no colour.
 - **Rigging ships off, and was measured on exactly one NPC.** `--rig
   --bind transfer` yields a rig that reports as complete but tears visibly
   under a shoulder rotation; `--rig --bind auto` yields nothing. Neither is

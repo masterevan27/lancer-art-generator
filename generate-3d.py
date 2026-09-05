@@ -42,7 +42,8 @@ def _load_npc_generator():
     """
     path = SCRIPT_DIR / "generate-npc.py"
     if not path.exists():
-        raise SystemExit("generate-npc.py not found next to this script (%s)" % SCRIPT_DIR)
+        raise SystemExit(
+            "generate-npc.py not found next to this script (%s)" % SCRIPT_DIR)
     name = "lancer_generate_npc"
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
@@ -110,6 +111,124 @@ def apose_npc(entry):
     npc["Weapon"] = ""
     npc["Gear"] = ""
     return npc
+
+
+# The Stance the back view is rendered in. Spec §4.4.
+#
+# Written as an ordinary Stance bullet for the same reason APOSE_STANCE is -
+# lowercase, no trailing period, no pronoun placeholders - so it composes with
+# the token template's "{Subject} {is_are} {stance}, both feet in frame"
+# exactly as a rolled bullet does.
+#
+# It describes the SAME jig from the other side: everything that made the
+# A-pose a good reconstruction source - limbs clear of the torso, both feet in
+# frame, squarely on to the camera - still holds, and only the facing changes.
+BACKVIEW_STANCE = (
+    "standing straight with the back squarely to the viewer and the face "
+    "turned fully away, seen from directly behind, arms held slightly away "
+    "from the sides with the palms facing backward, feet shoulder-width apart"
+)
+
+
+def backview_npc(entry):
+    """apose_npc(), turned around.
+
+    Built ON apose_npc rather than beside it so the two descriptions cannot
+    drift: the emptied hands, the Height backfill and the migrate_traits pass
+    are all decisions that belong to reconstruction, not to which way the
+    figure faces, and restating them here would be a second thing to keep in
+    step with the tables (§4.4).
+    """
+    npc = apose_npc(entry)
+    npc["Stance"] = BACKVIEW_STANCE
+    return npc
+
+
+# The frame the back view is edited toward. An EDIT instruction, not a
+# generation brief: it says what to do to the supplied image, not what to
+# draw from nothing.
+#
+# Deliberately NOT built through build_prompts()/TOKEN_TEMPLATE, which is
+# where the earlier version of this function got its prompt from. That
+# template hardcodes "facing the viewer" in its opening framing sentence -
+# true of every rolled Stance and of APOSE_STANCE, but flatly false once
+# Stance is replaced with BACKVIEW_STANCE, and a real ComfyUI run confirmed
+# what the resulting contradiction does at cfg 1.0/denoise 1.0: the edit
+# model followed the front-facing framing and the "character illustration"
+# generation-brief opening rather than the two reference images, and painted
+# an unrelated scene - a different pose, a different background, no relation
+# to the shell's own silhouette (spec §2.2's structural-registration argument
+# depends on the opposite happening). Composing the fields directly here,
+# from the same traits build_prompts() would have used, keeps the fix
+# targeted at the actual defect - the framing sentence - without touching the
+# working front/token prompt.
+BACKVIEW_TEMPLATE = (
+    "Edit the supplied photograph so the same figure is shown turned around, "
+    "seen from directly behind, matching the pose described below - this is "
+    "a photo edit of the reference image, not a new illustration, and "
+    "nothing about the person or the scene changes except the facing. "
+    "{Subject} {is_are} {height}, {build}, with {hair}, wearing {outfit}, "
+    "{faction_line}the clothing following the shape of {possessive} frame "
+    "from behind. {headgear} {Subject} {is_are} {stance}, both feet in "
+    "frame. Keep the exact same outfit, hair, colours and body proportions "
+    "as the reference image, against a plain flat background with no added "
+    "scenery or props."
+)
+
+
+def backview_prompt(entry):
+    """The edit instruction ComfyUI's back-view job is prompted with.
+
+    See BACKVIEW_TEMPLATE for why this does not route through
+    build_prompts()/TOKEN_TEMPLATE.
+    """
+    npc = backview_npc(entry)
+    fields = dict(npc["_pronouns"])
+    _, faction_visual, faction_flags = npc_gen.split_faction(npc["Faction"])
+    # Same "dressy Faction, practical Role" softening build_prompts() applies
+    # to the front prompts (see its own comment) - a back view should not
+    # invent baronial regalia for a role the front never gave one either.
+    if ("dressy" in faction_flags
+            and npc_gen.dress_policy_for(npc_gen.role_category(npc)) == "plain"):
+        faction_visual = ""
+    fields.update({
+        "height": npc["Height"],
+        "build": npc["Build"],
+        "hair": npc["Hair"],
+        "outfit": npc["Outfit"],
+        "headgear": npc["Headgear"],
+        "stance": npc["Stance"],
+        "faction_line": "%s, " % faction_visual if faction_visual else "",
+    })
+    return BACKVIEW_TEMPLATE.format(**fields)
+
+
+# The Backdrop phrases that mean the rolled portrait shows the character's
+# back. Read off the live tables, which compose a rear shot three ways: a
+# "seen from behind" shot phrase, a "rear-view" one, and a scene that puts the
+# subject's "back to the viewer" under a front-ish shot.
+#
+# Deliberately NOT a bare "behind": half the Backdrop table describes
+# something standing behind the subject, which says nothing about the camera.
+REAR_FACING_PHRASES = ("seen from behind", "rear-view", "rear view",
+                       "back to the viewer")
+
+
+def rear_facing(entry):
+    """True when this NPC's rolled portrait is composed from behind.
+
+    Where it is, the portrait is real evidence about the character's back -
+    the fall of the hair, the print across the jacket, what is slung over the
+    shoulders - and §4.4 gives it the third reference slot. Where it is not,
+    the slot is omitted rather than filled with a front view, which the edit
+    model would read as the thing to reproduce.
+    """
+    backdrop = (entry.get("traits") or {}).get("Backdrop", "") if entry else ""
+    if not backdrop:
+        return False
+    shot, scene, _ = npc_gen.split_backdrop(backdrop)
+    text = ("%s || %s" % (shot, scene)).lower()
+    return any(phrase in text for phrase in REAR_FACING_PHRASES)
 
 
 # --------------------------------------------------------------------------
@@ -232,11 +351,14 @@ def standalone_subject(args):
 
 MESH_WORKFLOW = art.WORKFLOW_DIR / "Util_Image_to_Mesh_Hunyuan3D_v1.json"
 RIG_WORKFLOW = art.WORKFLOW_DIR / "Util_Image_to_RiggedBody_SAM3D_v1.json"
+BACKVIEW_WORKFLOW = art.WORKFLOW_DIR / "Util_BackView_QwenEdit_v1.json"
 ASSEMBLE_SCRIPT = SCRIPT_DIR / "blender" / "assemble_npc.py"
+TEXTURE_SCRIPT = SCRIPT_DIR / "blender" / "texture_npc.py"
 
 # Named rather than numbered, so `--stage mesh` says what it does. The order
-# is the dependency order: mesh needs apose's PNG, assemble needs mesh's GLBs.
-STAGES = ("apose", "mesh", "assemble")
+# is the dependency order: mesh needs apose's PNG, assemble needs mesh's GLBs,
+# texture needs assemble's Shell.glb and mesh's apose_square.png.
+STAGES = ("apose", "mesh", "assemble", "texture")
 
 # Where Blender 5.2 LTS installs by default on this machine. LANCER_BLENDER
 # overrides it, so a different install or a different version needs no edit.
@@ -273,7 +395,7 @@ def should_skip(folder, args):
     behind, and skipping on it would make every such NPC permanently
     unbuildable without --overwrite.
 
-    Only applies when --stage is the full default set of all three stages.
+    Only applies when --stage is the full default set of all four stages.
     The docstring above and docs/generate-3d.md both advertise running
     `--stage apose`, inspecting the result, then `--stage mesh` as the normal
     way to iterate - and that sequence is exactly what this skip used to
@@ -285,6 +407,25 @@ def should_skip(folder, args):
     if set(args.stage) != set(STAGES):
         return False
     return folder.exists() and any(folder.iterdir()) and not args.overwrite
+
+
+def deliverables_3d(folder, stem):
+    """Every 3D deliverable currently in `folder`.
+
+    The dossier's '## 3D' section exists to describe what is on disk (see
+    append_dossier_3d, which REPLACES it for exactly that reason), but a
+    narrowed run knows only what it built itself: `--stage texture` on a
+    folder assembled last week would rewrite six true rows down to one. So
+    the list is read off the folder rather than accumulated from this run.
+
+    A deliverable is named after the NPC - `<stem> Shell.glb` - and the
+    intermediates kept beside it are not (apose.png, _shell.glb, back.png),
+    which is the whole distinction.
+    """
+    if not folder.exists():
+        return []
+    return sorted(p.name for p in folder.iterdir()
+                  if p.is_file() and p.name.startswith(stem))
 
 
 def select_entries(manifest, args):
@@ -305,7 +446,8 @@ def select_entries(manifest, args):
         # indistinguishable from a run that had nothing to do.
         missing = sorted(wanted - found)
         if missing:
-            raise SystemExit("no manifest entry with id %s" % ", ".join(missing))
+            raise SystemExit("no manifest entry with id %s" %
+                             ", ".join(missing))
 
     def text(folder_path, entry):
         """What --filter and --exclude match against.
@@ -337,13 +479,15 @@ def select_entries(manifest, args):
 DOSSIER_MARKER = "\n## 3D\n"
 
 
-def dossier_3d_section(files, workflows, stance):
+def dossier_3d_section(files, workflows, stance, back_stance=None):
     """The '## 3D' block: what was built, and everything needed to rebuild it.
 
     The dossier's existing property is that it records enough to reproduce its
     own output - the seed, the tables, both prompts verbatim. The 3D output is
-    reproduced from the two workflow graphs and the forced stance instead, so
-    those are what this records.
+    reproduced from the workflow graphs and the forced stances instead, so
+    those are what this records. The back-view stance appears only when a back
+    view was actually generated: recording a prompt that never ran would
+    describe a file that is not there.
     """
     lines = [
         "## 3D",
@@ -360,11 +504,14 @@ def dossier_3d_section(files, workflows, stance):
         "|---|---|",
     ]
     lines += ["| Workflow | `%s` |" % Path(w).name for w in workflows]
-    lines += ["| A-pose stance | %s |" % stance, ""]
+    lines += ["| A-pose stance | %s |" % stance]
+    if back_stance:
+        lines += ["| Back-view stance | %s |" % back_stance]
+    lines += [""]
     return "\n".join(lines)
 
 
-def append_dossier_3d(path, files, workflows, stance):
+def append_dossier_3d(path, files, workflows, stance, back_stance=None):
     """Add or REPLACE the dossier's '## 3D' section.
 
     Replace, because a --overwrite re-run would otherwise stack a second
@@ -375,7 +522,7 @@ def append_dossier_3d(path, files, workflows, stance):
     cut = text.find(DOSSIER_MARKER)
     if cut != -1:
         text = text[:cut]
-    body = dossier_3d_section(files, workflows, stance)
+    body = dossier_3d_section(files, workflows, stance, back_stance)
     path.write_text("%s\n\n%s" % (text.rstrip("\n"), body), encoding="utf-8")
 
 
@@ -406,6 +553,20 @@ def append_dossier_3d(path, files, workflows, stance):
 # interlaced, so that one shape is all this has to understand.
 
 APOSE_MARGIN = 0.06     # breathing room around the subject, as a fraction
+
+# The projection camera's ortho margin, for texturing (spec §4.2).
+#
+# square_apose() squares the subject on max(w, h) * (1 + APOSE_MARGIN);
+# frame_camera() sets ortho_scale to max(dimensions) * margin. They are the
+# same rule - the subject's own bounds, squared on the longer side - so the
+# camera that samples apose_square.png must use the constant that image was
+# built with, and DERIVING it is the only way that stays true when
+# APOSE_MARGIN moves.
+#
+# The design doc (§4.2) says 1.12. That is an error in the doc: APOSE_MARGIN
+# has been 0.06 since it was introduced, never 0.12, so the matching margin is
+# 1.06.
+FRONT_MARGIN = 1 + APOSE_MARGIN
 
 
 def _png_read(path):
@@ -455,7 +616,8 @@ def _png_read(path):
                 elif filter_type == 4:
                     line[i] = (line[i] + paeth(a, b, c)) & 255
                 else:
-                    raise ValueError("%s uses PNG filter %d" % (path, filter_type))
+                    raise ValueError("%s uses PNG filter %d" %
+                                     (path, filter_type))
         rows.append(line)
         previous = line
     return width, height, rows
@@ -606,7 +768,8 @@ def render_apose(comfy, args, entry):
     job = art.build_job(template, slots,
                         npc_gen.entry_for(category, slug, "apose", prompt),
                         entry["seed"], knobs)
-    images = art.Comfy.images(comfy.wait(comfy.queue(job), timeout=args.timeout))
+    images = art.Comfy.images(comfy.wait(
+        comfy.queue(job), timeout=args.timeout))
     if not images:
         raise RuntimeError("the A-pose render produced no image")
     time.sleep(args.pause)
@@ -626,7 +789,8 @@ def cut_out(comfy, args, subject, source, folder):
     knobs = npc_gen.Knobs(args, npc_gen.TOKEN_SIZE, npc_gen.COMFY_PREFIX)
 
     if not args.rmbg.exists():
-        raise SystemExit("Background-removal workflow not found: %s" % args.rmbg)
+        raise SystemExit(
+            "Background-removal workflow not found: %s" % args.rmbg)
     post = art.load_api_workflow(args.rmbg)
     try:
         post_slots = art.locate_post_slots(post)
@@ -637,8 +801,10 @@ def cut_out(comfy, args, subject, source, folder):
         else art.image_ref(source)
     prefix = "%s/%s/%s/apose_rmbg" % (npc_gen.COMFY_PREFIX,
                                       subject.category, subject.slug)
-    cut_job = art.build_post_job(post, post_slots, ref, prefix, subject.seed, knobs)
-    cut = art.Comfy.images(comfy.wait(comfy.queue(cut_job), timeout=args.timeout))
+    cut_job = art.build_post_job(
+        post, post_slots, ref, prefix, subject.seed, knobs)
+    cut = art.Comfy.images(comfy.wait(
+        comfy.queue(cut_job), timeout=args.timeout))
     if not cut:
         raise RuntimeError("background removal produced no image")
     time.sleep(args.pause)
@@ -677,7 +843,7 @@ def has_cutout(path, threshold=16):
 
 
 def check_image(args, folders):
-    """A SystemExit naming why --image cannot be used for this run.
+    """A SystemExit naming why --image or --back-image cannot be used.
 
     Every one of these is cheap to check and expensive to discover later: a
     reconstruction takes minutes on the GPU and answers a wrong input with a
@@ -685,6 +851,17 @@ def check_image(args, folders):
     against the run's target folders, rather than inside the per-NPC loop that
     catches SystemExit and turns a global mistake into one failure per NPC.
     """
+    if args.back_image is not None:
+        if len(folders) != 1:
+            raise SystemExit(
+                "--back-image is one person's back view, but %d NPCs are "
+                "selected - narrow the run with --id" % len(folders))
+        # Deliberately NOT _png_read: a generated back view is very often an
+        # opaque RGB PNG, which that reader refuses by design, and Blender
+        # loads any PNG it is handed. The signature is the whole check.
+        if args.back_image.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
+            raise SystemExit("--back-image is not a PNG: %s" % args.back_image)
+
     if not args.image:
         return
 
@@ -764,6 +941,107 @@ def build_mesh_job(template, ref, prefix, seed=None):
     return graph
 
 
+def backview_slots(graph):
+    """Where build_backview_job patches, found by following links.
+
+    NOT node_of(). The back-view graph has three LoadImage nodes and two
+    TextEncodeQwenImageEditPlus nodes - a positive and a negative - so
+    addressing either class by class_type finds three or two and raises. The
+    unique node is KSampler, and everything else hangs off it: its 'positive'
+    input names the encoder, and the encoder's image1/2/3 inputs name the
+    three loaders.
+
+    This keeps the property node_of() exists for - a re-export from the
+    ComfyUI editor renumbers every node and this still resolves - while
+    failing just as loudly on a graph that is not the shape this code expects.
+    """
+    samplers = [n for n, d in graph.items()
+                if d.get("class_type") == "KSampler"]
+    if len(samplers) != 1:
+        raise art.WorkflowError(
+            "expected exactly one KSampler node, found %d" % len(samplers))
+    positive = graph[samplers[0]]["inputs"].get("positive")
+    if not isinstance(positive, list) or positive[0] not in graph:
+        raise art.WorkflowError("the KSampler's positive input is not a link")
+    encode = positive[0]
+
+    slots = {"encode": encode, "save": node_of(graph, "SaveImage")}
+    for key in ("image1", "image2", "image3"):
+        ref = graph[encode]["inputs"].get(key)
+        if ref is None:
+            slots[key] = None
+            continue
+        if not isinstance(ref, list) or ref[0] not in graph:
+            raise art.WorkflowError("%s.%s is not a link" % (encode, key))
+        if graph[ref[0]]["class_type"] != "LoadImage":
+            raise art.WorkflowError(
+                "%s.%s points at a %s, not a LoadImage"
+                % (encode, key, graph[ref[0]]["class_type"]))
+        slots[key] = ref[0]
+    if slots["image1"] is None or slots["image2"] is None:
+        raise art.WorkflowError(
+            "the back-view encoder needs image1 (the render being edited) and "
+            "image2 (the A-pose reference)")
+    return slots
+
+
+def build_backview_job(template, refs, prompt, prefix, seed=None):
+    """One queueable back-view job. The template is left untouched.
+
+    `refs` is (back render, A-pose reference, portrait or None), in the slot
+    order §4.4 fixes: the render being EDITED first, because that is what makes
+    the result registered to the mesh; then the character's colours; then the
+    optional rear-facing portrait.
+
+    The graph's negative TextEncodeQwenImageEditPlus deliberately carries no
+    vae and no image1/2/3 links at all - unlike the template it was built
+    from, which feeds both encoders the same three images. This is only
+    correct because the graph's KSampler is pinned to cfg 1.0: at cfg 1.0,
+    pred = uncond + cfg*(cond - uncond) reduces to pred = cond, so the
+    negative branch is algebraically eliminated regardless of what it
+    contains. It is built this way, rather than mirroring the positive
+    encoder's images, because sharing image3 would leave the orphan-deletion
+    below unable to tell "nothing else needs this loader" from "the negative
+    encoder still needs it" - it would never fire, and a run with no portrait
+    would ship a dangling image3 input pointed at a placeholder file. Raising
+    cfg off 1.0 (the official 50-step/cfg-4.0 or fp8 20-step/cfg-2.5 configs
+    both do) makes the negative branch real again, and the negative encoder
+    would need its own image references wired back up first - see the
+    matching note on the graph's own KSampler node.
+    """
+    graph = json.loads(json.dumps(template))
+    slots = backview_slots(graph)
+    back_ref, apose_ref, portrait_ref = refs
+
+    graph[slots["image1"]]["inputs"]["image"] = back_ref
+    graph[slots["image2"]]["inputs"]["image"] = apose_ref
+    graph[slots["encode"]]["inputs"]["prompt"] = prompt
+    graph[slots["save"]]["inputs"]["filename_prefix"] = prefix
+
+    if portrait_ref is not None and slots["image3"] is not None:
+        graph[slots["image3"]]["inputs"]["image"] = portrait_ref
+    elif slots["image3"] is not None:
+        # Omitted, not faked (§4.4). The input goes, and so does the loader it
+        # was the only reference to - a node left dangling in an API-format
+        # graph is executed anyway, and would load whatever placeholder the
+        # template shipped with. This is also why the negative encoder (see
+        # the docstring above) has no image3 link of its own: if it did, this
+        # orphan check would always find a reference and never delete the
+        # loader.
+        orphan = slots["image3"]
+        del graph[slots["encode"]]["inputs"]["image3"]
+        if not any(isinstance(v, list) and v and v[0] == orphan
+                   for node in graph.values()
+                   for v in node["inputs"].values()):
+            del graph[orphan]
+
+    if seed is not None:
+        for node in graph.values():
+            if node.get("class_type") == "KSampler":
+                node["inputs"]["seed"] = seed
+    return graph
+
+
 def mesh_outputs(record, suffix=".glb"):
     """Every saved file in a history record whose filename ends in `suffix`.
 
@@ -805,7 +1083,8 @@ def stage_mesh(comfy, args, subject, folder, apose_png):
     # shell comes out wrong.
     square_png = folder / "apose_square.png"
     side = square_apose(apose_png, square_png)
-    print("    squared -> %s (%dx%d)" % (square_png.name, side, side), flush=True)
+    print("    squared -> %s (%dx%d)" %
+          (square_png.name, side, side), flush=True)
     ref = upload_image(comfy, square_png)
 
     written = []
@@ -857,7 +1136,8 @@ def parse_report(stdout):
     try:
         return json.loads(lines[-1][len(REPORT_PREFIX):])
     except ValueError as exc:
-        raise RuntimeError("the Blender assembly's report was not JSON: %s" % exc)
+        raise RuntimeError(
+            "the Blender assembly's report was not JSON: %s" % exc)
 
 
 def assemble_command(blender, args, folder, stem, base, shell, height=None):
@@ -924,8 +1204,10 @@ def stage_assemble(args, folder, stem, base, shell, height=None):
     if not ASSEMBLE_SCRIPT.exists():
         raise SystemExit("assembly script not found: %s" % ASSEMBLE_SCRIPT)
 
-    command = assemble_command(blender, args, folder, stem, base, shell, height)
-    proc = subprocess.run(command, capture_output=True, text=True, timeout=args.timeout)
+    command = assemble_command(
+        blender, args, folder, stem, base, shell, height)
+    proc = subprocess.run(command, capture_output=True,
+                          text=True, timeout=args.timeout)
     if proc.returncode != 0:
         raise RuntimeError("Blender assembly failed (%d):\n%s"
                            % (proc.returncode, proc.stderr[-2000:]))
@@ -937,10 +1219,203 @@ def stage_assemble(args, folder, stem, base, shell, height=None):
               % (report["shell_height_m"], report.get("estimated_height_m", 0),
                  report.get("print_height_mm", 0)))
     if report.get("rig_error"):
-        print("    ! rigging failed: %s" % report["rig_error"], file=sys.stderr)
+        print("    ! rigging failed: %s" %
+              report["rig_error"], file=sys.stderr)
     elif report.get("rigged"):
-        print("      rigged: %d bones, every vertex weighted" % report["bones"])
+        print("      rigged: %d bones, every vertex weighted" %
+              report["bones"])
     return report
+
+
+# --------------------------------------------------------------------------
+# Stage 3: texturing
+# --------------------------------------------------------------------------
+
+
+def texture_command(blender, args, folder, stem, shell, step,
+                    front=None, back=None):
+    """The full argv for one headless texture run.
+
+    Split out from run_texture_step() for the same reason assemble_command()
+    is split out: an unrecognised flag on the far side of Blender's '--'
+    separator is argparse's problem inside the script, minutes later.
+    """
+    command = [
+        str(blender), "--background", "--factory-startup",
+        "--python", str(TEXTURE_SCRIPT), "--",
+        str(shell), str(folder), "--stem", stem, "--step", step,
+    ]
+    if step == "bake":
+        command += ["--front", str(front),
+                    "--front-margin", str(FRONT_MARGIN),
+                    "--size", str(args.texture_size)]
+        if back is not None:
+            command += ["--back", str(back)]
+        # Only when it is actually there: --rig writes no Rigged.glb when the
+        # bind left vertices unweighted, and naming a missing file would fail
+        # the texture stage over a rig that already failed on its own.
+        rigged = folder / ("%s Rigged.glb" % stem)
+        if args.rig and rigged.exists():
+            command += ["--rigged", str(rigged)]
+    return command
+
+
+def run_texture_step(args, folder, stem, shell, step, front=None, back=None):
+    """One headless Blender launch. Returns its report.
+
+    A seam of its own so the containment tests can fail the Blender half
+    without a Blender.
+    """
+    blender = find_blender(args.blender)
+    if not TEXTURE_SCRIPT.exists():
+        raise SystemExit("texture script not found: %s" % TEXTURE_SCRIPT)
+    command = texture_command(blender, args, folder, stem, shell, step,
+                              front, back)
+    proc = subprocess.run(command, capture_output=True, text=True,
+                          timeout=args.timeout)
+    if proc.returncode != 0:
+        raise RuntimeError("Blender texturing (%s) failed (%d):\n%s"
+                           % (step, proc.returncode, proc.stderr[-2000:]))
+    return parse_report(proc.stdout)
+
+
+def reference_image(folder):
+    """The squared A-pose the reconstruction actually saw.
+
+    Rebuilt from apose.png when absent rather than refused: it is a pure
+    function of apose.png, and requiring --stage mesh to have run in THIS
+    working copy would defeat the back-catalogue case that is the whole reason
+    texture is a stage of its own (spec §4.1).
+    """
+    square = folder / "apose_square.png"
+    if square.exists():
+        return square
+    apose = folder / "apose.png"
+    if not apose.exists():
+        raise RuntimeError(
+            "no apose_square.png or apose.png in %s - texturing needs the "
+            "image the reconstruction was built from" % folder)
+    square_apose(apose, square)
+    return square
+
+
+def stage_texture(comfy, args, subject, folder, stem, entry=None,
+                  portrait=None):
+    """Project the reference image onto the shell and bake it. -> the report.
+
+    Reads Shell.glb and apose_square.png off disk rather than rebuilding
+    geometry, so an NPC whose 3d/ folder predates this stage can be textured
+    with `--stage texture` alone.
+
+    Nothing is moved into place until every step has succeeded. This stage
+    REWRITES a deliverable, which is the one thing rigging never had to do,
+    and a crash mid-bake must not leave a corrupt Shell.glb where a good one
+    was (spec §5.3).
+    """
+    shell = folder / ("%s Shell.glb" % stem)
+    if not shell.exists():
+        raise RuntimeError(
+            "no %s in %s - run --stage assemble first" % (shell.name, folder))
+    front = reference_image(folder)
+
+    back = None
+    back_stance = None
+    if args.back_image is not None:
+        back = args.back_image
+        print("    back view supplied: %s" % back.name, flush=True)
+    elif args.back_view:
+        back, back_stance = generate_back_view(
+            comfy, args, subject, folder, shell, stem, entry, portrait)
+
+    print("    baking a %dpx atlas ..." % args.texture_size, flush=True)
+    report = run_texture_step(args, folder, stem, shell, "bake", front, back)
+
+    # Checked before either file is moved: the two os.replace calls below are
+    # not jointly atomic, so a malformed report missing one key must not be
+    # allowed to replace the texture and then raise on the shell (or the
+    # reverse), leaving one updated and the other not. Shell.glb is never
+    # DAMAGED either way - os.replace only ever swaps in a whole, complete
+    # file - but "nothing moved until everything succeeded" should mean it.
+    for key in ("texture", "shell"):
+        if key not in report:
+            raise RuntimeError(
+                "the Blender texturing report has no %r - refusing to move "
+                "anything into place" % key)
+
+    # Everything above wrote only underscore-prefixed files. This is the one
+    # point at which a good deliverable is replaced, and os.replace is atomic
+    # on the same filesystem on every platform this runs on.
+    texture = folder / ("%s Texture.png" % stem)
+    os.replace(folder / report["texture"], texture)
+    os.replace(folder / report["shell"], shell)
+    if report.get("rigged"):
+        rigged = folder / ("%s Rigged.glb" % stem)
+        os.replace(folder / report["rigged"], rigged)
+
+    report["files"] = [texture.name]
+    report["back_stance"] = back_stance
+    print("      -> %s (%d UV islands, %s)"
+          % (texture.name, report.get("islands", 0),
+             " + ".join(report.get("views", []))))
+    return report
+
+
+def generate_back_view(comfy, args, subject, folder, shell, stem, entry,
+                       portrait):
+    """Render the shell's 180-degree view and have ComfyUI paint it.
+
+    -> (the back view's path, the stance that produced it).
+
+    The registration is structural, not prompted. What ComfyUI is given is a
+    render of THIS mesh at the camera the bake will sample the result with, so
+    whatever comes back lines up with the silhouette by construction - which
+    is the only reason this works with ControlNetLoader's enum empty (§2.2).
+    """
+    print("    back render ...", flush=True)
+    run_texture_step(args, folder, stem, shell, "back")
+    render = folder / "_back_render.png"
+    if not render.exists():
+        raise RuntimeError("the back render produced no image")
+
+    if not BACKVIEW_WORKFLOW.exists():
+        raise SystemExit("Workflow not found: %s" % BACKVIEW_WORKFLOW)
+    template = art.load_api_workflow(BACKVIEW_WORKFLOW)
+
+    refs = [upload_image(comfy, render),
+            upload_image(comfy, reference_image(folder)),
+            None]
+    # The portrait is evidence only when it was composed from behind (§4.4). A
+    # missing file is not an error: an NPC folder moved by hand keeps its 3d/
+    # and may have left the portrait behind, and the slot is optional.
+    if entry is not None and portrait is not None and portrait.exists() \
+            and rear_facing(entry):
+        print("      portrait is rear-facing - using it as a third reference")
+        refs[2] = upload_image(comfy, portrait)
+
+    # A standalone --out run has no traits to build a prompt from, the same
+    # gap that makes --out require --image. The stance alone is what is left
+    # that is true about the figure.
+    prompt = (backview_prompt(entry) if entry is not None
+              else "the same figure seen from directly behind, %s"
+                   % BACKVIEW_STANCE)
+    prefix = "%s/%s/%s/back" % (npc_gen.COMFY_PREFIX,
+                                subject.category, subject.slug)
+    job = build_backview_job(template, tuple(refs), prompt, prefix,
+                             subject.seed)
+
+    print("    back view ...", flush=True)
+    images = art.Comfy.images(comfy.wait(comfy.queue(job),
+                                         timeout=args.timeout))
+    if not images:
+        raise RuntimeError("the back-view job produced no image")
+    # --pause-3d, not --pause: Qwen-Image-Edit 2509 at fp8 is large and this
+    # runs after two reconstructions in the same batch, which is exactly the
+    # window spec §7.4 flags.
+    time.sleep(args.pause_3d)
+
+    back = npc_gen.fetch(comfy, images[0], folder / "back.png")
+    print("      -> %s" % back.name)
+    return back, BACKVIEW_STANCE
 
 
 # --------------------------------------------------------------------------
@@ -965,7 +1440,8 @@ def parse_args(argv=None):
                            "matches - the path carries the role category")
     pick.add_argument("--exclude", metavar="REGEX",
                       help="skip NPCs matching the same three")
-    pick.add_argument("--limit", type=int, metavar="N", help="stop after N NPCs")
+    pick.add_argument("--limit", type=int, metavar="N",
+                      help="stop after N NPCs")
     pick.add_argument("--overwrite", action="store_true",
                       help="rebuild an NPC that already has a 3d/ folder")
 
@@ -992,6 +1468,31 @@ def parse_args(argv=None):
                             "'transfer' copies the base's own vertex groups by "
                             "proximity, 'auto' solves for the bones directly "
                             "(default: %(default)s)")
+    stage.add_argument("--texture", dest="texture", action="store_true",
+                       default=True,
+                       help="project the A-pose reference onto the shell and "
+                            "bake it (the default). Unlike --rig this is ON: "
+                            "it is the point of the exercise, not an "
+                            "experiment")
+    stage.add_argument("--no-texture", dest="texture", action="store_false",
+                       help="skip texturing entirely, restoring the grey "
+                            "deliverables this tool used to produce")
+    stage.add_argument("--texture-size", type=int, default=2048,
+                       metavar="PIXELS",
+                       help="baked atlas size (default: %(default)s). The "
+                            "shell is ~1.9 m2, so 2048 is ~0.7 mm/texel "
+                            "against the reference's own ~1.3 mm/px")
+    stage.add_argument("--no-back-view", dest="back_view",
+                       action="store_false", default=True,
+                       help="do not generate a back view: project the front "
+                            "alone and wrap its silhouette colours around. No "
+                            "ComfyUI job runs, and the result is exact in "
+                            "front and plausible behind")
+    stage.add_argument("--back-image", type=Path, default=None, metavar="PATH",
+                       help="a back view you already have, instead of "
+                            "generating one. It must be a render of the "
+                            "shell's own 180-degree view - anything else will "
+                            "not register")
 
     supplied = p.add_argument_group("an A-pose you supply instead")
     supplied.add_argument("--image", type=Path, default=None, metavar="PATH",
@@ -1048,14 +1549,33 @@ def parse_args(argv=None):
 
     args = p.parse_args(argv)
 
+    explicit_stage = args.stage is not None
     if args.stage is None:
         # --image supplies what stage apose exists to produce, so the default
         # set drops it. Named stages are left exactly as given: `--image X
         # --stage mesh` is a caller deliberately stopping before assembly.
-        args.stage = [s for s in STAGES if s != "apose"] if args.image else list(STAGES)
+        args.stage = [s for s in STAGES if s !=
+                      "apose"] if args.image else list(STAGES)
     elif args.image and "apose" in args.stage:
         p.error("--image supplies the A-pose and --stage apose renders one - "
                 "pass only one of them")
+
+    # --no-texture does NOT edit args.stage. should_skip() compares the stage
+    # set against STAGES to decide whether the caller has narrowed the run,
+    # and dropping 'texture' here would quietly stop a --no-texture batch
+    # skipping NPCs that already have a 3d/ folder.
+    if explicit_stage and not args.texture and "texture" in args.stage:
+        p.error("--stage texture asks for the texture stage and --no-texture "
+                "suppresses it - pass only one of them")
+    if args.back_image is not None:
+        if not args.back_image.exists():
+            p.error("--back-image not found: %s" % args.back_image)
+        if not args.back_view:
+            p.error("--back-image supplies a back view and --no-back-view "
+                    "asks for none - pass only one of them")
+        if not args.texture:
+            p.error("--back-image is only used by the texture stage, which "
+                    "--no-texture switches off")
     if args.image and not args.image.exists():
         p.error("--image not found: %s" % args.image)
     if args.remove_bg and not args.image:
@@ -1088,7 +1608,8 @@ def parse_args(argv=None):
 
     # resolve_recorded_workflow() and workflow_for() read this off the args
     # object, so the same shape generate-npc.py builds has to be here too.
-    args.gender_workflows = dict(npc_gen.GENDER_WORKFLOWS, woman=args.workflow_woman)
+    args.gender_workflows = dict(
+        npc_gen.GENDER_WORKFLOWS, woman=args.workflow_woman)
     return args
 
 
@@ -1106,7 +1627,8 @@ def preflight(args):
     into one fast, clear failure instead of N slow, identical ones.
     """
     if ("apose" in args.stage or args.remove_bg) and not args.rmbg.exists():
-        raise SystemExit("Background-removal workflow not found: %s" % args.rmbg)
+        raise SystemExit(
+            "Background-removal workflow not found: %s" % args.rmbg)
     if "mesh" in args.stage:
         for workflow in (MESH_WORKFLOW, RIG_WORKFLOW):
             if not workflow.exists():
@@ -1115,6 +1637,13 @@ def preflight(args):
         find_blender(args.blender)
         if not ASSEMBLE_SCRIPT.exists():
             raise SystemExit("assembly script not found: %s" % ASSEMBLE_SCRIPT)
+    if "texture" in args.stage and args.texture:
+        find_blender(args.blender)
+        if not TEXTURE_SCRIPT.exists():
+            raise SystemExit("texture script not found: %s" % TEXTURE_SCRIPT)
+        if args.back_view and args.back_image is None \
+                and not BACKVIEW_WORKFLOW.exists():
+            raise SystemExit("Workflow not found: %s" % BACKVIEW_WORKFLOW)
 
 
 def main(argv=None):
@@ -1161,7 +1690,8 @@ def main(argv=None):
     started = time.time()
     queued_any = False
     for folder, folder_path, entry in jobs:
-        subject = subject_of(entry, args) if entry else standalone_subject(args)
+        subject = subject_of(
+            entry, args) if entry else standalone_subject(args)
         if should_skip(folder, args):
             print("skip %s (3d/ exists; --overwrite to rebuild)" % subject.name)
             skipped += 1
@@ -1195,7 +1725,13 @@ def main(argv=None):
                 print("      -> %s" % apose.name)
             else:
                 apose = folder / "apose.png"
-                if not apose.exists():
+                # The texture stage reads apose_square.png, and rebuilds it
+                # from apose.png only if it has to (reference_image). A run
+                # that is texturing an already-squared folder has no use for
+                # apose.png, so requiring it here would refuse a folder that
+                # is perfectly texturable.
+                needs_apose = any(s in args.stage for s in ("mesh", "assemble"))
+                if needs_apose and not apose.exists():
                     raise RuntimeError(
                         "no apose.png in %s - run --stage apose first" % folder)
 
@@ -1207,9 +1743,13 @@ def main(argv=None):
                 raise RuntimeError(
                     "no _shell.glb / _base.glb in %s - run --stage mesh first" % folder)
 
+            stem = npc_gen._safe(subject.name)
+            built = []
+            workflows = [MESH_WORKFLOW, RIG_WORKFLOW]
+            back_stance = None
+
             if "assemble" in args.stage:
                 print("    assembling ...", flush=True)
-                stem = npc_gen._safe(subject.name)
                 if subject.height is None:
                     print("    ! %s - using SAM3DBody's estimate"
                           % ("no --height-m given" if entry is None
@@ -1217,25 +1757,54 @@ def main(argv=None):
                           file=sys.stderr)
                 report = stage_assemble(args, folder, stem, base, shell,
                                         subject.height)
-                built = report["files"]
+                built = list(report["files"])
                 for name in built:
                     print("      -> %s" % name)
                 if report.get("rig_error"):
                     warned += 1
 
-                # A standalone run tracks nothing by design: there is no NPC
-                # whose dossier this belongs in, and inventing one would put a
-                # record of an experiment into the campaign's own notes.
-                if folder_path is not None:
-                    dossier = folder_path / ("%s.md" % stem)
-                    if dossier.exists():
-                        append_dossier_3d(dossier, built,
-                                          [MESH_WORKFLOW, RIG_WORKFLOW], APOSE_STANCE)
-                    else:
-                        # Not an error: an NPC folder moved by hand into Foundry
-                        # keeps its art and loses nothing by having no dossier.
-                        print("    ! no dossier at %s - skipping the 3D section"
-                              % dossier.name, file=sys.stderr)
+            if "texture" in args.stage and args.texture:
+                # Contained exactly as rigging is (spec §5.3) and for the same
+                # reason: the untextured shell, the STL and the turnarounds
+                # are already correct and already on disk, and throwing the
+                # NPC away because the texture failed would be the opposite of
+                # containment. This is deliberately NOT the per-NPC handler
+                # below - that one counts the NPC as failed, and an NPC with
+                # every grey deliverable intact did not fail.
+                try:
+                    print("    texturing ...", flush=True)
+                    textured = stage_texture(
+                        comfy, args, subject, folder, stem, entry,
+                        (folder_path / ("%s Portrait.png" % stem))
+                        if folder_path else None)
+                    built += textured["files"]
+                    back_stance = textured.get("back_stance")
+                    if back_stance:
+                        workflows = workflows + [BACKVIEW_WORKFLOW]
+                except (Exception, SystemExit) as exc:
+                    warned += 1
+                    print("    ! texturing failed: %s" % exc, file=sys.stderr)
+
+            # A standalone run tracks nothing by design: there is no NPC whose
+            # dossier this belongs in, and inventing one would put a record of
+            # an experiment into the campaign's own notes.
+            if folder_path is not None and built:
+                dossier = folder_path / ("%s.md" % stem)
+                if dossier.exists():
+                    # deliverables_3d(), not `built`: a narrowed --stage
+                    # texture run only ever built the texture, but assemble's
+                    # Shell.glb, Print.stl and the turnarounds are still on
+                    # disk from a run days or weeks earlier, and
+                    # append_dossier_3d() REPLACES the section rather than
+                    # appending to it. Listing only `built` would rewrite six
+                    # true rows down to one.
+                    append_dossier_3d(dossier, deliverables_3d(folder, stem),
+                                      workflows, APOSE_STANCE, back_stance)
+                else:
+                    # Not an error: an NPC folder moved by hand into Foundry
+                    # keeps its art and loses nothing by having no dossier.
+                    print("    ! no dossier at %s - skipping the 3D section"
+                          % dossier.name, file=sys.stderr)
         except KeyboardInterrupt:
             print("\ninterrupted - cancelling the running job")
             comfy.cancel_all()
@@ -1257,12 +1826,10 @@ def main(argv=None):
             continue
         done += 1
 
-    # The "(N without a rig)" parenthetical only means anything when rigging
-    # was actually attempted. warned counts rig attempts that failed, and
-    # --rig defaults off - so on a normal, unrigged run warned is always 0,
-    # and "0 without a rig" reads as "all of them got rigged" when in fact
-    # none did. Print it only when --rig was passed.
-    rig_note = " (%d without a rig)" % warned if args.rig else ""
+    # warned counts contained failures - a rig that did not bind, a texture
+    # that did not bake. Either way the NPC's grey deliverables shipped, which
+    # is why it is not counted as failed.
+    rig_note = " (%d with a warning)" % warned if warned else ""
     print("\ndone: %d built%s, %d skipped, %d failed, %.1f min"
           % (done, rig_note, skipped, failed, (time.time() - started) / 60))
     return 1 if failed else 0

@@ -9,14 +9,24 @@ a dynamic combo grows a child. Skipped, not failed, when no server answers.
 import json
 import unittest
 
-from test.helpers import REPO
+from test.helpers import REPO, load_3d
 from test.workflow_schema import (
     dynamic_combo_choices, expected_inputs, object_info, server_is_up)
 
+d3 = load_3d()
+
 MESH = REPO / "workflows" / "api" / "Util_Image_to_Mesh_Hunyuan3D_v1.json"
 RIG = REPO / "workflows" / "api" / "Util_Image_to_RiggedBody_SAM3D_v1.json"
+BACKVIEW = REPO / "workflows" / "api" / "Util_BackView_QwenEdit_v1.json"
 GRAPHS = {"mesh": json.loads(MESH.read_text(encoding="utf-8")),
-          "rig": json.loads(RIG.read_text(encoding="utf-8"))}
+          "rig": json.loads(RIG.read_text(encoding="utf-8")),
+          "backview": json.loads(BACKVIEW.read_text(encoding="utf-8"))}
+
+# The two reconstruction graphs. Three of TestGraphShape's checks are about
+# image-to-mesh specifically - one LoadImage, one SaveGLB, a native node set
+# that does not include the Qwen stack - and the back view answers to none of
+# them. It gets TestBackViewGraph instead.
+MESH_GRAPHS = {k: v for k, v in GRAPHS.items() if k in ("mesh", "rig")}
 
 
 def links(node):
@@ -39,13 +49,13 @@ class TestGraphShape(unittest.TestCase):
 
     def test_each_graph_has_exactly_one_load_image(self):
         """generate-3d.py finds it by class_type to patch the source in."""
-        for label, graph in GRAPHS.items():
+        for label, graph in MESH_GRAPHS.items():
             loads = [n for n, d in graph.items() if d["class_type"] == "LoadImage"]
             with self.subTest(graph=label):
                 self.assertEqual(len(loads), 1)
 
     def test_each_graph_has_exactly_one_save_glb(self):
-        for label, graph in GRAPHS.items():
+        for label, graph in MESH_GRAPHS.items():
             saves = [n for n, d in graph.items() if d["class_type"] == "SaveGLB"]
             with self.subTest(graph=label):
                 self.assertEqual(len(saves), 1)
@@ -106,10 +116,68 @@ class TestGraphShape(unittest.TestCase):
             "VAEDecodeHunyuan3D", "VoxelToMesh", "DecimateMesh",
             "SAM3DBody_Loader", "SAM3DBody_Predict", "BuildPoseFile",
         }
-        for label, graph in GRAPHS.items():
+        for label, graph in MESH_GRAPHS.items():
             for nid, node in graph.items():
                 with self.subTest(graph=label, node=nid):
                     self.assertIn(node["class_type"], native)
+
+
+class TestBackViewGraph(unittest.TestCase):
+    """§4.4. Three LoadImage nodes and two encoders, so node_of() cannot
+    address them - which is why generate-3d.py follows links from KSampler."""
+
+    graph = GRAPHS["backview"]
+
+    def test_exactly_one_ksampler(self):
+        """The anchor everything else is reached from."""
+        samplers = [n for n, d in self.graph.items()
+                    if d["class_type"] == "KSampler"]
+        self.assertEqual(len(samplers), 1)
+
+    def test_exactly_one_save_image(self):
+        saves = [n for n, d in self.graph.items()
+                 if d["class_type"] == "SaveImage"]
+        self.assertEqual(len(saves), 1)
+
+    def test_three_load_image_nodes(self):
+        loads = [n for n, d in self.graph.items()
+                 if d["class_type"] == "LoadImage"]
+        self.assertEqual(len(loads), 3)
+
+    def test_the_slots_resolve(self):
+        slots = d3.backview_slots(self.graph)
+        for key in ("encode", "image1", "image2", "image3", "save"):
+            with self.subTest(key=key):
+                self.assertIn(slots[key], self.graph)
+
+    def test_every_image_slot_is_a_distinct_load_image(self):
+        slots = d3.backview_slots(self.graph)
+        ids = [slots["image1"], slots["image2"], slots["image3"]]
+        self.assertEqual(len(set(ids)), 3)
+        for node_id in ids:
+            with self.subTest(node=node_id):
+                self.assertEqual(self.graph[node_id]["class_type"], "LoadImage")
+
+    def test_the_encoder_is_the_positive_conditioning(self):
+        slots = d3.backview_slots(self.graph)
+        sampler = next(d for d in self.graph.values()
+                       if d["class_type"] == "KSampler")
+        self.assertEqual(sampler["inputs"]["positive"][0], slots["encode"])
+
+    def test_the_negative_is_a_different_node(self):
+        """Two TextEncodeQwenImageEditPlus nodes is the whole reason node_of()
+        cannot be used here. If that ever stops being true, the simpler helper
+        should come back."""
+        sampler = next(d for d in self.graph.values()
+                       if d["class_type"] == "KSampler")
+        self.assertNotEqual(sampler["inputs"]["positive"][0],
+                            sampler["inputs"]["negative"][0])
+
+    def test_no_custom_node_pack_is_required(self):
+        """Spec §2.1 and §2.2: everything here ships with ComfyUI."""
+        for nid, node in self.graph.items():
+            with self.subTest(node=nid):
+                self.assertNotIn(".", node["class_type"])
 
 
 @unittest.skipUnless(server_is_up(), "no ComfyUI on 127.0.0.1:8000")
