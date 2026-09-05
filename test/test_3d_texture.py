@@ -118,6 +118,85 @@ class TestProjectedUVs(unittest.TestCase):
         self.assertGreater(self.report["max_y"] - self.report["min_y"], 0.9)
 
 
+# A throwaway --python script, written into the temp dir at run time - same
+# pattern as PROJECT_PROBE above. Synthesises the GLB round trip's per-corner
+# duplication signature (see texture_npc.load_shell's docstring): glTF stores
+# every attribute per face CORNER, so a real export/re-import gives every
+# triangle its own three vertices that share none with their neighbours.
+# bpy.ops.mesh.split() does not reproduce this - with the whole mesh selected
+# there is nothing unselected to split off, so it is a no-op. Splitting every
+# EDGE does: it duplicates a vertex everywhere two faces used to share it,
+# which is exactly the "no vertex shared between adjacent triangles" shape
+# load_shell()'s re-weld exists to undo.
+WELD_PROBE = '''
+import os, sys, json
+sys.path.insert(0, %r)
+import bpy
+import npc_mesh, texture_npc
+argv = sys.argv[sys.argv.index("--") + 1:]
+src, out = argv[0], argv[1]
+
+npc_mesh.clear_scene()
+shell = npc_mesh.join(npc_mesh.import_glb(src), "shell")
+before = len(shell.data.vertices)
+
+bpy.ops.object.mode_set(mode="EDIT")
+bpy.ops.mesh.select_all(action="SELECT")
+bpy.ops.mesh.edge_split(type="EDGE")
+bpy.ops.object.mode_set(mode="OBJECT")
+split = len(shell.data.vertices)
+
+npc_mesh.export_glb([shell], out)
+welded = texture_npc.load_shell(out)
+after = len(welded.data.vertices)
+
+print("LANCER3D " + json.dumps({
+    "before": before, "split": split, "after": after,
+}))
+'''
+
+
+@unittest.skipUnless(BLENDER, "Blender not installed")
+class TestLoadShellRewelds(unittest.TestCase):
+    """The weld in texture_npc.load_shell() is load-bearing, not redundant
+    with clean_shell()'s own weld: it undoes the per-corner vertex split a
+    GLB export/re-import introduces. Remove it and a real shell goes from
+    4,713 UV islands to 167,154 and bakes to an almost entirely black atlas -
+    with no exception, no non-zero exit, and a LANCER3D report that looks
+    fine (see docs/generate-3d.md, "Why the shell has to be re-welded before
+    it can be unwrapped"). The committed fixture doesn't reproduce that
+    signature on its own - it round-trips clean - so this probe synthesises
+    it by splitting every edge of the fixture cylinder before exporting."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        tmp = Path(cls._tmp.name)
+        script = tmp / "weld_probe.py"
+        script.write_text(WELD_PROBE % str(REPO / "blender"), encoding="utf-8")
+        split_glb = tmp / "split_shell.glb"
+        cls.report, cls.proc = run_blender(script, SHELL, split_glb)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
+
+    def test_it_exits_cleanly(self):
+        self.assertEqual(self.proc.returncode, 0, self.proc.stderr[-3000:])
+
+    def test_the_probe_actually_split_the_vertices(self):
+        """A sanity check on the probe itself, not on load_shell: if the
+        split did not duplicate anything, the assertion below would pass
+        for the wrong reason."""
+        self.assertGreater(self.report["split"], self.report["before"])
+
+    def test_load_shell_reweld_undoes_the_split(self):
+        """The one assertion this class exists for: re-welding the imported,
+        previously-split shell must bring the vertex count back down to what
+        it was before the split - not leave it at the split count."""
+        self.assertEqual(self.report["after"], self.report["before"])
+
+
 def glb_document(path):
     """The JSON chunk of a binary glTF, as a dict.
 

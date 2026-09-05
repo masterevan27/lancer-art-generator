@@ -1424,6 +1424,25 @@ class TestTextureContainment(unittest.TestCase):
         self.assertEqual(report["files"], ["Name Texture.png"])
         self.assertFalse((self.folder / "_Name Shell.glb").exists())
 
+    def test_a_missing_rigged_file_leaves_the_shell_and_texture_untouched(self):
+        """The texture/shell guard above exists so a malformed report cannot
+        move one deliverable and leave the other. rigged moves after both of
+        them, so it needs the same protection: a report naming a rigged file
+        that never landed on disk must not be allowed to replace the texture
+        and the shell and only then raise."""
+        def succeed(*a, **k):
+            (self.folder / "_Name Texture.png").write_bytes(b"the atlas")
+            (self.folder / "_Name Shell.glb").write_bytes(b"the textured shell")
+            return {"step": "bake", "texture": "_Name Texture.png",
+                    "shell": "_Name Shell.glb", "rigged": "_Name Rigged.glb",
+                    "views": ["front"], "files": []}
+
+        with mock.patch.object(d3, "run_texture_step", side_effect=succeed):
+            with self.assertRaises(RuntimeError):
+                d3.stage_texture(None, self.args, None, self.folder, "Name")
+        self.assertEqual(self.shell.read_bytes(), b"the good shell")
+        self.assertFalse((self.folder / "Name Texture.png").exists())
+
     def test_no_back_view_queues_no_comfyui_job(self):
         """comfy is None here: touching it at all is an AttributeError."""
         def succeed(*a, **k):
@@ -1967,11 +1986,12 @@ class TestGeneratedBackView(unittest.TestCase):
         self.assertTrue((self.folder / "_back_render.png").exists())
 
     def test_a_job_that_produces_no_image_is_a_clear_failure(self):
+        def write_render_and_report(*a, **k):
+            (self.folder / "_back_render.png").write_bytes(b"r")
+            return {"render": "_back_render.png"}
+
         with mock.patch.object(d3, "run_texture_step",
-                               side_effect=lambda *a, **k: (
-                                   (self.folder / "_back_render.png")
-                                   .write_bytes(b"r")
-                                   or {"render": "_back_render.png"})), \
+                               side_effect=write_render_and_report), \
              mock.patch.object(d3, "upload_image", return_value="x [input]"), \
              mock.patch.object(d3.art.Comfy, "images", return_value=[]), \
              mock.patch.object(d3.time, "sleep"):

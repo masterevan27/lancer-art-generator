@@ -1129,15 +1129,20 @@ def parse_report(stdout):
     An absent or unparseable report is an error rather than an empty dict: it
     means the script died somewhere after the argument check, and continuing
     would write a dossier claiming files that are not there.
+
+    Shared with the texture stages (assemble_npc.py and texture_npc.py both
+    print the same LANCER3D-prefixed line), so the messages below say "the
+    Blender script" rather than "the assembly" - a texture failure is not an
+    assembly failure.
     """
     lines = [l for l in stdout.splitlines() if l.startswith(REPORT_PREFIX)]
     if not lines:
-        raise RuntimeError("the Blender assembly printed no report line")
+        raise RuntimeError("the Blender script printed no report line")
     try:
         return json.loads(lines[-1][len(REPORT_PREFIX):])
     except ValueError as exc:
         raise RuntimeError(
-            "the Blender assembly's report was not JSON: %s" % exc)
+            "the Blender script's report was not JSON: %s" % exc)
 
 
 def assemble_command(blender, args, folder, stem, base, shell, height=None):
@@ -1341,6 +1346,15 @@ def stage_texture(comfy, args, subject, folder, stem, entry=None,
             raise RuntimeError(
                 "the Blender texturing report has no %r - refusing to move "
                 "anything into place" % key)
+    # Same guard, extended to the rigged file: it moves after the other two
+    # (below), so without this check a report naming a rigged file that is
+    # not on disk would replace Texture.png and Shell.glb and only THEN
+    # raise - the exact split-state the guard above exists to prevent.
+    if report.get("rigged") and not (folder / report["rigged"]).exists():
+        raise RuntimeError(
+            "the Blender texturing report names a rigged file that is not "
+            "on disk (%r) - refusing to move anything into place"
+            % report["rigged"])
 
     # Everything above wrote only underscore-prefixed files. This is the one
     # point at which a good deliverable is replaced, and os.replace is atomic
@@ -1372,8 +1386,7 @@ def generate_back_view(comfy, args, subject, folder, shell, stem, entry,
     is the only reason this works with ControlNetLoader's enum empty (§2.2).
     """
     print("    back render ...", flush=True)
-    run_texture_step(args, folder, stem, shell, "back")
-    render = folder / "_back_render.png"
+    render = folder / run_texture_step(args, folder, stem, shell, "back")["render"]
     if not render.exists():
         raise RuntimeError("the back render produced no image")
 
