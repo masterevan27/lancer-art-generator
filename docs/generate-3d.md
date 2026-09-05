@@ -50,6 +50,9 @@ python generate-3d.py --id npc-... --stage mesh --stage assemble
 python generate-3d.py --id npc-... --image apose.png
 python generate-3d.py --id npc-... --image render.png --remove-bg
 
+# an image that is nobody's: no manifest, no NPC, nothing tracked
+python generate-3d.py --image figure.png --out G:\3d\jules --height-m 1.75
+
 # opt in to rigging - off by default, and read Rigging below before you do
 python generate-3d.py --id npc-... --rig
 
@@ -116,7 +119,8 @@ Four things follow from that, all of them checked before any job is queued:
   still honoured if you want to stop before assembly.
 - **It only ever means one NPC.** One image is one person. If the selection
   resolves to more than one, the run is refused rather than giving forty NPCs
-  the same body - narrow it with `--id`.
+  the same body - narrow it with `--id`, or use `--out` below if the image is
+  nobody's.
 - **It will not clobber a render you already have.** An existing
   `3d/apose.png` stops the run unless you pass `--overwrite`.
 - **A fully opaque image is refused**, naming `--remove-bg`. An image with no
@@ -133,6 +137,51 @@ You can still do it by hand - the stages hand work to each other as plain
 files, so putting your own PNG at `<NPC folder>/3d/apose.png` and running
 `--stage mesh --stage assemble` works exactly as it always did, with none of
 the checks above.
+
+#### An image that is nobody's: `--out`
+
+Everything above still reconstructs *an NPC*, and picks the folder and the
+filenames from that NPC's manifest entry. An image that never came from one -
+a custom PNG, an experiment, a figure from somewhere else entirely - has no
+entry to pick anything from. `--out DIR` supplies the one thing such a run
+cannot infer, and switches off everything that reads the manifest:
+
+```
+python generate-3d.py --image path/to/figure.png --out G:\3d\jules
+python generate-3d.py --image path/to/figure.png --out G:\3d\jules \
+    --name "Jules Sokolova" --height-m 1.75
+```
+
+No manifest is read - it need not even exist - nothing is selected, and
+**nothing is tracked**: no dossier is written and no manifest row is added.
+The run leaves exactly the files in `DIR` and nothing else anywhere.
+
+Because there is no entry behind it, three values that an NPC run reads off
+the manifest come from flags instead:
+
+| | NPC run | `--out` run |
+|---|---|---|
+| deliverable names | the NPC's name | `--name`, else the `DIR` folder's own name |
+| real height | the rolled `## Height` | `--height-m`, else SAM3DBody's estimate |
+| ComfyUI output folder | the role category | `Standalone/` |
+| seed | the entry's recorded seed | 0 |
+
+`--name` matters because a supplied image is usually ComfyUI's own output:
+`--image apose_rmbg_00011_.png --out G:\3d\jules` gives `jules Shell.glb`
+rather than `apose_rmbg_00011_ Shell.glb`, and `--name "Jules Sokolova"`
+gives `Jules Sokolova Shell.glb`.
+
+`--height-m` is worth passing. SAM3DBody infers metric scale from a single
+image with no reference in it and guesses low - 1.5065 m for a figure who is
+1.75 m - and an NPC run corrects that from the rolled Height, which a
+standalone image does not have. Without it you get the estimate and a warning
+on stderr. It overrides a rolled Height too, for an NPC whose own number is
+wrong.
+
+`--out` requires `--image`: with no traits there is no prompt, so there is
+nothing to render. It refuses `--id`, `--filter`, `--exclude` and `--limit`
+outright rather than ignoring them, since a run that never opens the manifest
+cannot select anything from it.
 
 Match what the pipeline expects of that file:
 
@@ -181,7 +230,7 @@ falls over.
 | Stage | What it does | Output |
 |---|---|---|
 | `apose` | Re-renders the NPC's token in a forced A-pose with empty hands, and cuts out the background | `3d/apose.png` |
-| — | `--image` replaces this stage with an A-pose you supply, cutting it out first only if `--remove-bg` | `3d/apose.png` |
+| — | `--image` replaces this stage with an A-pose you supply, cutting it out first only if `--remove-bg`; `--out` does the same for an image with no NPC behind it | `3d/apose.png`, or `<DIR>/apose.png` |
 | `mesh` | That one image through Hunyuan3D (clothed shell) and SAM3DBody (rigged body) | `3d/_shell.glb`, `3d/_base.glb` |
 | `assemble` | Headless Blender: rest-pose the base, clean the shell, align, export | the deliverables below |
 

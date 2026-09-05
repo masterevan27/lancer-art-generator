@@ -12,6 +12,7 @@ slow and failure-prone, and it must never be able to break art generation.
     python generate-3d.py --filter Sokolova
     python generate-3d.py --id npc-jules-sokolova-40213 --stage apose
     python generate-3d.py --id npc-jules-sokolova-40213 --image apose.png
+    python generate-3d.py --image figure.png --out G:\\3d\\jules
 """
 import argparse
 import importlib.util
@@ -24,6 +25,7 @@ import time
 import urllib.request
 import uuid
 import zlib
+from collections import namedtuple
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -171,6 +173,57 @@ def height_metres(bullet):
 def apose_prompt(entry):
     """The token prompt Stage 0 renders. The portrait half is discarded."""
     return npc_gen.build_prompts(apose_npc(entry))[1]
+
+
+# --------------------------------------------------------------------------
+# Who a reconstruction is of
+# --------------------------------------------------------------------------
+
+# Everything the stages need to know about their subject, and nothing else:
+# the display name the deliverables are called after, the two strings that
+# address ComfyUI's output folder, the seed both reconstructions run at, and
+# the real height the assembly scales to (None to let SAM3DBody estimate it).
+#
+# Named as a thing of its own because a manifest entry is not the only way to
+# get one. A standalone image has no entry - no traits, no role category, no
+# rolled height - and yet it has all five of these. Taking the five out of the
+# stages is what lets one code path serve both, rather than a second set of
+# stages beside the first that drifts out of step with it.
+Subject = namedtuple("Subject", "name category slug seed height")
+
+# The ComfyUI output folder for a run with no NPC behind it. Its own category
+# rather than a shared one, so a standalone experiment cannot land in the tree
+# a real NPC's renders live in.
+STANDALONE_CATEGORY = "Standalone"
+
+
+def subject_of(entry, args):
+    """The Subject of one manifest entry."""
+    npc = apose_npc(entry)
+    return Subject(
+        name=entry["name"],
+        category=npc_gen.role_category(npc),
+        slug=art._slug(entry["name"]),
+        seed=entry["seed"],
+        # The NPC's own rolled height, not SAM3DBody's guess at it - and
+        # --height-m over both, for an entry whose Height is wrong. None for
+        # an entry whose Height names no number (the legacy 'of average
+        # height' backfill), and the estimate stands.
+        height=args.height_m if args.height_m is not None
+        else height_metres(npc["Height"]))
+
+
+def standalone_subject(args):
+    """The Subject of a --out run, which has no manifest entry behind it.
+
+    The name comes from the output folder, not the image: a supplied image is
+    typically ComfyUI's own output (apose_rmbg_00011_.png), and that counter
+    would end up in every deliverable's filename. Seed 0 because there is no
+    recorded seed to reuse and a fixed one at least makes the run repeatable.
+    """
+    name = args.name or args.out.name
+    return Subject(name=name, category=STANDALONE_CATEGORY,
+                   slug=art._slug(name), seed=0, height=args.height_m)
 
 
 # --------------------------------------------------------------------------
@@ -560,7 +613,7 @@ def render_apose(comfy, args, entry):
     return images[0]
 
 
-def cut_out(comfy, args, entry, source, folder):
+def cut_out(comfy, args, subject, source, folder):
     """Run `source` through --rmbg. -> <folder>/apose.png
 
     `source` is either an image already sitting on the server - what
@@ -570,10 +623,6 @@ def cut_out(comfy, args, entry, source, folder):
     argument's business rather than each caller's is what lets --remove-bg
     reuse the half of stage apose that does the actual cutting.
     """
-    npc = apose_npc(entry)
-    category = npc_gen.role_category(npc)
-    slug = art._slug(npc["name"])
-    seed = entry["seed"]
     knobs = npc_gen.Knobs(args, npc_gen.TOKEN_SIZE, npc_gen.COMFY_PREFIX)
 
     if not args.rmbg.exists():
@@ -586,8 +635,9 @@ def cut_out(comfy, args, entry, source, folder):
 
     ref = upload_image(comfy, source) if isinstance(source, Path) \
         else art.image_ref(source)
-    prefix = "%s/%s/%s/apose_rmbg" % (npc_gen.COMFY_PREFIX, category, slug)
-    cut_job = art.build_post_job(post, post_slots, ref, prefix, seed, knobs)
+    prefix = "%s/%s/%s/apose_rmbg" % (npc_gen.COMFY_PREFIX,
+                                      subject.category, subject.slug)
+    cut_job = art.build_post_job(post, post_slots, ref, prefix, subject.seed, knobs)
     cut = art.Comfy.images(comfy.wait(comfy.queue(cut_job), timeout=args.timeout))
     if not cut:
         raise RuntimeError("background removal produced no image")
@@ -597,8 +647,14 @@ def cut_out(comfy, args, entry, source, folder):
 
 
 def stage_apose(comfy, args, entry, folder):
-    """Render this NPC's token again in the A-pose, cut out. -> <folder>/apose.png"""
-    return cut_out(comfy, args, entry, render_apose(comfy, args, entry), folder)
+    """Render this NPC's token again in the A-pose, cut out. -> <folder>/apose.png
+
+    Takes the entry, not a Subject: the render half needs the whole trait set
+    to build a prompt from, which is exactly what a standalone run does not
+    have - and is why --out requires --image.
+    """
+    return cut_out(comfy, args, subject_of(entry, args),
+                   render_apose(comfy, args, entry), folder)
 
 
 # --------------------------------------------------------------------------
@@ -620,22 +676,23 @@ def has_cutout(path, threshold=16):
     return any(row[x * 4 + 3] <= threshold for row in rows for x in range(width))
 
 
-def check_image(args, picked):
+def check_image(args, folders):
     """A SystemExit naming why --image cannot be used for this run.
 
     Every one of these is cheap to check and expensive to discover later: a
     reconstruction takes minutes on the GPU and answers a wrong input with a
     plausible-looking wrong mesh rather than an error. Checked once here,
-    against the selection, rather than inside the per-NPC loop that catches
-    SystemExit and turns a global mistake into one failure per NPC.
+    against the run's target folders, rather than inside the per-NPC loop that
+    catches SystemExit and turns a global mistake into one failure per NPC.
     """
     if not args.image:
         return
 
-    if len(picked) != 1:
+    if len(folders) != 1:
         raise SystemExit(
             "--image is one person's A-pose, but %d NPCs are selected - "
-            "narrow the run with --id" % len(picked))
+            "narrow the run with --id, or reconstruct the image on its own "
+            "with --out DIR" % len(folders))
 
     # Broad on purpose: _png_read() raises ValueError for a shape it refuses,
     # but a truncated or non-PNG file reaches it as a zlib error or an index
@@ -652,13 +709,13 @@ def check_image(args, picked):
             "A backdrop reconstructs as a flat slab behind the figure; pass "
             "--remove-bg to cut it out first, or supply a cut-out image.")
 
-    apose = npc_3d_folder(picked[0][0]) / "apose.png"
+    apose = folders[0] / "apose.png"
     if apose.exists() and not args.overwrite:
         raise SystemExit("%s already exists - pass --overwrite to replace it "
                          "with --image" % apose)
 
 
-def install_image(comfy, args, entry, folder):
+def install_image(comfy, args, subject, folder):
     """Put --image at <folder>/apose.png, cutting it out first if asked.
 
     Copied into the NPC's own folder rather than read where it lies: every
@@ -670,7 +727,7 @@ def install_image(comfy, args, entry, folder):
     target = folder / "apose.png"
     if args.remove_bg:
         print("    cutting out %s ..." % args.image.name, flush=True)
-        return cut_out(comfy, args, entry, args.image, folder)
+        return cut_out(comfy, args, subject, args.image, folder)
     target.write_bytes(args.image.read_bytes())
     return target
 
@@ -729,7 +786,7 @@ def mesh_outputs(record, suffix=".glb"):
     return out
 
 
-def stage_mesh(comfy, args, entry, folder, apose_png):
+def stage_mesh(comfy, args, subject, folder, apose_png):
     """Reconstruct a clothed shell and a rigged body from one A-pose image.
 
     Two jobs from one source, deliberately: the Hunyuan3D shell has the
@@ -741,10 +798,6 @@ def stage_mesh(comfy, args, entry, folder, apose_png):
     Both files are underscore-prefixed because they are intermediates - the
     named deliverables of §6.1 land beside them.
     """
-    npc = apose_npc(entry)
-    category = npc_gen.role_category(npc)
-    slug = art._slug(npc["name"])
-
     # Squared before upload, never the raw A-pose: CLIPVisionEncode centre-crops
     # a 4:5 image and takes the head and the boots with it. Kept on disk beside
     # apose.png rather than made in a temporary, because it is what the
@@ -763,8 +816,9 @@ def stage_mesh(comfy, args, entry, folder, apose_png):
             raise SystemExit("Workflow not found: %s" % workflow)
         print("    %s ..." % label, flush=True)
         template = art.load_api_workflow(workflow)
-        prefix = "%s/%s/%s/%s" % (npc_gen.COMFY_PREFIX, category, slug, label)
-        job = build_mesh_job(template, ref, prefix, entry["seed"])
+        prefix = "%s/%s/%s/%s" % (npc_gen.COMFY_PREFIX,
+                                  subject.category, subject.slug, label)
+        job = build_mesh_job(template, ref, prefix, subject.seed)
         record = comfy.wait(comfy.queue(job), timeout=args.timeout)
         files = mesh_outputs(record)
         if not files:
@@ -949,6 +1003,19 @@ def parse_args(argv=None):
     supplied.add_argument("--remove-bg", action="store_true",
                           help="the --image still has a background: cut it out "
                                "through --rmbg first, and use that result")
+    supplied.add_argument("--out", type=Path, default=None, metavar="DIR",
+                          help="reconstruct --image as a thing of its own, with "
+                               "no NPC behind it, writing everything into DIR. "
+                               "No manifest is read and nothing is tracked, so "
+                               "the NPC selection flags cannot be used with it")
+    supplied.add_argument("--name", metavar="TEXT",
+                          help="what a --out run's deliverables are called "
+                               "(default: the --out folder's own name)")
+    supplied.add_argument("--height-m", type=float, default=None, metavar="METRES",
+                          help="the figure's real height, which the assembly "
+                               "scales to. Without it SAM3DBody estimates one, "
+                               "and it estimates low - 1.51 m for a 1.75 m "
+                               "figure. Overrides an NPC's rolled Height too")
 
     gen = p.add_argument_group("the A-pose render")
     gen.add_argument("--workflow", type=Path, default=art.DEFAULT_WORKFLOW,
@@ -994,6 +1061,23 @@ def parse_args(argv=None):
     if args.remove_bg and not args.image:
         p.error("--remove-bg has nothing to cut out without --image "
                 "(stage apose already cuts out its own render)")
+
+    if args.out and not args.image:
+        p.error("--out reconstructs a standalone --image; with no NPC behind "
+                "it there are no traits to render an A-pose from")
+    if args.out:
+        # Refused rather than ignored: a --out run never opens the manifest,
+        # so a selection flag here is a caller who thinks they are picking an
+        # NPC, and the run they get would not be the one they asked for.
+        named = [flag for flag, value in
+                 (("--id", args.id), ("--filter", args.filter),
+                  ("--exclude", args.exclude), ("--limit", args.limit)) if value]
+        if named:
+            p.error("--out reads no manifest, so %s cannot select anything"
+                    % ", ".join(named))
+    elif args.name:
+        p.error("--name names a standalone --out run; an NPC's deliverables "
+                "are named after the NPC")
     if args.limit is not None and args.limit < 1:
         p.error("--limit must be at least 1")
 
@@ -1036,19 +1120,29 @@ def preflight(args):
 def main(argv=None):
     args = parse_args(argv)
 
-    if not args.manifest.exists():
-        raise SystemExit("Manifest not found: %s" % args.manifest)
-    manifest = art.load_manifest(args.manifest)
-    picked = select_entries(manifest, args)
-    if not picked:
-        print("nothing selected")
-        return 0
+    # (folder, the NPC folder the dossier lives in, the manifest entry). The
+    # last two are None for a standalone run, and that is the whole difference
+    # between the two modes below this point: no dossier to append to, and no
+    # entry to derive a Subject from.
+    if args.out:
+        jobs = [(args.out, None, None)]
+    else:
+        if not args.manifest.exists():
+            raise SystemExit("Manifest not found: %s" % args.manifest)
+        manifest = art.load_manifest(args.manifest)
+        picked = select_entries(manifest, args)
+        if not picked:
+            print("nothing selected")
+            return 0
+        jobs = [(npc_3d_folder(p), Path(p), e) for p, e in picked]
 
     if args.dry_run:
-        for folder_path, entry in picked:
-            print("\n%s  \"%s\"  -> %s"
-                  % (entry["name"], entry.get("callsign", ""),
-                     npc_3d_folder(folder_path)))
+        for folder, _, entry in jobs:
+            if entry:
+                print("\n%s  \"%s\"  -> %s"
+                      % (entry["name"], entry.get("callsign", ""), folder))
+            else:
+                print("\n%s  -> %s" % (standalone_subject(args).name, folder))
             print("  stages: %s" % ", ".join(args.stage))
             if args.image:
                 print("  A-pose supplied: %s%s"
@@ -1057,7 +1151,7 @@ def main(argv=None):
                 print("  A-pose token prompt:\n%s" % apose_prompt(entry))
         return 0
 
-    check_image(args, picked)
+    check_image(args, [folder for folder, _, _ in jobs])
     preflight(args)
 
     comfy = art.find_server(args.server)
@@ -1066,10 +1160,10 @@ def main(argv=None):
     done = failed = skipped = warned = 0
     started = time.time()
     queued_any = False
-    for folder_path, entry in picked:
-        folder = npc_3d_folder(folder_path)
+    for folder, folder_path, entry in jobs:
+        subject = subject_of(entry, args) if entry else standalone_subject(args)
         if should_skip(folder, args):
-            print("skip %s (3d/ exists; --overwrite to rebuild)" % entry["name"])
+            print("skip %s (3d/ exists; --overwrite to rebuild)" % subject.name)
             skipped += 1
             continue
 
@@ -1084,12 +1178,16 @@ def main(argv=None):
             time.sleep(args.pause_3d)
         queued_any = True
 
-        print("\n%s  \"%s\"  -> %s" % (entry["name"], entry.get("callsign", ""), folder))
+        if entry:
+            print("\n%s  \"%s\"  -> %s"
+                  % (entry["name"], entry.get("callsign", ""), folder))
+        else:
+            print("\n%s  -> %s" % (subject.name, folder))
         folder.mkdir(parents=True, exist_ok=True)
         try:
             apose = None
             if args.image:
-                apose = install_image(comfy, args, entry, folder)
+                apose = install_image(comfy, args, subject, folder)
                 print("      -> %s (from %s)" % (apose.name, args.image.name))
             elif "apose" in args.stage:
                 print("    A-pose render ...", flush=True)
@@ -1104,37 +1202,40 @@ def main(argv=None):
             shell = folder / "_shell.glb"
             base = folder / "_base.glb"
             if "mesh" in args.stage:
-                shell, base = stage_mesh(comfy, args, entry, folder, apose)
+                shell, base = stage_mesh(comfy, args, subject, folder, apose)
             elif "assemble" in args.stage and not (shell.exists() and base.exists()):
                 raise RuntimeError(
                     "no _shell.glb / _base.glb in %s - run --stage mesh first" % folder)
 
             if "assemble" in args.stage:
                 print("    assembling ...", flush=True)
-                stem = npc_gen._safe(entry["name"])
-                # The NPC's own rolled height, not SAM3DBody's guess at it.
-                # None for an entry whose Height names no number - the legacy
-                # 'of average height' backfill - and the estimate stands.
-                height = height_metres(apose_npc(entry)["Height"])
-                if height is None:
-                    print("    ! %s names no height - using SAM3DBody's estimate"
-                          % entry["name"], file=sys.stderr)
-                report = stage_assemble(args, folder, stem, base, shell, height)
+                stem = npc_gen._safe(subject.name)
+                if subject.height is None:
+                    print("    ! %s - using SAM3DBody's estimate"
+                          % ("no --height-m given" if entry is None
+                             else "%s names no height" % subject.name),
+                          file=sys.stderr)
+                report = stage_assemble(args, folder, stem, base, shell,
+                                        subject.height)
                 built = report["files"]
                 for name in built:
                     print("      -> %s" % name)
                 if report.get("rig_error"):
                     warned += 1
 
-                dossier = Path(folder_path) / ("%s.md" % stem)
-                if dossier.exists():
-                    append_dossier_3d(dossier, built,
-                                      [MESH_WORKFLOW, RIG_WORKFLOW], APOSE_STANCE)
-                else:
-                    # Not an error: an NPC folder moved by hand into Foundry
-                    # keeps its art and loses nothing by having no dossier.
-                    print("    ! no dossier at %s - skipping the 3D section"
-                          % dossier.name, file=sys.stderr)
+                # A standalone run tracks nothing by design: there is no NPC
+                # whose dossier this belongs in, and inventing one would put a
+                # record of an experiment into the campaign's own notes.
+                if folder_path is not None:
+                    dossier = folder_path / ("%s.md" % stem)
+                    if dossier.exists():
+                        append_dossier_3d(dossier, built,
+                                          [MESH_WORKFLOW, RIG_WORKFLOW], APOSE_STANCE)
+                    else:
+                        # Not an error: an NPC folder moved by hand into Foundry
+                        # keeps its art and loses nothing by having no dossier.
+                        print("    ! no dossier at %s - skipping the 3D section"
+                              % dossier.name, file=sys.stderr)
         except KeyboardInterrupt:
             print("\ninterrupted - cancelling the running job")
             comfy.cancel_all()

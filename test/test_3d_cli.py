@@ -800,7 +800,7 @@ class TestImageFlag(unittest.TestCase):
         self.opaque = write_png(self.root / "opaque.png", alpha=255)
         self.entry = manifest_entry(11)
         self.folder_path = self.root / "npc"
-        self.picked = [(str(self.folder_path), self.entry)]
+        self.folders = [d3.npc_3d_folder(self.folder_path)]
 
     def args(self, argv):
         return d3.parse_args(argv)
@@ -840,33 +840,33 @@ class TestImageFlag(unittest.TestCase):
     # -- what the image has to be ------------------------------------------
 
     def test_a_cutout_passes_the_check(self):
-        d3.check_image(self.args(["--image", str(self.cutout)]), self.picked)
+        d3.check_image(self.args(["--image", str(self.cutout)]), self.folders)
 
     def test_an_opaque_image_names_remove_bg(self):
         """docs/generate-3d.md: a leftover backdrop reconstructs as a slab
         standing behind the figure. It looks like a successful run."""
         args = self.args(["--image", str(self.opaque)])
         with self.assertRaises(SystemExit) as caught:
-            d3.check_image(args, self.picked)
+            d3.check_image(args, self.folders)
         self.assertIn("--remove-bg", str(caught.exception))
 
     def test_an_opaque_image_is_fine_with_remove_bg(self):
         d3.check_image(
-            self.args(["--image", str(self.opaque), "--remove-bg"]), self.picked)
+            self.args(["--image", str(self.opaque), "--remove-bg"]), self.folders)
 
     def test_a_cutout_with_remove_bg_is_allowed(self):
         """Cutting an already-cut image is wasteful, not wrong - rmbg is
         idempotent on transparency, and refusing it would block the caller
         who knows their alpha is unreliable."""
         d3.check_image(
-            self.args(["--image", str(self.cutout), "--remove-bg"]), self.picked)
+            self.args(["--image", str(self.cutout), "--remove-bg"]), self.folders)
 
     def test_an_unreadable_png_is_refused(self):
         """square_apose() reads PNG by hand and understands one shape only."""
         bad = self.root / "bad.png"
         bad.write_bytes(b"not a png at all")
         with self.assertRaises(SystemExit):
-            d3.check_image(self.args(["--image", str(bad)]), self.picked)
+            d3.check_image(self.args(["--image", str(bad)]), self.folders)
 
     def test_a_non_rgba_png_is_refused_before_the_gpu_sees_it(self):
         """8-bit greyscale: a real PNG that _png_read cannot decode."""
@@ -883,7 +883,7 @@ class TestImageFlag(unittest.TestCase):
                     + bytes((8, 0, 0, 0, 0)))
             + chunk(b"IDAT", payload) + chunk(b"IEND", b""))
         with self.assertRaises(SystemExit):
-            d3.check_image(self.args(["--image", str(grey)]), self.picked)
+            d3.check_image(self.args(["--image", str(grey)]), self.folders)
 
     # -- how many NPCs it can mean -----------------------------------------
 
@@ -891,9 +891,9 @@ class TestImageFlag(unittest.TestCase):
         """One image cannot be the A-pose of two different people, and a batch
         that quietly gave all of them the same body would look like it worked."""
         args = self.args(["--image", str(self.cutout)])
-        picked = self.picked + [(str(self.root / "other"), manifest_entry(12))]
+        folders = self.folders + [d3.npc_3d_folder(self.root / "other")]
         with self.assertRaises(SystemExit) as caught:
-            d3.check_image(args, picked)
+            d3.check_image(args, folders)
         self.assertIn("2", str(caught.exception))
 
     # -- not clobbering a render already on disk ---------------------------
@@ -903,7 +903,7 @@ class TestImageFlag(unittest.TestCase):
         folder.mkdir(parents=True)
         write_png(folder / "apose.png", alpha=0, blob=(1, 1, 3, 3))
         with self.assertRaises(SystemExit) as caught:
-            d3.check_image(self.args(["--image", str(self.cutout)]), self.picked)
+            d3.check_image(self.args(["--image", str(self.cutout)]), self.folders)
         self.assertIn("--overwrite", str(caught.exception))
 
     def test_overwrite_replaces_it(self):
@@ -911,7 +911,7 @@ class TestImageFlag(unittest.TestCase):
         folder.mkdir(parents=True)
         write_png(folder / "apose.png", alpha=0, blob=(1, 1, 3, 3))
         d3.check_image(
-            self.args(["--image", str(self.cutout), "--overwrite"]), self.picked)
+            self.args(["--image", str(self.cutout), "--overwrite"]), self.folders)
 
     # -- installing it ------------------------------------------------------
 
@@ -922,7 +922,7 @@ class TestImageFlag(unittest.TestCase):
         folder = d3.npc_3d_folder(self.folder_path)
         folder.mkdir(parents=True)
         args = self.args(["--image", str(self.cutout)])
-        apose = d3.install_image(None, args, self.entry, folder)
+        apose = d3.install_image(None, args, d3.subject_of(self.entry, args), folder)
         self.assertEqual(apose, folder / "apose.png")
         self.assertEqual(apose.read_bytes(), self.cutout.read_bytes())
 
@@ -930,8 +930,8 @@ class TestImageFlag(unittest.TestCase):
         folder = d3.npc_3d_folder(self.folder_path)
         folder.mkdir(parents=True)
         before = self.cutout.read_bytes()
-        d3.install_image(None, self.args(["--image", str(self.cutout)]),
-                         self.entry, folder)
+        args = self.args(["--image", str(self.cutout)])
+        d3.install_image(None, args, d3.subject_of(self.entry, args), folder)
         self.assertEqual(self.cutout.read_bytes(), before)
 
     def test_remove_bg_routes_the_image_through_the_cut(self):
@@ -947,7 +947,8 @@ class TestImageFlag(unittest.TestCase):
             return folder_ / "apose.png"
 
         with mock.patch.object(d3, "cut_out", side_effect=fake_cut) as cut_out:
-            apose = d3.install_image(mock.Mock(), args, self.entry, folder)
+            apose = d3.install_image(mock.Mock(), args,
+                                     d3.subject_of(self.entry, args), folder)
         self.assertTrue(cut_out.called, "--remove-bg did not run the cut")
         self.assertEqual(apose.read_bytes(), cut.read_bytes())
         self.assertNotEqual(apose.read_bytes(), self.opaque.read_bytes())
@@ -958,8 +959,8 @@ class TestImageFlag(unittest.TestCase):
         folder.mkdir(parents=True)
         with mock.patch.object(d3, "cut_out",
                                side_effect=AssertionError("cut_out must not run")):
-            d3.install_image(None, self.args(["--image", str(self.cutout)]),
-                             self.entry, folder)
+            args = self.args(["--image", str(self.cutout)])
+            d3.install_image(None, args, d3.subject_of(self.entry, args), folder)
 
     # -- end to end through main() -----------------------------------------
 
@@ -1010,3 +1011,188 @@ class TestImageFlag(unittest.TestCase):
         self.assertEqual(code, 0, buffer.getvalue())
         self.assertEqual(seen["apose"].read_bytes(), self.cutout.read_bytes())
         self.assertEqual(seen["apose"].name, "apose.png")
+
+
+class TestSubject(unittest.TestCase):
+    """The five things a reconstruction needs to know about who it is of.
+
+    Name, ComfyUI output category, slug, seed and real height - and nothing
+    else. Naming them explicitly is what lets a standalone image reach the
+    same stages a manifest entry does, instead of a second code path beside
+    them.
+    """
+
+    def test_an_entry_carries_its_rolled_height(self):
+        """Regression on the refactor: the NPC's own Height, not an estimate."""
+        entry = manifest_entry(81, {"Height": "a solid five foot nine or so"})
+        subject = d3.subject_of(entry, d3.parse_args([]))
+        self.assertAlmostEqual(subject.height, 1.7526, places=3)
+
+    def test_an_entry_with_no_parseable_height_gets_none(self):
+        entry = manifest_entry(82, {"Height": "of average height"})
+        self.assertIsNone(d3.subject_of(entry, d3.parse_args([])).height)
+
+    def test_an_entry_keeps_its_name_and_seed(self):
+        entry = manifest_entry(83)
+        subject = d3.subject_of(entry, d3.parse_args([]))
+        self.assertEqual(subject.name, entry["name"])
+        self.assertEqual(subject.seed, entry["seed"])
+
+    def test_height_m_overrides_a_rolled_height(self):
+        """An override that silently did nothing in NPC mode would be a trap."""
+        entry = manifest_entry(84, {"Height": "a solid five foot nine or so"})
+        subject = d3.subject_of(entry, d3.parse_args(["--height-m", "2.1"]))
+        self.assertEqual(subject.height, 2.1)
+
+
+class TestStandalone(unittest.TestCase):
+    """--out: reconstruct an image that is nobody's token.
+
+    A custom PNG has no manifest entry, so there is no seed to reuse, no role
+    category, no rolled height and no dossier to append to. --out supplies the
+    one thing such a run cannot infer - where the results go - and switches
+    off everything that reads the manifest.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.cutout = write_png(self.root / "apose_rmbg_00011_.png",
+                                alpha=0, blob=(2, 2, 5, 5))
+        self.out = self.root / "jules"
+
+    def args(self, argv):
+        return d3.parse_args(argv)
+
+    def standalone(self, *extra):
+        return self.args(["--image", str(self.cutout), "--out", str(self.out)]
+                         + list(extra))
+
+    # -- the flag pair ------------------------------------------------------
+
+    def test_out_without_an_image_is_refused(self):
+        """There is no NPC to render, so there is nothing to reconstruct from."""
+        with self.assertRaises(SystemExit):
+            self.args(["--out", str(self.out)])
+
+    def test_out_with_a_selection_flag_is_refused(self):
+        """--out reads no manifest, so an NPC selection cannot mean anything."""
+        for flag, value in (("--id", "npc-x-1"), ("--filter", "Crew"),
+                            ("--exclude", "Pilots"), ("--limit", "3")):
+            with self.subTest(flag=flag):
+                with self.assertRaises(SystemExit):
+                    self.standalone(flag, value)
+
+    def test_no_out_by_default(self):
+        self.assertIsNone(self.args([]).out)
+
+    def test_name_without_out_is_refused(self):
+        """An NPC's deliverables are named after the NPC, so --name would
+        silently do nothing rather than renaming anything."""
+        with self.assertRaises(SystemExit):
+            self.args(["--name", "Jules"])
+
+    # -- who the subject is -------------------------------------------------
+
+    def test_the_name_defaults_to_the_output_folder(self):
+        """Not the image stem: apose_rmbg_00011_ is ComfyUI's counter, and it
+        would end up in the deliverable filenames."""
+        self.assertEqual(d3.standalone_subject(self.standalone()).name, "jules")
+
+    def test_name_overrides_the_folder(self):
+        subject = d3.standalone_subject(self.standalone("--name", "Jules Sokolova"))
+        self.assertEqual(subject.name, "Jules Sokolova")
+
+    def test_height_m_reaches_the_subject(self):
+        subject = d3.standalone_subject(self.standalone("--height-m", "1.75"))
+        self.assertEqual(subject.height, 1.75)
+
+    def test_no_height_is_none_not_zero(self):
+        """assemble_npc.py falls back to the estimate on a missing flag, and
+        --real-height-m 0 would scale the figure out of existence."""
+        self.assertIsNone(d3.standalone_subject(self.standalone()).height)
+
+    def test_the_slug_is_derived_from_the_name(self):
+        """art._slug keeps the case, as the real ComfyUI tree shows:
+        output/LancerNPCs/Pilots/Jules-Sokolova/."""
+        subject = d3.standalone_subject(self.standalone("--name", "Jules Sokolova"))
+        self.assertEqual(subject.slug, "Jules-Sokolova")
+
+    # -- clobber protection still applies -----------------------------------
+
+    def test_an_existing_apose_in_the_out_folder_is_not_clobbered(self):
+        self.out.mkdir(parents=True)
+        write_png(self.out / "apose.png", alpha=0, blob=(1, 1, 3, 3))
+        with self.assertRaises(SystemExit) as caught:
+            d3.check_image(self.standalone(), [self.out])
+        self.assertIn("--overwrite", str(caught.exception))
+
+    # -- end to end through main() ------------------------------------------
+
+    def run_standalone(self, *extra):
+        """main() with the two ComfyUI stages and Blender patched out."""
+        seen = {}
+
+        def fake_mesh(comfy, args, subject, folder, apose_png):
+            seen["apose"] = Path(apose_png)
+            seen["subject"] = subject
+            return folder / "_shell.glb", folder / "_base.glb"
+
+        def fake_assemble(args, folder, stem, base, shell, height=None):
+            seen["stem"] = stem
+            seen["height"] = height
+            seen["folder"] = Path(folder)
+            return {"files": ["%s Shell.glb" % stem]}
+
+        fake_comfy = mock.Mock()
+        fake_comfy.base = "http://fake"
+        with mock.patch.object(d3.art, "find_server", return_value=fake_comfy), \
+             mock.patch.object(d3, "find_blender", return_value=Path("blender.exe")), \
+             mock.patch.object(d3, "stage_apose",
+                               side_effect=AssertionError(
+                                   "a standalone run must not render an A-pose")), \
+             mock.patch.object(d3, "stage_mesh", side_effect=fake_mesh), \
+             mock.patch.object(d3, "stage_assemble", side_effect=fake_assemble):
+            buffer = io.StringIO()
+            with redirect_stdout(buffer):
+                seen["code"] = d3.main(
+                    ["--image", str(self.cutout), "--out", str(self.out)]
+                    + list(extra))
+        seen["stdout"] = buffer.getvalue()
+        return seen
+
+    def test_it_runs_with_no_manifest_on_disk_at_all(self):
+        """The manifest default points at a real path on the author's machine.
+        A standalone run must not read it, or even require it to exist."""
+        seen = self.run_standalone("--manifest", str(self.root / "absent.json"))
+        self.assertEqual(seen["code"], 0, seen["stdout"])
+
+    def test_the_image_lands_in_the_out_folder(self):
+        seen = self.run_standalone()
+        self.assertEqual(seen["apose"], self.out / "apose.png")
+        self.assertEqual(seen["apose"].read_bytes(), self.cutout.read_bytes())
+
+    def test_the_out_folder_is_created(self):
+        self.assertFalse(self.out.exists())
+        self.run_standalone()
+        self.assertTrue(self.out.is_dir())
+
+    def test_the_deliverables_are_named_after_the_folder(self):
+        seen = self.run_standalone()
+        self.assertEqual(seen["stem"], "jules")
+
+    def test_name_reaches_the_deliverables(self):
+        seen = self.run_standalone("--name", "Jules Sokolova")
+        self.assertEqual(seen["stem"], "Jules Sokolova")
+
+    def test_height_m_reaches_the_assembly(self):
+        seen = self.run_standalone("--height-m", "1.75")
+        self.assertEqual(seen["height"], 1.75)
+
+    def test_nothing_is_tracked(self):
+        """No dossier, no manifest write - a standalone run leaves only the
+        files in --out."""
+        seen = self.run_standalone()
+        self.assertEqual(sorted(p.name for p in self.out.iterdir()), ["apose.png"])
+        self.assertNotIn("dossier", seen["stdout"].lower())
