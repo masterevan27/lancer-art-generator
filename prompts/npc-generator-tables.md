@@ -186,6 +186,17 @@ templates at the bottom of this file.
   what the Gear bullet is for. Flag only the bullets where the head is
   actually inside a helmet. A kabuto counts and carries `helmet` without
   `hardtech`, since the clash is one of silhouette rather than register.
+- A **Gear** bullet may carry a **role lock**, of which `admin` is so far the
+  only one. It confines that bullet to the occupations named against the flag
+  in `ROLE_LOCKS` in `generate-npc.py` — `admin` is a colonial administrator's
+  and no one else's — and it is the one hard filter in this file. Every other
+  flag here is a preference that hands the whole pool back rather than leave
+  the roll with nothing; a lock never yields, since yielding would hand the
+  item to the very Role it was kept from. Use it only where the object is an
+  emblem of the job rather than a tool of it, and see the comment on the Gear
+  table for what that distinction is doing. A lock flag not defined in
+  `ROLE_LOCKS`, or one naming a Role the Role table has since reworded, fails
+  `test/test_role_lock.py`.
 
 A flag beginning `@` is a **theme tag** rather than a behavioural flag —
 `|| civ @neosamurai` reads as "civilian dress, belonging to the neosamurai
@@ -1812,6 +1823,23 @@ ignored — so notes like this one are safe to leave inline.
   has in hand or slung over a shoulder. Armament - anything that reads as a
   weapon - lives in '## Weapon', rolled separately; see that table's comment
   for its flags.
+
+  '|| admin' is a ROLE LOCK, and the only one so far. A locked bullet is
+  reachable by the occupations named against that flag in ROLE_LOCKS in
+  generate-npc.py and by no others - 'admin' is a colonial administrator's
+  and nobody else's. It is the one hard filter on this table: unlike 'notac',
+  'hands' or 'helmet', which hand the whole pool back rather than roll
+  nothing, a lock never yields, because yielding would give the item to
+  precisely the Role it was locked away from.
+
+  Use it sparingly and only where the object is an emblem of the job rather
+  than a tool of it. A cane of office, a seal, a warrant - things that say
+  something about the person holding them. A multitool says nothing: anyone
+  may own one, and locking tools by trade would just make the table thinner
+  without making it truer. Adding a lock means adding its flag to ROLE_LOCKS
+  with the exact Role bullet text; test/test_role_lock.py fails on a flag
+  that is missing there, and on a Role name there that the Role table has
+  since reworded.
 -->
 
 - a battered data-slate tucked under one arm || hands
@@ -1840,7 +1868,7 @@ ignored — so notes like this one are safe to leave inline.
 - a compact twin-thruster pack strapped across {possessive} back, its vents lit with a colored glow
 - a folded oilpaper parasol held in one hand, its tip braced against the ground || hands
 - a small pale fox cradled against the chest in both arms || hands
-- a lacquered walking stick gripped in one hand, weight braced into it || hands
+- a lacquered walking stick gripped in one hand, weight braced into it || hands admin
 - a fist-sized holographic sphere hovering just above one open palm, its surface a shifting lattice of glowing fracture-lines and readouts
 - a translucent holographic data-sheet held up in both hands, dense scrolling text glowing across its surface || hands
 - a cracked-open slate bristling with jack cables and cracking tools, plainly meant for breaking into things it shouldn't || hands
