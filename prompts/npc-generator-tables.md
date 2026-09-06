@@ -1647,6 +1647,18 @@ ignored — so notes like this one are safe to leave inline.
 - a dark robe traced with gold embroidered trim, a purple sash knotted at the waist and small tassels hanging loose || civ notac dressy
 - a dark kimono cinched with a wide white sash tied in a full bow at the back || civ notac dressy
 - a fringed pleated mantle draped over the shoulders and swagged with hanging chain loops, worn over a dark strapped underlayer || civ notac dressy
+- a hip-length tan leather jacket worn open over a high-collared dark bodyglove, a drop-leg holster rig strapped down one thigh || civ
+- a matte grey optical-camouflage suit, the light bending across it in faint rippling distortion wherever it catches an edge
+- a long olive field coat over a black rollneck, a shoulder holster rig showing at the open front || civ
+- a cheap dark suit with the tie pulled loose, a thin wire running from one ear down inside the collar || civ
+- a sealed matte-black diving suit with its hood pushed back and the weight belt still buckled at the waist
+- a boxy pale-blue police duty uniform with a black waist rig and a division patch at the shoulder, sleeves rolled to the elbow || mil
+- a white-and-olive labor pilot's suit with a padded collar, buckled chest harness and a stencilled unit number at the thigh || mil
+- grease-blackened overalls stripped to the waist and knotted there over a sweat-damp undershirt, a heavy tool belt slung at the hips || civ
+- a bulky riot-control suit of segmented off-white armor over a dark uniform, a numbered plate across the chest || mil
+- a heavy olive winter greatcoat over a service uniform, the fur collar turned up and gloves stuffed in one pocket || mil
+- a high-visibility site vest over a plaid work shirt and heavy canvas trousers, a loose chinstrap swinging at the throat || civ
+- a rumpled brown suit under an open plastic raincoat, both hems dripping || civ
 
 ## Outfit (she) +
 
@@ -1722,6 +1734,8 @@ ignored — so notes like this one are safe to leave inline.
 - a white-and-black lacquered armor harness baring the midriff, fitted white trousers tucked into patterned boots || civ notac dressy
 - a sleeveless dark lamellar armor bodice with a red cord sash, plate segments hanging low over dark leggings, {possessive} shoulders left bare || civ notac dressy
 - a dark kimono patterned with pale plum blossoms, a crimson underlayer glimpsed at the collar and wide sleeves || civ notac dressy
+- a hip-length tan leather jacket over a high-cut dark combat leotard and thigh-high stockings, a drop-leg holster strapped down one bare thigh || civ
+- a pale-blue police uniform blouse with the sleeves rolled, tucked into a straight duty skirt above a black belt rig || mil
 
 ## Weapon
 
@@ -1812,6 +1826,15 @@ ignored — so notes like this one are safe to leave inline.
 - a sheathed katana rested up over one shoulder, gripped loosely by the scabbard in one hand || hands mil weapon
 - twin sheathed swords worn crossed at {possessive} hip, hilts angled outward || mil weapon
 - a katana held up close to {possessive} face, its blade angled back and ready in one hand || hands mil weapon
+- a boxy bullpup carbine with a top-feeding curved magazine, held level in both hands || hands gun mil weapon
+- a long-barrelled heavy revolver holstered under one arm in a worn leather rig || weapon simple sidearm
+- a compact machine pistol with its wire stock folded, clipped to a chest sling || mil weapon simple sidearm
+- a slim vented pistol held low in a gloved hand, its muzzle angled at the ground || hands gun weapon simple
+- a service revolver holstered at the belt beneath an open jacket || weapon simple sidearm
+- a long riot baton gripped in one hand and a scuffed transparent shield braced on the other arm || hands weapon
+- an anti-materiel rifle with its bipod folded, slung muzzle-up across {possessive} back || mil weapon
+- a stubby grenade launcher slung across the chest above a bandolier of fat cased rounds || mil weapon
+- a flare pistol tucked into a chest pouch, its casing scuffed orange || weapon simple
 
 ## Gear
 
@@ -1913,6 +1936,18 @@ ignored — so notes like this one are safe to leave inline.
 - a pressure gauge on a looped length of hose slung over one shoulder
 - a cordless driver holstered at the thigh, a strip of bits taped along its body
 - a clipboard of work orders held against one hip, the top sheet curling with damp || hands
+- a length of neural interface cabling running from the nape of {possessive} neck to a jack held in one hand || hands
+- a slim diagnostic wand on a ribbon cable, held up against the base of {possessive} own skull || hands
+- an operator's control gauntlet worn to the elbow, thick cabling looping from the wrist back to a pack at the shoulder
+- a scuffed white site helmet carried under one arm, a stencilled unit number across the crown || hands helmet
+- a radio handset held up at the shoulder, its curled cord running down to a set at the belt || hands
+- a foam-lined optics case carried level in both hands, its latches sprung open || hands
+- a thick bound incident file wedged under one arm, tagged along the edge with coloured slips || hands
+- a heat-warped hydraulic line coiled over one shoulder, still weeping fluid
+- a marshalling paddle held down at each side, reflective tape banding both cuffs || hands
+- a tagged evidence bag held up at eye level, something small and dark shifting inside it || hands
+- a beaten aluminium riot helmet with a scratched face bar, carried in one hand || hands helmet
+- a case file rolled into a tube and tapped absently against one leg || hands
 
 ## Glow colour
 
@@ -2186,6 +2221,20 @@ ignored — so notes like this one are safe to leave inline.
 - A dramatic low-angle character portrait || {Subject} {is_are} standing atop a rocky summit in full armor, a sheathed blade held point-down at {possessive} side, drifting red leaves swirling past - behind {object} an enormous full moon fills the sky through a wreath of storm cloud. || nogear weather
 - A character portrait || {Subject} {is_are} standing before a weathered torii gate at night, armor catching the pale light, a scatter of vivid red flowers spread across the ground around {object} - mist pools low between bare trees and a hooded figure waits distant among aged grave markers behind {object}. || weather
 - A close character portrait || {Subject} {is_are} sitting with head bowed, a sheathed sword held loose across {possessive} lap, petals drifting thick through the air around {object} - beside {object} a second blade stands planted upright, a small paper talisman glowing faintly at its hilt. || nogear weather
+- x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a canal-side street in an old quarter, laundry strung between concrete tenements above brown water and stacked signage climbing the walls in unfamiliar scripts. || weather
+- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} falling backwards off the parapet of a tower block, arms spread wide and {possessive} coat snapping open, the grid of streets and rooftops laid out far below - {possessive} outline already shimmering and refracting as optical camouflage takes hold, bending the light behind {object}. Dramatic foreshortened composition. || nogear weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dim diagnostic bay, a reclined chair beneath a hooded scanner and thick cable looms dropping from the ceiling to a wall of dark racked hardware.
+- A character portrait || {Subject} {is_are} standing ankle-deep in the flooded arcade of an abandoned shopping street, still water mirroring the dead signage overhead, a shaft of grey daylight falling through a collapsed section of roof far ahead. || weather
+- A close character portrait || {Subject} {is_are} seated in the dark of a parked surveillance van, a bank of monitors washing {possessive} face in pale grey light, cable looms underfoot and cold cups crowding the console.
+- A half-body character portrait || Behind {object}, out of focus, is the wrecked hall of a natural history museum, a shattered tree-of-life mural across the far wall and the slumped bulk of a disabled multi-legged combat walker among the fallen masonry.
+- x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a maintenance hangar, a boxy industrial work-mech kneeling in its cradle with gantry crews along its arms and arc-welding flare stuttering off the walls.
+- A character portrait || {Subject} {is_are} standing on a seawall above a vast reclaimed-land project, dredgers and gantry cranes ranked across flat grey water behind {object} and a typhoon sky stacking up dark on the horizon. || weather
+- A character portrait || {Subject} {is_are} leaning at the counter of a late-night noodle stall beneath a highway overpass, steam rolling off the pass and rain sheeting off the awning's edge into the road behind {object}. || weather
+- x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-lashed construction site at night, pile drivers and floodlit scaffolding rising around the shell of a half-built tower. || weather
+- A character portrait || {Subject} {is_are} standing on an iced-over bridge deck in falling snow, an armored vehicle slewed across the roadway behind {object} and the grey shape of an airship hanging low over a silent skyline. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cramped divisional office of stacked case files and dead desk plants, a fan turning slowly above a wall of pinned notices.
+- A close character portrait || {Subject} {is_are} sitting in the back of a parked command vehicle, folding console screens open around {object} and a wall of labelled switches lit dull amber at {possessive} shoulder.
+- A character portrait || {Subject} {is_are} standing in the flooded, listing hold of a derelict cargo ship, water washing across the canted deck around {possessive} boots and a shaft of daylight falling through torn hull plating far above.
 
 ## Weather
 
