@@ -50,6 +50,7 @@ conventions, and the pronoun placeholders. As of this writing the flags are:
 | `sidearm` | Weapon | A bullet that explicitly includes a **holstered or openly worn** pistol. |
 | `notac` | Outfit | Elaborate/traditional dress that must never pair with `mil`-flagged Weapon or Gear, nor with `hardtech` Headgear. |
 | `hardtech` | Headgear | Modern technology worn on the head — helmets sealed or open, visor and lens rigs, sensor/night-vision hardware, breather masks, comms headsets, anything cabled or jacked, powered or cybernetic pieces, plus industrial eye and ear protection. Dropped when the Outfit roll came up `notac`. **Not** soft goods (cloth, straw, woven, leather, fur — hats, caps, hoods, bandanas, headbands), **not** plain eyewear, and **not** the traditional or ceremonial register: those are what an elaborate outfit *should* reach, and a kabuto over a kimono is the point. Goggles are eyewear, not hardware. A traditional hat with a mask beneath it is the hat. |
+| `helmet` | Headgear, Gear | A helmet actually worn on the head (Headgear), or carried rather than worn (Gear). A worn one drops the carried ones from the Gear pool, so nobody wears a helmet while holding a second. Much narrower than `hardtech`: a headset, a brow visor or an ear implant leaves the crown free and still pairs well with a helmet under the arm. Flag only where the head is actually inside a helmet — a kabuto counts, and carries `helmet` without `hardtech`, since the clash is one of silhouette rather than register. |
 | `dressy` | Outfit, Faction | Ceremonial, formal or finely made — gold thread, lacquer, brocade, ornament. The two tables consume it differently: a `dressy` Outfit is dropped for a Role whose work is manual or dirty, while a `dressy` Faction keeps its place and loses only its *visual* segment, so the dossier still prints the affiliation. **Not** the same as `notac`, and merging them is the main way to get this wrong: `notac` covers rags as readily as finery, and the pilgrim's robes, the ragged bindings and the travel-worn robe are all `notac` and none are fine. Flag finery, not tradition. |
 | `nogear` | Backdrop | The scene already puts something in the subject's hands. |
 | `weather` | Backdrop | Outdoors, so a Weather roll can land in it. |
@@ -326,12 +327,12 @@ the image will not fit this file. Apply all of these:
   A held weapon is `hands gun mil weapon` (+ `simple` if pocketable); a worn
   or slung one drops `hands gun`; only a holstered/worn pistol earns
   `sidearm`. Re-read the §0 traps before tagging.
-- **Gear**: `<noun phrase, may use {possessive}> || [hands] [mil]`
+- **Gear**: `<noun phrase, may use {possessive}> || [hands] [mil] [helmet]`
   Equipment only — data-slates, tool bags, radios, packs, anything that
   doesn't read as a weapon. No `gun`/`weapon`/`simple`/`sidearm` here; those
   flags live on `Weapon` now.
 - **Outfit**: `<noun phrase clause> || [civ] [mil] [notac] [dressy]`
-- **Headgear**: `{Subject} {wear} <full sentence>. || [hardtech]`
+- **Headgear**: `{Subject} {wear} <full sentence>. || [hardtech] [helmet]`
   Flag it if the piece is a helmet, a visor or lens rig, sensor or
   night-vision hardware, a breather mask, a comms headset, anything cabled or
   jacked, a powered or cybernetic piece, or industrial eye/ear protection.

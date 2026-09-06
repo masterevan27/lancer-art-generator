@@ -178,6 +178,16 @@ TRAIT_DEPENDENTS = {
     # flag by filter_by_hardtech(), keyed on that same outfit register.
     "Outfit": ("Headgear", "Weapon", "Gear"),
 
+    # Headgear is deliberately NOT here, though it gates Gear's 'helmet' flag
+    # exactly the way Outfit gates its 'notac' one. It is one of the eleven
+    # traits the import GUI re-rolls on a single click with no confirmation
+    # dialog, and an edge from it would turn that button into a silent
+    # two-trait re-roll - the failure test_every_one_click_trait_closes_to_
+    # itself() exists to catch, and the reason Build is absent from this map
+    # too. The pairing is resolved the way Build's is instead: roll_npc() runs
+    # the filter in BOTH directions, so a Headgear re-roll that pins the Gear
+    # drops the worn helmets from its own pool rather than redrawing the Gear.
+
     # Gear reads the Weapon's 'hands' - a weapon that occupies them rules out
     # equipment that needs one - and Stance reads its 'hands', 'gun' and 'none'
     # flags, since a pose that aims a firearm needs the roll to have actually
@@ -1166,6 +1176,27 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     forced_dressy = (
         forced_outfit is not None and "dressy" in split_flags(forced_outfit)[1]
     )
+
+    # And the same shape a third time, for the helmet pairing. Headgear is
+    # rolled before Gear, so a rolled helmet constrains the Gear pool; but a
+    # PINNED carried helmet has to constrain the Headgear roll instead. This is
+    # the path a --reroll-trait Headgear takes on an entry with raw bullets:
+    # reroll_from_raw() pins every other trait as an override and frees the
+    # target, so the Gear arrives here already fixed and the Headgear is the
+    # only variable left to yield.
+    #
+    # Unlike the Age/Build and Role/Outfit pairings above, the both-forced case
+    # is NOT an error further down. Those two raise because the prompt itself
+    # would contradict - a teenager with an adult woman's build, a dockworker
+    # in ceremonial dress. Two helmets contradict nothing; the clauses are both
+    # true of the figure and only the render is ugly. Someone naming both with
+    # --set-trait is overriding an aesthetic default on purpose, which is what
+    # --set-trait is for, so it is honoured rather than refused.
+    forced_gear = (overrides or {}).get("Gear")
+    forced_headgear = (overrides or {}).get("Headgear")
+    forced_carried_helmet = (
+        forced_gear is not None and "helmet" in split_flags(forced_gear)[1]
+    )
     role_dress = DEFAULT_DRESS_POLICY
 
     # Theme is rolled before every appearance table it gates, for the same
@@ -1197,6 +1228,7 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     young = False
     role_mil = False
     outfit_notac = False
+    headgear_helmet = False
     weapon_hands = False
     weapon_flags = ()
     for name in REQUIRED_TABLES:
@@ -1233,6 +1265,15 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
                         if dress_policy_for(
                             ROLE_CATEGORIES.get(split_flags(x)[0])) != "plain"]
             options = entitled or options
+
+        # The third pairing, running the same way round as the two above: a
+        # pinned carried helmet drops the worn ones from the Headgear pool,
+        # rather than the Headgear dropping the Gear. See forced_carried_helmet
+        # for why this direction has to exist at all.
+        if (name == "Headgear" and forced_carried_helmet
+                and forced_headgear is None):
+            bare = [x for x in options if "helmet" not in split_flags(x)[1]]
+            options = bare or options      # never filter the pool down to nothing
 
         # Build is filtered against the Age roll, the same way Stance is
         # filtered against Weapon and Gear below. An Age bullet flagged
@@ -1283,6 +1324,23 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
         if name == "Gear" and weapon_hands:
             free = [x for x in options if "hands" not in split_flags(x)[1]]
             options = free or options      # never filter the pool down to nothing
+
+        # One head, one helmet. A Headgear bullet flagged 'helmet' is a helmet
+        # actually worn, so the Gear bullet that carries one under an arm reads
+        # as a spare rather than a pilot between sorties. Headgear precedes
+        # Gear in REQUIRED_TABLES so this flag is already known, the same way
+        # Weapon's 'hands' is above, and Gear yields for the same reason: the
+        # thing on the head is the more defining object, and the table has
+        # thirty other bullets to fall back on.
+        #
+        # Keyed on 'helmet' rather than the 'hardtech' register Headgear
+        # already carries, because hard tech is the whole modern head register
+        # - headsets, brow visors, ear implants - and none of those fight a
+        # helmet held under an arm. Widening it would cost that pairing for
+        # sixteen bullets to fix a clash that only three of them have.
+        if name == "Gear" and headgear_helmet:
+            bare = [x for x in options if "helmet" not in split_flags(x)[1]]
+            options = bare or options      # never filter the pool down to nothing
 
         # A placement flagged 'scene' puts the light out in the environment -
         # on a wall, in the air, across the ground - so it only makes sense
@@ -1398,6 +1456,8 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
                 role_dress = dress_policy_for(ROLE_CATEGORIES.get(value))
             if name == "Outfit":
                 outfit_notac = "notac" in flags
+            if name == "Headgear":
+                headgear_helmet = "helmet" in flags
             if name == "Weapon":
                 weapon_hands = "hands" in flags
                 weapon_flags = flags
@@ -1508,6 +1568,20 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     # a table, and REQUIRED_TABLES is the authority on which is which.
     raw.update({k: v for k, v in (overrides or {}).items() if k in REQUIRED_TABLES})
     npc["_raw"] = raw
+
+    # Whether the Gear the NPC KEEPS is a carried helmet, published for the
+    # same reason '_outfit_notac' is: the manifest stores Gear with its flags
+    # stripped, so without this a legacy Headgear re-roll could not tell
+    # whether the figure is already holding one, and Headgear would have to
+    # leave REROLLABLE_TRAITS - taking its button in the import GUI with it.
+    #
+    # Read off raw["Gear"] rather than the gear_flags computed further up,
+    # because both the 'nogear' correction above and a --set-trait override
+    # can replace the drawn bullet, and raw["Gear"] is the one place that has
+    # already accounted for both. Taken after npc.update(overrides) for that
+    # reason, and before the strip block below, which is the last moment the
+    # flags exist.
+    npc["_gear_helmet"] = "helmet" in split_flags(raw["Gear"])[1]
 
     npc["Age"] = split_flags(npc["Age"])[0]   # the override still carries its flag
     # Same reason as Age: a --set-trait override for any of these pastes the
@@ -2393,8 +2467,9 @@ UNREROLLABLE_REASONS = {
               "entry stored Role with its flags already stripped",
     "Weapon": "its policy needs the Role bullet's 'mil' flag and the Outfit's "
               "'notac', and this entry stored both with their flags stripped",
-    "Gear": "its filter needs the Weapon bullet's 'hands' flag and the Outfit's "
-            "'notac', and this entry stored both with their flags stripped",
+    "Gear": "its filter needs the Weapon bullet's 'hands' flag, the Outfit's "
+            "'notac' and the Headgear's 'helmet', and this entry stored all "
+            "three with their flags stripped",
     "Stance": "its filter needs the Weapon and Gear 'hands'/'gun' flags, and this "
               "entry stored both with their flags stripped",
     "Backdrop": "Glow placement and Gear are filtered against it and Weather is "
@@ -2670,6 +2745,30 @@ def reroll_trait(tables, npc, name, rng):
                   file=sys.stderr)
         options = filter_by_hardtech(options, bool(register))
 
+    # 'helmet' against the recorded Gear register - the third key the manifest
+    # stores separately, for the same reason 'young' is the first. This runs
+    # in the opposite direction to the roller's own filter, and it has to:
+    # roll_npc() drops the carried helmet under a worn one because Headgear is
+    # rolled first, but here the Gear is already fixed and the Headgear is the
+    # free variable, so the worn helmets are what give way. Gear is in
+    # UNREROLLABLE_REASONS on this path, so this is the only way back into the
+    # clash that a legacy entry has.
+    #
+    # None means the entry predates the key, which is not the same as False:
+    # it is "nobody knows", and the honest answer to that is today's
+    # unrestricted behaviour plus a warning, not a fabricated 'no helmet'.
+    if name == "Headgear":
+        carried = npc.get("_gear_helmet")
+        if carried is None:
+            print("! this entry has no recorded gear register (written before "
+                  "the helmet flag existed) - re-rolling headgear "
+                  "unrestricted, so it may come back wearing a helmet while "
+                  "carrying one. Re-roll the NPC to record it.",
+                  file=sys.stderr)
+        if carried:
+            bare = [x for x in options if "helmet" not in split_flags(x)[1]]
+            options = bare or options  # never filter the pool down to nothing
+
     value = split_flags(rng.choice(options))[0]
 
     # A new cut takes the NPC's existing colour, and the tail that colour
@@ -2721,6 +2820,9 @@ def regenerate_one(args):
     # build_prompts(), so a plain regen neither needs it nor warns about it -
     # the warning belongs where the value is actually used.
     npc["_outfit_notac"] = entry.get("outfit_notac")
+    # And the same again for the Gear's helmet register, absent for the same
+    # reason and distinguished from a recorded False the same way.
+    npc["_gear_helmet"] = entry.get("gear_helmet")
     # No default here either, for the same reason: absent means "not
     # recorded" (an entry written before rawTraits existed), and that has to
     # stay distinguishable from a recorded-but-empty dict. A plain regen never
@@ -2884,6 +2986,8 @@ def regenerate_one(args):
     # knows either way, and a later re-roll would then trust the fabrication.
     if npc.get("_outfit_notac") is not None:
         entry["outfit_notac"] = npc["_outfit_notac"]
+    if npc.get("_gear_helmet") is not None:
+        entry["gear_helmet"] = npc["_gear_helmet"]
     # Only when a trait actually changed: a plain regen reproduces the entry
     # and rewriting traits it did not touch would just churn the manifest.
     if rerolled is not None:
@@ -3118,6 +3222,10 @@ def main(argv=None):
             # Headgear re-roll needs the Outfit bullet's 'notac' flag, and
             # traits are saved with their flags already stripped.
             "outfit_notac": npc["_outfit_notac"],
+            # And the third, for the same reason again: that same Headgear
+            # re-roll needs the Gear bullet's 'helmet' flag, to know whether
+            # the figure is already holding one.
+            "gear_helmet": npc["_gear_helmet"],
             "files": written,
             "portrait": portrait_file,
             "portraitPrompt": portrait_prompt,
