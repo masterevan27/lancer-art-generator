@@ -348,10 +348,30 @@ class TestTheLiveTable(unittest.TestCase):
         for wanted in ("high, tight", "messy", "topknot", "twin space buns",
                        "high ponytail bound near the crown",
                        "twin high", "floral hairpin ornament",
-                       "dangling metal pins gathered at the crown"):
+                       "dangling metal pins gathered at the crown",
+                       "loose bun already falling apart"):
             with self.subTest(phrase=wanted):
                 self.assertIn(wanted, flagged,
                               "%r is not flagged 'updo'" % wanted)
+
+    def test_every_swept_up_bullet_is_flagged(self):
+        """The construction rather than the list. 'swept up' says the mass has
+        been moved onto the crown and left there, which is the whole of what
+        'updo' means, so no bullet can carry the phrase and stay unflagged.
+        The enumeration above missed 'a loose bun already falling apart' on the
+        first pass and a rolled civilian wore a pilot's helmet through it; a
+        rule catches the next one at the moment it is written instead.
+
+        'swept back' and 'swept across' are deliberately not matched - those
+        move hair off the face, not onto the top of the head, and the neat low
+        bun is 'swept back'."""
+        for bullet in bullets_for(LIVE, "Hair"):
+            text, flags = gen.split_flags(bullet)
+            if "swept up" not in text:
+                continue
+            with self.subTest(bullet=text):
+                self.assertIn("updo", flags,
+                              "%r is swept up and not flagged 'updo'" % text)
 
     def test_nothing_that_lies_flat_is_flagged(self):
         """The narrow reading the design picked. A braid pinned close to the

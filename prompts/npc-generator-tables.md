@@ -1120,7 +1120,7 @@ ignored — so notes like this one are safe to leave inline.
 - an elaborate crown of {colour} braids pinned close to the head
 - a sleek {colour} bob cut level with the jaw
 - a long {colour} ponytail pulled through the back of a worn cap
-- {colour} hair swept up in a loose bun already falling apart
+- {colour} hair swept up in a loose bun already falling apart || updo
 - twin {colour} braids tied off with frayed cord
 - a short {colour} bob with long bangs swept across one eye
 - long {colour} hair worn loose, a few strands falling across the face
