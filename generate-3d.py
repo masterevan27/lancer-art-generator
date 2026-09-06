@@ -103,6 +103,11 @@ def apose_npc(entry):
     npc["_pronouns"] = npc_gen.pronoun_fields(npc["Pronouns"])
     npc["_young"] = entry.get("young", False)
     npc["_outfit_notac"] = entry.get("outfit_notac")
+    # headgear_line() reads this to decide whether the Hair bullet has already
+    # put the covering on the head. Absent on an entry written before the flag,
+    # which that function treats as "print the clause" - the behaviour that
+    # shipped before it existed.
+    npc["_hair_covered"] = entry.get("hair_covered")
     if "Height" not in npc:
         # Written before '## Height' existed. build_prompts() has no shim for
         # this one, unlike Weapon, so supply what regenerate_one() supplies.
@@ -169,7 +174,7 @@ BACKVIEW_TEMPLATE = (
     "nothing about the person or the scene changes except the facing. "
     "{Subject} {is_are} {height}, {build}, with {hair}, wearing {outfit}, "
     "{faction_line}{possessive} clothing following the shape of {possessive} frame "
-    "from behind. {headgear} {Subject} {is_are} {stance}, both feet in "
+    "from behind. {headgear_line}{Subject} {is_are} {stance}, both feet in "
     "frame. Keep the exact same outfit, hair, colours and body proportions "
     "as the reference image, against a plain flat background with no added "
     "scenery or props."
@@ -196,7 +201,11 @@ def backview_prompt(entry):
         "build": npc["Build"],
         "hair": npc["Hair"],
         "outfit": npc["Outfit"],
-        "headgear": npc["Headgear"],
+        # Pre-formatted, and empty when the Hair bullet already names the
+        # covering - the same rule the front and token prompts use, shared
+        # rather than restated so a back view cannot contradict a headscarf
+        # with "She is bare-headed." See npc_gen.headgear_line().
+        "headgear_line": npc_gen.headgear_line(npc),
         "stance": npc["Stance"],
         "faction_line": "%s, " % faction_visual if faction_visual else "",
     })

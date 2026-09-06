@@ -673,7 +673,7 @@ PORTRAIT_TEMPLATE = (
     "dot shading worked into the shadows, moody cinematic lighting. {Subject} {is_are} "
     "{height}, {build}, {face}, and {traits}"
     "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction_line}{possessive} "
-    "clothing following the shape of {possessive} frame. {headgear} "
+    "clothing following the shape of {possessive} frame. {headgear_line}"
     "{Possessive} face carries {demeanor}. "
     "{gear_line}{backdrop} {weather_line}{glow_line} "
     "Shallow depth of field, square framing, high detail, atmospheric sci-fi character "
@@ -737,7 +737,7 @@ TOKEN_TEMPLATE = (
     "{Subject} {is_are} {height}, {build}, {face}, and {traits}{skin}, {hair}, {eyes}, "
     "and {feature}, wearing "
     "{outfit}, {faction_line}{possessive} clothing following the shape of "
-    "{possessive} frame. {headgear} "
+    "{possessive} frame. {headgear_line}"
     "{Possessive} face carries {demeanor}. {gear_line}{Subject} {is_are} {stance}, both "
     "feet in frame, the pose natural and unforced. "
     "{glow_line} Behind {object} the background is an empty plain white void. "
@@ -1293,6 +1293,23 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         forced_headgear is not None
         and "helmet" in split_flags(forced_headgear)[1]
     )
+
+    # And a fifth, the widest of them. A Hair bullet flagged 'covered' names
+    # something worn as part of the cut - a headscarf, a cap, a headset band -
+    # so the head is already occupied and the Headgear roll has to come up
+    # bare. Read from the other side here, exactly as the four above are: a
+    # PINNED Headgear that is anything but the bare bullet drops the 'covered'
+    # cuts from the Hair pool.
+    #
+    # Note the test is 'not bare', not 'is a helmet'. Every other pairing in
+    # this function keys on the presence of a flag; this one keys on its
+    # absence, because the clash is with the whole worn register rather than
+    # one part of it, and a hairband over a headscarf is as wrong as a helmet
+    # over one.
+    forced_worn_headgear = (
+        forced_headgear is not None
+        and "bare" not in split_flags(forced_headgear)[1]
+    )
     role_dress = DEFAULT_DRESS_POLICY
 
     # Theme is rolled before every appearance table it gates, for the same
@@ -1331,6 +1348,7 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
     role_mil = False
     outfit_notac = False
     hair_updo = False
+    hair_covered = False
     headgear_helmet = False
     weapon_hands = False
     weapon_flags = ()
@@ -1384,6 +1402,16 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         if name == "Hair" and forced_worn_helmet and forced_hair is None:
             flat = [x for x in options if "updo" not in split_flags(x)[1]]
             options = flat or options      # never filter the pool down to nothing
+
+        # The fifth. A pinned Headgear that is not the bare bullet leaves no
+        # room for a cut that names a covering of its own, so those go. Runs
+        # alongside the filter above rather than instead of it: a pinned
+        # helmet is both worn and a helmet, and drops the 'updo' cuts and the
+        # 'covered' ones.
+        if name == "Hair" and forced_worn_headgear and forced_hair is None:
+            uncovered = [x for x in options
+                         if "covered" not in split_flags(x)[1]]
+            options = uncovered or options  # never filter the pool to nothing
 
         # Build is filtered against the Age roll, the same way Stance is
         # filtered against Weapon and Gear below. An Age bullet flagged
@@ -1477,6 +1505,22 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         if name == "Headgear" and hair_updo:
             bare = [x for x in options if "helmet" not in split_flags(x)[1]]
             options = bare or options      # never filter the pool down to nothing
+
+        # One head, one covering. Where 'updo' says the crown is full of hair,
+        # 'covered' says the Hair bullet has already put a worn object there -
+        # a headscarf, a cap, a headset band - and the only Headgear left that
+        # does not describe a second one is the bare bullet. So this filter
+        # keeps rather than drops, and it is the only one in this function
+        # that narrows a pool to a single bullet.
+        #
+        # It still hands the whole pool back rather than roll nothing, so a
+        # tables file with no 'bare' bullet degrades to today's behaviour
+        # instead of aborting. Deliberately not a ROLE_LOCKS-style hard
+        # filter: yielding here costs one ugly render, and yielding there
+        # would hand an emblem to the Role it was kept from.
+        if name == "Headgear" and hair_covered:
+            only_bare = [x for x in options if "bare" in split_flags(x)[1]]
+            options = only_bare or options  # never filter the pool to nothing
 
         # A placement flagged 'scene' puts the light out in the environment -
         # on a wall, in the air, across the ground - so it only makes sense
@@ -1601,6 +1645,7 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
                 outfit_notac = "notac" in flags
             if name == "Hair":
                 hair_updo = "updo" in flags
+                hair_covered = "covered" in flags
             if name == "Headgear":
                 headgear_helmet = "helmet" in flags
             if name == "Weapon":
@@ -1761,6 +1806,17 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
     # both re-rollable, so either can be the trait that moves into the clash.
     npc["_hair_updo"] = "updo" in split_flags(raw["Hair"])[1]
     npc["_headgear_helmet"] = "helmet" in split_flags(raw["Headgear"])[1]
+
+    # The covered/bare pairing needs its own two, and cannot borrow either of
+    # the pair above. '_headgear_helmet' is False for a soft hat, which is the
+    # very case 'covered' has to keep out, so a Hair re-roll reading it would
+    # put a headscarf under a felt hat and call it clean.
+    #
+    # '_headgear_bare' is stored as the positive fact rather than as
+    # 'headgear_worn' so the key reads the same way round as the flag it is
+    # named for; every consumer wants 'not bare' and says so.
+    npc["_hair_covered"] = "covered" in split_flags(raw["Hair"])[1]
+    npc["_headgear_bare"] = "bare" in split_flags(raw["Headgear"])[1]
 
     npc["Age"] = split_flags(npc["Age"])[0]   # the override still carries its flag
     # Same reason as Age: a --set-trait override for any of these pastes the
@@ -2016,6 +2072,36 @@ def flags_for(name, bullet):
     return split_flags(bullet)[1]
 
 
+def headgear_line(npc):
+    """The headgear sentence this NPC gets, with its trailing space, or ''.
+
+    Pre-formatted rather than a bare slot for the reason faction_line is: the
+    clause has to be able to vanish without leaving doubled whitespace in the
+    middle of a sentence.
+
+    It vanishes for exactly one case. A Hair bullet flagged 'covered' names
+    something worn as part of the cut - a headscarf, a cap, a headset band -
+    and the roll answers that by forcing the Headgear to the 'bare' bullet.
+    But that bullet has prose of its own, so printing it would put "a wrapped
+    headscarf with a few white strands escaping at the temple" and "She is
+    bare-headed." in the same prompt, and a render told both does not get to
+    pick the sensible one. The hair phrase IS the headgear here, so the
+    headgear clause is what gives way.
+
+    Worth being clear that this is not a defect the 'covered' filter
+    introduced: before it, a covered cut rolled the bare bullet about a third
+    of the time on its weight alone and contradicted itself just as flatly.
+    Forcing the bare bullet made a occasional collision into a certainty,
+    which is what turned it up.
+
+    None means the entry predates the register - the honest answer there is
+    the behaviour that shipped before the flag, so the clause is printed.
+    """
+    if npc.get("_hair_covered"):
+        return ""
+    return "%s " % npc["Headgear"]
+
+
 def weather_sentence(npc):
     """The weather sentence this NPC's portrait gets, or '' for none.
 
@@ -2100,6 +2186,10 @@ def build_prompts(npc):
     })
     weather = weather_sentence(npc)
     fields["weather_line"] = weather + " " if weather else ""
+    # Empty when the Hair bullet already put the covering on the head - see
+    # headgear_line(). 'headgear' stays in fields above as the raw value; only
+    # the templates' slot moved.
+    fields["headgear_line"] = headgear_line(npc)
 
     # Built from the same fields and inserted already-substituted, since
     # str.format does a single pass and would leave any nested placeholder raw.
@@ -3030,6 +3120,36 @@ def reroll_trait(tables, npc, name, rng):
             flat = [x for x in options if "updo" not in split_flags(x)[1]]
             options = flat or options  # never filter the pool down to nothing
 
+    # The covered/bare pairing, both directions, same shape and same None
+    # handling. Kept as two more blocks rather than folded into the two above
+    # because the registers are independent: a soft hat is worn and is not a
+    # helmet, so an entry can be clean for 'updo' and still be the one a
+    # 'covered' cut must not re-roll into.
+    if name == "Headgear":
+        wearing = npc.get("_hair_covered")
+        if wearing is None:
+            print("! this entry has no recorded hair covering (written before "
+                  "the covered flag existed) - re-rolling headgear "
+                  "unrestricted, so it may come back wearing a hat over hair "
+                  "that already names a headscarf or a cap. Re-roll the NPC "
+                  "to record it.", file=sys.stderr)
+        if wearing:
+            only_bare = [x for x in options if "bare" in split_flags(x)[1]]
+            options = only_bare or options  # never filter the pool to nothing
+
+    if name == "Hair":
+        headgear_bare = npc.get("_headgear_bare")
+        if headgear_bare is None:
+            print("! this entry has no recorded headgear register (written "
+                  "before the covered flag existed) - re-rolling hair "
+                  "unrestricted, so it may come back naming a headscarf or a "
+                  "cap under worn headgear. Re-roll the NPC to record it.",
+                  file=sys.stderr)
+        if headgear_bare is False:
+            uncovered = [x for x in options
+                         if "covered" not in split_flags(x)[1]]
+            options = uncovered or options  # never filter the pool to nothing
+
     value = split_flags(rng.choice(options))[0]
 
     # A new cut takes the NPC's existing colour, and the tail that colour
@@ -3275,6 +3395,11 @@ def npc_from_entry(entry, regen_id, warn=True):
     # of keys roll_npc() publishes.
     npc["_hair_updo"] = entry.get("hair_updo")
     npc["_headgear_helmet"] = entry.get("headgear_helmet")
+    # And the two halves of the covered/bare pairing, absent and defaulted the
+    # same way. Separate from the pair above because a soft hat is worn and is
+    # not a helmet, so neither of those keys answers this question.
+    npc["_hair_covered"] = entry.get("hair_covered")
+    npc["_headgear_bare"] = entry.get("headgear_bare")
     # No default here either, for the same reason: absent means "not
     # recorded" (an entry written before rawTraits existed), and that has to
     # stay distinguishable from a recorded-but-empty dict. A plain regen never
@@ -3520,6 +3645,10 @@ def regenerate_one(args):
         entry["hair_updo"] = npc["_hair_updo"]
     if npc.get("_headgear_helmet") is not None:
         entry["headgear_helmet"] = npc["_headgear_helmet"]
+    if npc.get("_hair_covered") is not None:
+        entry["hair_covered"] = npc["_hair_covered"]
+    if npc.get("_headgear_bare") is not None:
+        entry["headgear_bare"] = npc["_headgear_bare"]
     # Only when a trait actually changed: a plain regen reproduces the entry
     # and rewriting traits it did not touch would just churn the manifest.
     if rerolled is not None:
@@ -3768,6 +3897,11 @@ def main(argv=None):
             # re-rollable, so the clash is reachable from either side.
             "hair_updo": npc["_hair_updo"],
             "headgear_helmet": npc["_headgear_helmet"],
+            # The sixth and seventh, for the covered/bare pairing. Same two
+            # directions, and not answerable from the two above: 'covered' has
+            # to keep out a soft hat, which is neither bare nor a helmet.
+            "hair_covered": npc["_hair_covered"],
+            "headgear_bare": npc["_headgear_bare"],
             "files": written,
             "portrait": portrait_file,
             "portraitPrompt": portrait_prompt,
