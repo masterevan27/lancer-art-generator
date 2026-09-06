@@ -79,6 +79,7 @@ def manifest_entry(seed=0, overrides=None):
         "traits": {k: v for k, v in npc.items() if not k.startswith("_")},
         "young": npc["_young"],
         "outfit_notac": npc["_outfit_notac"],
+        "gear_helmet": npc["_gear_helmet"],
     }
 
 

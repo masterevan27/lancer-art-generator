@@ -174,6 +174,18 @@ templates at the bottom of this file.
   kabuto above one is the point rather than an oversight. Two boundaries
   worth knowing before you flag a new bullet: goggles count as eyewear, not
   hardware, and a traditional hat with a mask beneath it is the hat.
+- **Headgear** and **Gear** bullets may also carry `|| helmet`. On a Headgear
+  entry it means a helmet actually worn on the head; on a Gear entry it means
+  a helmet carried rather than worn. A helmet on the head drops the carried
+  ones from the Gear pool, so nobody turns up wearing a sealed tactical helmet
+  with a second helmet tucked under one arm. Gear yields, the same way it
+  yields to a `hands` Weapon.
+  This is much narrower than `hardtech`, and deliberately so: a headset, a
+  brow visor or an ear implant leaves the crown free, and a helmet held under
+  the arm beside one of those reads well — a pilot between sorties, which is
+  what the Gear bullet is for. Flag only the bullets where the head is
+  actually inside a helmet. A kabuto counts and carries `helmet` without
+  `hardtech`, since the clash is one of silhouette rather than register.
 
 A flag beginning `@` is a **theme tag** rather than a behavioural flag —
 `|| civ @neosamurai` reads as "civilian dress, belonging to the neosamurai
@@ -1323,30 +1335,30 @@ ignored — so notes like this one are safe to leave inline.
 - {Subject} {wear} a padded pilot skullcap with the visor unclipped and folded back. || hardtech
 - {Subject} {wear} a rolled bandana tied across {possessive} brow.
 - {Subject} {wear} a knitted watch cap pulled down to the eyebrows.
-- {Subject} {wear} a composite ballistic helmet with its rail-mounted visor hinged up. || hardtech
-- {Subject} {wear} a full flight helmet in scuffed pale grey-white, a tinted visor panel down over the eyes and a small lit accent lens at the temple, a thin tether cable trailing from the back. || hardtech
+- {Subject} {wear} a composite ballistic helmet with its rail-mounted visor hinged up. || hardtech helmet
+- {Subject} {wear} a full flight helmet in scuffed pale grey-white, a tinted visor panel down over the eyes and a small lit accent lens at the temple, a thin tether cable trailing from the back. || hardtech helmet
 - {Subject} {wear} a monocular sensor rig strapped over one eye, its lens faintly lit. || hardtech
 - {Subject} {wear} heavy ear defenders slung around {possessive} neck rather than on {possessive} head. || hardtech
 - {Subject} {wear} a welding visor tipped back on top of {possessive} head. || hardtech
 - {Subject} {wear} a worn ushanka-style fur hat with the flaps down, a faded unit star pinned to the front.
 - {Subject} {wear} a tactical cap with a small circular unit emblem, dark sunglasses beneath it. || hardtech
-- {Subject} {wear} a night-vision helmet with the quad tubes flipped up clear of {possessive} eyes. || hardtech
+- {Subject} {wear} a night-vision helmet with the quad tubes flipped up clear of {possessive} eyes. || hardtech helmet
 - {Subject} {wear} a sleek black mechanical headset piece mounted flush against one ear. || hardtech
 - {Subject} {wear} a stiff peaked officer's cap, the brim polished and a small insignia set at the crown.
-- {Subject} {wear} a hooded shroud drawn up over a full-face helmet, its visor tinted dark and a breather mask sealed across the lower face. || hardtech
+- {Subject} {wear} a hooded shroud drawn up over a full-face helmet, its visor tinted dark and a breather mask sealed across the lower face. || hardtech helmet
 - {Subject} {wear} a deep hood drawn up, a pair of goggles clipped across the brow of it.
 - {Subject} {wear} a flat-brimmed ball cap with a small stitched patch at the front.
-- {Subject} {wear} an open-face crash helmet with the visor swung up clear of {possessive} eyes. || hardtech
-- {Subject} {wear} a ballistic helmet with its visor tipped up and a black breather mask sealed over the lower face. || hardtech
+- {Subject} {wear} an open-face crash helmet with the visor swung up clear of {possessive} eyes. || hardtech helmet
+- {Subject} {wear} a ballistic helmet with its visor tipped up and a black breather mask sealed over the lower face. || hardtech helmet
 - {Subject} {wear} a russet leather flight cap with ear flaps and a monocular scanner lens fixed down over one eye. || hardtech
 - {Subject} {wear} a wide woven sedge hat, its brim throwing {possessive} face into shadow.
 - {Subject} {wear} a pale cloth wrapped loosely over the lower face beneath a wide straw hat.
 - {Subject} {wear} a sleek integrated visor plate curving back over one ear, thin cable jacks seated at the jaw and temple, a faint accent light glowing along its edge. || hardtech
 - {Subject} {wear} a bulky visored rig clamped down over the eyes, a stub antenna and a cluster of cable jacks rising from the crown, a single indicator light glowing beneath the visor's edge. || hardtech
 - {Subject} {wear} a gold-trimmed headset clamped over one ear, a coiled cable trailing from it down past {possessive} collar.
-- {Subject} {wear} a sleek pilot's helmet with a curved visor, faint HUD readouts scrolling across the inside of the glass and a stencilled call-sign plate set at the jaw. || hardtech
+- {Subject} {wear} a sleek pilot's helmet with a curved visor, faint HUD readouts scrolling across the inside of the glass and a stencilled call-sign plate set at the jaw. || hardtech helmet
 - {Subject} {wear} round wire-rimmed glasses, their lenses lit faintly at the edges with a soft glow.
-- {Subject} {wear} a scuffed recon helmet with a stubby antenna and an integrated comm mic curling to the jaw, cable jacks trailing from the crown to a collar rig. || hardtech
+- {Subject} {wear} a scuffed recon helmet with a stubby antenna and an integrated comm mic curling to the jaw, cable jacks trailing from the crown to a collar rig. || hardtech helmet
 - {Subject} {wear} a bulky illuminated visor rig clamped low over the eyes, graffitied casing and a stub antenna rising from one side. || hardtech
 - {Subject} {wear} a curved white plate clipped snug over one ear, a short antenna-like horn rising from its crown and a thin cable trailing to the collar. || hardtech
 - {Subject} {wear} a sleek red-tinted visor strapped low across the eyes, built into a close-fitted skullcap with a jack seated at one temple. || hardtech
@@ -1354,7 +1366,7 @@ ignored — so notes like this one are safe to leave inline.
 - {Subject} {wear} a pair of boxy retro-industrial headphones, worn olive-grey earcups ringed in exposed rivets and a scuffed control dial on one side. || hardtech
 - {Subject} {wear} tinted wraparound sunglasses pushed rakishly up into {possessive} hair.
 - {Subject} {wear} a segmented cybernetic implant sheathing one ear and running down the jaw, faint lit seams tracing its joints. || hardtech
-- {Subject} {wear} a domed flight helmet in weathered burnt-orange with a full mirrored visor down, a coiled comms cable trailing from one side. || hardtech
+- {Subject} {wear} a domed flight helmet in weathered burnt-orange with a full mirrored visor down, a coiled comms cable trailing from one side. || hardtech helmet
 - {Subject} {wear} a compact visor rig pushed up above the brow, articulated plating framing one side of the face and a thin mic boom curving down past the cheek. || hardtech
 - {Subject} {wear} a compact sensor rig clipped into {possessive} hair at the crown, trailing thin cables and a torn strip of fabric like a streamer. || hardtech
 - {Subject} {wear} a slim translucent visor band across the brow, a cluster of cabling running from a port at {possessive} temple back into the rig behind {object}. || hardtech
@@ -1362,24 +1374,24 @@ ignored — so notes like this one are safe to leave inline.
 - {Subject} {wear} a red-plated visor rig clamped down over the eyes, twin lens apertures lit faintly, a cluster of thin cables trailing back into {possessive} hair. || hardtech
 - {Subject} {wear} a sleek visored headset clamped over the eyes, a hinged jaw guard sealed below it and a cluster of thin cables trailing back into {possessive} hair. || hardtech
 - {Subject} {wear} a segmented white cybernetic headpiece clamped over the crown and one temple, faint cable jacks seated at the jaw. || hardtech
-- {Subject} {wear} a sealed tactical helmet with a smoked visor and an integrated breather mask, a coiled comms cable trailing from the jaw. || hardtech
-- {Subject} {wear} a smooth blue-visored full-face helmet with a hood drawn up over it, a scarf wound loose at the throat. || hardtech
+- {Subject} {wear} a sealed tactical helmet with a smoked visor and an integrated breather mask, a coiled comms cable trailing from the jaw. || hardtech helmet
+- {Subject} {wear} a smooth blue-visored full-face helmet with a hood drawn up over it, a scarf wound loose at the throat. || hardtech helmet
 - {Subject} {wear} a flat wide-brimmed lacquered hat crowned with a bird skull and trailing feathers, the brim throwing {possessive} face into shadow.
 - {Subject} {wear} a bulky mechanical diagnostic rig clamped over the crown of {possessive} head, thick cabling trailing down to jacks at the collar, a status light lit at the side. || hardtech
-- {Subject} {wear} a sleek angular powered helmet with raised sensor fins and a full dark visor down, a single braid of hair falling free beneath it. || hardtech
+- {Subject} {wear} a sleek angular powered helmet with raised sensor fins and a full dark visor down, a single braid of hair falling free beneath it. || hardtech helmet
 - {Subject} {wear} thin rectangular glasses framing sharp eyes.
 - {Subject} {wear} a sleek mechanical half-mask sealed over the nose and mouth, a small lens node mounted at the temple. || hardtech
 - {Subject} {wear} a close-fitted respirator mask across the lower face beneath narrow tactical eyewear. || hardtech
-- {Subject} {wear} a horned kabuto-style helmet with a trailing neck guard, its crest catching the last light.
+- {Subject} {wear} a horned kabuto-style helmet with a trailing neck guard, its crest catching the last light. || helmet
 - {Subject} {wear} a wide flat lacquered hat rimmed in gold, a single red tassel hanging from the brim.
-- {Subject} {wear} a horned kabuto helmet with a scowling mempo faceplate, eyes lit with a faint red glow.
+- {Subject} {wear} a horned kabuto helmet with a scowling mempo faceplate, eyes lit with a faint red glow. || helmet
 - {Subject} {wear} a wide woven hat trimmed with small curved horns and hanging tassels, a segmented mechanical mask sealed over the nose and mouth beneath it, a faint accent light glowing at the seam.
 - {Subject} {wear} a wide straw hat trimmed with small hanging bells and a tattered red ribbon at the crown, rain streaming off the brim.
 - {Subject} {wear} a broad ceremonial hat strung with hanging tasseled bells, an antler-like crest rising from the crown.
 - {Subject} {wear} a broad woven hat bristling with jagged spikes at the crown, its brim battered and weathered.
 - {Subject} {wear} a broad dark hat trimmed with hanging chain ornaments and a feather crest, the brim shadowing {possessive} eyes.
 - {Subject} {wear} a wide straw hat over a patterned cloth headband tied at the brow.
-- {Subject} {wear} a horned kabuto-style helmet with a riveted neck guard and cheek plates framing {possessive} face.
+- {Subject} {wear} a horned kabuto-style helmet with a riveted neck guard and cheek plates framing {possessive} face. || helmet
 
 ## Headgear (she) +
 
@@ -1805,7 +1817,7 @@ ignored — so notes like this one are safe to leave inline.
 - a battered data-slate tucked under one arm || hands
 - a heavy multitool holstered at the hip
 - a coil of cabling and diagnostic leads slung across the body
-- a scarred pilot helmet carried in the crook of one elbow || hands
+- a scarred pilot helmet carried in the crook of one elbow || hands helmet
 - a compact rebreather clipped at the collar
 - a shoulder-slung tool bag, its strap worn through and re-stitched
 - a slim wrist-mounted holographic interface projecting faint readouts
