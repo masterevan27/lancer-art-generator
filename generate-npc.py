@@ -1133,8 +1133,27 @@ def pronoun_fields(pronouns):
     }
 
 
-def roll_npc(tables, rng, overrides=None, unarmed=False):
-    """One NPC as a flat dict of trait -> rolled text."""
+def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
+    """One NPC as a flat dict of trait -> rolled text.
+
+    `probe`, when a dict is passed, is filled with the fully-filtered pool
+    this function computed for each table, keyed by table name. It is a
+    read-out of work already being done rather than a second computation:
+    every filter below narrows `options` and the draw comes off the end of
+    it, so the list recorded here is by construction the set of bullets this
+    table could have produced given the traits above it. That is the whole
+    reason the query in trait_choices() can promise not to drift - there is
+    nothing for it to drift from.
+
+    Recording consumes no randomness and changes no value, so a probed roll
+    and an unprobed roll at the same seed are the same NPC.
+    test_set_trait_value.ProbeIsInert holds that, and every legality answer
+    depends on it.
+
+    Pronouns is the one table with no entry: it is drawn before the loop from
+    an unfiltered list and is refused by both re-roll paths anyway, so there
+    is no question to answer about it.
+    """
     # Pronouns first: every other table may have a per-pronoun variant, so the
     # roll that selects between them has to happen before the rest.
     pronouns = (overrides or {}).get("Pronouns") or rng.choice(tables["Pronouns"])
@@ -1205,6 +1224,12 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     # a pirate should be as likely to look neosamurai as cyberpunk - so nothing
     # here reads npc["Role"].
     theme = (overrides or {}).get("Theme") or rng.choice(tables["Theme"])
+    # No filter runs on Theme - it is the thing the others are filtered by -
+    # so its pool is the whole table. Recorded anyway, so a caller asking
+    # "what could Theme be" gets a list rather than a KeyError, and so the
+    # probe's coverage test can name every table uniformly.
+    if probe is not None:
+        probe["Theme"] = list(tables["Theme"])
 
     npc = {"Pronouns": pronouns, "Theme": theme}
 
@@ -1389,6 +1414,13 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
         # Age/Build pairing above, and the Gear and Stance filters below -
         # since a shorter pool draws differently. Those already behaved this
         # way for a rolled trait; forcing one just makes it reachable sooner.
+        #
+        # After the last filter and before the draw: this is the only line in
+        # the function where `options` is exactly what the roller is about to
+        # choose from, which is what makes it the honest answer to "what could
+        # this table have produced for this NPC".
+        if probe is not None:
+            probe[name] = list(options)
         value = rng.choice(options)
 
         # A forced value replaces the draw here, at the moment its own table is
@@ -1517,6 +1549,10 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     if "hands" in carried_flags:
         free = [x for x in stances if "hands" not in x[1]]
         stances = free or stances          # never filter the pool down to nothing
+    # `stances` is (bullet, flags) pairs so the raw line survives the filters;
+    # the probe wants the bullets alone, to match every other entry.
+    if probe is not None:
+        probe["Stance"] = [x[0] for x in stances]
     raw["Stance"] = npc["Stance"] = rng.choice(stances)[0]
 
     # A 'nogear' backdrop has the subject's hands full of whatever the scene
@@ -1555,6 +1591,17 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
             # The re-roll overwrites raw["Gear"] on purpose: this is the bullet
             # the NPC keeps, and both consumers want the keeper rather than the
             # draw it replaced.
+            #
+            # The probe entry is overwritten for the same reason. A 'nogear'
+            # backdrop has already filled the subject's hands, so THIS is the
+            # pool the NPC's Gear actually comes from, and the loop's wider one
+            # is a list the roller has just finished overruling. Recording the
+            # wider one would tell a caller that a 'hands' Gear is fine under a
+            # scene that is about to take it away - which is the clash a pinned
+            # Gear survives today (23 in 400, per the Backdrop -> Gear note in
+            # TRAIT_DEPENDENTS), reported as if it were not there.
+            if probe is not None:
+                probe["Gear"] = list(free)
             raw["Gear"] = rng.choice(free)
             npc["Gear"], gear_flags = split_flags(raw["Gear"])
 
