@@ -724,7 +724,7 @@ TOKEN_TEMPLATE = (
     "linework and halftone dot shading worked into the shadows, moody cinematic lighting "
     "on the figure. {Subject} {is_are} "
     "facing the viewer, {possessive} whole figure in frame from the top of "
-    "{possessive} head to the soles of {possessive} feet, the head drawn small "
+    "{possessive} head to the soles of {possessive} shoes, the head drawn small "
     "in frame with clear empty space above and below, in realistic adult proportions "
     "roughly seven to eight heads tall. "
     "{Subject} {is_are} {height}, {build}, {face}, and {traits}{skin}, {hair}, {eyes}, "
@@ -1252,6 +1252,21 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     forced_carried_helmet = (
         forced_gear is not None and "helmet" in split_flags(forced_gear)[1]
     )
+
+    # And a fourth time, for the hair pairing. Hair is rolled before Headgear,
+    # so a rolled updo constrains the Headgear pool; but a PINNED helmet has to
+    # constrain the Hair roll instead, and this is the path a
+    # --reroll-trait Hair takes on an entry with raw bullets.
+    #
+    # The both-forced case is honoured rather than refused, the same way two
+    # helmets are: a bun and a helmet are each true of the figure and only the
+    # render is ugly, so naming both with --set-trait is an aesthetic override
+    # made on purpose.
+    forced_hair = (overrides or {}).get("Hair")
+    forced_worn_helmet = (
+        forced_headgear is not None
+        and "helmet" in split_flags(forced_headgear)[1]
+    )
     role_dress = DEFAULT_DRESS_POLICY
 
     # Theme is rolled before every appearance table it gates, for the same
@@ -1283,6 +1298,7 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     young = False
     role_mil = False
     outfit_notac = False
+    hair_updo = False
     headgear_helmet = False
     weapon_hands = False
     weapon_flags = ()
@@ -1329,6 +1345,13 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
                 and forced_headgear is None):
             bare = [x for x in options if "helmet" not in split_flags(x)[1]]
             options = bare or options      # never filter the pool down to nothing
+
+        # The fourth, same shape again: a pinned worn helmet drops the cuts
+        # gathered on top of the skull from the Hair pool, rather than the Hair
+        # dropping the Headgear. See forced_worn_helmet.
+        if name == "Hair" and forced_worn_helmet and forced_hair is None:
+            flat = [x for x in options if "updo" not in split_flags(x)[1]]
+            options = flat or options      # never filter the pool down to nothing
 
         # Build is filtered against the Age roll, the same way Stance is
         # filtered against Weapon and Gear below. An Age bullet flagged
@@ -1404,6 +1427,22 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
         # helmet held under an arm. Widening it would cost that pairing for
         # sixteen bullets to fix a clash that only three of them have.
         if name == "Gear" and headgear_helmet:
+            bare = [x for x in options if "helmet" not in split_flags(x)[1]]
+            options = bare or options      # never filter the pool down to nothing
+
+        # One head, one volume. A Hair bullet flagged 'updo' gathers the hair
+        # on top of the skull - a topknot, a high ponytail, a crowned bun - and
+        # a helmet has nowhere to go over it: the render puts the bun through
+        # the helmet, every seed, because the two clauses describe two objects
+        # in the same place. Hair precedes Headgear in REQUIRED_TABLES so this
+        # flag is already known, the same way Weapon's 'hands' is above, and
+        # Headgear yields because the hair is drawn first and the table has
+        # sixty other bullets to fall back on.
+        #
+        # Keyed on 'helmet' rather than 'hardtech' for the reason the Gear
+        # filter below gives: a headset, a brow visor or an ear implant leaves
+        # the crown free, and a topknot above one reads fine.
+        if name == "Headgear" and hair_updo:
             bare = [x for x in options if "helmet" not in split_flags(x)[1]]
             options = bare or options      # never filter the pool down to nothing
 
@@ -1521,6 +1560,8 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
                 role_dress = dress_policy_for(ROLE_CATEGORIES.get(value))
             if name == "Outfit":
                 outfit_notac = "notac" in flags
+            if name == "Hair":
+                hair_updo = "updo" in flags
             if name == "Headgear":
                 headgear_helmet = "helmet" in flags
             if name == "Weapon":
@@ -1653,6 +1694,19 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     # reason, and before the strip block below, which is the last moment the
     # flags exist.
     npc["_gear_helmet"] = "helmet" in split_flags(raw["Gear"])[1]
+
+    # The two halves of the hair/helmet pairing, published for the same reason
+    # and read off raw for the same reason: the manifest stores both traits
+    # with their flags stripped, so without these a legacy re-roll of either
+    # one could not tell what the other is, and both would have to leave
+    # REROLLABLE_TRAITS - taking their buttons in the import GUI with them.
+    #
+    # BOTH directions need a key here, unlike the carried-helmet pairing, which
+    # needs only one: Gear is in UNREROLLABLE_REASONS on that path, so the
+    # clash is reachable from the Headgear side alone. Hair and Headgear are
+    # both re-rollable, so either can be the trait that moves into the clash.
+    npc["_hair_updo"] = "updo" in split_flags(raw["Hair"])[1]
+    npc["_headgear_helmet"] = "helmet" in split_flags(raw["Headgear"])[1]
 
     npc["Age"] = split_flags(npc["Age"])[0]   # the override still carries its flag
     # Same reason as Age: a --set-trait override for any of these pastes the
@@ -2842,6 +2896,42 @@ def reroll_trait(tables, npc, name, rng):
             bare = [x for x in options if "helmet" not in split_flags(x)[1]]
             options = bare or options  # never filter the pool down to nothing
 
+    # 'updo' against the recorded Hair register - the fourth key the manifest
+    # stores separately. Same direction as the roller's own filter, since Hair
+    # is drawn first there too: the hair is fixed and the Headgear is the free
+    # variable, so the helmets are what give way.
+    #
+    # None means the entry predates the key, which is not the same as False,
+    # and the honest answer is today's unrestricted behaviour plus a warning
+    # rather than a fabricated 'lies flat'.
+    if name == "Headgear":
+        gathered = npc.get("_hair_updo")
+        if gathered is None:
+            print("! this entry has no recorded hair register (written before "
+                  "the updo flag existed) - re-rolling headgear "
+                  "unrestricted, so it may come back wearing a helmet over "
+                  "hair gathered on the crown. Re-roll the NPC to record it.",
+                  file=sys.stderr)
+        if gathered:
+            bare = [x for x in options if "helmet" not in split_flags(x)[1]]
+            options = bare or options  # never filter the pool down to nothing
+
+    # And the same pairing from the other side, which the carried-helmet one
+    # has no equivalent of: Gear cannot be re-rolled on this path, but Hair
+    # can, so a stored helmet has to gate the Hair pool too or the clash walks
+    # straight back in through a one-click Hair re-roll.
+    if name == "Hair":
+        helmeted = npc.get("_headgear_helmet")
+        if helmeted is None:
+            print("! this entry has no recorded headgear register (written "
+                  "before the updo flag existed) - re-rolling hair "
+                  "unrestricted, so it may come back gathered on the crown "
+                  "under a helmet. Re-roll the NPC to record it.",
+                  file=sys.stderr)
+        if helmeted:
+            flat = [x for x in options if "updo" not in split_flags(x)[1]]
+            options = flat or options  # never filter the pool down to nothing
+
     value = split_flags(rng.choice(options))[0]
 
     # A new cut takes the NPC's existing colour, and the tail that colour
@@ -2896,6 +2986,12 @@ def regenerate_one(args):
     # And the same again for the Gear's helmet register, absent for the same
     # reason and distinguished from a recorded False the same way.
     npc["_gear_helmet"] = entry.get("gear_helmet")
+    # And the two halves of the hair/helmet pairing, absent for the same
+    # reason and distinguished from a recorded False the same way. Both are
+    # needed because both traits are re-rollable from an entry - see the pair
+    # of keys roll_npc() publishes.
+    npc["_hair_updo"] = entry.get("hair_updo")
+    npc["_headgear_helmet"] = entry.get("headgear_helmet")
     # No default here either, for the same reason: absent means "not
     # recorded" (an entry written before rawTraits existed), and that has to
     # stay distinguishable from a recorded-but-empty dict. A plain regen never
@@ -3061,6 +3157,10 @@ def regenerate_one(args):
         entry["outfit_notac"] = npc["_outfit_notac"]
     if npc.get("_gear_helmet") is not None:
         entry["gear_helmet"] = npc["_gear_helmet"]
+    if npc.get("_hair_updo") is not None:
+        entry["hair_updo"] = npc["_hair_updo"]
+    if npc.get("_headgear_helmet") is not None:
+        entry["headgear_helmet"] = npc["_headgear_helmet"]
     # Only when a trait actually changed: a plain regen reproduces the entry
     # and rewriting traits it did not touch would just churn the manifest.
     if rerolled is not None:
@@ -3299,6 +3399,12 @@ def main(argv=None):
             # re-roll needs the Gear bullet's 'helmet' flag, to know whether
             # the figure is already holding one.
             "gear_helmet": npc["_gear_helmet"],
+            # The fourth and fifth, for the hair/helmet pairing. A Headgear
+            # re-roll needs the Hair bullet's 'updo' flag and a Hair re-roll
+            # needs the Headgear bullet's 'helmet' one - both traits are
+            # re-rollable, so the clash is reachable from either side.
+            "hair_updo": npc["_hair_updo"],
+            "headgear_helmet": npc["_headgear_helmet"],
             "files": written,
             "portrait": portrait_file,
             "portraitPrompt": portrait_prompt,

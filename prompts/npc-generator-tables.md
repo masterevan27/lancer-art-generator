@@ -186,6 +186,20 @@ templates at the bottom of this file.
   what the Gear bullet is for. Flag only the bullets where the head is
   actually inside a helmet. A kabuto counts and carries `helmet` without
   `hardtech`, since the clash is one of silhouette rather than register.
+- **Hair** bullets may carry `|| updo`, marking a cut whose mass sits on top
+  of the skull — a topknot, a high ponytail, twin space buns, a bun crowned
+  with a pin or a flower. Those are dropped whenever the Headgear roll came up
+  `helmet`, so nothing renders a bun growing through a flight helmet. Headgear
+  is what yields on a fresh roll, since Hair is drawn first; the filter runs
+  both ways, so a pinned or `--set-trait` helmet drops the `updo` cuts from the
+  Hair pool instead. Forcing both by hand is honoured rather than refused, the
+  same way two helmets are.
+  It is gated on `helmet` rather than `hardtech` for the reason the flag above
+  gives: a headset, a brow visor or an ear implant leaves the crown free, and a
+  topknot above one is fine. Flag only what stands proud of the skull — hair
+  merely *pinned up off the collar*, a braid crown pinned close to the head, a
+  low bun, a bob or anything cropped all lie flat, and those are exactly the
+  cuts a helmet goes on over.
 - A **Gear** bullet may carry a **role lock**, of which `admin` is so far the
   only one. It confines that bullet to the occupations named against the flag
   in `ROLE_LOCKS` in `generate-npc.py` — `admin` is a colonial administrator's
@@ -1077,7 +1091,7 @@ ignored — so notes like this one are safe to leave inline.
 - a slicked-back {colour} corporate cut, not one strand out of place
 - {colour} hair hacked off short and uneven, clearly self-cut
 - long {colour} hair worn loose and unkempt, shoved back out of the face
-- a high, tight {colour} topknot
+- a high, tight {colour} topknot || updo
 - {colour} hair tied back in a short tail
 - a wrapped headscarf with a few {colour} strands escaping at the temple
 - a choppy shoulder-length {colour} cut
@@ -1090,7 +1104,7 @@ ignored — so notes like this one are safe to leave inline.
 - long {colour} hair falling past the shoulders, cut with sharp jagged bangs across the brow
 - long wavy {colour} hair falling loose past the shoulders, framing the face
 - short wavy {colour} hair falling to the jaw, one side swept over an eye
-- {colour} hair swept into a high ponytail bound near the crown, loose strands framing the face
+- {colour} hair swept into a high ponytail bound near the crown, loose strands framing the face || updo
 - a sharp chin-length {colour} bob, its long fringe swept over one eye
 - a tousled chin-length {colour} bob with choppy side-swept bangs
 - long tousled {colour} waves spilling loosely over one shoulder
@@ -1122,27 +1136,27 @@ ignored — so notes like this one are safe to leave inline.
 - long {colour} hair, cut with blunt bangs
 - a short {colour} bob with a loose curling cowlick
 - a short {colour} bob left deliberately choppy, the ends spiked and uneven, long bangs swept across one eye
-- a high {colour} ponytail tied off loose and messy, long strands left free either side of the face
+- a high {colour} ponytail tied off loose and messy, long strands left free either side of the face || updo
 - {colour} hair worn poker-straight and very long, falling well past the waist, a long fringe swept down one side of the face
 - a chin-length {colour} bob with a straight-cut fringe
 - a {colour} bob swept low across one eye
 - a long {colour} double braid falling past the waist
 - {colour} hair cut in a blunt chin-length bob with heavy straight bangs
 - a long {colour} twin-tail, loose strands pulled forward across one shoulder
-- a messy {colour} topknot, one side shaved close beneath it
+- a messy {colour} topknot, one side shaved close beneath it || updo
 - a long single {colour} braid, loose strands escaping at the crown
-- {colour} hair gathered into twin space buns, loose strands falling free at the temples
-- a high {colour} ponytail, choppy bangs falling across one eye
+- {colour} hair gathered into twin space buns, loose strands falling free at the temples || updo
+- a high {colour} ponytail, choppy bangs falling across one eye || updo
 - a {colour} bob with a sharp side-swept fringe and a single streaked strand
 - a {colour} bob with a pair of small horn-shaped ornamental clips swept back at the temples
 - a {colour} bob with a blunt fringe
-- twin high {colour} ponytails held back by the band of a chunky headset, a long fringe swept across one brow
-- twin high {colour} ponytails clipped at the base by a segmented mechanical binder, sweeping loose past the shoulders
+- twin high {colour} ponytails held back by the band of a chunky headset, a long fringe swept across one brow || updo
+- twin high {colour} ponytails clipped at the base by a segmented mechanical binder, sweeping loose past the shoulders || updo
 - shoulder-length {colour} hair, center-parted with a long face-framing fringe
 - {colour} hair swept back into a neat low bun, held with a single ornamental pin
-- {colour} hair swept up in a bun crowned with a floral hairpin ornament, loose strands and bangs falling forward across the brow
-- {colour} hair swept up into a high bun, secured with ornamental pins and a trailing ribbon
-- {colour} hair swept up, an ornamental flower and dangling metal pins gathered at the crown
+- {colour} hair swept up in a bun crowned with a floral hairpin ornament, loose strands and bangs falling forward across the brow || updo
+- {colour} hair swept up into a high bun, secured with ornamental pins and a trailing ribbon || updo
+- {colour} hair swept up, an ornamental flower and dangling metal pins gathered at the crown || updo
 
 ## Hair (he) +
 
@@ -2640,8 +2654,14 @@ wrapped WWI-style puttees rising from the boot tops with nothing said about
 them. The Faction and Outfit tables now describe each faction's dress
 specifically enough that the drift no longer happens, and the old clause was
 actively wrong for any character who isn't in boots at all. "the soles of
-{POSSESSIVE} feet" asserts the framing - the feet are in shot - and leaves
-what is on them to Outfit.
+{POSSESSIVE} shoes" asserts the framing - the bottom of the figure is in shot -
+and still leaves what is actually on the feet to Outfit, which names the
+footwear for the factions that have any.
+
+It says "shoes" rather than "feet" because a shoe is a worn object rather than
+a body part, so the clause reads as an instruction about where the frame ends
+rather than about anatomy. "Shoes" stays generic enough not to fight a rolled
+boot, sandal or greave the way the old "plain modern boots" did.
 
 The opening sentence asserts framing, not pose. It used to read "standing at
 full height", which fought the rolled Stance on every crouching, kneeling or
@@ -2650,7 +2670,7 @@ render came back with two figures. Stance owns the pose; this sentence owns
 the framing, and the two no longer overlap.
 
 Framing is asserted three times, and that is deliberate. "the whole figure in
-frame ... to the soles of {POSSESSIVE} feet" on its own was losing at CFG 1.0
+frame ... to the soles of {POSSESSIVE} shoes" on its own was losing at CFG 1.0
 to the detail the rest of the prompt asks for: the model anchored the head near
 the top of the canvas, drew it at portrait scale, and ran out of room somewhere
 around the shins, cropping off the feet the sentence had just promised. Two

@@ -80,6 +80,8 @@ def manifest_entry(seed=0, overrides=None):
         "young": npc["_young"],
         "outfit_notac": npc["_outfit_notac"],
         "gear_helmet": npc["_gear_helmet"],
+        "hair_updo": npc["_hair_updo"],
+        "headgear_helmet": npc["_headgear_helmet"],
     }
 
 

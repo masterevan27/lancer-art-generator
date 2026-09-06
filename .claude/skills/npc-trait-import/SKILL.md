@@ -51,6 +51,7 @@ conventions, and the pronoun placeholders. As of this writing the flags are:
 | `notac` | Outfit | Elaborate/traditional dress that must never pair with `mil`-flagged Weapon or Gear, nor with `hardtech` Headgear. |
 | `hardtech` | Headgear | Modern technology worn on the head — helmets sealed or open, visor and lens rigs, sensor/night-vision hardware, breather masks, comms headsets, anything cabled or jacked, powered or cybernetic pieces, plus industrial eye and ear protection. Dropped when the Outfit roll came up `notac`. **Not** soft goods (cloth, straw, woven, leather, fur — hats, caps, hoods, bandanas, headbands), **not** plain eyewear, and **not** the traditional or ceremonial register: those are what an elaborate outfit *should* reach, and a kabuto over a kimono is the point. Goggles are eyewear, not hardware. A traditional hat with a mask beneath it is the hat. |
 | `helmet` | Headgear, Gear | A helmet actually worn on the head (Headgear), or carried rather than worn (Gear). A worn one drops the carried ones from the Gear pool, so nobody wears a helmet while holding a second. Much narrower than `hardtech`: a headset, a brow visor or an ear implant leaves the crown free and still pairs well with a helmet under the arm. Flag only where the head is actually inside a helmet — a kabuto counts, and carries `helmet` without `hardtech`, since the clash is one of silhouette rather than register. |
+| `updo` | Hair | A cut whose mass sits **on top of the skull** — a topknot, a high ponytail, twin space buns, a bun crowned with a pin or a flower. Dropped when the Headgear roll came up `helmet`, so nothing renders a bun growing through a flight helmet; the filter runs both ways, so a pinned helmet drops the `updo` cuts instead. Gated on `helmet`, not `hardtech` — a headset or a brow visor leaves the crown free and a topknot above one is fine. **Not** for anything that lies flat: a braid crown pinned close to the head, hair *pinned up off the collar*, a low bun, a bob or any crop are exactly the cuts a helmet goes on over. |
 | `dressy` | Outfit, Faction | Ceremonial, formal or finely made — gold thread, lacquer, brocade, ornament. The two tables consume it differently: a `dressy` Outfit is dropped for a Role whose work is manual or dirty, while a `dressy` Faction keeps its place and loses only its *visual* segment, so the dossier still prints the affiliation. **Not** the same as `notac`, and merging them is the main way to get this wrong: `notac` covers rags as readily as finery, and the pilgrim's robes, the ragged bindings and the travel-worn robe are all `notac` and none are fine. Flag finery, not tradition. |
 | `admin` | Gear | A **role lock**: the bullet is reachable only by the occupations named against that flag in `ROLE_LOCKS` in `generate-npc.py`, and `admin` names a colonial administrator alone. The one *hard* filter in the tables — every other flag hands the whole pool back rather than leave the roll with nothing, while a lock never yields, since yielding would give the item to the very Role it was kept from. Stage it only where the object is an **emblem** of a job rather than a tool of it: a cane of office, a seal, a warrant. A multitool is nobody's emblem. A new lock flag needs its entry in `ROLE_LOCKS` first, naming the exact Role bullet text. |
 | `nogear` | Backdrop | The scene already puts something in the subject's hands. |
@@ -339,10 +340,11 @@ the image will not fit this file. Apply all of these:
   jacked, a powered or cybernetic piece, or industrial eye/ear protection.
   Leave it unflagged if it is a soft hat, cap, hood, bandana or headband,
   plain eyewear, or anything in the traditional/ceremonial register.
-- **Hair**: `<noun phrase, exactly one {colour}>` (no flags — dropped straight
-  into `{hair}` alongside `{skin}` and `{eyes}` in the prompt template, with
-  the rolled `Hair colour` filling the `{colour}` slot first; see the shape
-  note in §0 before writing one of these)
+- **Hair**: `<noun phrase, exactly one {colour}> || [updo]` — the phrase is
+  dropped straight into `{hair}` alongside `{skin}` and `{eyes}` in the prompt
+  template, with the rolled `Hair colour` filling the `{colour}` slot first;
+  see the shape note in §0 before writing one of these. Flag it `updo` only if
+  the hair is gathered on top of the skull, where a helmet cannot go over it.
 - **Hair colour**: `<base, consonant-initial> || [tail] || [older]` — the
   `base` fills the cut's `{colour}` slot, the optional `tail` is a trailing
   clause for gradients, and `older` is the only flag. See the consonant and

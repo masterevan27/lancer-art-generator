@@ -36,7 +36,7 @@ class TestTokenTemplatePose(unittest.TestCase):
         says why.
         """
         for phrase in ("whole figure in frame",
-                       "to the soles of {possessive} feet",
+                       "to the soles of {possessive} shoes",
                        "clear empty space above and below",
                        "seven to eight heads tall"):
             with self.subTest(phrase=phrase):
