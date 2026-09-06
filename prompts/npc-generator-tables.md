@@ -1824,6 +1824,15 @@ ignored — so notes like this one are safe to leave inline.
   weapon - lives in '## Weapon', rolled separately; see that table's comment
   for its flags.
 
+  It is also the everyday half of what a person carries, and deliberately so.
+  Most NPCs this file rolls are not soldiers, and a setting whose civilians
+  all carry diagnostic leads and tactical packs reads as a barracks rather
+  than a colony. A thermos, a market basket, a folded umbrella, a paper
+  parcel of something hot - those are what the great majority of people in
+  any inhabited place have in their hands, and they cost nothing to render.
+  Keep authoring them: the ratio of ordinary objects to issued equipment here
+  is most of what makes a rolled crowd feel lived-in.
+
   '|| admin' is a ROLE LOCK, and the only one so far. A locked bullet is
   reachable by the occupations named against that flag in ROLE_LOCKS in
   generate-npc.py and by no others - 'admin' is a colonial administrator's
@@ -1875,6 +1884,35 @@ ignored — so notes like this one are safe to leave inline.
 - a pair of articulated mechanical wing extensions mounted at the shoulders, each feather-like segment tipped with a small lit sensor lens
 - a small pendant amulet glowing softly at the throat
 - an old-fashioned lantern glowing warm, carried by its handle in one hand || hands
+- a string bag of groceries hanging from one hand, a loaf and a bundle of greens showing through the mesh || hands
+- a chipped enamel mug cradled in both hands, steam curling off it || hands
+- a paper-wrapped parcel of hot food held close against the chest || hands
+- a cheap folding umbrella hooked over one forearm, still beaded with rain || hands
+- a battered canvas satchel worn crossbody, its flap held down by one surviving buckle
+- a woven market basket carried in the crook of one arm, a cloth laid over it against the dust || hands
+- a bundle of laundry rolled under one arm, a wooden peg still clipped to a corner || hands
+- a small toy mech held forgotten in one hand, its paint worn down to bare metal || hands
+- a paperback gone soft at the spine, held open on one thumb || hands
+- a ring of worn keys and stamped door-tags hooked through a belt loop
+- a plastic crate of empty bottles balanced against one shoulder || hands
+- a bundle of cut flowers wrapped in newsprint, carried head-down at one side || hands
+- a scuffed instrument case slung from one shoulder, its clasps mismatched
+- a folded broadsheet tucked under one arm, its edges gone damp || hands
+- a transit pass on a frayed lanyard at the neck, the print worn off it
+- a dented lunch tin knotted into a cloth wrap and carried by the knot || hands
+- a stray cat riding one shoulder, tail hooked round the back of {possessive} neck for balance
+- a hand-lettered price board carried face-down at one side || hands
+- a long torque wrench rested across one shoulder, its handle wrapped in worn tape || hands
+- a welding mask carried by its strap in one hand, the lens burned nearly opaque || hands
+- a spool of solder and a cooling iron clipped at the breast pocket
+- a set of calipers hooked in a breast pocket beside a row of markers
+- a steel tape and a flat carpenter's pencil stuffed in a hip pocket
+- a tin of grease and a fistful of oil-black rags gathered in one hand || hands
+- a stiff-bristled deck broom held upright in one hand || hands
+- a coil of nylon line and a pair of shackles hung at the belt
+- a pressure gauge on a looped length of hose slung over one shoulder
+- a cordless driver holstered at the thigh, a strip of bits taped along its body
+- a clipboard of work orders held against one hip, the top sheet curling with damp || hands
 
 ## Glow colour
 
