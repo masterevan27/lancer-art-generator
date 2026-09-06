@@ -66,7 +66,7 @@ conventions, and the pronoun placeholders. As of this writing the flags are:
 | `frontline` | Backdrop | Occupation gate: the subject is *fighting* — a weapon discharging, powered armor mid-impact, a sniper's hide. Merely being armed is not enough; an armed figure standing in a street stays ungated. Pilots, Soldiers, Criminals. |
 | `vacuum` | Backdrop | Occupation gate: a sealed EVA suit in vacuum. The shirt-sleeve zero-gravity scenes carry no gate at all — anyone can float down a station corridor. Pilots, Technicians, Support. |
 | `swordwork` | Backdrop | Occupation gate: a drawn or worn blade carried as the subject's weapon of record. Soldiers, Criminals. |
-| `deskwork` | Backdrop | Occupation gate: operating a command, plot, watch or surveillance station. Pilots, Soldiers, Officials, Support, Criminals. |
+| `deskwork` | Backdrop | Occupation gate: operating a command, plot, watch or surveillance station. Pilots, Soldiers, Officials, Support, Criminals, Civilians — every bucket but Laborers and Technicians, since a screen wall is genre-neutral in a way a cockpit is not. |
 | `ceremony` | Backdrop | Occupation gate: the subject presides — a ceremonial ramp, a throne, the front of a rally. Pilots, Soldiers, Officials, Criminals. |
 | `inspection` | Backdrop | Occupation gate: auditing someone else's work — badge out, folio closed, a placard held against a serial plate. Officials. |
 | `salvage` | Backdrop | Occupation gate: stripping machine wreckage as work rather than as spectacle. Laborers, plus the scavenger-priest by name. |

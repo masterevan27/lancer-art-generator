@@ -597,8 +597,17 @@ BACKDROP_ROLES = {
     "vacuum": ("Pilots", "Technicians", "Support"),
     # A drawn or worn blade carried as the weapon of record.
     "swordwork": ("Soldiers", "Criminals"),
-    # Operating a command, plot, watch or surveillance station.
-    "deskwork": ("Pilots", "Soldiers", "Officials", "Support", "Criminals"),
+    # Operating a command, plot, watch or surveillance station. The one gate
+    # with no bucket left out, which is close enough to ungated that it is
+    # worth saying why it is still a gate: a screen wall is genre-neutral in a
+    # way a cockpit is not - the information broker reading four camera feeds
+    # behind the bar and the courier in the back of a surveillance van are
+    # both the setting - but the scenes themselves name a flag bridge, a CIC,
+    # a duty roster, so the roles that could not be in that room at all are
+    # already the roles this admits. It is Laborers and Technicians that the
+    # bucket list drops, and only them.
+    "deskwork": ("Pilots", "Soldiers", "Officials", "Support", "Criminals",
+                 "Civilians"),
     # The subject presides - a ceremonial ramp, a throne, a rally ground.
     "ceremony": ("Pilots", "Soldiers", "Officials", "Criminals"),
     # Auditing someone else's work: badge out, folio closed, placard against a
