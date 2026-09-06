@@ -2968,29 +2968,36 @@ def trait_choices(tables, npc, name):
     return out
 
 
-def regenerate_one(args):
-    """Re-render one NPC's portrait and/or token from a stored manifest entry.
-
-    Skips roll_npc and the tables file entirely - every trait comes from the
-    entry exactly as it was originally rolled, so the prompt reproduces
-    identically regardless of --new-seed. The entry's own folder is reused and
-    overwritten in place (same filenames), unlike a fresh roll's npc_folder(),
-    which suffixes rather than collides.
-    """
-    manifest = art.load_manifest(args.regen_manifest)
+def find_regen_entry(manifest, regen_id, manifest_path):
+    """The (folder path, entry) pair for one id, or a refusal naming it."""
     folder_path, entry = next(
-        ((k, v) for k, v in manifest.items() if isinstance(v, dict) and v.get("id") == args.regen_id),
+        ((k, v) for k, v in manifest.items() if isinstance(v, dict) and v.get("id") == regen_id),
         (None, None),
     )
     if entry is None:
-        raise SystemExit("--regen-id %r: no such entry in %s" % (args.regen_id, args.regen_manifest))
+        raise SystemExit("--regen-id %r: no such entry in %s" % (regen_id, manifest_path))
+    return folder_path, entry
 
+
+def npc_from_entry(entry, regen_id, warn=True):
+    """A manifest entry rebuilt into the dict roll_npc() would have produced.
+
+    Lifted out of regenerate_one() so that --trait-choices reads an entry the
+    same way a regen does. Two reconstructions would drift, and the direction
+    they would drift in is the worst one available: a query answering about a
+    slightly different NPC than the one the regen is about to render.
+
+    `warn` is off for the query, which is a read-only question a GUI may ask
+    many times over. The migration notices belong on the run that actually
+    writes something - and the query prints JSON to stdout, so a stray line
+    would corrupt it besides.
+    """
     npc = migrate_traits(entry["traits"])
     npc["_pronouns"] = pronoun_fields(npc["Pronouns"])
-    if "young" not in entry:
+    if warn and "young" not in entry:
         print("! %s has no recorded 'young' flag (written by an older version of this script) - "
               "assuming not young; the maturity/face wording may drift slightly from the "
-              "original render." % args.regen_id, file=sys.stderr)
+              "original render." % regen_id, file=sys.stderr)
     npc["_young"] = entry.get("young", False)
     # No default: absent is 'not recorded', which reroll_trait() distinguishes
     # from a recorded False. Unlike 'young' this is not consumed by
@@ -3018,10 +3025,26 @@ def regenerate_one(args):
         # rename_legacy_traits().
         npc["_raw"] = rename_legacy_traits(entry["rawTraits"])
     if "Height" not in npc:
-        print("! %s has no recorded Height trait (written before the Height table existed) - "
-              "regenerating without one; re-roll instead of regenerating to pick one up."
-              % args.regen_id, file=sys.stderr)
+        if warn:
+            print("! %s has no recorded Height trait (written before the Height table existed) - "
+                  "regenerating without one; re-roll instead of regenerating to pick one up."
+                  % regen_id, file=sys.stderr)
         npc["Height"] = "of average height"
+    return npc
+
+
+def regenerate_one(args):
+    """Re-render one NPC's portrait and/or token from a stored manifest entry.
+
+    Skips roll_npc and the tables file entirely - every trait comes from the
+    entry exactly as it was originally rolled, so the prompt reproduces
+    identically regardless of --new-seed. The entry's own folder is reused and
+    overwritten in place (same filenames), unlike a fresh roll's npc_folder(),
+    which suffixes rather than collides.
+    """
+    manifest = art.load_manifest(args.regen_manifest)
+    folder_path, entry = find_regen_entry(manifest, args.regen_id, args.regen_manifest)
+    npc = npc_from_entry(entry, args.regen_id)
 
     # One trait re-rolled - and, on the raw path, everything a filter would
     # have had to reject alongside it. Everything else reproduced. Seeded from
