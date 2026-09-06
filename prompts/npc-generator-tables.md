@@ -2244,8 +2244,8 @@ they live in `generate-npc.py` — editing them here changes nothing.
 > painterly illustration style with fine grain texture and clean linework, halftone
 > dot shading worked into the shadows, moody cinematic lighting. {SUBJECT} is
 > **{BUILD}**, with **{TRAITS}** **{SKIN}**, **{HAIR}**, and **{EYES}**, and **{FEATURE}**,
-> wearing **{OUTFIT}**, **{FACTION_LINE}**the clothing following the shape of that
-> frame. **{HEADGEAR}** {POSSESSIVE} face carries
+> wearing **{OUTFIT}**, **{FACTION_LINE}**{POSSESSIVE} clothing following the shape
+> of {POSSESSIVE} frame. **{HEADGEAR}** {POSSESSIVE} face carries
 > **{DEMEANOR}**. {SUBJECT} carries
 > **{GEAR}**. **{BACKDROP}** **{WEATHER}** **{GLOW_LINE}** Shallow depth of field, square
 > framing, high detail, atmospheric sci-fi character portrait. Painterly illustration
@@ -2260,13 +2260,13 @@ than an adult figure. It lives in `GENDER_TRAITS` in
 gender cannot come out of a pool of thirty bullets.
 
 `{FACTION_LINE}` is the rolled Faction's visual signature alone, already
-comma-suffixed and ready to sit in front of "the clothing following the shape
-of that frame" — never the affiliation name. `split_faction()` keeps the name
-("Smith-Shimano Corpro") for the dossier's "Affiliation" row only; the name
-never reaches either prompt. The two non-affiliations (`Unaligned`,
-`Unregistered`) roll no visual at all, so `{FACTION_LINE}` is empty for them
-and the sentence reads "wearing **{OUTFIT}**, the clothing following..." with
-no orphaned comma.
+comma-suffixed and ready to sit in front of "{POSSESSIVE} clothing following
+the shape of {POSSESSIVE} frame" — never the affiliation name.
+`split_faction()` keeps the name ("Smith-Shimano Corpro") for the dossier's
+"Affiliation" row only; the name never reaches either prompt. The two
+non-affiliations (`Unaligned`, `Unregistered`) roll no visual at all, so
+`{FACTION_LINE}` is empty for them and the sentence reads "wearing
+**{OUTFIT}**, {POSSESSIVE} clothing following..." with no orphaned comma.
 
 `{HEADGEAR}` is a whole sentence rather than a noun phrase, and so is
 `{WEATHER}` — which is empty unless the rolled Backdrop is flagged `weather`.
@@ -2325,7 +2325,8 @@ glow could land on a face with nothing nearby to cast it.
 > realistic adult proportions roughly seven to eight heads tall. {SUBJECT}
 > is **{HEIGHT}**, **{BUILD}**, with **{TRAITS}**
 > **{SKIN}**, **{HAIR}**, **{EYES}**, and **{FEATURE}**, wearing **{OUTFIT}**,
-> **{FACTION_LINE}**the clothing following the shape of that frame. **{HEADGEAR}**
+> **{FACTION_LINE}**{POSSESSIVE} clothing following the shape of {POSSESSIVE}
+> frame. **{HEADGEAR}**
 > {POSSESSIVE} face carries **{DEMEANOR}**. {SUBJECT} carries **{GEAR}**.
 > {SUBJECT} is **{STANCE}**, both feet in frame, the pose natural and
 > unforced. **{GLOW_LINE}** The background alone is a solid flat plain white,

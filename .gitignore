@@ -5,6 +5,9 @@ __pycache__/
 # ComfyUI run logs (local state, regenerated per machine)
 .generated-manifest.json
 .generated-npcs.json
+# The import GUI's per-library record of which NPCs the user has already
+# looked at; it sits beside the manifest it describes, so it lands here.
+.npc-seen.json
 
 # Local ComfyUI output, when COMFYUI_OUTPUT_DIR is unset
 output/

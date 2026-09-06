@@ -86,19 +86,21 @@ class TestFactionShapeMigration(unittest.TestCase):
         }
 
     def test_a_single_segment_faction_still_reaches_the_clothing_sentence(self):
-        """The pre-Task-7 shape: the whole value WAS the visual clause,
-        exactly what the old template dropped straight into the clothing
-        sentence - "wearing {outfit}, {faction}, the clothing following the
-        shape of that frame." with {faction} substituted raw. Regeneration
-        has to still be able to produce that same clause verbatim.
+        """The pre-Task-7 shape: the whole value WAS the visual clause, which
+        the old template dropped straight into the clothing sentence between
+        {outfit} and the clause about the frame, with {faction} substituted
+        raw. Regeneration has to still place that same faction clause in that
+        same position - the clothing clause itself has since taken the
+        possessive determiner, so only its own wording has moved on.
         """
         old_faction = "in IPS-Northstar workwear, riveted and salt-stained"
         npc = gen.migrate_traits(self._stored_traits(old_faction))
         npc["_pronouns"] = gen.pronoun_fields(npc["Pronouns"])
         npc["_young"] = False
         portrait, token = gen.build_prompts(npc)
-        expected = "wearing %s, %s, the clothing following the shape of that frame." % (
-            npc["Outfit"], old_faction)
+        possessive = npc["_pronouns"]["possessive"]
+        expected = "wearing %s, %s, %s clothing following the shape of %s frame." % (
+            npc["Outfit"], old_faction, possessive, possessive)
         for prompt in (portrait, token):
             self.assertIn(expected, prompt)
 
