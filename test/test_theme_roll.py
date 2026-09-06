@@ -173,10 +173,11 @@ class TestThemeRoll(unittest.TestCase):
         """A themed roll must never come back empty, whatever the theme.
 
         A crash guard rather than a pool guard - it asserts only that a value
-        exists, not that the pool it came from stayed a reasonable size. The
-        actual no-starvation guarantee is
-        test_theme_inert.test_every_theme_still_rolls_a_full_pool, which
-        compares pool lengths.
+        exists, not that the pool it came from stayed a reasonable size, and
+        it measures the fixture rather than the live tables. The actual
+        no-starvation guarantee is
+        test_theme_live_pools.test_no_theme_drops_a_pool_below_the_floor,
+        which counts distinct bullets across the real content.
 
         Weapon is exempt from the truthiness check, not from the key lookup:
         its weighted empty entry ('|| none') rolling to '' is the unarmed

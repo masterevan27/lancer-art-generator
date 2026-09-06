@@ -1,11 +1,11 @@
 """A theme tag is only read on the tables THEMED_TABLES names.
 
-The permanent successor to test_theme_inert.py. That file asserts the live
-tables carry no '@' tag *at all*, which stops being true - and stops being a
-test - the moment Phase 4 starts tagging; it is deleted then. This file's
-assertion is inverted, and so holds both before and after that pass: a tag may
-appear on a gated table, and nowhere else. Without it, deleting the inert file
-would leave the repository with nothing at all to say about where tags may
+Written as the permanent successor to test_theme_inert.py, which asserted the
+live tables carried no '@' tag *at all* and was retired when Phase 4 began
+tagging (its walk lives on as test_theme_live_pools.py). This file's assertion
+is the inverted one, and so held both before that pass and after: a tag may
+appear on a gated table, and nowhere else. Without it, retiring the inert file
+would have left the repository with nothing at all to say about where tags may
 legally go.
 
 The failure it guards is not hypothetical. Only the gated tables have their

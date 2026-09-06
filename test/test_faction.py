@@ -11,12 +11,29 @@ Three segments, the same shape Backdrop and Hair colour use - and for the same
 reason: two of them are prose and only the third is flags.
 """
 import random
+import re
 import unittest
 
 from test.helpers import FIXTURE_TABLES, REPO, load_generator
 
 gen = load_generator()
 TABLES = gen.parse_tables(FIXTURE_TABLES)
+
+# The hues a Faction visual can assert its pigment with. A vocabulary rather
+# than a sentence shape on purpose: the older bullets name their colours in a
+# trailing clause - "in imperial green and gold" - and the newer ones as an
+# adjective on the insignia itself - "a red five-point star roundel" - and both
+# assert a palette exactly as hard. An earlier spelling of the test below
+# looked for that clause's literal " in " and so failed all five of the newer
+# bullets for a phrasing difference.
+#
+# Metallics are deliberately absent. "tarnished brass fastenings" is patina on
+# a fitting rather than a colour scheme, and every palette-flagged bullet names
+# a real hue besides, so leaving gold and brass out keeps the check strict.
+COLOUR_WORDS = re.compile(
+    r"\b(black|blue|brown|charcoal|crimson|cyan|green|grey|gray|indigo|"
+    r"magenta|maroon|ochre|olive|orange|pastels?|pink|purple|red|russet|"
+    r"scarlet|tan|teal|turquoise|violet|white|yellow)\b", re.I)
 
 
 class TestSplitFaction(unittest.TestCase):
@@ -148,7 +165,12 @@ class TestFactionPigment(unittest.TestCase):
 
     def test_every_pigment_faction_actually_names_a_colour(self):
         """A 'palette' flag on a bullet with no colour in it would soften the
-        closing line for nothing."""
+        closing line for nothing.
+
+        What the flag promises is a hue, not a phrasing - see COLOUR_WORDS at
+        the top of this file for why the check is a vocabulary rather than a
+        search for the "in <colour>" clause the earliest bullets happen to use.
+        """
         live = gen.parse_tables(REPO / "prompts" / "npc-generator-tables.md")
         checked = 0
         for bullet in live["Faction"]:
@@ -157,14 +179,28 @@ class TestFactionPigment(unittest.TestCase):
                 continue
             checked += 1
             with self.subTest(bullet=bullet):
-                self.assertIn(" in ", visual,
-                              "a palette faction must name its colours: %s" % bullet)
+                self.assertRegex(
+                    visual, COLOUR_WORDS,
+                    "a palette faction must name its colours: %s" % bullet)
         # A vacuous pass if 'palette' were ever dropped from every bullet -
         # the loop above would then assert nothing and the test would pass on
         # nothing checked, the same shape test_stance_armed.py and
         # test_stance_content.py guard their own pools against.
         self.assertGreaterEqual(checked, 5,
                                  "expected at least 5 palette-flagged Faction bullets")
+
+    def test_the_colour_check_can_actually_fail(self):
+        """The other half of the vacuity guard above.
+
+        COLOUR_WORDS is broad, and a pattern broad enough to match anything
+        would let the test above pass on bullets that assert no pigment at
+        all. The visual pinned here is the live Colonial militia one, which
+        deliberately carries no 'palette' flag precisely because it names no
+        colour - so it is the exact shape the check has to keep rejecting.
+        """
+        self.assertNotRegex(
+            "mismatched surplus, webbing straps and taped-over insignia",
+            COLOUR_WORDS)
 
 
 if __name__ == "__main__":

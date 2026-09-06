@@ -318,13 +318,22 @@ class TestTheLiveTable(unittest.TestCase):
 
     def test_every_wide_brim_is_flagged(self):
         """The rest of the set. Each of these puts a brim across the top of
-        the skull, which is where an updo already is."""
+        the skull, which is where an updo already is.
+
+        The spiked woven hat - "bristling with jagged spikes at the crown" -
+        was in this list and is not any more. It was flagged 'crown' on the
+        branch that added the register, and commented out of the Headgear
+        table on main in the same window; the merge kept both, leaving a
+        phrase pinned here that no live bullet carries. A retired bullet has
+        no register to get wrong, so the expectation goes rather than the
+        retirement. It stays commented rather than deleted in the table, so
+        restoring it means restoring this line too.
+        """
         flagged = self._flagged()
         for wanted in ("wide woven sedge hat",
                        "pale cloth wrapped loosely over the lower face",
                        "small curved horns and hanging tassels",
                        "small hanging bells and a tattered red ribbon",
-                       "bristling with jagged spikes at the crown",
                        "over a patterned cloth headband"):
             with self.subTest(phrase=wanted):
                 self.assertIn(wanted, flagged,

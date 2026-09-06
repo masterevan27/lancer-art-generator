@@ -131,9 +131,9 @@ def main(argv=None):
 
     total_tagged = sum(c.tagged for row in results.values() for c in row.values())
     if not total_tagged:
-        print("\nNothing tagged yet - this is the pre-tagging baseline. Every "
-              "theme opens the whole neutral pool, which is what "
-              "test/test_theme_inert.py pins.")
+        print("\nNothing tagged - every theme opens the whole neutral pool. "
+              "That was the pre-tagging baseline; now it means the tags have "
+              "gone, which test/test_theme_visibility.py pins against.")
     elif shortfalls:
         print("\n%d table(s) below target: %s" % (
             len(shortfalls),

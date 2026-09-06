@@ -34,16 +34,17 @@ filter in turn rather than assumed:
     that already exists, on a property they do not measure.
 """
 import random
+import re
 import unittest
 
 from test.helpers import REPO, load_generator, own_texts
-from test.theme_visibility import measure, measure_cell
+from test.theme_visibility import LIVE_TABLES, measure, measure_cell
 
 gen = load_generator()
 
 THEMED_FIXTURE = REPO / "test" / "fixtures" / "tables-themed.md"
 TABLES = gen.parse_tables(THEMED_FIXTURE)
-LIVE = gen.parse_tables(REPO / "prompts" / "npc-generator-tables.md")
+LIVE = gen.parse_tables(LIVE_TABLES)
 
 # One sample, shared by every test below - 800 rolls per theme across three
 # themes is the expensive part of this file, and none of these tests mutate it.
@@ -155,20 +156,49 @@ class TestMeasurementItself(unittest.TestCase):
             for name, cell in row.items():
                 self.assertLessEqual(cell.hits, cell.rolls, "%s/%s" % (theme, name))
 
-    def test_the_live_tables_measure_zero_until_they_are_tagged(self):
-        """The pre-tagging baseline, and a second guard on Phase 1 inertness.
+    def test_the_live_tables_measure_the_tags_they_carry(self):
+        """The instrument pointed at the content it was built to watch.
 
-        Delete or invert this when the tagging pass begins - like
-        test_theme_inert.py, a green run here stops meaning anything the moment
-        content carries tags, and a stale copy would mask real regressions.
+        This was test_the_live_tables_measure_zero_until_they_are_tagged, the
+        pre-tagging baseline: with no bullet tagged the whole grid read zero,
+        and pinning that caught a stray tag landing before the tagging pass
+        was meant to start. Its own docstring asked for it to be inverted once
+        that pass began, which it has, so it now pins the other end - that
+        measure() reports the live tags rather than a number of its own.
+
+        The count it is held against is read off the raw markdown rather than
+        recomputed from the parsed tables, which is the whole point: a check
+        written as `sum(themes_of(flags_for(...)))` would be measure_cell's
+        own line copied out, green by construction. Counting '@' occurrences
+        in the file text instead goes around parse_tables(), table_keys() and
+        flags_for() together, so a variant table silently dropped from the
+        parse, or a Backdrop tag read out of the wrong '||' segment, shows up
+        here as a shortfall rather than as agreement between two copies of the
+        same mistake. HTML comments are stripped first - the Theme table's own
+        doc block spells out '|| civ @neosamurai' as an example, and a retired
+        bullet stays in the file commented out rather than deleted.
+
+        The tag count does not depend on the rolls, so this takes one roll per
+        theme rather than the 800 the sampled tests above share.
         """
-        results = measure(LIVE, count=5, seed=0)
-        tagged = sum(c.tagged for row in results.values() for c in row.values())
+        text = re.sub(r"<!--.*?-->", "", LIVE_TABLES.read_text(encoding="utf-8"),
+                      flags=re.S)
+        in_file = sum(
+            len(re.findall(r"(?<![\w@])@[a-z]+", line))
+            for line in re.findall(r"^- .*?\|\|.*$", text, flags=re.M))
+
+        results = measure(LIVE, count=1, seed=0)
+        measured = sum(c.tagged for row in results.values() for c in row.values())
+
+        self.assertGreater(
+            in_file, 0,
+            "no '@' tag left in the live tables - tagging was reverted, and "
+            "this test no longer measures anything")
         self.assertEqual(
-            tagged, 0,
-            "live tables now carry theme tags - tagging has begun, so update "
-            "test_theme_visibility.test_the_live_tables_measure_zero_until_"
-            "they_are_tagged and delete test/test_theme_inert.py")
+            measured, in_file,
+            "measure() reports %d tagged live bullets against %d '@' tags in "
+            "the file - the instrument is not seeing all the content, or is "
+            "counting some of it twice" % (measured, in_file))
 
 
 if __name__ == "__main__":
