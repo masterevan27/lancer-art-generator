@@ -2295,6 +2295,18 @@ def parse_args(argv=None):
                               "lossy record of its own roll - a stored Role has lost the 'mil' "
                               "flag its Faction, Outfit and Weapon are filtered on - so those "
                               "re-roll only: " + ", ".join(REROLLABLE_TRAITS))
+    regen.add_argument("--trait-choices", metavar="TABLE",
+                       help="print, as JSON on stdout, which values TABLE could take on "
+                            "this NPC given its other traits - each with whether the roller "
+                            "would have offered it ('allowed') and which kept traits it "
+                            "would leave contradicting it ('conflicts'). Renders nothing and "
+                            "contacts no server. Requires --regen-id, and needs the entry's "
+                            "raw bullets.")
+    regen.add_argument("--release", metavar="A,B",
+                       help="with --set-trait, traits to re-roll instead of keeping - meant "
+                            "for the ones --trait-choices reports as conflicting. Each name "
+                            "expands to its whole cascade, so releasing Outfit also re-rolls "
+                            "the Headgear, Weapon and Gear it gates.")
 
     run = p.add_argument_group("run mode")
     run.add_argument("--trait-odds", type=int, nargs="?", const=DEFAULT_ODDS_SAMPLES,
@@ -2361,6 +2373,15 @@ def parse_args(argv=None):
     if args.pronouns and "Pronouns" in overrides:
         p.error("--pronouns and --set-trait Pronouns= set the same thing; use one")
     args.overrides = overrides
+
+    # Below args.overrides, because both of these read it.
+    if args.trait_choices:
+        if not args.regen_manifest:
+            p.error("--trait-choices needs --regen-manifest and --regen-id")
+        if args.reroll_trait:
+            p.error("--trait-choices only reports; drop --reroll-trait")
+        if args.overrides:
+            p.error("--trait-choices only reports; drop --set-trait")
 
     args.gender_workflows = dict(GENDER_WORKFLOWS, woman=args.workflow_woman)
 
@@ -2968,6 +2989,54 @@ def trait_choices(tables, npc, name):
     return out
 
 
+def print_trait_choices(args):
+    """--trait-choices: which values one trait could take, as JSON.
+
+    Prints to stdout and nothing else, because the caller parses stdout whole
+    - the same contract --trait-odds already keeps, and the reason
+    npc_from_entry() is asked not to warn here. Anything diagnostic goes to
+    stderr.
+    """
+    manifest = art.load_manifest(args.regen_manifest)
+    _, entry = find_regen_entry(manifest, args.regen_id, args.regen_manifest)
+    npc = npc_from_entry(entry, args.regen_id, warn=False)
+
+    # Pinning is what makes a chosen value mean anything, and a legacy entry
+    # has nothing to pin: its stored bullets lost their flags on the way in, so
+    # the filters this query reports on cannot run against them. Refused with
+    # the cure named, the way reroll_trait() names it.
+    raw = npc.get("_raw")
+    if not raw:
+        raise SystemExit(
+            "--trait-choices %s: this entry recorded no raw bullets, so there "
+            "is nothing to pin the rest of the NPC to. Re-roll the NPC to "
+            "record them." % args.trait_choices)
+
+    # The same list reroll_trait() would use for this entry, so a trait the
+    # GUI is told it cannot choose is a trait it is also told it cannot
+    # re-roll. Offering one without the other would be worse than neither.
+    if args.trait_choices not in RAW_REROLLABLE_TRAITS:
+        reason = UNREROLLABLE_REASONS.get(
+            args.trait_choices, "it is not a trait this script rolls")
+        raise SystemExit(
+            "--trait-choices %s: cannot choose that one, because %s.\n"
+            "Choosable: %s"
+            % (args.trait_choices, reason, ", ".join(RAW_REROLLABLE_TRAITS)))
+
+    if not args.tables.exists():
+        raise SystemExit("--trait-choices needs the tables file: %s" % args.tables)
+    tables = parse_tables(args.tables)
+    check_tables(tables, args.tables, getattr(parse_tables, "repeated", ()))
+
+    json.dump({
+        "trait": args.trait_choices,
+        "current": raw.get(args.trait_choices),
+        "dependents": list(TRAIT_DEPENDENTS.get(args.trait_choices, ())),
+        "choices": trait_choices(tables, npc, args.trait_choices),
+    }, sys.stdout)
+    return 0
+
+
 def find_regen_entry(manifest, regen_id, manifest_path):
     """The (folder path, entry) pair for one id, or a refusal naming it."""
     folder_path, entry = next(
@@ -3208,6 +3277,10 @@ def regenerate_one(args):
 
 def main(argv=None):
     args = parse_args(argv)
+
+    # Before regenerate_one(), which renders. This mode only reports.
+    if args.trait_choices:
+        return print_trait_choices(args)
 
     if args.regen_manifest:
         return regenerate_one(args)

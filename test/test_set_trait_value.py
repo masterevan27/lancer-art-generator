@@ -12,8 +12,13 @@ rest depends on: a probed roll and an unprobed roll at the same seed are the
 same NPC. If that ever stops being true, every legality answer in this file is
 being computed against a roll that never happened.
 """
+import contextlib
+import io
+import json
 import random
+import tempfile
 import unittest
+from pathlib import Path
 
 from test.helpers import FIXTURE_TABLES, REPO, load_generator
 
@@ -214,6 +219,88 @@ class ReleasesIsTheCascadeClosure(unittest.TestCase):
                 if not c["conflicts"]:
                     with self.subTest(trait=trait):
                         self.assertEqual(c["releases"], [])
+
+
+LIVE_TABLES_PATH = REPO / "prompts" / "npc-generator-tables.md"
+
+
+def manifest_with(npc, path, seed=0, drop_raw=False):
+    """A one-entry manifest file on disk, as regenerate_one() reads it."""
+    entry = {
+        "id": "npc-test-%d" % seed,
+        "kind": "npc",
+        "name": npc["name"],
+        "callsign": npc["Callsigns"],
+        "seed": seed,
+        "traits": {k: v for k, v in npc.items() if not k.startswith("_")},
+        "young": npc["_young"],
+        "outfit_notac": npc["_outfit_notac"],
+        "gear_helmet": npc["_gear_helmet"],
+        "rawTraits": {} if drop_raw else npc["_raw"],
+    }
+    path.write_text(json.dumps({"npcs/test": entry}), encoding="utf-8")
+    return path
+
+
+class TraitChoicesCommand(unittest.TestCase):
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.dir.cleanup)
+        self.npc = raw_npc(seed=0)
+        self.manifest = manifest_with(self.npc, Path(self.dir.name) / "m.json")
+
+    def run_cli(self, *extra, manifest=None):
+        # --tables explicitly: the NPC in the manifest was rolled from LIVE,
+        # so the query has to read the same file, and leaning on the default
+        # would make this test depend on the working directory.
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            gen.main(["--regen-manifest", str(manifest or self.manifest),
+                      "--regen-id", "npc-test-0",
+                      "--tables", str(LIVE_TABLES_PATH),
+                      *extra])
+        return out.getvalue()
+
+    def test_it_prints_json_and_renders_nothing(self):
+        got = json.loads(self.run_cli("--trait-choices", "Outfit"))
+        self.assertEqual(got["trait"], "Outfit")
+        self.assertEqual(got["current"], self.npc["_raw"]["Outfit"])
+        self.assertEqual(got["dependents"], ["Headgear", "Weapon", "Gear"])
+        self.assertTrue(got["choices"])
+
+    def test_every_choice_carries_the_documented_keys(self):
+        got = json.loads(self.run_cli("--trait-choices", "Outfit"))
+        for choice in got["choices"]:
+            self.assertEqual(
+                sorted(choice),
+                ["allowed", "conflicts", "current", "heading", "releases", "value"])
+
+    def test_stdout_is_json_and_nothing_else(self):
+        # The GUI parses stdout whole, so one stray banner line breaks it -
+        # the same constraint --trait-odds already documents.
+        json.loads(self.run_cli("--trait-choices", "Hair"))
+
+    def test_the_flags_stay_on_the_value(self):
+        # --set-trait takes its bullet verbatim and the downstream filters read
+        # those flags, so stripping them anywhere on this path is a real bug.
+        got = json.loads(self.run_cli("--trait-choices", "Outfit"))
+        self.assertTrue(any("||" in c["value"] for c in got["choices"]))
+
+    def test_an_unrerollable_trait_is_refused(self):
+        with self.assertRaises(SystemExit) as caught:
+            self.run_cli("--trait-choices", "Pronouns")
+        self.assertIn("Pronouns", str(caught.exception))
+
+    def test_an_entry_without_raw_bullets_is_refused(self):
+        legacy = manifest_with(
+            self.npc, Path(self.dir.name) / "legacy.json", drop_raw=True)
+        with self.assertRaises(SystemExit) as caught:
+            self.run_cli("--trait-choices", "Outfit", manifest=legacy)
+        self.assertIn("re-roll", str(caught.exception).lower())
+
+    def test_it_refuses_to_run_alongside_a_reroll(self):
+        with self.assertRaises(SystemExit):
+            self.run_cli("--trait-choices", "Hair", "--reroll-trait", "Hair")
 
 
 if __name__ == "__main__":
