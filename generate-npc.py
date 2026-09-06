@@ -47,6 +47,13 @@ Examples:
   python generate-npc.py --regen-manifest .generated-npcs.json --regen-id npc-Nadia-Okonkwo-1234
   python generate-npc.py --regen-manifest .generated-npcs.json --regen-id npc-Nadia-Okonkwo-1234 \\
       --new-seed 5678 --no-token
+
+  # Ask which values one trait could take on that NPC (JSON on stdout, no
+  # render), then pin the one you want and re-render with everything else kept:
+  python generate-npc.py --regen-manifest .generated-npcs.json --regen-id npc-Nadia-Okonkwo-1234 \\
+      --trait-choices Outfit
+  python generate-npc.py --regen-manifest .generated-npcs.json --regen-id npc-Nadia-Okonkwo-1234 \\
+      --set-trait Outfit="an elaborate floral kimono ... || civ notac" --release Headgear
 """
 
 from __future__ import annotations
@@ -1188,8 +1195,27 @@ def pronoun_fields(pronouns):
     }
 
 
-def roll_npc(tables, rng, overrides=None, unarmed=False):
-    """One NPC as a flat dict of trait -> rolled text."""
+def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
+    """One NPC as a flat dict of trait -> rolled text.
+
+    `probe`, when a dict is passed, is filled with the fully-filtered pool
+    this function computed for each table, keyed by table name. It is a
+    read-out of work already being done rather than a second computation:
+    every filter below narrows `options` and the draw comes off the end of
+    it, so the list recorded here is by construction the set of bullets this
+    table could have produced given the traits above it. That is the whole
+    reason the query in trait_choices() can promise not to drift - there is
+    nothing for it to drift from.
+
+    Recording consumes no randomness and changes no value, so a probed roll
+    and an unprobed roll at the same seed are the same NPC.
+    test_set_trait_value.ProbeIsInert holds that, and every legality answer
+    depends on it.
+
+    Pronouns is the one table with no entry: it is drawn before the loop from
+    an unfiltered list and is refused by both re-roll paths anyway, so there
+    is no question to answer about it.
+    """
     # Pronouns first: every other table may have a per-pronoun variant, so the
     # roll that selects between them has to happen before the rest.
     pronouns = (overrides or {}).get("Pronouns") or rng.choice(tables["Pronouns"])
@@ -1275,6 +1301,12 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     # a pirate should be as likely to look neosamurai as cyberpunk - so nothing
     # here reads npc["Role"].
     theme = (overrides or {}).get("Theme") or rng.choice(tables["Theme"])
+    # No filter runs on Theme - it is the thing the others are filtered by -
+    # so its pool is the whole table. Recorded anyway, so a caller asking
+    # "what could Theme be" gets a list rather than a KeyError, and so the
+    # probe's coverage test can name every table uniformly.
+    if probe is not None:
+        probe["Theme"] = list(tables["Theme"])
 
     npc = {"Pronouns": pronouns, "Theme": theme}
 
@@ -1493,6 +1525,13 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
         # Age/Build pairing above, and the Gear and Stance filters below -
         # since a shorter pool draws differently. Those already behaved this
         # way for a rolled trait; forcing one just makes it reachable sooner.
+        #
+        # After the last filter and before the draw: this is the only line in
+        # the function where `options` is exactly what the roller is about to
+        # choose from, which is what makes it the honest answer to "what could
+        # this table have produced for this NPC".
+        if probe is not None:
+            probe[name] = list(options)
         value = rng.choice(options)
 
         # A forced value replaces the draw here, at the moment its own table is
@@ -1623,6 +1662,10 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     if "hands" in carried_flags:
         free = [x for x in stances if "hands" not in x[1]]
         stances = free or stances          # never filter the pool down to nothing
+    # `stances` is (bullet, flags) pairs so the raw line survives the filters;
+    # the probe wants the bullets alone, to match every other entry.
+    if probe is not None:
+        probe["Stance"] = [x[0] for x in stances]
     raw["Stance"] = npc["Stance"] = rng.choice(stances)[0]
 
     # A 'nogear' backdrop has the subject's hands full of whatever the scene
@@ -1667,6 +1710,17 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
             # The re-roll overwrites raw["Gear"] on purpose: this is the bullet
             # the NPC keeps, and both consumers want the keeper rather than the
             # draw it replaced.
+            #
+            # The probe entry is overwritten for the same reason. A 'nogear'
+            # backdrop has already filled the subject's hands, so THIS is the
+            # pool the NPC's Gear actually comes from, and the loop's wider one
+            # is a list the roller has just finished overruling. Recording the
+            # wider one would tell a caller that a 'hands' Gear is fine under a
+            # scene that is about to take it away - which is the clash a pinned
+            # Gear survives today (23 in 400, per the Backdrop -> Gear note in
+            # TRAIT_DEPENDENTS), reported as if it were not there.
+            if probe is not None:
+                probe["Gear"] = list(free)
             raw["Gear"] = rng.choice(free)
             npc["Gear"], gear_flags = split_flags(raw["Gear"])
 
@@ -2375,6 +2429,18 @@ def parse_args(argv=None):
                               "lossy record of its own roll - a stored Role has lost the 'mil' "
                               "flag its Faction, Outfit and Weapon are filtered on - so those "
                               "re-roll only: " + ", ".join(REROLLABLE_TRAITS))
+    regen.add_argument("--trait-choices", metavar="TABLE",
+                       help="print, as JSON on stdout, which values TABLE could take on "
+                            "this NPC given its other traits - each with whether the roller "
+                            "would have offered it ('allowed') and which kept traits it "
+                            "would leave contradicting it ('conflicts'). Renders nothing and "
+                            "contacts no server. Requires --regen-id, and needs the entry's "
+                            "raw bullets.")
+    regen.add_argument("--release", metavar="A,B",
+                       help="with --set-trait, traits to re-roll instead of keeping - meant "
+                            "for the ones --trait-choices reports as conflicting. Each name "
+                            "expands to its whole cascade, so releasing Outfit also re-rolls "
+                            "the Headgear, Weapon and Gear it gates.")
 
     run = p.add_argument_group("run mode")
     run.add_argument("--trait-odds", type=int, nargs="?", const=DEFAULT_ODDS_SAMPLES,
@@ -2403,11 +2469,15 @@ def parse_args(argv=None):
     if bool(args.regen_manifest) != bool(args.regen_id):
         p.error("--regen-manifest and --regen-id must be given together")
     if args.regen_manifest:
+        # --set-trait is deliberately NOT in this list any more. "Replaces the
+        # roll entirely" is still true of every flag that is: each of them
+        # would be asking for a different NPC. Naming one trait's value while
+        # reproducing the rest is the opposite request, and reroll_from_raw()
+        # has had a `pinned` parameter for it since Theme's cascade needed one.
         conflicting = [
             flag for flag, given in (
                 ("--count", args.count != 1), ("--seed", args.seed is not None),
                 ("--name", bool(args.name)), ("--pronouns", bool(args.pronouns)),
-                ("--set-trait", bool(args.set_trait)),
                 ("--unarmed", args.unarmed),
             ) if given
         ]
@@ -2441,6 +2511,34 @@ def parse_args(argv=None):
     if args.pronouns and "Pronouns" in overrides:
         p.error("--pronouns and --set-trait Pronouns= set the same thing; use one")
     args.overrides = overrides
+
+    # Below args.overrides, because all of these read it.
+    if args.trait_choices:
+        if not args.regen_manifest:
+            p.error("--trait-choices needs --regen-manifest and --regen-id")
+        if args.reroll_trait:
+            p.error("--trait-choices only reports; drop --reroll-trait")
+        if args.overrides:
+            p.error("--trait-choices only reports; drop --set-trait")
+
+    if args.reroll_trait and args.overrides:
+        p.error("--reroll-trait draws a new value and --set-trait names one; use one")
+
+    args.release = [n.strip() for n in (args.release or "").split(",") if n.strip()]
+    if args.release:
+        if not args.overrides:
+            p.error("--release only makes sense with --set-trait")
+        # Only what the set trait actually gates. Releasing anything else is a
+        # re-roll wearing a disguise, and --reroll-trait is the flag for that.
+        releasable = set()
+        for table in args.overrides:
+            releasable |= set(TRAIT_DEPENDENTS.get(table, ()))
+        stray = [n for n in args.release if n not in releasable]
+        if stray:
+            p.error(
+                "--release %s: not gated by %s. Releasable here: %s"
+                % (", ".join(stray), ", ".join(sorted(args.overrides)),
+                   ", ".join(sorted(releasable)) or "nothing"))
 
     args.gender_workflows = dict(GENDER_WORKFLOWS, woman=args.workflow_woman)
 
@@ -2954,29 +3052,214 @@ def reroll_trait(tables, npc, name, rng):
     return value
 
 
-def regenerate_one(args):
-    """Re-render one NPC's portrait and/or token from a stored manifest entry.
+def trait_choices(tables, npc, name):
+    """Which bullets `name` could take on this NPC, and what each would cost.
 
-    Skips roll_npc and the tables file entirely - every trait comes from the
-    entry exactly as it was originally rolled, so the prompt reproduces
-    identically regardless of --new-seed. The entry's own folder is reused and
-    overwritten in place (same filenames), unlike a fresh roll's npc_folder(),
-    which suffixes rather than collides.
+    Two questions per bullet, and they run in opposite directions.
+
+    Upstream: could the roller have produced this bullet for this table, given
+    the traits above it? That is `probe[name]` from a roll with the whole NPC
+    pinned - the pool roll_npc() filtered, read back rather than recomputed.
+    One roll answers it for the entire table at once, because a table's pool
+    is built from the traits ABOVE it and those are pinned to this NPC's own
+    bullets regardless of which candidate is being asked about.
+
+    Downstream: if this bullet replaced the current one, would any trait BELOW
+    it be left holding a value the roller would no longer offer? Pinning
+    filters one way only - a pinned trait is never re-drawn, so nothing
+    re-checks it against a gate that has just changed - which is exactly the
+    contradiction class reroll_from_raw()'s cascade exists to prevent. Here
+    the cascade is deliberately not run, because keeping the dependents is the
+    point, so the contradiction is reported instead of avoided.
+
+    The downstream pass runs over every edge in TRAIT_DEPENDENTS bar Weather,
+    including the pairs roll_npc() already filters both ways (Headgear/Gear,
+    Age/Build). For those it is redundant and simply agrees with the upstream
+    pool. Redundant beats an exception list that has to be re-derived every
+    time an edge is added: a stale exception reports a conflict that is not
+    real, but a missed edge hides one that is.
+
+    Weather is exempt because its edge is not a filter. Nothing narrows the
+    Weather pool - the Backdrop's 'weather' flag is read at prompt-build time
+    by weather_sentence() and decides only whether the rolled Weather is
+    RENDERED. A kept Weather is therefore never illegal, only newly hidden or
+    newly shown, and checking it would report every Backdrop in the table as
+    conflicting.
+
+    Nothing is dropped. Both answers ride on the entry and the caller decides:
+    the picker this feeds greys ruled-out values and still lets them be
+    chosen, which mirrors --set-trait's own long-standing behaviour of
+    bypassing the roll pool. This function describes the pool; it does not
+    enforce it.
+
+    The rng is fixed rather than passed in. Every roll here is fully pinned,
+    so nothing is actually drawn and the seed cannot reach the result - but a
+    caller handing in a live rng would have its stream silently consumed by a
+    query, a bug that would only ever surface as an unrelated NPC changing.
+    """
+    subject = npc["Pronouns"].split("/")[0].strip().lower()
+    raw = dict(npc["_raw"])
+
+    baseline = {}
+    roll_npc(tables, random.Random(0), raw, probe=baseline)
+    pool = set(baseline.get(name, ()))
+
+    dependents = [d for d in TRAIT_DEPENDENTS.get(name, ()) if d != "Weather"]
+
+    # Deduplicated, order preserved. variant_table() repeats a bullet once per
+    # point of weight, because that is how the roller makes a heavier bullet
+    # more likely - fine for rng.choice(), wrong for a list somebody reads: a
+    # weight-30 bullet would appear thirty times in the picker, and "the value
+    # this NPC is wearing" would match all thirty of them.
+    #
+    # Weight is not lost, it is just not this function's subject. What a
+    # bullet's odds are is what --trait-odds answers.
+    candidates = list(dict.fromkeys(variant_table(tables, name, subject)))
+
+    out = []
+    for bullet in candidates:
+        current = bullet == raw.get(name)
+        # The value it already has cannot contradict what it is already
+        # wearing, and skipping it here is not an optimisation - running the
+        # check would compare the NPC against itself and could only ever
+        # report a conflict that predates this feature.
+        if dependents and not current:
+            forced = dict(raw, **{name: bullet})
+            after = {}
+            try:
+                roll_npc(tables, random.Random(0), forced, probe=after)
+            except SystemExit:
+                # Two pairings are refused outright rather than filtered: a
+                # 'young' Age with a 'figure' Build, and a 'plain' Role with a
+                # 'dressy' Outfit. roll_npc() checks those after the loop,
+                # where both values are known whether they were rolled or
+                # forced, because a pool filter cannot catch a pair that was
+                # BOTH forced - which is every pair in here.
+                #
+                # That refusal is a conflict of the hardest kind, so it is
+                # reported as one. Which dependent caused it is asked of the
+                # roller rather than parsed out of its message: free one at a
+                # time and see which one makes the refusal go away. Costs at
+                # most len(dependents) extra rolls, and only for a candidate
+                # that raised at all.
+                conflicts = []
+                for d in dependents:
+                    if d not in raw:
+                        continue
+                    trial = dict(forced)
+                    del trial[d]
+                    try:
+                        roll_npc(tables, random.Random(0), trial, probe={})
+                    except SystemExit:
+                        continue    # still refused, so freeing d is not the cure
+                    conflicts.append(d)
+                # Refused however we free them one at a time means more than
+                # one is implicated. Naming them all is the honest answer, and
+                # releasing them all is the remedy that actually works.
+                conflicts = conflicts or [d for d in dependents if d in raw]
+            else:
+                conflicts = [d for d in dependents
+                             if d in raw and raw[d] not in after.get(d, ())]
+        else:
+            conflicts = []
+
+        # What --release <conflicts> would actually free. Reported rather than
+        # left to the caller to derive, so the picker can name what moves
+        # without a copy of trait_cascade() in JavaScript.
+        releases = set()
+        for d in conflicts:
+            releases |= set(trait_cascade(d))
+        releases -= {name}
+
+        out.append({
+            "value": bullet,
+            "heading": heading_for(tables, name, subject, bullet),
+            "allowed": bullet in pool,
+            "current": current,
+            "conflicts": conflicts,
+            "releases": sorted(releases),
+        })
+    return out
+
+
+def print_trait_choices(args):
+    """--trait-choices: which values one trait could take, as JSON.
+
+    Prints to stdout and nothing else, because the caller parses stdout whole
+    - the same contract --trait-odds already keeps, and the reason
+    npc_from_entry() is asked not to warn here. Anything diagnostic goes to
+    stderr.
     """
     manifest = art.load_manifest(args.regen_manifest)
+    _, entry = find_regen_entry(manifest, args.regen_id, args.regen_manifest)
+    npc = npc_from_entry(entry, args.regen_id, warn=False)
+
+    # Pinning is what makes a chosen value mean anything, and a legacy entry
+    # has nothing to pin: its stored bullets lost their flags on the way in, so
+    # the filters this query reports on cannot run against them. Refused with
+    # the cure named, the way reroll_trait() names it.
+    raw = npc.get("_raw")
+    if not raw:
+        raise SystemExit(
+            "--trait-choices %s: this entry recorded no raw bullets, so there "
+            "is nothing to pin the rest of the NPC to. Re-roll the NPC to "
+            "record them." % args.trait_choices)
+
+    # The same list reroll_trait() would use for this entry, so a trait the
+    # GUI is told it cannot choose is a trait it is also told it cannot
+    # re-roll. Offering one without the other would be worse than neither.
+    if args.trait_choices not in RAW_REROLLABLE_TRAITS:
+        reason = UNREROLLABLE_REASONS.get(
+            args.trait_choices, "it is not a trait this script rolls")
+        raise SystemExit(
+            "--trait-choices %s: cannot choose that one, because %s.\n"
+            "Choosable: %s"
+            % (args.trait_choices, reason, ", ".join(RAW_REROLLABLE_TRAITS)))
+
+    if not args.tables.exists():
+        raise SystemExit("--trait-choices needs the tables file: %s" % args.tables)
+    tables = parse_tables(args.tables)
+    check_tables(tables, args.tables, getattr(parse_tables, "repeated", ()))
+
+    json.dump({
+        "trait": args.trait_choices,
+        "current": raw.get(args.trait_choices),
+        "dependents": list(TRAIT_DEPENDENTS.get(args.trait_choices, ())),
+        "choices": trait_choices(tables, npc, args.trait_choices),
+    }, sys.stdout)
+    return 0
+
+
+def find_regen_entry(manifest, regen_id, manifest_path):
+    """The (folder path, entry) pair for one id, or a refusal naming it."""
     folder_path, entry = next(
-        ((k, v) for k, v in manifest.items() if isinstance(v, dict) and v.get("id") == args.regen_id),
+        ((k, v) for k, v in manifest.items() if isinstance(v, dict) and v.get("id") == regen_id),
         (None, None),
     )
     if entry is None:
-        raise SystemExit("--regen-id %r: no such entry in %s" % (args.regen_id, args.regen_manifest))
+        raise SystemExit("--regen-id %r: no such entry in %s" % (regen_id, manifest_path))
+    return folder_path, entry
 
+
+def npc_from_entry(entry, regen_id, warn=True):
+    """A manifest entry rebuilt into the dict roll_npc() would have produced.
+
+    Lifted out of regenerate_one() so that --trait-choices reads an entry the
+    same way a regen does. Two reconstructions would drift, and the direction
+    they would drift in is the worst one available: a query answering about a
+    slightly different NPC than the one the regen is about to render.
+
+    `warn` is off for the query, which is a read-only question a GUI may ask
+    many times over. The migration notices belong on the run that actually
+    writes something - and the query prints JSON to stdout, so a stray line
+    would corrupt it besides.
+    """
     npc = migrate_traits(entry["traits"])
     npc["_pronouns"] = pronoun_fields(npc["Pronouns"])
-    if "young" not in entry:
+    if warn and "young" not in entry:
         print("! %s has no recorded 'young' flag (written by an older version of this script) - "
               "assuming not young; the maturity/face wording may drift slightly from the "
-              "original render." % args.regen_id, file=sys.stderr)
+              "original render." % regen_id, file=sys.stderr)
     npc["_young"] = entry.get("young", False)
     # No default: absent is 'not recorded', which reroll_trait() distinguishes
     # from a recorded False. Unlike 'young' this is not consumed by
@@ -3010,10 +3293,26 @@ def regenerate_one(args):
         # rename_legacy_traits().
         npc["_raw"] = rename_legacy_traits(entry["rawTraits"])
     if "Height" not in npc:
-        print("! %s has no recorded Height trait (written before the Height table existed) - "
-              "regenerating without one; re-roll instead of regenerating to pick one up."
-              % args.regen_id, file=sys.stderr)
+        if warn:
+            print("! %s has no recorded Height trait (written before the Height table existed) - "
+                  "regenerating without one; re-roll instead of regenerating to pick one up."
+                  % regen_id, file=sys.stderr)
         npc["Height"] = "of average height"
+    return npc
+
+
+def regenerate_one(args):
+    """Re-render one NPC's portrait and/or token from a stored manifest entry.
+
+    Skips roll_npc and the tables file entirely - every trait comes from the
+    entry exactly as it was originally rolled, so the prompt reproduces
+    identically regardless of --new-seed. The entry's own folder is reused and
+    overwritten in place (same filenames), unlike a fresh roll's npc_folder(),
+    which suffixes rather than collides.
+    """
+    manifest = art.load_manifest(args.regen_manifest)
+    folder_path, entry = find_regen_entry(manifest, args.regen_id, args.regen_manifest)
+    npc = npc_from_entry(entry, args.regen_id)
 
     # One trait re-rolled - and, on the raw path, everything a filter would
     # have had to reject alongside it. Everything else reproduced. Seeded from
@@ -3050,6 +3349,66 @@ def regenerate_one(args):
         # look like a smaller change than it was.
         for trait in (trait_cascade(args.reroll_trait) if cascading else ()):
             if trait != args.reroll_trait:
+                print("  with %s: %r -> %r"
+                      % (trait, before.get(trait), npc.get(trait)))
+
+    # One trait pinned to a chosen value, everything else reproduced - the
+    # mirror of the block above, which draws a value instead of taking one.
+    if args.overrides:
+        if not args.tables.exists():
+            raise SystemExit("--set-trait needs the tables file: %s" % args.tables)
+        tables = parse_tables(args.tables)
+        check_tables(tables, args.tables, getattr(parse_tables, "repeated", ()))
+        if not npc.get("_raw"):
+            raise SystemExit(
+                "--set-trait on a regen needs the entry's raw bullets, so the "
+                "rest of the NPC has something to be pinned to. Re-roll the "
+                "NPC to record them.")
+
+        # The same list --reroll-trait accepts, and refused for the same
+        # reasons - naming a value rather than drawing one does not make
+        # Pronouns any safer to change under an NPC whose every appearance
+        # bullet was drawn for the old subject, and the two halves of the name
+        # decide the folder and the manifest id. A table that is not rolled at
+        # all is refused here too, rather than passed to roll_npc() where an
+        # override for a table it has never heard of is silently dropped: a
+        # typo would otherwise regenerate the NPC unchanged and report success.
+        unsettable = [t for t in args.overrides if t not in RAW_REROLLABLE_TRAITS]
+        if unsettable:
+            reasons = "; ".join(
+                "%s: %s" % (t, UNREROLLABLE_REASONS.get(
+                    t, "it is not a trait this script rolls"))
+                for t in unsettable)
+            raise SystemExit(
+                "--set-trait %s: cannot set that on a regen (%s).\nSettable: %s"
+                % (", ".join(unsettable), reasons, ", ".join(RAW_REROLLABLE_TRAITS)))
+
+        # free=set() pins every stored bullet; `pinned` swaps the named ones.
+        # Re-running roll_npc() rather than assigning npc[table] directly is
+        # the point: _young, _outfit_notac, _gear_helmet, the '{colour}' fill
+        # and the flag stripping all recompute, and _raw ends up describing the
+        # NPC about to be rendered rather than the one it replaced.
+        #
+        # A released trait travels as its whole cascade. Freeing the bare name
+        # would redraw it and leave everything it gates pinned to bullets
+        # chosen for the value that just went - the same contradiction one
+        # level down, which is what trait_cascade() exists to close.
+        free = set()
+        for name in args.release:
+            free |= set(trait_cascade(name))
+        before = {k: v for k, v in npc.items() if not k.startswith("_")}
+        reroll_from_raw(
+            tables, npc, free,
+            random.Random(args.new_seed if args.new_seed is not None else entry["seed"]),
+            dict(args.overrides))
+        for table in args.overrides:
+            print("set %s: %r -> %r" % (table, before.get(table), npc.get(table)))
+        # Named rather than counted, for the same reason the re-roll cascade
+        # above names its own: a release reaches further than the trait the
+        # user typed, and finding that out from the render is the failure this
+        # report exists to prevent.
+        for trait in sorted(free):
+            if trait not in args.overrides:
                 print("  with %s: %r -> %r"
                       % (trait, before.get(trait), npc.get(trait)))
 
@@ -3181,6 +3540,10 @@ def regenerate_one(args):
 
 def main(argv=None):
     args = parse_args(argv)
+
+    # Before regenerate_one(), which renders. This mode only reports.
+    if args.trait_choices:
+        return print_trait_choices(args)
 
     if args.regen_manifest:
         return regenerate_one(args)

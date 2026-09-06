@@ -923,6 +923,84 @@ theme to give: the re-roll proceeds within it anyway — the seven theme-gated
 tables and their four dependents still draw again — and says so on stderr
 rather than silently pretending the theme changed.)
 
+## Choosing a trait's value instead of re-rolling it
+
+`--reroll-trait` draws a new value. It cannot say *which*, so landing on a
+particular haircut means re-rolling — and re-rendering — until the dice agree.
+Two flags close that gap, and they are meant to be used together.
+
+### Asking what's possible
+
+```
+python generate-npc.py --regen-manifest .generated-npcs.json \
+    --regen-id npc-Nadia-Okonkwo-1234 --trait-choices Outfit
+```
+
+Renders nothing, contacts no ComfyUI, and prints one JSON object on stdout —
+stdout and nothing else, so a caller can parse it whole, the same contract
+`--trait-odds` keeps. Each entry in `choices` carries:
+
+| key | meaning |
+|---|---|
+| `value` | the raw bullet, **flags included**, exactly as `--set-trait` takes it |
+| `heading` | the table it came from, so an `Outfit (she) +` variant stays visible |
+| `allowed` | whether the roller would have offered it, given the traits *above* it |
+| `current` | whether it is what the NPC is wearing now |
+| `conflicts` | kept traits *below* it that this value would leave contradicting |
+| `releases` | what `--release <conflicts>` would actually free — the cascade closure |
+
+`allowed` and `conflicts` are different questions and neither is a filter:
+nothing is dropped from the list. A value can be legal in itself yet leave the
+Headgear it gates stranded, and a value the roller would never have drawn is
+still yours to force — which is what `--set-trait` has always done.
+
+The answer comes from `roll_npc()`'s own filtered pool, recorded as it is built
+rather than recomputed. There is deliberately no second copy of the filter
+chain anywhere: one would agree on the day it was written and drift silently
+afterwards, and a list that quietly stops being true is worse than no list.
+
+On a civilian NPC against the live tables, `Outfit` comes back as 105 bullets —
+56 allowed, 49 ruled out (the military uniforms, on the Role's `mil` flag), and
+13 allowed-but-conflicting (the `notac` robes, against the kept Headgear and
+Gear).
+
+### Pinning the one you picked
+
+```
+python generate-npc.py --regen-manifest .generated-npcs.json \
+    --regen-id npc-Nadia-Okonkwo-1234 \
+    --set-trait Outfit="an elaborate floral kimono ... || civ notac"
+```
+
+`--set-trait` now works alongside `--regen-manifest`, where it used to be
+refused. Every other trait is pinned to its stored raw bullet and the named one
+is swapped, so the NPC keeps its name, face and role and changes exactly what
+was asked for. It re-runs the roller rather than editing the trait in place,
+which is what keeps `rawTraits` describing the NPC that gets rendered.
+
+Add `--release` for the traits `--trait-choices` reported as conflicting:
+
+```
+    --set-trait Outfit="... || civ notac" --release Headgear
+```
+
+Each released name expands to its **whole cascade**. Releasing the bare name
+would redraw it while everything it gates stayed pinned to bullets chosen for
+the value that just went — the same contradiction one level down. Every trait
+that travels is printed, so a release reaching further than the word you typed
+says so rather than turning up in the render.
+
+`--release` is refused without `--set-trait`, and refused for a trait the set
+one does not gate: releasing something unrelated is a re-roll in disguise, and
+`--reroll-trait` is the flag for that.
+
+### Both need the entry's raw bullets
+
+An NPC generated before `rawTraits` existed is a lossy record of its own roll —
+its stored bullets lost the flags the filters read — so there is nothing to pin
+the rest of it to. Both flags refuse such an entry and name the cure: re-roll
+the NPC once to record them.
+
 ## What a bullet's real odds are
 
 A weight tells you how a bullet compares to its neighbour. It does not tell you

@@ -952,7 +952,10 @@ class TestTheCascadeReport(unittest.TestCase):
             path.write_text(json.dumps({"out/report": entry}), encoding="utf-8")
             args = types.SimpleNamespace(
                 regen_manifest=path, regen_id="report-1", reroll_trait=trait,
-                tables=FIXTURE_TABLES, new_seed=None)
+                tables=FIXTURE_TABLES, new_seed=None,
+                # regenerate_one() reads these since --set-trait joined the
+                # regen path; empty is the "this is a re-roll, not a pin" case.
+                overrides={}, release=[])
             out = io.StringIO()
             # The workflow is named but absent, which is as far as this can go
             # without a ComfyUI to render through - every print under test has
@@ -1053,7 +1056,8 @@ class TestTheRegenWriterActuallyRuns(unittest.TestCase):
             args = types.SimpleNamespace(
                 regen_manifest=manifest_path, regen_id="writer-check-1",
                 reroll_trait="Eyes", new_seed=None, tables=FIXTURE_TABLES,
-                no_portrait=True, no_token=True, server=None)
+                no_portrait=True, no_token=True, server=None,
+                overrides={}, release=[])
             stub_comfy = types.SimpleNamespace(base="stub://nowhere")
             with mock.patch.object(gen.art, "find_server", return_value=stub_comfy):
                 result = gen.regenerate_one(args)
