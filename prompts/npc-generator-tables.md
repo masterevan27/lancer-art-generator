@@ -186,6 +186,17 @@ templates at the bottom of this file.
   what the Gear bullet is for. Flag only the bullets where the head is
   actually inside a helmet. A kabuto counts and carries `helmet` without
   `hardtech`, since the clash is one of silhouette rather than register.
+- A **Gear** bullet may carry a **role lock**, of which `admin` is so far the
+  only one. It confines that bullet to the occupations named against the flag
+  in `ROLE_LOCKS` in `generate-npc.py` — `admin` is a colonial administrator's
+  and no one else's — and it is the one hard filter in this file. Every other
+  flag here is a preference that hands the whole pool back rather than leave
+  the roll with nothing; a lock never yields, since yielding would hand the
+  item to the very Role it was kept from. Use it only where the object is an
+  emblem of the job rather than a tool of it, and see the comment on the Gear
+  table for what that distinction is doing. A lock flag not defined in
+  `ROLE_LOCKS`, or one naming a Role the Role table has since reworded, fails
+  `test/test_role_lock.py`.
 
 A flag beginning `@` is a **theme tag** rather than a behavioural flag —
 `|| civ @neosamurai` reads as "civilian dress, belonging to the neosamurai
@@ -1709,6 +1720,18 @@ ignored — so notes like this one are safe to leave inline.
 - a weathered tan leather jacket rolled to the elbow, layered over a thick wrapped scarf || civ
 - a cropped sleeveless hoodie worn over a bare midriff, a low-slung utility belt studded with cybernetic modules, and thigh-high leg wraps || @cyberpunk
 - a sun-faded orange work jumpsuit worn under a heavy grey scarf, cuffed sleeves over grease-stained gloves, a multi-pouch tool belt cinched at the waist || civ
+- a hip-length tan leather jacket worn open over a high-collared dark bodyglove, a drop-leg holster rig strapped down one thigh || civ
+- a matte grey optical-camouflage suit, the light bending across it in faint rippling distortion wherever it catches an edge
+- a long olive field coat over a black rollneck, a shoulder holster rig showing at the open front || civ
+- a cheap dark suit with the tie pulled loose, a thin wire running from one ear down inside the collar || civ
+- a sealed matte-black diving suit with its hood pushed back and the weight belt still buckled at the waist
+- a boxy pale-blue police duty uniform with a black waist rig and a division patch at the shoulder, sleeves rolled to the elbow || mil
+- a white-and-olive labor pilot's suit with a padded collar, buckled chest harness and a stencilled unit number at the thigh || mil
+- grease-blackened overalls stripped to the waist and knotted there over a sweat-damp undershirt, a heavy tool belt slung at the hips || civ
+- a bulky riot-control suit of segmented off-white armor over a dark uniform, a numbered plate across the chest || mil
+- a heavy olive winter greatcoat over a service uniform, the fur collar turned up and gloves stuffed in one pocket || mil
+- a high-visibility site vest over a plaid work shirt and heavy canvas trousers, a loose chinstrap swinging at the throat || civ
+- a rumpled brown suit under an open plastic raincoat, both hems dripping || civ
 
 ## Outfit (she) +
 
@@ -1794,6 +1817,8 @@ ignored — so notes like this one are safe to leave inline.
 - a skintight tactical bodysuit plated at one shoulder, every panel line glowing hairline-thin || @cyberpunk
 - a tailored pinstripe blazer cinched over a short pencil skirt, collar snapped high at the throat || civ @corporate
 - a skintight bio-mechanical bodysuit fused with plating at the shoulders and spine, seams glowing hairline-thin || @cyberpunk
+- a hip-length tan leather jacket over a high-cut dark combat leotard and thigh-high stockings, a drop-leg holster strapped down one bare thigh || civ
+- a pale-blue police uniform blouse with the sleeves rolled, tucked into a straight duty skirt above a black belt rig || mil
 
 ## Weapon
 
@@ -1900,6 +1925,15 @@ ignored — so notes like this one are safe to leave inline.
 - a compact pistol held loose at {possessive} side, muzzle dipped toward the floor || hands gun weapon simple
 - a heavy angular rifle, its rear coil glowing, gripped low at {possessive} hip with the muzzle dipped toward the deck || hands gun weapon @cyberpunk
 - a slim, wire-wrapped katana with a faint glowing edge along the blade || hands weapon @cyberpunk
+- a boxy bullpup carbine with a top-feeding curved magazine, held level in both hands || hands gun mil weapon
+- a long-barrelled heavy revolver holstered under one arm in a worn leather rig || weapon simple sidearm
+- a compact machine pistol with its wire stock folded, clipped to a chest sling || mil weapon simple sidearm
+- a slim vented pistol held low in a gloved hand, its muzzle angled at the ground || hands gun weapon simple
+- a service revolver holstered at the belt beneath an open jacket || weapon simple sidearm
+- a long riot baton gripped in one hand and a scuffed transparent shield braced on the other arm || hands weapon
+- an anti-materiel rifle with its bipod folded, slung muzzle-up across {possessive} back || mil weapon
+- a stubby grenade launcher slung across the chest above a bandolier of fat cased rounds || mil weapon
+- a flare pistol tucked into a chest pouch, its casing scuffed orange || weapon simple
 
 ## Gear
 
@@ -1911,6 +1945,32 @@ ignored — so notes like this one are safe to leave inline.
   has in hand or slung over a shoulder. Armament - anything that reads as a
   weapon - lives in '## Weapon', rolled separately; see that table's comment
   for its flags.
+
+  It is also the everyday half of what a person carries, and deliberately so.
+  Most NPCs this file rolls are not soldiers, and a setting whose civilians
+  all carry diagnostic leads and tactical packs reads as a barracks rather
+  than a colony. A thermos, a market basket, a folded umbrella, a paper
+  parcel of something hot - those are what the great majority of people in
+  any inhabited place have in their hands, and they cost nothing to render.
+  Keep authoring them: the ratio of ordinary objects to issued equipment here
+  is most of what makes a rolled crowd feel lived-in.
+
+  '|| admin' is a ROLE LOCK, and the only one so far. A locked bullet is
+  reachable by the occupations named against that flag in ROLE_LOCKS in
+  generate-npc.py and by no others - 'admin' is a colonial administrator's
+  and nobody else's. It is the one hard filter on this table: unlike 'notac',
+  'hands' or 'helmet', which hand the whole pool back rather than roll
+  nothing, a lock never yields, because yielding would give the item to
+  precisely the Role it was locked away from.
+
+  Use it sparingly and only where the object is an emblem of the job rather
+  than a tool of it. A cane of office, a seal, a warrant - things that say
+  something about the person holding them. A multitool says nothing: anyone
+  may own one, and locking tools by trade would just make the table thinner
+  without making it truer. Adding a lock means adding its flag to ROLE_LOCKS
+  with the exact Role bullet text; test/test_role_lock.py fails on a flag
+  that is missing there, and on a Role name there that the Role table has
+  since reworded.
 -->
 
 - a battered data-slate tucked under one arm || hands
@@ -1939,7 +1999,7 @@ ignored — so notes like this one are safe to leave inline.
 - a compact twin-thruster pack strapped across {possessive} back, its vents lit with a colored glow
 - a folded oilpaper parasol held in one hand, its tip braced against the ground || hands
 - a small pale fox cradled against the chest in both arms || hands
-- a lacquered walking stick gripped in one hand, weight braced into it || hands
+- a lacquered walking stick gripped in one hand, weight braced into it || hands admin
 - a fist-sized holographic sphere hovering just above one open palm, its surface a shifting lattice of glowing fracture-lines and readouts
 - a translucent holographic data-sheet held up in both hands, dense scrolling text glowing across its surface || hands
 - a cracked-open slate bristling with jack cables and cracking tools, plainly meant for breaking into things it shouldn't || hands
@@ -1953,6 +2013,47 @@ ignored — so notes like this one are safe to leave inline.
 - a scuffed leather briefcase gripped by the handle, corners worn pale with use || hands
 - a battered acoustic guitar cradled against {possessive} chest, {possessive} fretting hand pressed to the neck || hands
 - a heavy iron wrench gripped in one grease-streaked glove || hands
+- a string bag of groceries hanging from one hand, a loaf and a bundle of greens showing through the mesh || hands
+- a chipped enamel mug cradled in both hands, steam curling off it || hands
+- a paper-wrapped parcel of hot food held close against the chest || hands
+- a cheap folding umbrella hooked over one forearm, still beaded with rain || hands
+- a battered canvas satchel worn crossbody, its flap held down by one surviving buckle
+- a woven market basket carried in the crook of one arm, a cloth laid over it against the dust || hands
+- a bundle of laundry rolled under one arm, a wooden peg still clipped to a corner || hands
+- a small toy mech held forgotten in one hand, its paint worn down to bare metal || hands
+- a paperback gone soft at the spine, held open on one thumb || hands
+- a ring of worn keys and stamped door-tags hooked through a belt loop
+- a plastic crate of empty bottles balanced against one shoulder || hands
+- a bundle of cut flowers wrapped in newsprint, carried head-down at one side || hands
+- a scuffed instrument case slung from one shoulder, its clasps mismatched
+- a folded broadsheet tucked under one arm, its edges gone damp || hands
+- a transit pass on a frayed lanyard at the neck, the print worn off it
+- a dented lunch tin knotted into a cloth wrap and carried by the knot || hands
+- a stray cat riding one shoulder, tail hooked round the back of {possessive} neck for balance
+- a hand-lettered price board carried face-down at one side || hands
+- a long torque wrench rested across one shoulder, its handle wrapped in worn tape || hands
+- a welding mask carried by its strap in one hand, the lens burned nearly opaque || hands
+- a spool of solder and a cooling iron clipped at the breast pocket
+- a set of calipers hooked in a breast pocket beside a row of markers
+- a steel tape and a flat carpenter's pencil stuffed in a hip pocket
+- a tin of grease and a fistful of oil-black rags gathered in one hand || hands
+- a stiff-bristled deck broom held upright in one hand || hands
+- a coil of nylon line and a pair of shackles hung at the belt
+- a pressure gauge on a looped length of hose slung over one shoulder
+- a cordless driver holstered at the thigh, a strip of bits taped along its body
+- a clipboard of work orders held against one hip, the top sheet curling with damp || hands
+- a length of neural interface cabling running from the nape of {possessive} neck to a jack held in one hand || hands
+- a slim diagnostic wand on a ribbon cable, held up against the base of {possessive} own skull || hands
+- an operator's control gauntlet worn to the elbow, thick cabling looping from the wrist back to a pack at the shoulder
+- a scuffed white site helmet carried under one arm, a stencilled unit number across the crown || hands helmet
+- a radio handset held up at the shoulder, its curled cord running down to a set at the belt || hands
+- a foam-lined optics case carried level in both hands, its latches sprung open || hands
+- a thick bound incident file wedged under one arm, tagged along the edge with coloured slips || hands
+- a heat-warped hydraulic line coiled over one shoulder, still weeping fluid
+- a marshalling paddle held down at each side, reflective tape banding both cuffs || hands
+- a tagged evidence bag held up at eye level, something small and dark shifting inside it || hands
+- a beaten aluminium riot helmet with a scratched face bar, carried in one hand || hands helmet
+- a case file rolled into a tube and tapped absently against one leg || hands
 
 ## Glow colour
 
@@ -2269,6 +2370,20 @@ ignored — so notes like this one are safe to leave inline.
 - A half-body character portrait || {Subject} {is_are} working a hand pump at an open-air bar counter tucked under a rusted porch, sun-bleached hills and a distant industrial skyline rolling beyond the pipework columns. || nogear weather @scav
 - A wide character portrait || {Subject} {is_are} walking toward a rust-streaked scavenger trading post, a spotted hyena loping at {possessive} heel - pressure tanks and tangled pipework rise behind a hand-lettered sign under sun-bleached desert hills and a wide open sky. || weather @scav
 - A wide character portrait || {Subject} {is_are} glancing back over {possessive} shoulder atop a rain-slicked rooftop, blade drawn at {possessive} side - a dense skyline of stacked signage and towers glowing beyond. || nogear weather @cyberpunk
+- x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a canal-side street in an old quarter, laundry strung between concrete tenements above brown water and stacked signage climbing the walls in unfamiliar scripts. || weather
+- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} falling backwards off the parapet of a tower block, arms spread wide and {possessive} coat snapping open, the grid of streets and rooftops laid out far below - {possessive} outline already shimmering and refracting as optical camouflage takes hold, bending the light behind {object}. Dramatic foreshortened composition. || nogear weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dim diagnostic bay, a reclined chair beneath a hooded scanner and thick cable looms dropping from the ceiling to a wall of dark racked hardware.
+- A character portrait || {Subject} {is_are} standing ankle-deep in the flooded arcade of an abandoned shopping street, still water mirroring the dead signage overhead, a shaft of grey daylight falling through a collapsed section of roof far ahead. || weather
+- A close character portrait || {Subject} {is_are} seated in the dark of a parked surveillance van, a bank of monitors washing {possessive} face in pale grey light, cable looms underfoot and cold cups crowding the console.
+- A half-body character portrait || Behind {object}, out of focus, is the wrecked hall of a natural history museum, a shattered tree-of-life mural across the far wall and the slumped bulk of a disabled multi-legged combat walker among the fallen masonry.
+- x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a maintenance hangar, a boxy industrial work-mech kneeling in its cradle with gantry crews along its arms and arc-welding flare stuttering off the walls.
+- A character portrait || {Subject} {is_are} standing on a seawall above a vast reclaimed-land project, dredgers and gantry cranes ranked across flat grey water behind {object} and a typhoon sky stacking up dark on the horizon. || weather
+- A character portrait || {Subject} {is_are} leaning at the counter of a late-night noodle stall beneath a highway overpass, steam rolling off the pass and rain sheeting off the awning's edge into the road behind {object}. || weather
+- x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-lashed construction site at night, pile drivers and floodlit scaffolding rising around the shell of a half-built tower. || weather
+- A character portrait || {Subject} {is_are} standing on an iced-over bridge deck in falling snow, an armored vehicle slewed across the roadway behind {object} and the grey shape of an airship hanging low over a silent skyline. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cramped divisional office of stacked case files and dead desk plants, a fan turning slowly above a wall of pinned notices.
+- A close character portrait || {Subject} {is_are} sitting in the back of a parked command vehicle, folding console screens open around {object} and a wall of labelled switches lit dull amber at {possessive} shoulder.
+- A character portrait || {Subject} {is_are} standing in the flooded, listing hold of a derelict cargo ship, water washing across the canted deck around {possessive} boots and a shaft of daylight falling through torn hull plating far above.
 
 ## Weather
 

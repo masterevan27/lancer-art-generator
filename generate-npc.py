@@ -494,6 +494,37 @@ DEFAULT_WEAPON_POLICY = "civilian"
 # armed ordinary civilians feel - raise it for a quieter setting.
 CIVILIAN_UNARMED_COPIES = 3
 
+# Gear bullets that belong to one occupation and no other. A flag named here
+# locks its bullet to the Role bullets listed against it: a rolled Role not in
+# that set never sees the bullet at all, and no other filter re-admits it.
+#
+# This is the one hard exclusion in the file. Every other filter here is a
+# preference that falls back to the whole pool rather than roll nothing -
+# 'notac', 'dressy', 'hardtech', the civ/mil split - because each of those is
+# answering "does this pairing read badly", and a slightly odd pairing beats a
+# crash. A lock answers a different question: this object means something
+# about the person carrying it, and handing it to anyone else is not an odd
+# pairing but a wrong one. Gear's neutral pool is fifty-odd bullets deep, so
+# there is no realistic way to empty it; test_role_lock.py holds that.
+#
+# Keyed on exact Role bullet text, not on a ROLE_CATEGORIES bucket, and that
+# is the difference from DRESS_POLICY above. The bucket is right for "what
+# kind of work is this" - a question about a whole category, which is why
+# restating it per-Role there would only drift. A lock is the opposite: it
+# names one job because the item is that job's, and 'Officials' would hand
+# the administrator's cane to a corporate liaison and a Union inspector too.
+# Because the text has to match exactly, it can go stale silently if a Role
+# bullet is reworded - test_role_lock.py checks every name here is still in
+# the live Role table, and that every lock flag in the tables is defined here.
+#
+# Gear only. Weapon has its own Role machinery in apply_weapon_policy(), and
+# what a person wears is already handled three other ways; if a lock is ever
+# wanted on another table, widen filter_by_role_lock()'s call site rather than
+# adding a second mapping.
+ROLE_LOCKS = {
+    "admin": ("a colonial administrator",),
+}
+
 # Trait names that have changed, old -> new. --regen-manifest rebuilds an NPC
 # from a stored traits dict rather than re-rolling, so an entry written before
 # a rename still carries the old key and would otherwise KeyError in
@@ -911,6 +942,30 @@ def filter_by_dress(options, policy):
     return plain or options        # never filter the pool down to nothing
 
 
+def filter_by_role_lock(options, role):
+    """Gear bullets locked to an occupation, dropped for every other Role.
+
+    A bullet carrying a flag named in ROLE_LOCKS is that job's and nobody
+    else's - a colonial administrator's lacquered cane of office reads as
+    ceremony on an administrator and as a walking aid on a dockworker, which
+    is not the same object. Anything unflagged is neutral and reachable by
+    everyone, which is all but a handful of the table.
+
+    Unlike every other filter in this file this one does NOT fall back to the
+    whole pool when it empties, because falling back would hand the locked
+    bullet to exactly the Role it was locked away from - the one outcome the
+    flag exists to prevent. See the note on ROLE_LOCKS for why the pool cannot
+    realistically empty, and test_role_lock.py for the guard that it doesn't.
+
+    Takes the rolled Role's stripped text: ROLE_LOCKS is keyed on the bullet
+    as the Role table writes it, and roll_npc() has already split the '|| mil'
+    flag off by the time Gear rolls.
+    """
+    return [x for x in options
+            if all(role in ROLE_LOCKS[f]
+                   for f in split_flags(x)[1] if f in ROLE_LOCKS)]
+
+
 def filter_by_hardtech(options, outfit_notac):
     """Headgear flagged 'hardtech', dropped under an Outfit flagged 'notac'.
 
@@ -1316,6 +1371,16 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
         if name == "Outfit":
             options = filter_by_dress(options, role_dress)
 
+        # An item that belongs to one occupation, kept off everyone else. This
+        # runs first among the Gear filters, and before the hands and helmet
+        # ones below, because it is the only one of the three that is a rule
+        # rather than a preference - the others hand the pool back untouched
+        # when they would empty it, and running them first could only mean a
+        # locked bullet survived that fallback. Role precedes Gear in
+        # REQUIRED_TABLES, so npc["Role"] is already the value this NPC keeps.
+        if name == "Gear":
+            options = filter_by_role_lock(options, npc["Role"])
+
         # A weapon that occupies the hands rules out equipment that also needs
         # one. Weapon precedes Gear in REQUIRED_TABLES so this flag is already
         # known, the same way Role precedes Faction and Outfit. Gear is what
@@ -1542,12 +1607,18 @@ def roll_npc(tables, rng, overrides=None, unarmed=False):
     # npc.update(overrides) - which runs below this - was the first place a
     # forced Backdrop appeared.
     if "nogear" in split_backdrop(npc["Backdrop"])[2] and "hands" in gear_flags:
-        free = [x for x in variant_table(tables, "Gear", subject)
+        free = [x for x in filter_by_role_lock(
+                    variant_table(tables, "Gear", subject), npc["Role"])
                 if "hands" not in split_flags(x)[1]]
-        # 'notac' applies here too, same as it does in the loop's own Gear
-        # roll above (see the comment there) - otherwise a kimono flagged
+        # This re-draws from the raw table rather than from the pool the loop
+        # narrowed, so every Gear filter has to be restated here or it is
+        # simply undone. filter_by_role_lock() is applied inline above for
+        # that reason, and 'notac' just below, same as it does in the loop's
+        # own Gear roll (see the comment there) - otherwise a kimono flagged
         # 'notac' paired with a nogear scene could still re-roll onto a
-        # military-issue Gear bullet the loop would have screened out.
+        # military-issue Gear bullet the loop would have screened out. The
+        # 'hands' and 'helmet' filters are not restated because this re-roll
+        # narrows to non-hands bullets itself, and a carried helmet is one.
         if outfit_notac:
             civ = [x for x in free if "mil" not in split_flags(x)[1]]
             free = civ or free      # never filter the pool down to nothing
@@ -1718,7 +1789,9 @@ def split_flags(bullet):
     entry, an actual issued weapon on a Weapon entry). Weapon alone also
     carries 'weapon', 'simple' or 'sidearm', read by apply_weapon_policy()
     rather than filter_by_mil() - see the tables file for what each one
-    means. Age and Build reuse the same split for their own unrelated flags,
+    means. Gear alone may also carry a lock flag named in ROLE_LOCKS
+    ('admin'), which is read by filter_by_role_lock() and confines the bullet
+    to one occupation. Age and Build reuse the same split for their own unrelated flags,
     'young' and 'figure', and so do Role ('mil', an active-duty military or
     paramilitary occupation), Faction/Outfit ('civ' or 'mil', filtered
     against the Role flag - see filter_by_mil()) and Outfit's own 'notac'
