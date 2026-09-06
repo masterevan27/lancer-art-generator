@@ -3196,6 +3196,24 @@ def regenerate_one(args):
                 "rest of the NPC has something to be pinned to. Re-roll the "
                 "NPC to record them.")
 
+        # The same list --reroll-trait accepts, and refused for the same
+        # reasons - naming a value rather than drawing one does not make
+        # Pronouns any safer to change under an NPC whose every appearance
+        # bullet was drawn for the old subject, and the two halves of the name
+        # decide the folder and the manifest id. A table that is not rolled at
+        # all is refused here too, rather than passed to roll_npc() where an
+        # override for a table it has never heard of is silently dropped: a
+        # typo would otherwise regenerate the NPC unchanged and report success.
+        unsettable = [t for t in args.overrides if t not in RAW_REROLLABLE_TRAITS]
+        if unsettable:
+            reasons = "; ".join(
+                "%s: %s" % (t, UNREROLLABLE_REASONS.get(
+                    t, "it is not a trait this script rolls"))
+                for t in unsettable)
+            raise SystemExit(
+                "--set-trait %s: cannot set that on a regen (%s).\nSettable: %s"
+                % (", ".join(unsettable), reasons, ", ".join(RAW_REROLLABLE_TRAITS)))
+
         # free=set() pins every stored bullet; `pinned` swaps the named ones.
         # Re-running roll_npc() rather than assigning npc[table] directly is
         # the point: _young, _outfit_notac, _gear_helmet, the '{colour}' fill

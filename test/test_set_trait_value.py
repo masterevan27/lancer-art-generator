@@ -381,6 +381,51 @@ class SetTraitOnARegen(unittest.TestCase):
                                  after["_raw"].get(trait))
 
 
+class SetTraitRefusesWhatRerollRefuses(unittest.TestCase):
+    """The pin accepts exactly the traits --reroll-trait does, and no more.
+
+    Naming a value rather than drawing one does not make Pronouns safer to
+    change under an NPC whose every appearance bullet was drawn for the old
+    subject, and the two halves of the name decide the folder and the manifest
+    id. A table this script does not roll is refused for a different reason
+    that matters just as much: roll_npc() silently ignores an override for a
+    table it has never heard of, so a typo would regenerate the NPC unchanged
+    and report success.
+    """
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.dir.cleanup)
+        self.npc = raw_npc(seed=0)
+        self.manifest = manifest_with(self.npc, Path(self.dir.name) / "m.json")
+
+    def run_cli(self, *extra):
+        return gen.main(["--regen-manifest", str(self.manifest),
+                         "--regen-id", "npc-test-0",
+                         "--tables", str(LIVE_TABLES_PATH), *extra])
+
+    def test_pronouns_cannot_be_pinned(self):
+        with self.assertRaises(SystemExit) as caught:
+            self.run_cli("--set-trait", "Pronouns=she/her/her/woman")
+        self.assertIn("Pronouns", str(caught.exception))
+
+    def test_the_halves_of_the_name_cannot_be_pinned(self):
+        for trait in ("Given names", "Family names"):
+            with self.subTest(trait=trait):
+                with self.assertRaises(SystemExit):
+                    self.run_cli("--set-trait", "%s=Nobody" % trait)
+
+    def test_a_table_this_script_does_not_roll_is_refused(self):
+        with self.assertRaises(SystemExit) as caught:
+            self.run_cli("--set-trait", "Ouftit=a typo")
+        self.assertIn("Ouftit", str(caught.exception))
+
+    def test_the_refusal_offers_the_list_that_does_work(self):
+        with self.assertRaises(SystemExit) as caught:
+            self.run_cli("--set-trait", "Pronouns=she/her/her/woman")
+        self.assertIn("Outfit", str(caught.exception))
+
+
 class SetTraitArgumentRules(unittest.TestCase):
     def parse(self, *argv):
         return gen.parse_args(list(argv))
