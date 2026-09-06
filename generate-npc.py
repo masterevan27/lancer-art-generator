@@ -177,7 +177,16 @@ TRAIT_DEPENDENTS = {
     # guaranteed to be carrying. Outfit reads Role a second way as well,
     # through filter_by_dress() and the policy dress_policy_for() derives from
     # that same category - a dockworker is not entitled to a ceremonial robe.
-    "Role": ("Faction", "Outfit", "Weapon"),
+    #
+    # Backdrop is the fourth, through filter_by_backdrop_role(): a scene
+    # flagged in BACKDROP_ROLES asserts an occupation, so under a new Role the
+    # old scene may be one the roller could not have produced - a freed Role
+    # that kept its Backdrop would put the new bar owner back on the
+    # inspection gantry through the one path that skips the filter. Role is
+    # not one of the eleven REROLLABLE_TRAITS, so this edge costs no
+    # one-click button its cascade; test_every_one_click_trait_closes_to_
+    # itself() is what would fail if that ever changed.
+    "Role": ("Faction", "Outfit", "Weapon", "Backdrop"),
 
     # All three read Outfit's 'notac'. Weapon and Gear lose their
     # military-issue bullets to it, so a kimono carries neither a service rifle
@@ -530,6 +539,80 @@ CIVILIAN_UNARMED_COPIES = 3
 # adding a second mapping.
 ROLE_LOCKS = {
     "admin": ("a colonial administrator",),
+}
+
+# Backdrop scenes that assert an occupation, and who may roll them.
+#
+# Most of the Backdrop table is places, and a place fits anyone: a blurred
+# alley, a transit car, a rooftop at dusk. But a scene that puts the subject
+# mid-action makes a claim about the PERSON rather than the frame - flying the
+# machine, welding its plating, annotating a clipboard on an inspection gantry,
+# firing on a battlefield. Those are the entries flagged here, and a Role that
+# does not do that work never sees them.
+#
+# The same hard-exclusion shape as ROLE_LOCKS above, and for the same reason: a
+# bar owner on a maintenance gantry is not an odd pairing but a wrong one, so
+# filter_by_backdrop_role() does not fall back to the whole pool when it
+# narrows. Where this differs is which side is scarce. A lock says "this object
+# is one job's"; most of these say "this scene is one KIND of work's", which is
+# why an entry is normally a tuple of ROLE_CATEGORIES buckets - the bucket
+# already encodes what kind of work an occupation is, and restating it per-Role
+# would only drift from it, which is the argument DRESS_POLICY makes too.
+#
+# An entry may also name an exact Role bullet, and four of them do, because the
+# bucket is too coarse where the scene is one job's alone. 'Civilians' holds the
+# bar owner, the data courier AND the scavenger-priest, so gating 'clergy' or
+# 'barkeep' by bucket would re-admit precisely the roles the flag exists to
+# keep out. 'medic' is the same case inside 'Support', which also holds a comms
+# operator, who does not run a triage tent. A bucket name is capitalized and a
+# Role bullet starts lowercase, so the two never collide; test_backdrop_role.py
+# holds that every name here is still a live bucket or a live Role bullet.
+#
+# Backdrop only. Role precedes it in REQUIRED_TABLES, which is what makes this
+# readable at all, and TRAIT_DEPENDENTS carries the matching 'Role' -> Backdrop
+# edge so a re-rolled Role redraws the scene instead of keeping one it could
+# no longer have produced.
+BACKDROP_ROLES = {
+    # In the cockpit: a flight station, a worn or carried flight helmet, pilot
+    # pressure armor. The image says they fly it.
+    "cockpit": ("Pilots",),
+    # The scene calls the machine a companion - it is the subject's own frame.
+    "ownmech": ("Pilots",),
+    # Hands on the machine: a wrench, a welding torch, a diagnostic slate, an
+    # inspection clipboard.
+    "mechwork": ("Pilots", "Technicians", "Laborers"),
+    # Inside a machine's reach without working on it - a hangar, a service
+    # cradle, the knee of a parked war engine. Access rather than activity,
+    # which is why it is wider than 'mechwork' is deep.
+    "mechyard": ("Pilots", "Technicians", "Laborers"),
+    # A war engine fighting, or the wreck of one, as the scene behind the
+    # subject. Laborers are here for the salvager, who works exactly there.
+    "warzone": ("Pilots", "Soldiers", "Criminals", "Laborers"),
+    # The subject is fighting: a weapon discharging, powered armor mid-impact,
+    # a sniper's hide. Not merely armed - engaged.
+    "frontline": ("Pilots", "Soldiers", "Criminals"),
+    # A sealed EVA suit in vacuum. The suit is the subject's own kit and the
+    # work is trained, so this is narrower than the shirt-sleeve zero-gravity
+    # scenes, which carry no flag at all and stay open to everyone.
+    "vacuum": ("Pilots", "Technicians", "Support"),
+    # A drawn or worn blade carried as the weapon of record.
+    "swordwork": ("Soldiers", "Criminals"),
+    # Operating a command, plot, watch or surveillance station.
+    "deskwork": ("Pilots", "Soldiers", "Officials", "Support", "Criminals"),
+    # The subject presides - a ceremonial ramp, a throne, a rally ground.
+    "ceremony": ("Pilots", "Soldiers", "Officials", "Criminals"),
+    # Auditing someone else's work: badge out, folio closed, placard against a
+    # serial plate. Left at the bucket rather than the inspector alone, since a
+    # liaison or an administrator tours a facility on the same terms.
+    "inspection": ("Officials",),
+    # Stripping machine wreckage as work rather than as spectacle.
+    "salvage": ("Laborers", "a scavenger-priest of a local machine cult"),
+    # Officiating. The priest's image and nobody else's.
+    "clergy": ("a scavenger-priest of a local machine cult",),
+    # Triage, a sick bay, a ripperdoc's chair.
+    "medic": ("a field medic",),
+    # Behind the counter, or across the booth table from a contact.
+    "barkeep": ("a bar owner and information broker",),
 }
 
 # Trait names that have changed, old -> new. --regen-manifest rebuilds an NPC
@@ -971,6 +1054,31 @@ def filter_by_role_lock(options, role):
     return [x for x in options
             if all(role in ROLE_LOCKS[f]
                    for f in split_flags(x)[1] if f in ROLE_LOCKS)]
+
+
+def filter_by_backdrop_role(options, role):
+    """Backdrop scenes that assert an occupation, dropped for every other Role.
+
+    The Backdrop twin of filter_by_role_lock(), and the second hard filter in
+    this file: like that one it does NOT hand the whole pool back when it
+    empties, because falling back would give the scene to exactly the Role it
+    was kept from. See the note on BACKDROP_ROLES for what earns a flag, and
+    test_backdrop_role.py for the guard that the neutral pool - some 180
+    unflagged bullets - cannot realistically run out.
+
+    A BACKDROP_ROLES entry may name a ROLE_CATEGORIES bucket or an exact Role
+    bullet, so both are tested against here. Buckets are capitalized and Role
+    bullets are not, so a name can only ever match one of the two.
+
+    Reads flags through split_backdrop() rather than split_flags(), because a
+    Backdrop bullet keeps its flags in the THIRD segment - split_flags() would
+    read the scene sentence as a flag list. That is the same trap flags_for()
+    exists to cover.
+    """
+    bucket = ROLE_CATEGORIES.get(role, UNCATEGORIZED_ROLE)
+    return [x for x in options
+            if all(role in BACKDROP_ROLES[f] or bucket in BACKDROP_ROLES[f]
+                   for f in split_backdrop(x)[2] if f in BACKDROP_ROLES)]
 
 
 def filter_by_hardtech(options, outfit_notac):
@@ -1463,6 +1571,17 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # REQUIRED_TABLES, so npc["Role"] is already the value this NPC keeps.
         if name == "Gear":
             options = filter_by_role_lock(options, npc["Role"])
+
+        # A scene that asserts an occupation, kept off everyone who does not
+        # hold it - a maintenance gantry off the bar owner, a triage tent off
+        # the pirate. The Backdrop twin of the Gear lock above, and a rule
+        # rather than a preference for the same reason: it hands nothing back
+        # when it narrows, so it must not run after a filter that could. It is
+        # the only Role-driven filter on this table; everything else Backdrop
+        # yields to is the theme roll. Role precedes Backdrop in
+        # REQUIRED_TABLES, so npc["Role"] is already this NPC's.
+        if name == "Backdrop":
+            options = filter_by_backdrop_role(options, npc["Role"])
 
         # A weapon that occupies the hands rules out equipment that also needs
         # one. Weapon precedes Gear in REQUIRED_TABLES so this flag is already
@@ -1976,12 +2095,20 @@ def split_backdrop(bullet):
     cannot be staged inside a half-body portrait, and a zero-gravity pose over a
     rain-streaked street would be nonsense either way.
 
-    The one flag is 'nogear': an action scene that already put something in the
-    subject's hands suppresses the merged carry sentence on the portrait (see
-    carry_sentence() and build_prompts()), which otherwise arms them a second
-    time from the Weapon/Gear rolls - a rolled rifle on top of the two blades
-    the rooftop scene hands out. It also restricts Gear, at roll time in
-    roll_npc(), to bullets that leave the hands free.
+    Three kinds of flag live in that segment. 'nogear': an action scene that
+    already put something in the subject's hands suppresses the merged carry
+    sentence on the portrait (see carry_sentence() and build_prompts()), which
+    otherwise arms them a second time from the Weapon/Gear rolls - a rolled
+    rifle on top of the two blades the rooftop scene hands out. It also
+    restricts Gear, at roll time in roll_npc(), to bullets that leave the hands
+    free. 'weather' marks the scene as outdoors, so weather_sentence() may drop
+    a Weather roll into it.
+
+    The rest are the occupation flags named in BACKDROP_ROLES - 'cockpit',
+    'frontline', 'barkeep' and the like - read by filter_by_backdrop_role() to
+    keep a scene that asserts a job off the Roles that do not hold it. They are
+    inert here: this function only splits, and an unrecognized flag is ignored
+    the way one is everywhere else in this module.
     """
     parts = [p.strip() for p in bullet.split("||")]
     if len(parts) == 1:

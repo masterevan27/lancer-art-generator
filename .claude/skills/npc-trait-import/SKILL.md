@@ -58,12 +58,44 @@ conventions, and the pronoun placeholders. As of this writing the flags are:
 | `admin` | Gear | A **role lock**: the bullet is reachable only by the occupations named against that flag in `ROLE_LOCKS` in `generate-npc.py`, and `admin` names a colonial administrator alone. The one *hard* filter in the tables — every other flag hands the whole pool back rather than leave the roll with nothing, while a lock never yields, since yielding would give the item to the very Role it was kept from. Stage it only where the object is an **emblem** of a job rather than a tool of it: a cane of office, a seal, a warrant. A multitool is nobody's emblem. A new lock flag needs its entry in `ROLE_LOCKS` first, naming the exact Role bullet text. |
 | `nogear` | Backdrop | The scene already puts something in the subject's hands. |
 | `weather` | Backdrop | Outdoors, so a Weather roll can land in it. |
+| `cockpit` | Backdrop | An **occupation gate** (see the group note below): the subject is at a flight station, in worn or carried flight gear, or in pilot pressure armor. Pilots. |
+| `ownmech` | Backdrop | Occupation gate: the machine in the scene is the subject's *own* — a companion frame, a hand resting on its plating, a perch on its shoulder. Pilots. |
+| `mechwork` | Backdrop | Occupation gate: hands on the machine — a wrench, a welding torch, a diagnostic slate, an inspection clipboard. Pilots, Technicians, Laborers. |
+| `mechyard` | Backdrop | Occupation gate: inside a machine's reach without working on it — a hangar, a service cradle, the knee of a parked war engine. Access rather than activity, so it is wider than `mechwork` is deep. Pilots, Technicians, Laborers. |
+| `warzone` | Backdrop | Occupation gate: a war engine fighting, or the wreck of one, as the scene behind the subject. Pilots, Soldiers, Criminals, Laborers. |
+| `frontline` | Backdrop | Occupation gate: the subject is *fighting* — a weapon discharging, powered armor mid-impact, a sniper's hide. Merely being armed is not enough; an armed figure standing in a street stays ungated. Pilots, Soldiers, Criminals. |
+| `vacuum` | Backdrop | Occupation gate: a sealed EVA suit in vacuum. The shirt-sleeve zero-gravity scenes carry no gate at all — anyone can float down a station corridor. Pilots, Technicians, Support. |
+| `swordwork` | Backdrop | Occupation gate: a drawn or worn blade carried as the subject's weapon of record. Soldiers, Criminals. |
+| `deskwork` | Backdrop | Occupation gate: operating a command, plot, watch or surveillance station. Pilots, Soldiers, Officials, Support, Criminals. |
+| `ceremony` | Backdrop | Occupation gate: the subject presides — a ceremonial ramp, a throne, the front of a rally. Pilots, Soldiers, Officials, Criminals. |
+| `inspection` | Backdrop | Occupation gate: auditing someone else's work — badge out, folio closed, a placard held against a serial plate. Officials. |
+| `salvage` | Backdrop | Occupation gate: stripping machine wreckage as work rather than as spectacle. Laborers, plus the scavenger-priest by name. |
+| `clergy` | Backdrop | Occupation gate: officiating — hands raised before a bowed congregation. Named to the scavenger-priest alone. |
+| `medic` | Backdrop | Occupation gate: triage, a sick bay, a ripperdoc's chair. Named to the field medic alone. |
+| `barkeep` | Backdrop | Occupation gate: behind the counter, or across the booth table from a contact. Named to the bar owner and information broker alone. |
 | `scene` | Glow placement | The light falls out in the *environment* — on a wall, in the air, across the ground. Only reachable when the Backdrop is what casts it, since the alternative source is something the NPC wears or carries and a lit visor cannot light the wall behind them. An unflagged placement keeps the light on or immediately around the figure and is reachable either way; most should stay unflagged, because the equipped case is the common one. |
 | `clear` | Weather | Contributes nothing to the prompt. |
 | `young` | Age | NPC under twenty; swaps the adult clauses. |
 | `figure` | Build | Written in terms of an adult woman's figure; dropped when Age rolled `young`. |
 | `older` | Hair colour | An age-linked colour (greying, salt-and-pepper); dropped when the Age roll came up `young`, the same pairing `figure` has with Build. |
 | `@<theme>` | Hair, Hair colour, Feature, Outfit, Headgear, Weapon, Backdrop — **and nowhere else** | A *theme tag*, not a behavioural flag: the bullet belongs to that visual world. Untagged is neutral and reachable from every theme. `Gear` is deliberately not on this list — it split away from `Weapon` precisely because it isn't theme-defining. See the trap below before using one. |
+
+**On the Backdrop occupation gates.** The fifteen rows above marked "occupation
+gate" are one mechanism, defined in `BACKDROP_ROLES` in `generate-npc.py`
+against either a `ROLE_CATEGORIES` bucket or an exact Role bullet. Like `admin`
+on Gear, and unlike everything else in this table, they are a **hard** filter:
+`filter_by_backdrop_role()` never hands the pool back, because handing it back
+would give the scene to precisely the Role it was kept from.
+
+The line to hold when staging is **location versus activity**. A blurred
+background makes a claim about the *place*, and a place fits anyone — the
+subject merely standing in front of a mech hangar is fine for a bar owner, and
+gets no gate. A scene that puts the subject mid-action makes a claim about the
+*person*, and that is what a gate is for. Roughly two thirds of the live table
+is ungated and should stay that way; reach for a gate only when the sentence
+would be *false* about a wrong Role, not merely unusual. A new gate flag needs
+its `BACKDROP_ROLES` entry first, or it is silently ignored and the scene ships
+ungated.
 
 Run `python -c "import importlib.util,sys,pathlib;s=importlib.util.spec_from_file_location('g','generate-npc.py');m=importlib.util.module_from_spec(s);sys.modules['g']=m;s.loader.exec_module(m);print(sorted(set(m.parse_tables(pathlib.Path('prompts/npc-generator-tables.md'))['Theme'])))"`
 at the **start** of every run, to get the live list of theme names. That list
@@ -262,7 +294,7 @@ subagents, but hold these lines, all of which have failed in practice:
 
 | What the image shows | Table | Notes |
 | --- | --- | --- |
-| A wide scene/environment, with or without the subject doing something in it | **Backdrop** | Portrait only. If the subject is actively posed against the scene (leaning, fighting, kneeling), stage the whole shot as one `{Subject} {is_are} ...` sentence rather than a blurred-background phrase. Tag `weather` if the scene is outdoors or semi-outdoors, so a Weather roll can land in it; tag `nogear` only if the sentence already puts something in the subject's hands. Both live in a **third** segment here — see §4. |
+| A wide scene/environment, with or without the subject doing something in it | **Backdrop** | Portrait only. If the subject is actively posed against the scene (leaning, fighting, kneeling), stage the whole shot as one `{Subject} {is_are} ...` sentence rather than a blurred-background phrase. Tag `weather` if the scene is outdoors or semi-outdoors, so a Weather roll can land in it; tag `nogear` only if the sentence already puts something in the subject's hands. Then ask whether the scene asserts a *job*, and if it does add the one occupation gate that fits: `cockpit` (at a flight station), `ownmech` (the machine is theirs), `mechwork` (hands on it), `mechyard` (in its bay, not working), `warzone` (a war engine fighting or wrecked behind them), `frontline` (the subject fighting), `vacuum` (sealed EVA suit), `swordwork` (a blade as their weapon of record), `deskwork` (a command or watch station), `ceremony` (presiding), `inspection` (auditing), `salvage` (stripping wreckage), `clergy` (officiating), `medic` (triage or a clinic), `barkeep` (behind the counter). A blurred background is a *place* and gets none of these — gate on activity, not scenery, and leave it ungated when in doubt. All of them live in a **third** segment here — see §4. |
 | A body pose with no particular environment, meant for the full-body token | **Stance** | Token only, and that means **the body and nothing else** — no ground, ledge, wall, furniture, weather or props that aren't in a hand. A pose may crouch, kneel or sit; it must not sit *on* anything. See the trap in §4. Tag `hands` if the pose needs both hands free, `armed` if it references a weapon at all, `gun` if it specifically aims or fires one. An untagged pose is treated as hands-free and weaponless, so a raised blade left untagged will turn up on an unarmed NPC. |
 | A weapon — held, slung, holstered or worn | **Weapon** | Tag `hands`/`gun`/`mil`/`weapon`/`simple`/`sidearm` as applicable — see the flag traps in §0. |
 | A tool, pack, or other carried item that isn't a weapon | **Gear** | Tag `hands`/`mil` — `gun`/`weapon`/`simple`/`sidearm` moved to `Weapon` with the split and no longer apply here. Two others do reach this table: `helmet` for a helmet **carried** rather than worn, and `admin`, a role lock you may only stage under the conditions in §0. |
@@ -329,7 +361,8 @@ the image will not fit this file. Apply all of these:
 
 ## 4. Write the bullet in the exact grammar for its table
 
-- **Backdrop**: `<opening shot phrase> || <scene sentence> || [nogear] [weather]` (may start with `xN `)
+- **Backdrop**: `<opening shot phrase> || <scene sentence> || [nogear] [weather] [cockpit] [ownmech] [mechwork] [mechyard] [warzone] [frontline] [vacuum] [swordwork] [deskwork] [ceremony] [inspection] [salvage] [clergy] [medic] [barkeep]` (may start with `xN `)
+  At most one of the occupation gates, and only when the scene asserts a job — see §0.
   Two shapes exist — pick based on the image:
   - Background-only: `A half-body character portrait || Behind {object}, softly blurred well out of focus, is ...`
   - Subject staged in the scene: `A <descriptor> character portrait || {Subject} {is_are} <doing something>, ... - <environment clause>.`

@@ -64,7 +64,8 @@ EXPECTED_CASCADES = {
     "Theme": THEME_CASCADE_FROM_THE_DOC,
     "Age": ("Age", "Build", "Hair", "Hair colour"),
     "Hair colour": ("Hair", "Hair colour"),
-    "Role": ("Role", "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Stance"),
+    "Role": ("Role", "Faction", "Outfit", "Headgear", "Weapon", "Gear",
+             "Backdrop", "Glow placement", "Weather", "Stance"),
     "Outfit": ("Outfit", "Headgear", "Weapon", "Gear", "Stance"),
     "Weapon": ("Weapon", "Gear", "Stance"),
     "Gear": ("Gear", "Stance"),
@@ -371,16 +372,21 @@ class TestTraitCascade(unittest.TestCase):
     def test_the_transitive_step_actually_runs(self):
         """A cascade two hops deep, so 'transitive' is more than a word.
 
-        Role names only Faction, Outfit and Weapon in the map. Headgear, Gear
-        and Stance are in its cascade only because the new Outfit and Weapon
-        pull them in - which is the reach a direct-dependents-only closure
-        would lose, handing back a Stance posed around the replaced rifle.
+        Role names only Faction, Outfit, Weapon and Backdrop in the map.
+        Headgear, Gear and Stance are in its cascade only because the new
+        Outfit and Weapon pull them in, and Glow placement and Weather only
+        because the new Backdrop does - which is the reach a
+        direct-dependents-only closure would lose, handing back a Stance posed
+        around the replaced rifle and a glow placement lighting a wall that is
+        no longer in the scene.
         """
         self.assertEqual(
             gen.trait_cascade("Role"),
-            ("Role", "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Stance"))
+            ("Role", "Faction", "Outfit", "Headgear", "Weapon", "Gear",
+             "Backdrop", "Glow placement", "Weather", "Stance"))
         self.assertNotIn("Headgear", gen.TRAIT_DEPENDENTS["Role"])
         self.assertNotIn("Stance", gen.TRAIT_DEPENDENTS["Role"])
+        self.assertNotIn("Glow placement", gen.TRAIT_DEPENDENTS["Role"])
 
 
 def _doc_cascade_table():

@@ -850,7 +850,7 @@ Every re-roll's actual size, on the live tables:
 | Re-roll | Also re-rolls | Total |
 | --- | --- | --- |
 | `Theme` | the 7 theme-gated tables, plus `Gear`, `Stance`, `Glow placement`, `Weather` | 12 |
-| `Role` | `Faction`, `Outfit`, `Weapon`, `Headgear`, `Gear`, `Stance` | 7 |
+| `Role` | `Faction`, `Outfit`, `Weapon`, `Backdrop`, `Headgear`, `Gear`, `Glow placement`, `Weather`, `Stance` | 10 |
 | `Outfit` | `Headgear`, `Weapon`, `Gear`, `Stance` | 5 |
 | `Backdrop` | `Weather`, `Glow placement`, `Gear`, `Stance` | 5 |
 | `Age` | `Build`, `Hair colour`, `Hair` | 4 |
