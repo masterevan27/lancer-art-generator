@@ -2320,7 +2320,8 @@ glow could land on a face with nothing nearby to cast it.
 > grain texture, clean linework and halftone dot shading worked into the
 > shadows, moody cinematic lighting on the figure. {SUBJECT} is facing the
 > viewer, {POSSESSIVE} whole figure in frame from the top of {POSSESSIVE} head to
-> the soles of {POSSESSIVE} feet, with clear empty space above and below, in
+> the soles of {POSSESSIVE} feet, the head drawn small in frame with clear empty
+> space above and below, in
 > realistic adult proportions roughly seven to eight heads tall. {SUBJECT}
 > is **{HEIGHT}**, **{BUILD}**, with **{TRAITS}**
 > **{SKIN}**, **{HAIR}**, **{EYES}**, and **{FEATURE}**, wearing **{OUTFIT}**,
@@ -2328,7 +2329,8 @@ glow could land on a face with nothing nearby to cast it.
 > {POSSESSIVE} face carries **{DEMEANOR}**. {SUBJECT} carries **{GEAR}**.
 > {SUBJECT} is **{STANCE}**, both feet in frame, the pose natural and
 > unforced. **{GLOW_LINE}** The background alone is a solid flat plain white,
-> no texture, no gradient, no shadow, no environment. Centered composition,
+> no texture, no gradient, no shadow, no environment. Full-length wide shot,
+> the whole figure clear of the frame edge, centered composition,
 > dramatic lighting, isolated character illustration, clean silhouette,
 > painterly brushwork with heavy grain and dense halftone screentone worked
 > into every shadow.
@@ -2367,6 +2369,28 @@ full height", which fought the rolled Stance on every crouching, kneeling or
 sitting bullet - the prompt asserted standing and crouching at once and the
 render came back with two figures. Stance owns the pose; this sentence owns
 the framing, and the two no longer overlap.
+
+Framing is asserted three times, and that is deliberate. "the whole figure in
+frame ... to the soles of {POSSESSIVE} feet" on its own was losing at CFG 1.0
+to the detail the rest of the prompt asks for: the model anchored the head near
+the top of the canvas, drew it at portrait scale, and ran out of room somewhere
+around the shins, cropping off the feet the sentence had just promised. Two
+clauses were added against that.
+
+- **"the head drawn small in frame"** is the scale instruction that
+  "seven to eight heads tall" was being asked to carry and cannot. A head-count
+  is a *ratio* between head and body, and a head too big for the canvas
+  satisfies it just as well as one that fits - the proportions came back
+  correct and the feet still came back missing. This says the absolute size.
+- **"Full-length wide shot, the whole figure clear of the frame edge"** opens
+  the closing tag block. That block is the position a diffusion model weights
+  hardest, and it was naming the composition ("Centered composition") without
+  ever naming the *distance*; shot-scale vocabulary is the term the training
+  data actually indexes framing under.
+
+A Stance that reaches upward - arms raised overhead, something held above the
+shoulders - spends vertical canvas at the top and squeezes the feet hardest, so
+those bullets are the ones to check first if cropping reappears.
 
 The `even lighting` / flat-background phrasing this used to carry was flattening
 the whole render toward a clean cel-shaded look rather than just the background —
