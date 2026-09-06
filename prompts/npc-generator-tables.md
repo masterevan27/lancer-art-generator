@@ -2068,6 +2068,40 @@ ignored — so notes like this one are safe to leave inline.
 - a tagged evidence bag held up at eye level, something small and dark shifting inside it || hands
 - a beaten aluminium riot helmet with a scratched face bar, carried in one hand || hands helmet
 - a case file rolled into a tube and tapped absently against one leg || hands
+- a bricklayer's trowel and a coiled line level hooked at the belt
+- a test meter dangling from one hand by its probe leads || hands
+- a length of threaded pipe balanced across one shoulder, a wrench hooked over the end || hands
+- a paint roller on a long pole rested back over one shoulder, its sleeve stiff with dried colour || hands
+- a sheet of glass held edge-on in gloved hands, tape crossed over it in a wide X || hands
+- a pincushion strapped to one wrist and a tape measure hung round the neck
+- a bolt of patterned cloth balanced on one shoulder and steadied with one hand || hands
+- a tray of seedlings held level in both hands, the soil in them still dark with water || hands
+- a soil probe and a folded moisture reader stuffed in a hip pocket
+- a pair of long-handled pruning shears hooked over one shoulder || hands
+- a wringer bucket swinging from one hand, grey water slopping over the lip || hands
+- a battered inventory scanner holstered at the hip, its screen cracked across a corner
+- a blunt cargo hook slung through the belt at the small of {possessive} back
+- a spool of printer feedstock tucked under one arm, its seal broken and half unwound || hands
+- a freshly printed part cradled in both hands, its support scaffolding not yet snapped off || hands
+- a cook's knife roll of worn canvas under one arm, its ties hanging loose || hands
+- a sack of flour hoisted onto one shoulder, a white handprint left below it || hands
+- a foam cool-box slung from its shoulder strap, condensation beading the lid
+- a hand balance and a pouch of brass weights hooked at the belt
+- a tray of skewers slung from a neck strap, a folded fan in one hand for the coals || hands
+- a small child riding on one hip, both arms wound round {possessive} neck || hands
+- a scruffy dog leaning against one leg, its lead looped twice round {possessive} wrist || hands
+- a hen tucked under one arm, entirely unbothered || hands
+- a potted plant hugged against the chest in both arms, leaves brushing {possessive} chin || hands
+- a strap-bound stack of schoolbooks wedged against one hip || hands
+- a scuffed handheld comm held low at one side, its screen lit on a half-typed message || hands
+- a foil ration brick half-unwrapped and eaten one-handed || hands
+- a dented water can swinging from one hand, the ration stencil half scrubbed off it || hands
+- an old film camera hanging at the chest on a worn neck strap
+- a plain wooden cane hooked over one forearm, its tip worn to a bevel || hands
+- a rigid courier box strapped high on the back, a delivery tag fluttering from its handle
+- a bundle of incense sticks and a folded paper charm held in one hand || hands
+- a paper cone of roasted nuts held in one hand, the top of it still steaming || hands
+- a folded camp stool tucked under one arm by its crossed legs || hands
 
 ## Glow colour
 
