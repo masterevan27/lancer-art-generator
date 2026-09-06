@@ -1478,7 +1478,7 @@ ignored — so notes like this one are safe to leave inline.
 - {Subject} {wear} a wide woven hat trimmed with small curved horns and hanging tassels, a segmented mechanical mask sealed over the nose and mouth beneath it, a faint accent light glowing at the seam.
 - {Subject} {wear} a wide straw hat trimmed with small hanging bells and a tattered red ribbon at the crown, rain streaming off the brim.
 - {Subject} {wear} a broad ceremonial hat strung with hanging tasseled bells, an antler-like crest rising from the crown.
-- {Subject} {wear} a broad woven hat bristling with jagged spikes at the crown, its brim battered and weathered.
+<!-- - {Subject} {wear} a broad woven hat bristling with jagged spikes at the crown, its brim battered and weathered. -->
 - {Subject} {wear} a broad dark hat trimmed with hanging chain ornaments and a feather crest, the brim shadowing {possessive} eyes.
 - {Subject} {wear} a wide straw hat over a patterned cloth headband tied at the brow.
 - {Subject} {wear} a horned kabuto-style helmet with a riveted neck guard and cheek plates framing {possessive} face. || helmet
