@@ -1518,8 +1518,8 @@ ignored — so notes like this one are safe to leave inline.
 - {Subject} {wear} a matte combat helmet cinched down over a full rebreather mask, hoses looping to a chest-mounted filter. || hardtech helmet
 - {Subject} {wear} a deep hood drawn low over {possessive} brow, shadowing {possessive} face down to the nose.
 - {Subject} {wear} heavy over-ear headphones with a glowing status ring on each cup. || hardtech
-- {Subject} {wear} a fin-eared tactical helmet with a mirrored visor. || hardtech @cyberpunk helmet
-- {Subject} {wear} a streamlined flight helmet with cable ports ringing the crown, the visor cracked open to show eyes lit faintly beneath. || hardtech @gundam helmet
+- {Subject} {wear} a fin-eared tactical helmet with a mirrored visor. || hardtech helmet @cyberpunk
+- {Subject} {wear} a streamlined flight helmet with cable ports ringing the crown, the visor cracked open to show eyes lit faintly beneath. || hardtech helmet @gundam
 - {Subject} {wear} brass-rimmed welding goggles pushed low over a heavy over-ear headset, a cable trailing to a shoulder pack. || hardtech
 - {Subject} {wear} a chrome respirator mask fitted along {possessive} jaw, a single lens glowing over one eye. || hardtech @cyberpunk
 - {Subject} {wear} a pair of scuffed brass-and-leather over-ear headphones with an exposed pivot joint. || hardtech
