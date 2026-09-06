@@ -2335,11 +2335,15 @@ def parse_args(argv=None):
     if bool(args.regen_manifest) != bool(args.regen_id):
         p.error("--regen-manifest and --regen-id must be given together")
     if args.regen_manifest:
+        # --set-trait is deliberately NOT in this list any more. "Replaces the
+        # roll entirely" is still true of every flag that is: each of them
+        # would be asking for a different NPC. Naming one trait's value while
+        # reproducing the rest is the opposite request, and reroll_from_raw()
+        # has had a `pinned` parameter for it since Theme's cascade needed one.
         conflicting = [
             flag for flag, given in (
                 ("--count", args.count != 1), ("--seed", args.seed is not None),
                 ("--name", bool(args.name)), ("--pronouns", bool(args.pronouns)),
-                ("--set-trait", bool(args.set_trait)),
                 ("--unarmed", args.unarmed),
             ) if given
         ]
@@ -2374,7 +2378,7 @@ def parse_args(argv=None):
         p.error("--pronouns and --set-trait Pronouns= set the same thing; use one")
     args.overrides = overrides
 
-    # Below args.overrides, because both of these read it.
+    # Below args.overrides, because all of these read it.
     if args.trait_choices:
         if not args.regen_manifest:
             p.error("--trait-choices needs --regen-manifest and --regen-id")
@@ -2382,6 +2386,25 @@ def parse_args(argv=None):
             p.error("--trait-choices only reports; drop --reroll-trait")
         if args.overrides:
             p.error("--trait-choices only reports; drop --set-trait")
+
+    if args.reroll_trait and args.overrides:
+        p.error("--reroll-trait draws a new value and --set-trait names one; use one")
+
+    args.release = [n.strip() for n in (args.release or "").split(",") if n.strip()]
+    if args.release:
+        if not args.overrides:
+            p.error("--release only makes sense with --set-trait")
+        # Only what the set trait actually gates. Releasing anything else is a
+        # re-roll wearing a disguise, and --reroll-trait is the flag for that.
+        releasable = set()
+        for table in args.overrides:
+            releasable |= set(TRAIT_DEPENDENTS.get(table, ()))
+        stray = [n for n in args.release if n not in releasable]
+        if stray:
+            p.error(
+                "--release %s: not gated by %s. Releasable here: %s"
+                % (", ".join(stray), ", ".join(sorted(args.overrides)),
+                   ", ".join(sorted(releasable)) or "nothing"))
 
     args.gender_workflows = dict(GENDER_WORKFLOWS, woman=args.workflow_woman)
 
@@ -3150,6 +3173,48 @@ def regenerate_one(args):
         # look like a smaller change than it was.
         for trait in (trait_cascade(args.reroll_trait) if cascading else ()):
             if trait != args.reroll_trait:
+                print("  with %s: %r -> %r"
+                      % (trait, before.get(trait), npc.get(trait)))
+
+    # One trait pinned to a chosen value, everything else reproduced - the
+    # mirror of the block above, which draws a value instead of taking one.
+    if args.overrides:
+        if not args.tables.exists():
+            raise SystemExit("--set-trait needs the tables file: %s" % args.tables)
+        tables = parse_tables(args.tables)
+        check_tables(tables, args.tables, getattr(parse_tables, "repeated", ()))
+        if not npc.get("_raw"):
+            raise SystemExit(
+                "--set-trait on a regen needs the entry's raw bullets, so the "
+                "rest of the NPC has something to be pinned to. Re-roll the "
+                "NPC to record them.")
+
+        # free=set() pins every stored bullet; `pinned` swaps the named ones.
+        # Re-running roll_npc() rather than assigning npc[table] directly is
+        # the point: _young, _outfit_notac, _gear_helmet, the '{colour}' fill
+        # and the flag stripping all recompute, and _raw ends up describing the
+        # NPC about to be rendered rather than the one it replaced.
+        #
+        # A released trait travels as its whole cascade. Freeing the bare name
+        # would redraw it and leave everything it gates pinned to bullets
+        # chosen for the value that just went - the same contradiction one
+        # level down, which is what trait_cascade() exists to close.
+        free = set()
+        for name in args.release:
+            free |= set(trait_cascade(name))
+        before = {k: v for k, v in npc.items() if not k.startswith("_")}
+        reroll_from_raw(
+            tables, npc, free,
+            random.Random(args.new_seed if args.new_seed is not None else entry["seed"]),
+            dict(args.overrides))
+        for table in args.overrides:
+            print("set %s: %r -> %r" % (table, before.get(table), npc.get(table)))
+        # Named rather than counted, for the same reason the re-roll cascade
+        # above names its own: a release reaches further than the trait the
+        # user typed, and finding that out from the render is the failure this
+        # report exists to prevent.
+        for trait in sorted(free):
+            if trait not in args.overrides:
                 print("  with %s: %r -> %r"
                       % (trait, before.get(trait), npc.get(trait)))
 

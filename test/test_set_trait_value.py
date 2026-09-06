@@ -303,5 +303,124 @@ class TraitChoicesCommand(unittest.TestCase):
             self.run_cli("--trait-choices", "Hair", "--reroll-trait", "Hair")
 
 
+class SetTraitOnARegen(unittest.TestCase):
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.dir.cleanup)
+        self.npc = raw_npc(seed=0)
+        self.manifest = manifest_with(self.npc, Path(self.dir.name) / "m.json")
+        self.entry = json.loads(self.manifest.read_text())["npcs/test"]
+
+    def pinned(self, table, value, release=None):
+        """regenerate_one()'s roll half, without the render half."""
+        npc = gen.npc_from_entry(self.entry, "npc-test-0", warn=False)
+        free = set()
+        for name in (release or ()):
+            free |= set(gen.trait_cascade(name))
+        gen.reroll_from_raw(LIVE, npc, free, random.Random(1), {table: value})
+        return npc
+
+    def other_value_for(self, trait):
+        choices = gen.trait_choices(LIVE, self.npc, trait)
+        return next(c for c in choices
+                    if c["allowed"] and not c["current"] and not c["conflicts"])
+
+    def test_only_the_named_trait_moves(self):
+        pick = self.other_value_for("Demeanor")
+        after = self.pinned("Demeanor", pick["value"])
+        moved = [t for t in gen.REQUIRED_TABLES
+                 if self.npc["_raw"].get(t) != after["_raw"].get(t)]
+        self.assertEqual(moved, ["Demeanor"])
+
+    def test_the_named_trait_actually_takes_the_value(self):
+        pick = self.other_value_for("Demeanor")
+        after = self.pinned("Demeanor", pick["value"])
+        self.assertEqual(after["_raw"]["Demeanor"], pick["value"])
+
+    def test_the_pin_is_exactly_a_roll_with_that_bullet_forced(self):
+        # The one risk both specs single out is rawTraits describing bullets
+        # the NPC no longer carries, and this is the tightest way to rule it
+        # out: the pinned result is compared against roll_npc() handed the same
+        # overrides directly. Nothing is poked by hand, so _raw, the rendered
+        # traits, _young, _outfit_notac, _gear_helmet and the '{colour}' fill
+        # all recompute together or the comparison fails.
+        #
+        # Comparing raw against rendered field by field would NOT work and is
+        # worth saying so: a raw bullet legitimately keeps its pronoun
+        # placeholders ('{Subject} {wear} a rolled bandana') exactly as it
+        # keeps '{colour}', and those are filled at render.
+        pick = self.other_value_for("Outfit")
+        after = self.pinned("Outfit", pick["value"])
+        expected = gen.roll_npc(
+            LIVE, random.Random(1),
+            dict(self.npc["_raw"], Outfit=pick["value"]))
+        self.assertEqual(after, expected)
+
+    def test_releasing_a_trait_frees_its_whole_cascade(self):
+        # Freeing Outfit alone would redraw it while Headgear, Weapon and Gear
+        # stayed pinned to bullets chosen for the outfit that is now gone.
+        pick = next(c for c in gen.trait_choices(LIVE, self.npc, "Theme")
+                    if c["conflicts"])
+        after = self.pinned("Theme", pick["value"], release=pick["conflicts"])
+        untouched = [t for t in gen.REQUIRED_TABLES
+                     if t not in pick["releases"] and t != "Theme"]
+        for trait in untouched:
+            with self.subTest(trait=trait):
+                self.assertEqual(self.npc["_raw"].get(trait),
+                                 after["_raw"].get(trait))
+
+    def test_releasing_nothing_keeps_every_other_trait(self):
+        pick = next(c for c in gen.trait_choices(LIVE, self.npc, "Theme")
+                    if c["conflicts"])
+        after = self.pinned("Theme", pick["value"])
+        for trait in gen.REQUIRED_TABLES:
+            if trait == "Theme":
+                continue
+            with self.subTest(trait=trait):
+                self.assertEqual(self.npc["_raw"].get(trait),
+                                 after["_raw"].get(trait))
+
+
+class SetTraitArgumentRules(unittest.TestCase):
+    def parse(self, *argv):
+        return gen.parse_args(list(argv))
+
+    def test_set_trait_is_allowed_with_regen(self):
+        args = self.parse("--regen-manifest", "m.json", "--regen-id", "x",
+                          "--set-trait", "Hair=a bob")
+        self.assertEqual(args.overrides, {"Hair": "a bob"})
+
+    def test_set_trait_and_reroll_trait_together_are_refused(self):
+        with self.assertRaises(SystemExit):
+            self.parse("--regen-manifest", "m.json", "--regen-id", "x",
+                       "--set-trait", "Hair=a bob", "--reroll-trait", "Hair")
+
+    def test_release_without_set_trait_is_refused(self):
+        with self.assertRaises(SystemExit):
+            self.parse("--regen-manifest", "m.json", "--regen-id", "x",
+                       "--release", "Headgear")
+
+    def test_release_of_a_non_dependent_is_refused(self):
+        with self.assertRaises(SystemExit):
+            self.parse("--regen-manifest", "m.json", "--regen-id", "x",
+                       "--set-trait", "Demeanor=a scowl",
+                       "--release", "Backdrop")
+
+    def test_release_of_a_real_dependent_is_accepted(self):
+        args = self.parse("--regen-manifest", "m.json", "--regen-id", "x",
+                          "--set-trait", "Outfit=a kimono",
+                          "--release", "Headgear,Gear")
+        self.assertEqual(args.release, ["Headgear", "Gear"])
+
+    def test_count_and_name_are_still_refused_with_regen(self):
+        # --set-trait leaving the conflict list must not take the rest with it.
+        for flag, value in (("--name", "Someone"), ("--seed", "3"),
+                            ("--pronouns", "she/her")):
+            with self.subTest(flag=flag):
+                with self.assertRaises(SystemExit):
+                    self.parse("--regen-manifest", "m.json", "--regen-id", "x",
+                               flag, value)
+
+
 if __name__ == "__main__":
     unittest.main()
