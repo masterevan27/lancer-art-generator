@@ -541,6 +541,32 @@ ROLE_LOCKS = {
     "admin": ("a colonial administrator",),
 }
 
+# The flag a Role's armament MUST carry, for the Roles whose whole identity is
+# the weapon. Read by apply_weapon_policy().
+#
+# This reads the OPPOSITE way round from ROLE_LOCKS above, and the two are
+# worth keeping straight:
+#
+#   ROLE_LOCKS    this bullet is ONLY for these Roles   (keeps others out)
+#   WEAPON_ROLES  these Roles get ONLY this bullet      (keeps them in)
+#
+# A lock protects an emblem from the wrong job; this protects a job from the
+# wrong emblem. It is emphatically not a lock in the other direction - the
+# blades stay in everyone else's pool, because a pirate with a cutlass is
+# still a pirate with a cutlass.
+#
+# Why this needs to exist at all, rather than a heavier weight: "a
+# close-quarters blade specialist" is flagged 'mil', and the 'mil' tier below
+# restricts the pool to 'sidearm' bullets so a soldier is always armed. No
+# blade is a 'sidearm' - none of them is a pistol - so the two filters
+# intersected to nothing and fell back to the whole table, which is how a
+# blade specialist kept turning up holding a service pistol and no blade. That
+# is why the restriction here OUTRANKS the 'sidearm' one instead of composing
+# with it.
+WEAPON_ROLES = {
+    "blade": ("a close-quarters blade specialist",),
+}
+
 # Backdrop scenes that assert an occupation, and who may roll them.
 #
 # Most of the Backdrop table is places, and a place fits anyone: a blurred
@@ -1208,7 +1234,7 @@ def apply_theme_share(options, theme, name, share=THEME_SHARE):
     return tagged * max(1, n) + neutral
 
 
-def apply_weapon_policy(options, category, mil, unarmed=False):
+def apply_weapon_policy(options, category, mil, unarmed=False, role=None):
     """Bias or filter the Weapon roll to fit the NPC's Role.
 
     Three tiers, layered on top of filter_by_mil's civ/mil split:
@@ -1248,6 +1274,20 @@ def apply_weapon_policy(options, category, mil, unarmed=False):
         disarmed = [x for x in options if "weapon" not in split_flags(x)[1]]
         return disarmed or options
 
+    # A Role named in WEAPON_ROLES carries that kind of weapon and no other.
+    # Placed above the 'mil' tier and returning directly, because it has to
+    # OUTRANK that tier rather than compose with it: a blade specialist is
+    # 'mil', no blade is a 'sidearm', and running both filters intersects to
+    # nothing - which falls back to the whole pool and hands the specialist a
+    # pistol. See WEAPON_ROLES for the whole argument.
+    #
+    # Still yields rather than aborts, like every other filter here: a tables
+    # file with no bullets carrying the flag hands the full pool back.
+    for flag, roles in WEAPON_ROLES.items():
+        if role in roles:
+            required = [x for x in options if flag in split_flags(x)[1]]
+            return required or options
+
     if mil:
         armed = [x for x in options if "sidearm" in split_flags(x)[1]]
         return armed or options
@@ -1267,6 +1307,29 @@ def apply_weapon_policy(options, category, mil, unarmed=False):
         unarmed_bullets = [x for x in options if "weapon" not in split_flags(x)[1]]
         return options + unarmed_bullets * CIVILIAN_UNARMED_COPIES if unarmed_bullets else options
     return options
+
+
+# Headgear that occupies the top of the skull, and so has nowhere to go over
+# hair gathered up there. Two flags rather than one, because they are read by
+# different numbers of filters.
+#
+# 'helmet' encloses the head. It is read here AND by the carried-helmet filter,
+# which drops the Gear bullet holding a spare helmet under one arm.
+#
+# 'crown' merely sits on top of it - a wide woven brim, a tall hat. It is read
+# HERE AND NOWHERE ELSE, which is the whole reason it is not just 'helmet' on
+# those bullets: a sedge hat has no quarrel with a flight helmet carried under
+# an arm, and reusing 'helmet' would have confiscated it.
+#
+# Neither is 'hardtech'. That flag is the modern head register and 'notac'
+# drops it, so a woven hat tagged that way would vanish from exactly the
+# elaborate and traditional outfits it belongs on.
+CROWN_FLAGS = ("helmet", "crown")
+
+
+def occupies_crown(flags):
+    """Whether a Headgear bullet's flags put something on top of the skull."""
+    return any(f in flags for f in CROWN_FLAGS)
 
 
 def resolve_pronouns(tables, subject):
@@ -1406,9 +1469,9 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
     # render is ugly, so naming both with --set-trait is an aesthetic override
     # made on purpose.
     forced_hair = (overrides or {}).get("Hair")
-    forced_worn_helmet = (
+    forced_crowned_head = (
         forced_headgear is not None
-        and "helmet" in split_flags(forced_headgear)[1]
+        and occupies_crown(split_flags(forced_headgear)[1])
     )
 
     # And a fifth, the widest of them. A Hair bullet flagged 'covered' names
@@ -1467,6 +1530,7 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
     hair_updo = False
     hair_covered = False
     headgear_helmet = False
+    headgear_crown = False
     weapon_hands = False
     weapon_flags = ()
     for name in REQUIRED_TABLES:
@@ -1513,10 +1577,10 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
             bare = [x for x in options if "helmet" not in split_flags(x)[1]]
             options = bare or options      # never filter the pool down to nothing
 
-        # The fourth, same shape again: a pinned worn helmet drops the cuts
-        # gathered on top of the skull from the Hair pool, rather than the Hair
-        # dropping the Headgear. See forced_worn_helmet.
-        if name == "Hair" and forced_worn_helmet and forced_hair is None:
+        # The fourth, same shape again: a pinned helmet or brimmed hat drops
+        # the cuts gathered on top of the skull from the Hair pool, rather
+        # than the Hair dropping the Headgear. See forced_crowned_head.
+        if name == "Hair" and forced_crowned_head and forced_hair is None:
             flat = [x for x in options if "updo" not in split_flags(x)[1]]
             options = flat or options      # never filter the pool down to nothing
 
@@ -1627,11 +1691,15 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # Headgear yields because the hair is drawn first and the table has
         # sixty other bullets to fall back on.
         #
-        # Keyed on 'helmet' rather than 'hardtech' for the reason the Gear
-        # filter below gives: a headset, a brow visor or an ear implant leaves
-        # the crown free, and a topknot above one reads fine.
+        # Keyed on 'helmet' and 'crown' rather than on 'hardtech', for the
+        # reason the Gear filter below gives: a headset, a brow visor or an ear
+        # implant leaves the crown free, and a topknot above one reads fine.
+        # 'crown' is the softer half of the pair - a wide woven brim sits on
+        # top of the skull without enclosing it, which is all this filter
+        # cares about. See occupies_crown() for why the two stay separate.
         if name == "Headgear" and hair_updo:
-            bare = [x for x in options if "helmet" not in split_flags(x)[1]]
+            bare = [x for x in options
+                    if not occupies_crown(split_flags(x)[1])]
             options = bare or options      # never filter the pool down to nothing
 
         # One head, one covering. Where 'updo' says the crown is full of hair,
@@ -1674,7 +1742,8 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # fallback re-admits them rather than the reverse.
         if name == "Weapon":
             options = apply_weapon_policy(
-                options, ROLE_CATEGORIES.get(npc["Role"]), role_mil, unarmed)
+                options, ROLE_CATEGORIES.get(npc["Role"]), role_mil, unarmed,
+                role=npc["Role"])
 
         # 'notac' applies to both halves of the old Gear table: an elaborate or
         # traditional outfit should pair with neither a military-issue rifle
@@ -1776,6 +1845,7 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
                 hair_covered = "covered" in flags
             if name == "Headgear":
                 headgear_helmet = "helmet" in flags
+                headgear_crown = "crown" in flags
             if name == "Weapon":
                 weapon_hands = "hands" in flags
                 weapon_flags = flags
@@ -1934,6 +2004,12 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
     # both re-rollable, so either can be the trait that moves into the clash.
     npc["_hair_updo"] = "updo" in split_flags(raw["Hair"])[1]
     npc["_headgear_helmet"] = "helmet" in split_flags(raw["Headgear"])[1]
+    # 'crown' is the second half of that register and needs its own key rather
+    # than folding into '_headgear_helmet'. The two are read by different sets
+    # of filters - the carried-helmet one reads 'helmet' alone - so collapsing
+    # them would make a woven hat confiscate a carried flight helmet on every
+    # re-roll from a lossy entry.
+    npc["_headgear_crown"] = "crown" in split_flags(raw["Headgear"])[1]
 
     # The covered/bare pairing needs its own two, and cannot borrow either of
     # the pair above. '_headgear_helmet' is False for a soft hat, which is the
@@ -3237,22 +3313,31 @@ def reroll_trait(tables, npc, name, rng):
                   "hair gathered on the crown. Re-roll the NPC to record it.",
                   file=sys.stderr)
         if gathered:
-            bare = [x for x in options if "helmet" not in split_flags(x)[1]]
+            bare = [x for x in options
+                    if not occupies_crown(split_flags(x)[1])]
             options = bare or options  # never filter the pool down to nothing
 
     # And the same pairing from the other side, which the carried-helmet one
     # has no equivalent of: Gear cannot be re-rolled on this path, but Hair
     # can, so a stored helmet has to gate the Hair pool too or the clash walks
     # straight back in through a one-click Hair re-roll.
+    # Two registers here rather than one, read INDEPENDENTLY. An entry written
+    # before 'crown' existed has 'headgear_helmet' recorded and
+    # 'headgear_crown' missing, and folding the two together - treating either
+    # None as "nothing is known" - would throw away the helmet fact such an
+    # entry does carry, re-admitting the original clash the updo flag was
+    # written for. So each blocks on its own True, and the warning fires for
+    # whichever one is actually absent.
     if name == "Hair":
         helmeted = npc.get("_headgear_helmet")
-        if helmeted is None:
+        crowned = npc.get("_headgear_crown")
+        if helmeted is None or crowned is None:
             print("! this entry has no recorded headgear register (written "
                   "before the updo flag existed) - re-rolling hair "
                   "unrestricted, so it may come back gathered on the crown "
-                  "under a helmet. Re-roll the NPC to record it.",
-                  file=sys.stderr)
-        if helmeted:
+                  "under a helmet or a wide brim. Re-roll the NPC to record "
+                  "it.", file=sys.stderr)
+        if helmeted or crowned:
             flat = [x for x in options if "updo" not in split_flags(x)[1]]
             options = flat or options  # never filter the pool down to nothing
 
@@ -3531,6 +3616,7 @@ def npc_from_entry(entry, regen_id, warn=True):
     # of keys roll_npc() publishes.
     npc["_hair_updo"] = entry.get("hair_updo")
     npc["_headgear_helmet"] = entry.get("headgear_helmet")
+    npc["_headgear_crown"] = entry.get("headgear_crown")
     # And the two halves of the covered/bare pairing, absent and defaulted the
     # same way. Separate from the pair above because a soft hat is worn and is
     # not a helmet, so neither of those keys answers this question.
@@ -3781,6 +3867,8 @@ def regenerate_one(args):
         entry["hair_updo"] = npc["_hair_updo"]
     if npc.get("_headgear_helmet") is not None:
         entry["headgear_helmet"] = npc["_headgear_helmet"]
+    if npc.get("_headgear_crown") is not None:
+        entry["headgear_crown"] = npc["_headgear_crown"]
     if npc.get("_hair_covered") is not None:
         entry["hair_covered"] = npc["_hair_covered"]
     if npc.get("_headgear_bare") is not None:
@@ -4033,6 +4121,7 @@ def main(argv=None):
             # re-rollable, so the clash is reachable from either side.
             "hair_updo": npc["_hair_updo"],
             "headgear_helmet": npc["_headgear_helmet"],
+            "headgear_crown": npc["_headgear_crown"],
             # The sixth and seventh, for the covered/bare pairing. Same two
             # directions, and not answerable from the two above: 'covered' has
             # to keep out a soft hat, which is neither bare nor a helmet.
