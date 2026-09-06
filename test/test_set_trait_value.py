@@ -303,17 +303,51 @@ class TraitChoicesCommand(unittest.TestCase):
             self.run_cli("--trait-choices", "Hair", "--reroll-trait", "Hair")
 
 
+def seed_with_a_theme_conflict(limit=200):
+    """A seed whose NPC carries a trait tagged for some theme.
+
+    A Theme choice reports a conflict only when the NPC is already wearing a
+    bullet tagged for a rival theme, so the two release tests below need an
+    NPC that has one - most seeds roll one, but not all.
+
+    Which seeds those are is a property of the CONTENT rather than of the code
+    under test: random.choice() draws a different slice of the stream for a
+    differently-sized pool, so appending a bullet to any table at all moves
+    every roll after it - Gear included, though it carries no theme tags of
+    its own. Naming seed 0 here made both tests fail the next time somebody
+    authored a bullet, as a StopIteration reported against a feature that had
+    not changed. The search costs about a millisecond a seed.
+    """
+    for seed in range(limit):
+        npc = raw_npc(seed=seed)
+        if any(c["conflicts"] for c in gen.trait_choices(LIVE, npc, "Theme")):
+            return seed
+    raise AssertionError(
+        "no NPC in %d rolls wears a theme-tagged bullet, so no Theme choice "
+        "conflicts and the release tests have nothing to release" % limit)
+
+
 class SetTraitOnARegen(unittest.TestCase):
     def setUp(self):
         self.dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.dir.cleanup)
-        self.npc = raw_npc(seed=0)
-        self.manifest = manifest_with(self.npc, Path(self.dir.name) / "m.json")
+        self.load(seed=0)
+
+    def load(self, seed):
+        """Roll one NPC and the manifest entry regenerate_one() reads it from.
+
+        A method rather than the tail of setUp because the two release tests
+        need a particular KIND of NPC - see seed_with_a_theme_conflict() - and
+        the entry has to be rebuilt around it, not just the npc.
+        """
+        self.npc = raw_npc(seed=seed)
+        self.manifest = manifest_with(
+            self.npc, Path(self.dir.name) / "m.json", seed=seed)
         self.entry = json.loads(self.manifest.read_text())["npcs/test"]
 
     def pinned(self, table, value, release=None):
         """regenerate_one()'s roll half, without the render half."""
-        npc = gen.npc_from_entry(self.entry, "npc-test-0", warn=False)
+        npc = gen.npc_from_entry(self.entry, self.entry["id"], warn=False)
         free = set()
         for name in (release or ()):
             free |= set(gen.trait_cascade(name))
@@ -356,11 +390,21 @@ class SetTraitOnARegen(unittest.TestCase):
             dict(self.npc["_raw"], Outfit=pick["value"]))
         self.assertEqual(after, expected)
 
+    def theme_that_conflicts(self):
+        """Re-roll onto an NPC wearing a theme tag, then a rival theme for it.
+
+        Both release tests need a Theme choice that reports a conflict, and
+        only an NPC already wearing a tagged bullet has one. setUp's seed 0
+        does not always: see seed_with_a_theme_conflict().
+        """
+        self.load(seed=seed_with_a_theme_conflict())
+        return next(c for c in gen.trait_choices(LIVE, self.npc, "Theme")
+                    if c["conflicts"])
+
     def test_releasing_a_trait_frees_its_whole_cascade(self):
         # Freeing Outfit alone would redraw it while Headgear, Weapon and Gear
         # stayed pinned to bullets chosen for the outfit that is now gone.
-        pick = next(c for c in gen.trait_choices(LIVE, self.npc, "Theme")
-                    if c["conflicts"])
+        pick = self.theme_that_conflicts()
         after = self.pinned("Theme", pick["value"], release=pick["conflicts"])
         untouched = [t for t in gen.REQUIRED_TABLES
                      if t not in pick["releases"] and t != "Theme"]
@@ -370,8 +414,7 @@ class SetTraitOnARegen(unittest.TestCase):
                                  after["_raw"].get(trait))
 
     def test_releasing_nothing_keeps_every_other_trait(self):
-        pick = next(c for c in gen.trait_choices(LIVE, self.npc, "Theme")
-                    if c["conflicts"])
+        pick = self.theme_that_conflicts()
         after = self.pinned("Theme", pick["value"])
         for trait in gen.REQUIRED_TABLES:
             if trait == "Theme":
