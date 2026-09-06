@@ -79,6 +79,28 @@ spec.** It previously omitted `weapon`, `simple`, `sidearm` and `notac`
 entirely, and a run trusting it emitted wrong flags. Diff it against the file
 every run and fix this skill if they disagree.
 
+**This skill mirrors the flags in three places, and they drift apart in a
+predictable order.** The table above, the *Tag …* column of the routing table
+in §3, and the per-table shapes in §4 all name flags, and a change that adds
+one has reliably updated the first and the last while leaving §3 behind: §3
+was found claiming `Hair` took *no flags* after `updo` shipped, describing
+`Headgear` without `helmet`, and listing `hands`/`mil` *only* for `Gear` when
+`helmet` and `admin` also reach it. §3 is the column a run actually reads
+while deciding what to tag, so it is the worst of the three to leave stale.
+Diff all three, and use the live tables as the arbiter rather than any of
+them — this one-liner prints the flags each table really carries:
+
+```
+python -c "import importlib.util,sys,pathlib,collections;s=importlib.util.spec_from_file_location('g','generate-npc.py');m=importlib.util.module_from_spec(s);sys.modules['g']=m;s.loader.exec_module(m);T=m.parse_tables(pathlib.Path('prompts/npc-generator-tables.md'));W={'Backdrop','Faction','Hair colour'};c=collections.defaultdict(set);[c[k.split(' (')[0]].update(f for f in (b.split('||')[2].split() if k.split(' (')[0] in W and b.count('||')>1 else m.split_flags(b)[1] if k.split(' (')[0] not in W else []) if not f.startswith('@')) for k,v in T.items() if k.split(' (')[0] in m.REQUIRED_TABLES for b in v];[print('%-16s %s'%(k,' '.join(sorted(f)))) for k,f in sorted(c.items()) if f]"
+```
+
+It reads the third segment for `Backdrop`, `Faction` and `Hair colour` and the
+second for everything else, so every row is accurate as printed, and it keeps
+only the real tables in `REQUIRED_TABLES` — without that filter the prose of
+`## How the script reads this file` parses as a table and floods the output.
+A flag on a row here that is missing from §0, §3 or §4 is this skill's bug,
+not the tables' — fix the skill.
+
 **Flags the design specifies that do NOT exist yet — do not emit these.**
 `docs/superpowers/specs/2026-09-03-themed-npc-generation-design.md` §7 lists
 `bulk`, `enclosed`, `sealed`, `vacuum` and `mechown`/`mechwork`/`mechnear`.
@@ -233,10 +255,10 @@ subagents, but hold these lines, all of which have failed in practice:
 | A wide scene/environment, with or without the subject doing something in it | **Backdrop** | Portrait only. If the subject is actively posed against the scene (leaning, fighting, kneeling), stage the whole shot as one `{Subject} {is_are} ...` sentence rather than a blurred-background phrase. |
 | A body pose with no particular environment, meant for the full-body token | **Stance** | Token only, and that means **the body and nothing else** — no ground, ledge, wall, furniture, weather or props that aren't in a hand. A pose may crouch, kneel or sit; it must not sit *on* anything. See the trap in §4. Tag `hands` if the pose needs both hands free, `armed` if it references a weapon at all, `gun` if it specifically aims or fires one. An untagged pose is treated as hands-free and weaponless, so a raised blade left untagged will turn up on an unarmed NPC. |
 | A weapon — held, slung, holstered or worn | **Weapon** | Tag `hands`/`gun`/`mil`/`weapon`/`simple`/`sidearm` as applicable — see the flag traps in §0. |
-| A tool, pack, or other carried item that isn't a weapon | **Gear** | Tag `hands`/`mil` only — `gun`/`weapon`/`simple`/`sidearm` moved to `Weapon` with the split and no longer apply here. |
+| A tool, pack, or other carried item that isn't a weapon | **Gear** | Tag `hands`/`mil` — `gun`/`weapon`/`simple`/`sidearm` moved to `Weapon` with the split and no longer apply here. Two others do reach this table: `helmet` for a helmet **carried** rather than worn, and `admin`, a role lock you may only stage under the conditions in §0. |
 | A garment, armor, or full kit | **Outfit** (or `Outfit (she) +` if the cut only reads on a woman's figure) | Tag `civ`/`mil`, plus `notac` if it is elaborate or traditional and `dressy` if it is finery. The two are not the same — see the flag table. |
-| A helmet, hood, hat, or headset | **Headgear** (or `Headgear (she) +`) | Full sentence: `{Subject} {wear} ...`. Tag `hardtech` if it is a helmet, visor rig, sensor or comms hardware, a breather mask or a cybernetic piece; leave soft hats, hoods, plain eyewear and the traditional register unflagged. |
-| A hairstyle/cut visible on its own (not tucked under headgear) | **Hair** (or `Hair (she) +` / `Hair (he) +` if the cut only reads on one gender) | Noun phrase with exactly one `{colour}` placeholder standing in for the shade — no literal color word, no flags. If headgear covers all but a fringe or a couple of strands, it's fine to note that (existing bullets do), but the cut itself is still what gets recorded. A distinctive *shade* seen in the image (not just the cut) is a separate `Hair colour` candidate — see the note on that table's shape in §0. |
+| A helmet, hood, hat, or headset | **Headgear** (or `Headgear (she) +`) | Full sentence: `{Subject} {wear} ...`. Tag `hardtech` if it is a visor rig, sensor or comms hardware, a breather mask or a cybernetic piece; leave soft hats, hoods, plain eyewear and the traditional register unflagged. Tag `helmet` **as well** wherever the head is actually inside a helmet — that is the narrower flag, and it is what keeps a second helmet out of the hands and a gathered updo off the crown. A kabuto takes `helmet` alone, without `hardtech`. |
+| A hairstyle/cut visible on its own (not tucked under headgear) | **Hair** (or `Hair (she) +` / `Hair (he) +` if the cut only reads on one gender) | Noun phrase with exactly one `{colour}` placeholder standing in for the shade — no literal color word. Tag `updo` if the hair is gathered on top of the skull; see the tell in §4. **Never name a worn garment inside the phrase** — no headscarf, cap, hood or headset, however plainly the image shows one. Headgear rolls separately and will put a second thing on the same head. If the reference shows hair under a covering, stage the covering as its own `Headgear` candidate and record the cut alone. A distinctive *shade* seen in the image (not just the cut) is a separate `Hair colour` candidate — see the note on that table's shape in §0. |
 | A distinctive facial expression / mood on the subject | **Demeanor** (or `Demeanor (she) +`) | Noun phrase describing the look, not the backstory behind it — "a wry, crooked grin," not "someone who's seen a lot." |
 | A scar, tattoo, prosthetic, implant or other mark carried on the body | **Feature** (or `Feature (she) +` / `Feature (he) +`) | Noun phrase, no behavioural flags — but it *is* one of the seven themed tables, so a mark strongly of one look may carry a `@theme` tag. Distinct from `Demeanor`, which is the expression, and from `Headgear`, which is worn and removable: a cybernetic optic wired into the face is a Feature, a visor strapped over the eyes is Headgear. |
 | An insignia, unit livery, or faction-defining look | **Faction** | `name || visual || flags` — the name is dossier-only; the visual is the only part that reaches the prompt, and it must describe fabric, tailoring, insignia or patina, **never a garment category** (that loses to `Outfit` every time). Tag `palette` if the faction asserts colours of its own, `dressy` if the livery is ceremonial. See §4 for the full shape. |
@@ -345,6 +367,24 @@ the image will not fit this file. Apply all of these:
   template, with the rolled `Hair colour` filling the `{colour}` slot first;
   see the shape note in §0 before writing one of these. Flag it `updo` only if
   the hair is gathered on top of the skull, where a helmet cannot go over it.
+
+  **The tell is your own wording.** If the phrase you just wrote says *swept
+  up*, *piled*, *gathered at the crown*, *topknot*, *space buns*, or a *high*
+  ponytail or bun, it is an `updo` — those words say the mass has been moved
+  onto the crown and left there, which is the whole of what the flag means.
+  *Swept **back*** and *swept **across*** are not: they move hair off the
+  face, not onto the top of the head, and the live *neat low bun* is "swept
+  back". Judge the words, not the ornament — a bullet was once missed for no
+  better reason than that its three flagged siblings all named a pin or a
+  flower and it named none, and a civilian rendered with a flight helmet
+  through her bun.
+
+  **A Hair bullet never names a worn garment.** No headscarf, cap, hood or
+  headset in the phrase, however plainly the reference shows one: Headgear
+  rolls independently and will put a second object on the same head. Stage the
+  covering as its own `Headgear` candidate. Three live bullets predate this
+  rule and still name one — a headscarf, a worn cap and a chunky headset. They
+  are not precedent to follow.
 - **Hair colour**: `<base, consonant-initial> || [tail] || [older]` — the
   `base` fills the cut's `{colour}` slot, the optional `tail` is a trailing
   clause for gradients, and `older` is the only flag. See the consonant and
@@ -648,10 +688,19 @@ against the file you just wrote and fix anything they surface:
 8. **Every input image is accounted for** in `entries` or `skipped`, with no
    image referenced that isn't in the run.
 9. **`id`s are unique.**
-10. **Every `Hair` candidate's bullet contains exactly one `{colour}`.** Zero
-    means the base cut can never take a rolled shade; more than one means the
-    same shade gets substituted twice and the second copy is very likely
-    wrong once the placeholder logic fills it in.
+10. **Every `Hair` candidate passes all three of these.** They are cheap to
+    read off the finished bullet and each one has been gotten wrong.
+    - **Exactly one `{colour}`.** Zero means the base cut can never take a
+      rolled shade; more than one means the same shade gets substituted twice
+      and the second copy is very likely wrong once the placeholder logic
+      fills it in.
+    - **Anything gathered on the crown carries `updo`.** Re-read the phrase
+      for *swept up*, *piled*, *gathered at the crown*, *topknot*, *space
+      buns*, or a *high* ponytail or bun. Missing the flag is silent: the
+      bullet rolls a helmet over itself and only the render shows it.
+    - **No worn garment named in the phrase** — no headscarf, cap, hood or
+      headset. Headgear rolls separately, and two coverings on one head is
+      the same artefact as a bun inside a helmet.
 11. **Every `Hair colour` candidate's flags sit in the third segment**, not
     the second. `Hair colour` is `base || tail || flags` — the same shape as
     `Backdrop`, not the `text || flags` shape most other tables use — so a
