@@ -265,6 +265,19 @@ distinct from `Glow colour`'s light), which softens the closing palette
 line's claim from "the only saturated color" to "the only *other* saturated
 color" so the prompt stops contradicting a uniform it just described.
 
+Those two non-affiliations also carry an `unaffiliated` flag, which exists so a
+filter can name them without matching on their prose — the same reason Weapon's
+empty bullet carries `none` and Headgear's carries `bare`. What reads it is
+`UNAFFILIATED_ROLES`, the Role bullets whose own words say they work for
+nobody. "A freelance salvager" is the only one so far, and its Faction pool is
+cut to those two: the dossier prints Faction under **Affiliation**, so
+"freelance salvager … House Clawthorne" is one sheet disagreeing with itself
+rather than an interesting pairing. The `civ`/`mil` split cannot catch that
+alone — it drops House Clawthorne from a civilian's pool for being `mil` and
+then hands them Smith-Shimano Corpro instead. The mercenary Roles are
+deliberately *not* in the set: a mercenary company is an affiliation, with a
+name, a banner and a payroll.
+
 **`--set-trait Faction=` needs that same shape.** A bare string — the form
 every example below used before this table gained a visual segment — parses
 as the name with an empty visual, so the faction clause silently disappears
@@ -327,6 +340,53 @@ the same ordering dependency `Role` has on `Faction` and `Outfit`.
 The token prompt gets no placement at all. It renders on flat white with no
 scene to place anything against, so it keeps the unplaced wording it always
 had.
+
+### What makes a glow believable
+
+Three things about the glow used to read as wrong in finished portraits, and
+each is now filtered rather than left to the roll.
+
+**The light has to be coloured.** `has_light_source()` decides whether the glow
+sentence fires at all, and it used to match the bare words `lit`, `light`,
+`lights`, `lighting` and `glaring`. Almost every scene in the Backdrop table
+says one of those somewhere, and where it does the light is usually *white* —
+floodlights over a dock, fluorescent tubes in a corridor, "hard directional
+light", a caged work lamp, grey daylight through a broken roof. The sentence
+fired on 88% of rolls, and a faint magenta glow across a face lit by a work
+lamp is exactly the render that reads as out of place. It now matches
+**emitters** whose light is coloured by what they are — neon, embers, readouts,
+a muzzle flash — and **a hue word sitting beside any light word**, in either
+order: "lit crimson", "cool blue interior lighting", "red emergency
+strip-lighting", "monitors glowing violet and cyan". Plain daylight and dusk
+are still excluded, and so now is plain white.
+
+**The colour has to agree with the scene's own.** Where a scene commits to a
+hue, `filter_by_hue()` narrows the `Glow colour` pool to shades in the same
+family, so a wall of schematics *lit crimson* no longer stands behind a subject
+washed in teal-green. Thirty-eight of the live scenes commit; the rest — a bank
+of readouts, an ember, an unqualified neon sign — cast light without saying what
+colour it is, and leave the shade free. The families are `red`, `amber`,
+`green`, `blue` and `violet`, matched on the shade's own words, which is why
+`Glow colour` bullets still carry no flags.
+
+**The placement has to describe something the scene has.** A placement may name
+a prop, and five flags say which: `ground`, `wall`, `screens`, `signage` and
+`air`. Each is matched against the rolled scene, so "washes the towering display
+wall stacked behind her" cannot land on a snowbound crash site and "pools on the
+ground around him" cannot land on a man floating weightless in an observation
+blister. `ground` is matched on the *verb* the scene gives the subject —
+standing, walking, crouched — which is also what keeps it off the weightless
+scenes and off every half-body one, since those describe only the background.
+`air` is the inverted one: the glow hangs as a haze, and hard vacuum has no
+atmosphere to hold it.
+
+A prop gate reads the **scene** and nothing else. The two placements that used
+to assert something *worn* — a suit's seams, a shoulder harness — were reworded
+to "{possessive} clothing" and "the near shoulder" rather than gated, because
+gating them would have made `Glow placement` a dependent of `Outfit`, `Gear` and
+`Weapon` in `TRAIT_DEPENDENTS` and widened three cascades to fix two bullets.
+`Glow colour` reads the scene alone for the same reason: across all six equipped
+tables exactly three bullets name a colour for the light they cast.
 
 ## Where the entries came from
 
@@ -849,10 +909,10 @@ Every re-roll's actual size, on the live tables:
 
 | Re-roll | Also re-rolls | Total |
 | --- | --- | --- |
-| `Theme` | the 7 theme-gated tables, plus `Gear`, `Stance`, `Glow placement`, `Weather` | 12 |
-| `Role` | `Faction`, `Outfit`, `Weapon`, `Backdrop`, `Headgear`, `Gear`, `Glow placement`, `Weather`, `Stance` | 10 |
+| `Theme` | the 7 theme-gated tables, plus `Gear`, `Stance`, `Glow colour`, `Glow placement`, `Weather` | 13 |
+| `Role` | `Faction`, `Outfit`, `Weapon`, `Backdrop`, `Headgear`, `Gear`, `Glow colour`, `Glow placement`, `Weather`, `Stance` | 11 |
 | `Outfit` | `Headgear`, `Weapon`, `Gear`, `Stance` | 5 |
-| `Backdrop` | `Weather`, `Glow placement`, `Gear`, `Stance` | 5 |
+| `Backdrop` | `Weather`, `Glow colour`, `Glow placement`, `Gear`, `Stance` | 6 |
 | `Age` | `Build`, `Hair colour`, `Hair` | 4 |
 | `Weapon` | `Gear`, `Stance` | 3 |
 | `Hair colour` | `Hair` | 2 |
@@ -904,13 +964,19 @@ the trait a GM most wants to change, since it's the whole visual world the
 NPC comes from, and "re-roll the entire NPC" is not a substitute — it throws
 away the name, the role and the face that made the character worth keeping.
 
-`--reroll-trait Theme` re-rolls **twelve** traits — `Theme` itself, the seven
-theme-gated tables (`Hair`, `Hair colour`, `Feature`, `Outfit`, `Headgear`,
-`Weapon`, `Backdrop`), and the four that depend on those (`Gear`, `Stance`,
-`Glow placement`, `Weather`) — and keeps **thirteen**: `Given names`, `Family
-names`, `Callsigns`, `Pronouns`, `Age`, `Build`, `Height`, `Skin`, `Eyes`,
-`Demeanor`, `Role`, `Faction`, `Glow colour`. The NPC stays the same person;
-only the world they're standing in, and what that world put them in, changes.
+`--reroll-trait Theme` re-rolls **thirteen** traits — `Theme` itself, the
+seven theme-gated tables (`Hair`, `Hair colour`, `Feature`, `Outfit`,
+`Headgear`, `Weapon`, `Backdrop`), and the five that depend on those (`Gear`,
+`Stance`, `Glow colour`, `Glow placement`, `Weather`) — and keeps **twelve**:
+`Given names`, `Family names`, `Callsigns`, `Pronouns`, `Age`, `Build`,
+`Height`, `Skin`, `Eyes`, `Demeanor`, `Role`, `Faction`. The NPC stays the
+same person; only the world they're standing in, and what that world put them
+in, changes.
+
+`Glow colour` moved out of the kept list when the shade was bound to the
+scene's own light: `filter_by_hue()` narrows it to the hue family the rolled
+Backdrop commits to, so a colour kept across a new scene can be one that
+scene's light flatly contradicts.
 
 The new theme is always a *different* one from the stored theme — the draw
 excludes it and picks from what's left, rather than repeating until it

@@ -77,7 +77,7 @@ templates at the bottom of this file.
   exclusion, like `## Gear`'s `admin` lock and unlike every preference filter
   in the file: it never falls back to the whole pool, because falling back
   would hand the scene to the Role it was kept from. An unflagged bullet is
-  neutral and reachable by everyone, which is what roughly 180 of these are —
+  neutral and reachable by everyone, which is what some 155 of these are —
   keep it that way unless the scene puts the subject *doing* the job rather
   than merely standing somewhere. The comment above that table has the rest.
 - **Hair colour** bullets carry three segments as well — the colour itself,
@@ -1614,18 +1614,40 @@ ignored — so notes like this one are safe to leave inline.
   scheme should NOT carry the flag: Unaligned, Unregistered and the colonial
   militia deliberately leave the palette unconstrained.
 
+  '|| unaffiliated' marks the two entries that are NOT an affiliation - the
+  ones whose visual is empty because there is nothing to show. It is a marker
+  rather than a preference, the same shape 'none' has on Weapon and 'bare' on
+  Headgear: nothing is dropped FOR it, and it exists so a filter can name the
+  non-affiliations without matching on their prose. Exactly two bullets carry
+  it.
+
+  What reads it is UNAFFILIATED_ROLES in generate-npc.py, which names the Role
+  bullets whose own words say they work for nobody - "a freelance salvager" is
+  the only one so far. Such a Role's Faction pool is cut to these two and
+  nothing else, because "a freelance salvager, Affiliation: House Clawthorne"
+  is a dossier disagreeing with itself rather than an interesting combination.
+  The civ/mil split cannot catch that on its own: it drops House Clawthorne
+  from a civilian's pool for being 'mil', and then hands them Smith-Shimano
+  Corpro instead. A hard filter like the Gear lock and the Backdrop gates, for
+  the same reason - handing the pool back would give the freelancer the
+  employer this exists to keep off them.
+
+  The mercenary Roles are deliberately NOT in that set. A mercenary company is
+  an affiliation, with a name, a banner and a payroll, so "a mercenary squad
+  lead, Ashfall Vanguard" is who pays them rather than a contradiction.
+
   Keep visuals to about a dozen words. Both prompts run close to Krea 2's
   512-token ceiling - see test/test_prompt_budget.py.
 -->
 
-- x2 Unaligned || || civ
+- x2 Unaligned || || civ unaffiliated
 - x2 Union Administrative Department || issued and worn thin, in faded institutional blue-grey || mil palette
 - Harrison Armory || sharply pressed, high collar and polished fittings, in imperial green and gold || mil palette
 - Smith-Shimano Corpro || precisely tailored with fine seam piping, in white and pale pastels || civ palette dressy
 - IPS-Northstar || riveted and salt-stained heavy canvas, in rust orange || civ palette
 - Karrakin Trade Baronies || heavy brocade and gold braid, an heraldic crest at the shoulder, in deep crimson || palette dressy
 - Colonial militia || mismatched surplus, webbing straps and taped-over insignia || mil
-- Unregistered || ||
+- Unregistered || || unaffiliated
 - House Clawthorne || a purple rabbit-skull crest banner, tarnished gold trim and dangling bone charms || mil palette
 - Forge Household || a quartered crimson-and-black heraldic shield stitched over the breast, tarnished brass fastenings || mil palette
 - Redstar Salvage || a red five-point star roundel stitched above the chest zipper, edges frayed and sun-faded || civ palette
@@ -2192,6 +2214,43 @@ ignored — so notes like this one are safe to leave inline.
   on or immediately around the figure and is reachable either way - most
   should stay that way, since the equipped case is the common one. See
   has_light_source() in generate-npc.py.
+
+  The other five flags are PROP GATES, and they are what stops a placement
+  describing scenery the rolled scene does not have - 'washes the towering
+  display wall stacked behind her' against a snowbound crash site, 'pools on
+  the ground around him' against a man floating weightless in an observation
+  blister. Each is matched against the Backdrop's scene sentence by
+  PLACEMENT_REQUIRES (or, for 'air', PLACEMENT_FORBIDS) in generate-npc.py:
+
+    'ground'  - the light pools on the floor, so the subject has to have their
+                weight on one. Matched on the VERB the scene gives them -
+                standing, walking, crouched - which is also why it drops the
+                weightless scenes (they say floating and drifting) and every
+                half-body one (those describe only the background, so they
+                carry no verb for the subject at all, and a half-body shot
+                crops above the ground anyway).
+    'wall'    - an interior surface behind the subject: a corridor, a bay, an
+                alley, a room.
+    'screens' - a stacked display wall: monitors, readouts, consoles, a board.
+    'signage' - a lit skyline: signage, neon, billboards.
+    'air'     - the inverse of the four above. The glow hangs as a haze, and
+                hard vacuum has no atmosphere to scatter it, so this one names
+                what the scene must NOT be. Weightlessness is not the test:
+                most of the zero-gravity scenes are shirt-sleeve interiors, and
+                a pressurised compartment holds a haze as well as a street
+                does. It is the vacuum ones this drops.
+
+  A gate reads the scene and nothing else. Reading the Outfit or the Gear too
+  would make this table a dependent of theirs in TRAIT_DEPENDENTS; the two
+  bullets that used to assert worn props - a suit's seams, a shoulder harness -
+  were reworded to '{possessive} clothing' and 'the near shoulder' instead,
+  which are true of every roll.
+
+  The COLOUR is gated too, though not from here: filter_by_hue() narrows the
+  '## Glow colour' pool to shades agreeing with a coloured light the scene
+  already named, so a wall of schematics lit crimson no longer gets a
+  teal-green glow in front of it. That needs no flag - it reads the shade's own
+  words - which is why '## Glow colour' bullets stay single-segment.
 -->
 
 - x2 falls across one side of {possessive} face against warm dim ambient light on the other
@@ -2201,13 +2260,17 @@ ignored — so notes like this one are safe to leave inline.
 - falls across {possessive} back and one shoulder, the front of the figure in warm shadow
   <!-- - catches {possessive} profile and one hand at a sharp angle, the rest of the figure left in shadow -->
   <!-- - washes across the scene behind {object}, throwing {possessive} outline into near-silhouette || scene -->
-- pools on the ground around {object} and throws colour up onto {possessive} hands || scene
-- stripes the wall behind {object} and catches one side of {possessive} face || scene
-- hangs in the air as a haze across the whole depth of the shot || scene
-- washes across {possessive} cheek and shoulder harness at a low angle
-- washes the towering display wall stacked behind {object} || scene
-- traces the seams of {possessive} suit in a hairline of light down each limb
-- spills across the skyline in overlapping signage behind {object} || scene
+- pools on the ground around {object} and throws colour up onto {possessive} hands || scene ground
+- stripes the wall behind {object} and catches one side of {possessive} face || scene wall
+- hangs in the air as a haze across the whole depth of the shot || scene air
+- washes across {possessive} cheek and the near shoulder at a low angle
+- washes the towering display wall stacked behind {object} || scene screens
+- picks out the seams and edges of {possessive} clothing in a hairline of light
+- spills across the skyline in overlapping signage behind {object} || scene signage
+- edges {possessive} profile in a thin line and leaves the rest of the figure in shadow
+- lies along {possessive} shoulder and the side of {possessive} neck, the face turned out of it
+- catches the underside of {possessive} chin and the line of {possessive} jaw from low down
+- bleeds up the surface behind {object} in a soft bloom, {possessive} outline read almost as a silhouette || scene wall
 
 ## Backdrop
 
@@ -2245,7 +2308,7 @@ ignored — so notes like this one are safe to leave inline.
   of a mech hangar is fine for a bar owner, and gets no flag. A scene that
   puts the subject mid-action is a claim about the person: flying the machine,
   welding its plating, annotating a clipboard on an inspection gantry, running
-  a triage tent. Some 180 of these bullets are ungated and should stay that
+  a triage tent. Some 155 of these bullets are ungated and should stay that
   way. Reach for a gate only where the sentence would be FALSE about a wrong
   Role, not merely unusual - over-gating this table is how you end up with
   three occupations that can only ever roll six scenes between them.
@@ -2259,13 +2322,13 @@ ignored — so notes like this one are safe to leave inline.
   Entries that led with the environment rendered the subject standing on a deck
   no matter how many "weightless" qualifiers were bolted on.
 
-  Nineteen of these are zero-gravity, against 303 weighted entries in all, so
-  about one portrait in sixteen comes up weightless. That figure is far below
+  Thirty-one of these are zero-gravity, against 353 weighted entries in all, so
+  about one portrait in eleven comes up weightless. That figure is far below
   the "about a quarter" this note used to claim: the count was written when the
   table was a fraction of its present size and the standing entries carried an
   x3 weight, and the table outgrew it rather than the weighting changing. Add a
   weight to the zero-gravity bullets, not to the standing ones, if you want the
-  mix back - there are 250 of the latter now and re-weighting them all is a
+  mix back - there are 300-odd of the latter now and re-weighting them all is a
   much larger edit than it was.
 
   The exterior/vacuum entries dress the subject in a sealed EVA pressure suit
@@ -2508,24 +2571,53 @@ ignored — so notes like this one are safe to leave inline.
 - A character portrait || {Subject} {is_are} peeling off a pair of tacky gloves at the mouth of a field surgery, {possessive} apron streaked and {possessive} sleeves shoved past the elbow, an unlit cigarette waiting at the corner of {possessive} mouth - behind {object} a tarpaulin awning sags under the rain and a generator throbs beside stacked supply crates. || nogear weather medic
 - A character portrait || {Subject} {is_are} bent close over a clinic chair under a swing-arm lamp, working a fine driver into the opened forearm housing of a patient's prosthetic, tool trays and spooled cabling crowding the bench at {possessive} elbow - the room's tiled walls throw back a faint green cast from the lamp. || nogear medic
 - A character portrait || {Subject} {is_are} sitting on the lowered tail ramp of a parked medical transport with a flask cradled in both hands and {possessive} kit bag slumped against {possessive} leg, watching a grey dawn come up over a churned airfield - a stencilled medical cross flakes at the ramp's edge beside {object}. || nogear weather medic
+- A character portrait || {Subject} {is_are} kneeling in the red-lit cabin of a casualty flight with one knee braced against a stretcher rail, squeezing a bag valve two-handed over a strapped-down casualty as the airframe shudders around {object} - crew silhouettes and a swinging drip line crowd the bay behind {object}. || nogear medic
+- A character portrait || {Subject} {is_are} standing over a reclined cyberbrain rig with {possessive} arms folded, watching a patient's neural map turn slowly in the air at head height, the skull cradle's fine manipulator arms folded back and waiting - the theatre's tiled walls recede cold and green behind {object}. || medic
+- A character portrait || {Subject} {is_are} crouched at a colony shelter's triage line knotting a sorting tag onto a seated evacuee's wrist, a marker clamped between {possessive} teeth - rows of blanketed figures and stacked bedding recede behind {object} beneath a taped-up casualty board. || nogear medic
+- A character portrait || {Subject} {is_are} washing to the elbow at a bay sink with {possessive} sleeves shoved back and {possessive} head down, a splashed apron still tied on - an instrument tray and a heap of soiled gowns crowd the counter beside {object}, the theatre doors swinging shut behind. || nogear medic
+- A character portrait || {Subject} {is_are} sitting on an upturned crate outside a construction site's first-aid post splinting the forearm of a labourer seated opposite, a torn hi-vis jacket bundled at their feet - beyond them a toppled work-frame lies half across the road under floodlights and drifting dust. || nogear weather medic
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a back-alley implant clinic's shopfront, a reclining chair visible through smeared glass beneath a ring of surgical lamps and shelves of boxed limbs. || medic
+- A character portrait || {Subject} {is_are} sitting back against a corridor bulkhead with {possessive} legs stretched out and {possessive} gloves still on, head tipped back and eyes shut - down the passage behind {object} a lit theatre door stands propped open and a mop bucket waits against the wall. || medic
+- A dramatic low-angle character portrait || {Subject} {is_are} braced in the open side door of a hovering ambulance craft, one hand on the frame and a jump line clipped at {possessive} harness, looking down past the skids - far below {object} a wet street glows with the strobing lights of a cordon. || nogear weather medic
 - A character portrait || {Subject} {is_are} standing waist-deep among stacked frame torsos in a breaker's yard, a cutting torch idle in one gloved hand and a hauling strap slung across {possessive} chest - behind {object} a gantry crane swings a severed limb section slowly against a flat white sky. || nogear weather salvage
 - A character portrait || {Subject} {is_are} crouched inside the opened chest cavity of a downed war-machine, {possessive} headlamp throwing a hard cone across severed cable looms as {subject} works a connector free - the machine's ribbed interior recedes into the dark around {object}. || nogear salvage
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a tidal scrapyard at low water, half-sunk hulls and stripped actuator limbs bedded in grey mud beneath a wide colourless sky. || weather salvage
 - A character portrait || {Subject} {is_are} sitting on an upturned crate beside a weighing scale heaped with salvaged servo parts, arguing a price with a dealer whose back fills the foreground out of focus - behind {object} a tarpaulin stall of sorted scrap glows amber under strung work lights. || salvage
 - A character portrait || {Subject} {is_are} walking a narrow catwalk between towering stacks of crushed vehicle bodies, a coil of recovered cable looped over one shoulder and a sorting hook swinging in {possessive} free hand - rust-red canyon walls of compacted metal rise to either side of {object} into a hazy sky. || nogear weather salvage
 - A character portrait || {Subject} {is_are} standing on the sun-blasted upper hull of a beached colony section prying at a seam with a long bar, {possessive} shadow thrown long across the plating - behind {object} the structure's torn ring curves away into a heat-shimmering desert. || nogear weather salvage
+- A character portrait || {Subject} {is_are} crouched in the sand-drifted cockpit of a half-buried war-machine brushing grit off a seized control yoke with the back of one glove - the frame's exposed ribs break the dune line behind {object} and a hot white sky flattens the horizon. || nogear weather salvage
+- A character portrait || {Subject} {is_are} walking a stripped synthetic chassis upright on a hand truck through a chop shop's roller door, its faceplate gone and its cabling bundled at the neck - racks of mismatched limbs and torsos line the walls behind {object} under bare fluorescent tubes. || nogear salvage
+- A character portrait || {Subject} {is_are} standing at the rail of a scrap barge beneath a bay bridge with a cargo hook laid across {possessive} shoulder, watching a crane swing a crushed cab aboard - the far shore's gantries and stacked containers fade into brown smog behind {object}. || nogear weather salvage
+- A character portrait || {Subject} {is_are} kneeling on wet plating in a flooded service culvert hauling a severed cable loom hand over hand out of the silt, {possessive} headlamp throwing a hard cone down the tunnel - water runs steadily past {possessive} knees into the dark. || nogear salvage
+- A character portrait || {Subject} {is_are} sitting in the open jaw of a parked grapple crane with {possessive} boots dangling over the drop and a tin of food balanced on one knee, looking out across the yard - ranked rows of stripped hulls stretch away below {object} into a rust-coloured evening. || nogear weather salvage
+- A close character portrait || {Subject} {is_are} holding a pulled optic module up to a strung work light, turning it to read the maker's stamp etched around its housing - behind {object} a night market stall of sorted chrome glitters on a folding table, buyers browsing out of focus. || nogear salvage
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a bonded salvage lot at first light, numbered wrecks ranked in rows under frost and a chain-link fence running away into the mist. || weather salvage
 - A character portrait || {Subject} {is_are} standing in a hangar doorway with a sealed document wallet tucked under one arm, taking in the bay ahead without stepping into it, {possessive} lanyard badge turned face-out at {possessive} chest - work crews and a shrouded war-machine stand paused in the light behind {object}. || nogear inspection
 - A character portrait || {Subject} {is_are} seated across a bare interview table from an empty chair, a recorder set squarely between them and {possessive} hands folded on a closed folio - the room's acoustic panelling and one high window recede flat and grey behind {object}. || inspection
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a records vault of racked archive boxes and rolling ladder rails, a single strip light burning away down a long aisle. || inspection
 - A character portrait || {Subject} {is_are} holding a stamped compliance placard up against a machine housing on a factory floor, comparing it to the serial plate at eye level - conveyor lines and a shift-change crowd blur away behind {object} under flat sodium light. || nogear inspection
 - A character portrait || {Subject} {is_are} standing at a rain-lashed dockside barrier with a tablet held low and shielded under one arm, watching a container crane work - floodlights burn cones through the downpour behind {object} and a queue of idling haulers stretches back to the gate. || nogear weather inspection
 - A character portrait || {Subject} {is_are} descending a spiral stair into a colony's lower service level, one hand on the rail and a survey lamp raised in the other, condensation beading the pipe runs that crowd the shaft around {object}. || nogear inspection
+- A character portrait || {Subject} {is_are} standing at an observation gallery rail above an assembly floor, a stylus paused over a checklist and {possessive} attention down on the line below - ranked frame chassis crawl past on the belt beneath {object} under flat white light. || nogear inspection
+- A character portrait || {Subject} {is_are} crouched at an opened bonded container with the broken seal still hanging from its latch, sweeping a scanner wand across the crates stacked inside - the warehouse aisles recede behind {object} under caged lamps, a forklift idling out of focus. || nogear inspection
+- A character portrait || {Subject} {is_are} holding a tape measure taut across a cracked weld on a pressure bulkhead and photographing it one-handed, the flash catching the seam - pipe runs and painted frame numbers crowd close behind {object}. || nogear inspection
+- A character portrait || {Subject} {is_are} seated at a hearing-room table with a stack of tabbed folders squared at {possessive} elbow and one hand raised mid-question, a gooseneck microphone bent toward {object} - tiered empty benches and a hung institutional seal recede behind {object}. || inspection
+- A character portrait || {Subject} {is_are} standing in a colony's reactor annex reading a dosimeter held up at arm's length, {possessive} badge clipped face-out at {possessive} collar - shielded conduit and painted hazard chevrons climb the wall behind {object} under a steady amber lamp. || nogear inspection
+- A character portrait || {Subject} {is_are} stepping down from an idling inspection car at a road checkpoint with a stamped manifest held flat against the door, rain beading across the folder's cover - a queue of covered haulers stretches back past {object} into the downpour. || nogear weather inspection
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a permit office papered floor to ceiling with pinned notices and expired certificates, a numbered ticket display glowing above a shuttered counter. || inspection
 - A character portrait || {Subject} {is_are} standing behind a narrow bar counter polishing a glass with both elbows loose, the back-bar shelves stacked with mismatched bottles under a strip of warm tube light - a patron's shoulder blurs across the foreground and rain streaks the window beyond {object}. || nogear weather barkeep
 - A character portrait || {Subject} {is_are} leaning across a booth table with both palms flat on the laminate, saying something low to a figure seated out of focus opposite - behind {object} the bar's back room glows in stacked neon and a beaded curtain hangs half-parted. || barkeep
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a shuttered bar at closing, chairs upended on the tables and a lone pendant lamp burning over a wiped-down counter. || barkeep
 - A character portrait || {Subject} {is_are} sitting at the end of {possessive} own counter with a ledger open and a cash tin beside it, glancing up at the door - behind {object} a wall of pinned business cards, chits and faded photographs climbs to the ceiling beside a dead payphone. || nogear barkeep
 - A character portrait || {Subject} {is_are} drawing a cellar hatch shut behind {object} with a crate of bottles balanced on one hip, the stairwell's bare bulb still swinging - overhead the bar's floorboards leak music and the moving shapes of feet. || nogear barkeep
 - A character portrait || {Subject} {is_are} standing under a taped-over security monitor at the end of the bar with {possessive} arms folded, watching four grainy feeds of the alley and the door while the room's warm noise blurs past {possessive} shoulder. || barkeep
+- A character portrait || {Subject} {is_are} drawing a beer at a wall of taps with {possessive} eyes not on the glass but on a booth across the room, foam climbing the rim - the back-bar mirror behind {object} carries the blurred reflection of two figures leaning close together. || nogear barkeep
+- A character portrait || {Subject} {is_are} setting two glasses down on a corner table and sliding a thin data chit beneath one of them with two fingers, {possessive} expression giving nothing away - cracked vinyl and a low pendant lamp frame the booth, the room's noise blurred beyond. || nogear barkeep
+- A character portrait || {Subject} {is_are} standing at the head of the bar's basement stair beneath a dead neon sign, arms folded and one shoulder against the doorframe, watching the wet street - rain runs off the awning past {object} and headlights slide by out of focus. || weather barkeep
+- A character portrait || {Subject} {is_are} working the pass of {possessive} own noodle counter beneath an expressway, ladling broth one-handed with steam rolling up past {possessive} face - a row of empty stools and a hand-lettered price board recede behind {object}, traffic rumbling overhead. || nogear weather barkeep
+- A character portrait || {Subject} {is_are} leaning back against the back-bar shelves with a handset trapped between {possessive} shoulder and ear, writing a name on the inside of {possessive} own wrist - stacked bottles and a strip of warm tube light glow behind {object}, the room dark beyond. || nogear barkeep
+- A character portrait || {Subject} {is_are} sitting on a stool at the closed end of the counter under a half-drawn shutter, thumbing a stack of chits and marking one - the room stands dark behind {object} but for a single lamp and the shutter's slatted light laid across the floor. || nogear barkeep
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is the bar's back office, a wall of unlabelled keys on hooks beside a battered safe and a rack of pigeonholes stuffed with folded notes. || barkeep
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} coasting head-on toward the viewer down the central shaft of a colony spoke, arms tucked close and {possessive} body tilted no more than about 30 to 40 degrees off vertical, hair fanned loose around {possessive} face - the shaft's ladder rungs and stencilled level numbers streak away behind {object}. Dramatic foreshortened composition.
 - A character portrait || {Subject} {is_are} floating in a darkened observation blister with {possessive} legs drawn up and drifting, one hand steadying against a console rail, a scatter of pens and a loose clipboard hanging motionless in the air around {object} - the room's readouts glow dim across {possessive} face.
 - A character portrait || {Subject} {is_are} hanging weightless in a station galley with one boot hooked under a table rail, a drink bulb held loose and {possessive} body turned a mild 20 to 30 degrees off vertical, crumbs and a spoon suspended nearby - stowage netting and taped-up duty notices line the bulkhead behind {object}.
@@ -2536,6 +2628,18 @@ ignored — so notes like this one are safe to leave inline.
 - A character portrait || {Subject} {is_are} clamped by one boot to the spine of a drydocked warship in a sealed EVA pressure suit and helmet, visor down, a torque tool floating tethered at {possessive} hip, looking back along the hull - beyond {object} the ship's bare ribs recede into the scaffold and a work light glares white off the plating. Dramatic rim lighting along {possessive} silhouette. || vacuum
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} pushing off toward the viewer through a debris field in a sealed EVA pressure suit and helmet, visor down, one gauntlet thrust out at the camera and {possessive} tether whipping loose behind {object}, {possessive} body tilted no more than about 30 to 40 degrees off vertical - shattered panel fragments turn slowly past {object} against the starfield. || vacuum
 - A character portrait || {Subject} {is_are} standing magnet-soled on the outer hull of a colony cylinder in a sealed EVA pressure suit and helmet, visor down, one gauntlet raised against the glare and a survey slate clipped at {possessive} thigh - the cylinder's vast painted flank curves away behind {object} toward a distant mirror panel burning white. || vacuum
+- A character portrait || {Subject} {is_are} curled loose in a bunk niche's sleep sack with one arm floated free of the netting and {possessive} hair fanned around {possessive} face, {possessive} body turned a mild 20 to 30 degrees off vertical - stowed kit and a taped-up photograph line the niche wall behind {object}.
+- A dynamic character portrait || {Subject} {is_are} twisting weightless to catch a thrown wrench, {possessive} body rotating a mild 20 to 30 degrees off vertical with one hand snapping shut on it and the other flung back as counterweight - a workshop's tool boards and a drift of loose swarf hang motionless behind {object}.
+- A close, low-angle character portrait || {Subject} {is_are} hanging inverted with {possessive} boots hooked through an overhead rail and {possessive} head lowest in frame, both hands working at an opened panel above {possessive} face and {possessive} hair falling the wrong way - conduit runs recede past {object} in dim standby light.
+- A character portrait || {Subject} {is_are} floating with {possessive} legs drawn up and {possessive} palms cupped around a wobbling sphere of water held in the air before {possessive} face, {possessive} body tilted no more than about 30 to 40 degrees off vertical - a survey bay's racked sample cases and a drifting pen hang behind {object}.
+- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} diving toward the viewer through the open ribs of a colony under construction in freefall, {possessive} body stretched into strong foreshortening with both arms swept back along {possessive} sides and {possessive} legs trailing, girders and taped bundles of cable streaking past to either side. Dramatic foreshortened composition.
+- A character portrait || {Subject} {is_are} turning slowly weightless inside the gutted interior of a derelict, {possessive} body tilted no more than about 30 to 40 degrees off vertical and one hand fending off a drifting sheet of torn panelling - frozen condensation glitters in the air around {object} wherever {possessive} lamp beam catches it.
+- A dynamic, gently canted-angle character portrait || {Subject} {is_are} pushing off hard from a hatch coaming with both feet, {possessive} body already tilted no more than about 30 to 40 degrees off vertical and {possessive} arms folding tight to {possessive} chest, a document wallet tumbling free of {possessive} grip behind {object} - numbered lockers fall away past {possessive} shoulder.
+- A close character portrait || {Subject} {is_are} floating close to the camera with {possessive} eyes shut and {possessive} hair spread wide around {possessive} head, one hand raised loose beside {possessive} face and {possessive} body turned a mild 20 to 30 degrees off vertical - behind {object} a dark compartment recedes with a single amber standby lamp burning.
+- A dynamic character portrait || {Subject} {is_are} weightless and reaching overhead to catch a stanchion mid-tumble, {possessive} body arched and tilted no more than about 30 to 40 degrees off vertical with {possessive} free arm swept across {possessive} chest - warning strobes wash the corridor around {object} amber and a hatch stands cycling open behind.
+- A character portrait || {Subject} {is_are} sitting weightless with {possessive} legs crossed and drifting slightly apart, hands resting loose in {possessive} lap and {possessive} body turned a mild 20 to 30 degrees off vertical, hair lifted free - behind {object} a long observation ring curves away, its windows full of slow-turning stars.
+- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} riding a manoeuvring pack away from the camera and looking back over one shoulder in a sealed EVA pressure suit and helmet, visor down, {possessive} body tilted no more than about 30 to 40 degrees off vertical with thruster plumes feathering white at {possessive} hips - behind {object} a half-built station truss recedes into the dark. Dramatic rim lighting along {possessive} silhouette. || vacuum
+- A character portrait || {Subject} {is_are} floating tethered beside a shattered solar array in a sealed EVA pressure suit and helmet, visor down, one gauntlet steadying a torn frame member and {possessive} legs drifting loose - behind {object} the array's broken wing trails away in glittering fragments and a planet's terminator cuts a bright line across the dark. Dramatic rim lighting along {possessive} silhouette. || vacuum
 - A character portrait || {Subject} {is_are} leaning in over a shoulder-height plot table with both fists planted either side of a lit tactical overlay, calling something off past the frame - ranked operator stations glow blue behind {object} in the dim of a flag bridge. || nogear deskwork
 - A character portrait || {Subject} {is_are} seated at a combat information console in a headset, one hand cupped over the earpiece and the other steady on a trackball, a wall of plot repeaters washing {possessive} face green in the dark. || nogear deskwork
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a night watch room, three unmanned consoles glowing beneath a wall clock and a rack of dead handsets. || deskwork
@@ -2544,6 +2648,15 @@ ignored — so notes like this one are safe to leave inline.
 - A character portrait || {Subject} {is_are} seated in an editing suite with a segmented playback rig lowered over {possessive} temples, both hands paused above a scrub wheel, layered recording windows hanging in the air around {possessive} head and throwing shifting colour across {possessive} face. || nogear deskwork
 - A character portrait || {Subject} {is_are} standing behind a seated operator's chair on a dim watch floor, one hand on the seat back and {possessive} attention up on the big board, a mug of tea going cold on the console below - rows of glowing stations stretch away behind {object} into the dark. || nogear deskwork
 - A character portrait || {Subject} {is_are} bent close over a paper plotting chart under a hooded lamp, drawing a bearing line with a parallel rule and a handset trapped between {possessive} shoulder and ear - the rest of the plot room falls away into red-lit gloom behind {object}. || nogear deskwork
+- A character portrait || {Subject} {is_are} wedged behind a desk buried under stacked paper with a handset trapped at {possessive} ear, stamping a form without looking down at it - mismatched desks, a dying pot plant and a wall of pinned duty notices crowd the office behind {object}. || nogear deskwork
+- A character portrait || {Subject} {is_are} standing at a wall-sized district map with a pin held between finger and thumb, threads already strung taut between a dozen markers across it - the ops room falls away behind {object}, one lamp burning over a table of spread photographs. || nogear deskwork
+- A character portrait || {Subject} {is_are} seated at a dispatch console with one hand flat on a transmit key and {possessive} eyes up on the status board, unit markers glowing in ranks above {object} - another operator's back blurs across the foreground and the room's handsets hang dead on their hooks. || deskwork
+- A character portrait || {Subject} {is_are} leaning in over a seated radio operator's shoulder with one hand braced on the equipment rack, a headset held to one ear and the other ear open to the room - banks of receivers glow green down the bulkhead behind them. || nogear deskwork
+- A character portrait || {Subject} {is_are} sitting on the corner of a desk in a dark office reading down a long printout roll that spills from {possessive} hands to the floor, the only light a swan-neck lamp - rows of unmanned desks and dead monitors recede behind {object}. || nogear deskwork
+- A character portrait || {Subject} {is_are} writing on the far side of a glass status wall with a marker, the lettering running backwards toward the viewer and {possessive} face lit through it - beyond the glass a watch floor of glowing stations stretches away into the dark. || nogear deskwork
+- A character portrait || {Subject} {is_are} standing at the head of a briefing table pointing up into a projected overlay hanging above it, seated silhouettes ranked down both sides of the room - the projector's beam cuts through drifting smoke above {possessive} shoulder. || nogear deskwork
+- A character portrait || {Subject} {is_are} slumped back at a desk at the dead hour with {possessive} boots crossed on an open drawer and a cold cup balanced on {possessive} chest, staring at a screen of unread traffic - the office behind {object} is dark but for three other terminals left running. || nogear deskwork
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a records basement of racked case files, a single terminal glowing at the end of a long aisle with its cursor blinking on an open query. || deskwork
 
 ## Weather
 

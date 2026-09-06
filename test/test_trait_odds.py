@@ -49,6 +49,18 @@ class TestTheRollIsUnchanged(unittest.TestCase):
     this landed. Every trait of every seed in it must still come out
     identical - memoising the splitters must be invisible, and collecting
     raw bullets must not consume a single extra number from the stream.
+
+    The snapshot is not frozen forever, though, and it is worth being clear
+    about when it may move, because "regenerate the fixture" is also how you
+    would silently paper over a real regression. It may be recaptured only for
+    a change that is MEANT to change the draw - a table added to or reordered
+    within REQUIRED_TABLES, a new filter in the roll loop - and the recapture
+    belongs in that same commit, so the diff shows the intended change and its
+    effect together. It has moved once: when Glow colour was reordered to
+    follow Backdrop and gated on the scene's own hue (filter_by_hue), which
+    shifts every draw after it in the stream by construction. Anything that
+    claims to be invisible to the roller - a refactor, a memoisation, a new
+    piece of bookkeeping - must still leave this file untouched.
     """
 
     def test_the_roll_is_unchanged(self):
