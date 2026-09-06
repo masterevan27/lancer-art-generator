@@ -311,9 +311,9 @@ class SetTraitOnARegen(unittest.TestCase):
         self.manifest = manifest_with(self.npc, Path(self.dir.name) / "m.json")
         self.entry = json.loads(self.manifest.read_text())["npcs/test"]
 
-    def pinned(self, table, value, release=None):
+    def pinned(self, table, value, release=None, entry=None):
         """regenerate_one()'s roll half, without the render half."""
-        npc = gen.npc_from_entry(self.entry, "npc-test-0", warn=False)
+        npc = gen.npc_from_entry(entry or self.entry, "npc-test-0", warn=False)
         free = set()
         for name in (release or ()):
             free |= set(gen.trait_cascade(name))
@@ -356,29 +356,53 @@ class SetTraitOnARegen(unittest.TestCase):
             dict(self.npc["_raw"], Outfit=pick["value"]))
         self.assertEqual(after, expected)
 
+    def themed_case(self):
+        """An NPC wearing theme-tagged bullets, and a Theme that contradicts them.
+
+        Scanned rather than assumed, which is the correction these two tests
+        needed. Whether a given seed draws theme-tagged bullets is a property
+        of the tables, and the tables are authored over time: both tests
+        hard-coded seed 0 and began raising StopIteration the day enough
+        neutral bullets were added that seed 0's NPC came up entirely untagged.
+        Nothing about the feature had changed.
+
+        Roughly two seeds in three qualify on the live tables, so the scan is
+        short. It fails rather than skips when none does: "no NPC anywhere
+        wears a themed bullet" would mean the theme cascade has stopped
+        working, which is the opposite of something to pass over quietly.
+        """
+        for seed in range(40):
+            npc = raw_npc(seed=seed)
+            pick = next((c for c in gen.trait_choices(LIVE, npc, "Theme")
+                         if c["conflicts"]), None)
+            if pick:
+                manifest = manifest_with(
+                    npc, Path(self.dir.name) / ("themed-%d.json" % seed))
+                entry = json.loads(manifest.read_text())["npcs/test"]
+                return npc, entry, pick
+        self.fail("no NPC in 40 seeds wears a theme-tagged bullet, so the theme "
+                  "cascade cannot be exercised at all")
+
     def test_releasing_a_trait_frees_its_whole_cascade(self):
         # Freeing Outfit alone would redraw it while Headgear, Weapon and Gear
         # stayed pinned to bullets chosen for the outfit that is now gone.
-        pick = next(c for c in gen.trait_choices(LIVE, self.npc, "Theme")
-                    if c["conflicts"])
-        after = self.pinned("Theme", pick["value"], release=pick["conflicts"])
+        npc, entry, pick = self.themed_case()
+        after = self.pinned("Theme", pick["value"], release=pick["conflicts"],
+                            entry=entry)
         untouched = [t for t in gen.REQUIRED_TABLES
                      if t not in pick["releases"] and t != "Theme"]
         for trait in untouched:
             with self.subTest(trait=trait):
-                self.assertEqual(self.npc["_raw"].get(trait),
-                                 after["_raw"].get(trait))
+                self.assertEqual(npc["_raw"].get(trait), after["_raw"].get(trait))
 
     def test_releasing_nothing_keeps_every_other_trait(self):
-        pick = next(c for c in gen.trait_choices(LIVE, self.npc, "Theme")
-                    if c["conflicts"])
-        after = self.pinned("Theme", pick["value"])
+        npc, entry, pick = self.themed_case()
+        after = self.pinned("Theme", pick["value"], entry=entry)
         for trait in gen.REQUIRED_TABLES:
             if trait == "Theme":
                 continue
             with self.subTest(trait=trait):
-                self.assertEqual(self.npc["_raw"].get(trait),
-                                 after["_raw"].get(trait))
+                self.assertEqual(npc["_raw"].get(trait), after["_raw"].get(trait))
 
 
 class SetTraitRefusesWhatRerollRefuses(unittest.TestCase):
