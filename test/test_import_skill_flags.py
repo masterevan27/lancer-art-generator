@@ -52,11 +52,36 @@ SHAPES = {
         r"^- \*\*([A-Za-z ]+)\*\*: (.*)$", SKILL, re.M)
 }
 
+# A row of the §3 routing table: '| what you see | **Table** (or ...) | how to
+# tag it |'. This is the THIRD place the skill names flags, and until this file
+# grew a check for it, the only one with no test - which is exactly the one
+# that drifted. It was found claiming Hair took "no flags" a commit after
+# `updo` shipped, describing Headgear with no mention of `helmet`, and listing
+# "`hands`/`mil` only" for Gear when `helmet` and `admin` both reach it. §0 and
+# §4 were correct throughout, because the assertions below covered them.
+#
+# It is the worst of the three to leave stale: §0 is a lookup table and §4 is a
+# shape to copy, but §3 is the column a run reads while *deciding* what to tag,
+# so a flag missing here is one that never gets considered at all.
+ROUTES = {}
+for _line in SKILL.split("\n"):
+    if not _line.startswith("| "):
+        continue
+    _cells = [c.strip() for c in _line.strip().strip("|").split(" | ")]
+    if len(_cells) != 3:
+        continue
+    _m = re.match(r"\*\*([A-Za-z ]+)\*\*", _cells[1])
+    if _m:
+        ROUTES[_m.group(1).strip()] = set(re.findall(r"`([a-z]+)`", _cells[2]))
+
 # Flags a staging run must never author, so they are documented in the flag
 # table but deliberately absent from the shape line. Each needs a reason.
 NEVER_STAGED = {
     ("Weapon", "none"): "the single empty bullet, which is how an NPC rolls "
                         "unarmed - it is not a thing a reference image shows",
+    ("Headgear", "bare"): "the single bare-headed bullet, marked so the "
+                          "'covered' filter can name it. Same reason as "
+                          "Weapon/none: an image cannot show an absence",
 }
 
 
@@ -130,6 +155,36 @@ class TestEveryLiveFlagIsDocumented(unittest.TestCase):
                     "silently untagged. If it is deliberately never authored "
                     "from a reference image, add it to NEVER_STAGED with a "
                     "reason." % (table, flag))
+
+    def test_each_routing_row_covers_its_own_tables_flags(self):
+        """The third mirror, and the one with the worst record.
+
+        Same exemptions as the shape lines: a flag a run must never author
+        does not need to appear in the column telling it what to author.
+        """
+        used = flags_used()
+        for table, route_flags in sorted(ROUTES.items()):
+            for flag in sorted(used.get(table, set())):
+                if (table, flag) in NEVER_STAGED:
+                    continue
+                with self.subTest(table=table, flag=flag):
+                    self.assertIn(
+                        flag, route_flags,
+                        "the import skill's §3 routing row for %s does not "
+                        "mention %r, which the table uses. That row is what a "
+                        "staging run reads while deciding what to tag, so a "
+                        "flag missing from it is never considered at all."
+                        % (table, flag))
+
+    def test_the_routing_table_parsed(self):
+        """A reformatted routing table would make every assertion above pass
+        vacuously rather than fail."""
+        self.assertGreaterEqual(
+            len(ROUTES), 8,
+            "only parsed %d routing rows out of the skill's §3 table - the "
+            "row format probably changed; this file expects "
+            "'| seen | **Table** | how to tag |'" % len(ROUTES))
+        self.assertIn("Hair", ROUTES)
 
     def test_every_never_staged_flag_is_still_real(self):
         """An exemption for a flag that no longer exists is an exemption that

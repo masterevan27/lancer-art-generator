@@ -200,6 +200,34 @@ templates at the bottom of this file.
   merely *pinned up off the collar*, a braid crown pinned close to the head, a
   low bun, a bob or anything cropped all lie flat, and those are exactly the
   cuts a helmet goes on over.
+- **Hair** bullets may also carry `|| covered`, marking a cut that names
+  something *worn* as part of the phrase — a wrapped headscarf, a ponytail
+  pulled through the back of a cap, ponytails held by a headset band. The
+  bullet has already put an object on the head, so the Headgear pool is cut to
+  the one bullet flagged `bare` and the NPC comes out bare-headed; anything
+  else would describe two coverings in the same place.
+  The headgear *clause* then drops out of the prompt entirely, rather than
+  printing the bare bullet's own sentence. "A wrapped headscarf ..." and "She
+  is bare-headed." in one prompt contradict each other as flatly as the hat
+  did, and a render told both does not get to pick the sensible one. The hair
+  phrase is the headgear for these bullets, so the clause is what gives way —
+  in the portrait, the token and the 3D back view alike.
+  This is a strictly harder filter than `updo`, and gated wider on purpose.
+  `updo` drops only `helmet` and hands back sixty other bullets, because a
+  bun and a brow visor coexist; `covered` has nothing to hand back, because a
+  headscarf leaves no room for a hairband either. It is still not a *lock* —
+  a file with no `bare` bullet gets the whole pool rather than an empty roll.
+  Like `updo` the filter runs both ways: a pinned or `--set-trait` Headgear
+  that is not `bare` drops the `covered` cuts from the Hair pool instead, and
+  forcing both by hand is honoured rather than refused.
+  Flag only a thing genuinely *worn*. Hair ornaments are not: a clip, a
+  ribbon, an ornamental pin, a flower or a mechanical binder is part of the
+  hairstyle and leaves the head free for a hat.
+- The single **Headgear** bullet that leaves the head bare carries `|| bare`,
+  which is what `covered` filters down to. It is a marker rather than a
+  preference — nothing is dropped *for* it — and it exists for the same
+  reason `none` does on Weapon: a filter needs to be able to name the empty
+  bullet without matching on its prose. Exactly one bullet should carry it.
 - A **Gear** bullet may carry a **role lock**, of which `admin` is so far the
   only one. It confines that bullet to the occupations named against the flag
   in `ROLE_LOCKS` in `generate-npc.py` — `admin` is a colonial administrator's
@@ -1093,7 +1121,7 @@ ignored — so notes like this one are safe to leave inline.
 - long {colour} hair worn loose and unkempt, shoved back out of the face
 - a high, tight {colour} topknot || updo
 - {colour} hair tied back in a short tail
-- a wrapped headscarf with a few {colour} strands escaping at the temple
+- a wrapped headscarf with a few {colour} strands escaping at the temple || covered
 - a choppy shoulder-length {colour} cut
 - {colour} wavy hair caught mid-motion in the wind
 - a short choppy {colour} cut, spiky and layered at the crown, long bangs falling loose across the brow
@@ -1119,7 +1147,7 @@ ignored — so notes like this one are safe to leave inline.
 - long {colour} hair spilling loose over the shoulders in soft waves
 - an elaborate crown of {colour} braids pinned close to the head
 - a sleek {colour} bob cut level with the jaw
-- a long {colour} ponytail pulled through the back of a worn cap
+- a long {colour} ponytail pulled through the back of a worn cap || covered
 - {colour} hair swept up in a loose bun already falling apart || updo
 - twin {colour} braids tied off with frayed cord
 - a short {colour} bob with long bangs swept across one eye
@@ -1150,7 +1178,7 @@ ignored — so notes like this one are safe to leave inline.
 - a {colour} bob with a sharp side-swept fringe and a single streaked strand
 - a {colour} bob with a pair of small horn-shaped ornamental clips swept back at the temples
 - a {colour} bob with a blunt fringe
-- twin high {colour} ponytails held back by the band of a chunky headset, a long fringe swept across one brow || updo
+- twin high {colour} ponytails held back by the band of a chunky headset, a long fringe swept across one brow || updo covered
 - twin high {colour} ponytails clipped at the base by a segmented mechanical binder, sweeping loose past the shoulders || updo
 - shoulder-length {colour} hair, center-parted with a long face-framing fringe
 - {colour} hair swept back into a neat low bun, held with a single ornamental pin
@@ -1378,7 +1406,7 @@ ignored — so notes like this one are safe to leave inline.
   bare-headed; reweight that first bullet to change how often headgear shows.
 -->
 
-- x6 {Subject} {is_are} bare-headed.
+- x6 {Subject} {is_are} bare-headed. || bare
 - x2 {Subject} {wear} a padded flight headset, earcups clamped over the ears and a boom mic swung down to the corner of {possessive} mouth, a coiled cable trailing from one side. || hardtech
 - {Subject} {wear} a lightweight comms earpiece with a slender mic arm tracking along the jaw. || hardtech
 - {Subject} {wear} scratched flight goggles pushed up onto {possessive} forehead.
