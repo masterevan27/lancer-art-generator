@@ -47,6 +47,13 @@ Examples:
   python generate-npc.py --regen-manifest .generated-npcs.json --regen-id npc-Nadia-Okonkwo-1234
   python generate-npc.py --regen-manifest .generated-npcs.json --regen-id npc-Nadia-Okonkwo-1234 \\
       --new-seed 5678 --no-token
+
+  # Ask which values one trait could take on that NPC (JSON on stdout, no
+  # render), then pin the one you want and re-render with everything else kept:
+  python generate-npc.py --regen-manifest .generated-npcs.json --regen-id npc-Nadia-Okonkwo-1234 \\
+      --trait-choices Outfit
+  python generate-npc.py --regen-manifest .generated-npcs.json --regen-id npc-Nadia-Okonkwo-1234 \\
+      --set-trait Outfit="an elaborate floral kimono ... || civ notac" --release Headgear
 """
 
 from __future__ import annotations
