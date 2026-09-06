@@ -2188,7 +2188,7 @@ ignored — so notes like this one are safe to leave inline.
 - caught mid-stride walking straight toward the viewer, twin sidearms held low and loose at {possessive} sides || gun
 - standing with head bowed and shoulders drawn in tight
 - standing in a slow half-bow, one hand pressed flat against the chest
-- standing with both arms raised overhead, a long board gripped in both hands and braced across the back of the shoulders like a yoke || hands
+<!-- - standing with both arms raised overhead, a long board gripped in both hands and braced across the back of the shoulders like a yoke || hands -->
 - sitting cross-legged in a formal meditative pose, palms pressed together at the chest, segmented mechanical arms folded still || hands
 - leaning forward and down, braced on one forearm, the other hand reaching toward something out of frame || hands
 - crouched low and coiled, weight braced forward on one arm, ready to spring || hands
