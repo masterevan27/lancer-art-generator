@@ -133,10 +133,11 @@ Renders nothing, talks to no ComfyUI, prints one JSON object on stdout:
   "dependents": ["Headgear", "Weapon", "Gear"],
   "choices": [
     { "value": "a padded synthweave work jacket || civ",
-      "heading": "Outfit", "allowed": true, "current": true, "conflicts": [] },
+      "heading": "Outfit", "allowed": true, "current": true,
+      "conflicts": [], "releases": [] },
     { "value": "an elaborate floral kimono ... || civ notac",
       "heading": "Outfit", "allowed": true, "current": false,
-      "conflicts": ["Headgear"] }
+      "conflicts": ["Headgear"], "releases": ["Gear", "Headgear", "Stance"] }
   ]
 }
 ```
@@ -146,8 +147,14 @@ Renders nothing, talks to no ComfyUI, prints one JSON object on stdout:
   GUI's job (`lib/traitOptions.js` already has `readableLabel`).
 - `heading` is the table the bullet came from, so a variant table
   (`Outfit (she) +`) stays distinguishable from the base pool.
-- `allowed` is the upstream answer; `conflicts` is the downstream one. **Both
-  are reported and neither is dropped** — the picker shows illegal values too,
+- `allowed` is the upstream answer; `conflicts` is the downstream one — the
+  **direct** dependents whose kept bullet this value would invalidate.
+  `releases` is what `--release <conflicts>` would actually free: the union of
+  those traits' cascade closures, minus the trait being set. It is reported
+  rather than left to the caller to derive, so the picker can name what moves
+  without a copy of `trait_cascade()` in JavaScript. Empty whenever `conflicts`
+  is.
+- **Both are reported and neither is dropped** — the picker shows illegal values too,
   greyed and still selectable, and it cannot do that if this end filters them
   out. It also matches `--set-trait`'s own long-standing behaviour of bypassing
   the roll pool: this command describes the pool, it does not enforce it.
@@ -182,21 +189,33 @@ the same question.
 
 ### Also re-rolling the conflicting traits
 
-`--set-trait Theme=<x>` keeping all twelve themed traits gives an NPC labelled
-for one visual world and dressed for another. So the pinned regen takes an
-optional companion:
+`--set-trait Theme=<x>` keeping all seven themed traits — twelve once their own
+dependents are counted — gives an NPC labelled for one visual world and dressed
+for another. So the pinned regen takes an optional companion:
 
 ```
 --set-trait Theme="neosamurai || ..." --release Hair,Outfit,Headgear
 ```
 
-`--release` names traits to leave out of the pin, i.e. `free`. It is refused
-unless `--set-trait` is given, and each name must be a real dependent of a set
+`--release` names traits to leave out of the pin. It is refused unless
+`--set-trait` is given, and each name must be a **direct** dependent of a set
 trait — releasing something unrelated is a re-roll wearing a disguise, and
 `--reroll-trait` is the flag for that.
 
+**Each released name expands to its cascade closure**, and the union of those
+closures is the `free` set. Releasing the bare name would recreate the exact
+contradiction this feature is trying to avoid, one level down: free `Outfit`
+alone and it redraws while `Headgear`, `Weapon` and `Gear` stay pinned to
+bullets chosen for the outfit that is now gone. `trait_cascade()` already
+computes the closure and `reroll_from_raw()` already takes it as `free`; this
+is the case they were written for.
+
+Every trait that moved is printed, the way the `--reroll-trait` cascade report
+already prints its own, so a release that reaches further than the name
+suggests says so rather than being discovered in the render.
+
 The GUI drives this from the conflict list it already has: the picker offers
-*"also re-roll the 3 conflicting traits"*, unchecked, and sends their names.
+*"also re-roll Headgear"*, unchecked, and sends the conflicting names.
 Nothing releases unless the user asks.
 
 ## Entries without raw bullets
@@ -230,8 +249,13 @@ New tests in `test/test_set_trait_value.py`:
 - `Backdrop` never reports a `Weather` conflict.
 - A pinned `--set-trait` regen changes the named trait and no other, and
   rewrites `rawTraits` consistently with `traits`.
-- `--release` frees exactly the named traits; releasing a non-dependent is
-  refused; `--release` without `--set-trait` is refused.
+- `--release Outfit` frees `Outfit`'s whole cascade, not just `Outfit` — the
+  closure test, and the reason the flag exists in this shape.
+- Releasing a non-dependent is refused; `--release` without `--set-trait` is
+  refused.
+- A candidate's `releases` equals the closure the matching `--release` run
+  actually frees. The query and the command have to agree, or the picker
+  promises one thing and the regen does another.
 - `--set-trait` with `--reroll-trait` is refused.
 - Both commands refuse an entry with empty `rawTraits`.
 
