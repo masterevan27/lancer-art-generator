@@ -37,7 +37,7 @@ templates at the bottom of this file.
   enough of them to stay varied. The filter runs both ways: forcing a `figure`
   Build with `--set-trait` drops the `young` bullets from the Age pool instead,
   so an explicit build never collides with a randomly rolled teenager. Forcing
-  *both* into a contradiction is an error rather than a silent pairing.
+  _both_ into a contradiction is an error rather than a silent pairing.
 - **Gear**, **Weapon** and **Stance** bullets may end `|| hands`. On a Gear or
   Weapon entry that means the item occupies at least one hand or arm; on a
   Stance entry it means the pose needs both hands free. Stance is rolled
@@ -98,7 +98,7 @@ templates at the bottom of this file.
   whether there is a glow sentence at all). An unflagged bullet keeps the
   light on or immediately around the figure and is reachable either way -
   most should stay that way, since the equipped source is the common one.
-  The table is rolled *after* Backdrop for exactly this reason.
+  The table is rolled _after_ Backdrop for exactly this reason.
 - **Weather** bullets may end `|| clear`, meaning the bullet contributes nothing
   to the prompt. Weather only reaches a portrait whose Backdrop is flagged
   `weather`, and never reaches the token at all.
@@ -125,7 +125,7 @@ templates at the bottom of this file.
   **Outfit** and **Faction** bullets may also carry `|| dressy`, a third axis
   orthogonal to both `civ`/`mil` and to theme. It marks dress that is
   ceremonial, formal or finely made — gold thread, lacquer, brocade,
-  ornament — and it is gated on the *kind of work* the Role is, through
+  ornament — and it is gated on the _kind of work_ the Role is, through
   `DRESS_POLICY` in the script rather than through a flag on the Role bullet:
   `ROLE_CATEGORIES` already knows which job an occupation is, and restating
   that here would only let the two drift. Roles filed under `Laborers` or
@@ -141,7 +141,7 @@ templates at the bottom of this file.
   `dressy` is **not** `notac`, however much the two overlap. `notac` means
   "do not pair with tactical gear" and covers rags as readily as finery — a
   dockworker in ragged cloth bindings, a travel-worn robe or a weathered
-  haori is entirely plausible, and several of those read as *poorer* than the
+  haori is entirely plausible, and several of those read as _poorer_ than the
   default coveralls. The two disagree on seven of the thirteen `notac`
   bullets in the base table. Flag finery, not tradition.
 
@@ -170,7 +170,7 @@ templates at the bottom of this file.
   third and last table `notac` reaches, after Weapon and Gear. Soft goods —
   cloth, straw, woven, leather and fur hats, caps, hoods, bandanas and
   headbands — plain eyewear, and the traditional and ceremonial register are
-  all deliberately unflagged: those are what a kimono *should* reach, and a
+  all deliberately unflagged: those are what a kimono _should_ reach, and a
   kabuto above one is the point rather than an oversight. Two boundaries
   worth knowing before you flag a new bullet: goggles count as eyewear, not
   hardware, and a traditional hat with a mask beneath it is the hat.
@@ -2112,8 +2112,8 @@ ignored — so notes like this one are safe to leave inline.
 - catches {possessive} jaw and one shoulder from below
 - rims {possessive} shoulders and hair from behind, the face lit only by what spills around it
 - falls across {possessive} back and one shoulder, the front of the figure in warm shadow
-<!-- - catches {possessive} profile and one hand at a sharp angle, the rest of the figure left in shadow -->
-<!-- - washes across the scene behind {object}, throwing {possessive} outline into near-silhouette || scene -->
+  <!-- - catches {possessive} profile and one hand at a sharp angle, the rest of the figure left in shadow -->
+  <!-- - washes across the scene behind {object}, throwing {possessive} outline into near-silhouette || scene -->
 - pools on the ground around {object} and throws colour up onto {possessive} hands || scene
 - stripes the wall behind {object} and catches one side of {possessive} face || scene
 - hangs in the air as a haze across the whole depth of the shot || scene
@@ -2598,7 +2598,7 @@ glow could land on a face with nothing nearby to cast it.
 > grain texture, clean linework and halftone dot shading worked into the
 > shadows, moody cinematic lighting on the figure. {SUBJECT} is facing the
 > viewer, {POSSESSIVE} whole figure in frame from the top of {POSSESSIVE} head to
-> the soles of {POSSESSIVE} feet, the head drawn small in frame with clear empty
+> the soles of {POSSESSIVE} shoes, the head drawn small in frame with clear empty
 > space above and below, in
 > realistic adult proportions roughly seven to eight heads tall. {SUBJECT}
 > is **{HEIGHT}**, **{BUILD}**, with **{TRAITS}**
@@ -2658,13 +2658,13 @@ clauses were added against that.
 
 - **"the head drawn small in frame"** is the scale instruction that
   "seven to eight heads tall" was being asked to carry and cannot. A head-count
-  is a *ratio* between head and body, and a head too big for the canvas
+  is a _ratio_ between head and body, and a head too big for the canvas
   satisfies it just as well as one that fits - the proportions came back
   correct and the feet still came back missing. This says the absolute size.
 - **"Full-length wide shot, the whole figure clear of the frame edge"** opens
   the closing tag block. That block is the position a diffusion model weights
   hardest, and it was naming the composition ("Centered composition") without
-  ever naming the *distance*; shot-scale vocabulary is the term the training
+  ever naming the _distance_; shot-scale vocabulary is the term the training
   data actually indexes framing under.
 
 A Stance that reaches upward - arms raised overhead, something held above the
