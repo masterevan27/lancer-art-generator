@@ -168,7 +168,7 @@ BACKVIEW_TEMPLATE = (
     "a photo edit of the reference image, not a new illustration, and "
     "nothing about the person or the scene changes except the facing. "
     "{Subject} {is_are} {height}, {build}, with {hair}, wearing {outfit}, "
-    "{faction_line}the clothing following the shape of {possessive} frame "
+    "{faction_line}{possessive} clothing following the shape of {possessive} frame "
     "from behind. {headgear} {Subject} {is_are} {stance}, both feet in "
     "frame. Keep the exact same outfit, hair, colours and body proportions "
     "as the reference image, against a plain flat background with no added "

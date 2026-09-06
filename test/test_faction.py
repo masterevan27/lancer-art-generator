@@ -76,10 +76,16 @@ class TestFactionInOutput(unittest.TestCase):
         npc = gen.roll_npc(TABLES, random.Random(0),
                            {"Faction": "Unaligned || || civ"})
         portrait, token = gen.build_prompts(npc)
+        # Derived rather than hardcoded: the fixture rolls its own Pronouns, so
+        # pinning "their" here would hold the test hostage to any reweight or
+        # change in RNG consumption upstream of the Pronouns roll.
+        possessive = npc["_pronouns"]["possessive"]
         for prompt in (portrait, token):
             self.assertNotIn(", ,", prompt)
             self.assertNotIn(",  ", prompt)
-            self.assertIn("the clothing following the shape of that frame", prompt)
+            self.assertIn(
+                "wearing %s, %s clothing following the shape of %s frame."
+                % (npc["Outfit"], possessive, possessive), prompt)
 
 
 class TestFactionPigment(unittest.TestCase):
