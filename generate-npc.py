@@ -2838,6 +2838,136 @@ def reroll_trait(tables, npc, name, rng):
     return value
 
 
+def trait_choices(tables, npc, name):
+    """Which bullets `name` could take on this NPC, and what each would cost.
+
+    Two questions per bullet, and they run in opposite directions.
+
+    Upstream: could the roller have produced this bullet for this table, given
+    the traits above it? That is `probe[name]` from a roll with the whole NPC
+    pinned - the pool roll_npc() filtered, read back rather than recomputed.
+    One roll answers it for the entire table at once, because a table's pool
+    is built from the traits ABOVE it and those are pinned to this NPC's own
+    bullets regardless of which candidate is being asked about.
+
+    Downstream: if this bullet replaced the current one, would any trait BELOW
+    it be left holding a value the roller would no longer offer? Pinning
+    filters one way only - a pinned trait is never re-drawn, so nothing
+    re-checks it against a gate that has just changed - which is exactly the
+    contradiction class reroll_from_raw()'s cascade exists to prevent. Here
+    the cascade is deliberately not run, because keeping the dependents is the
+    point, so the contradiction is reported instead of avoided.
+
+    The downstream pass runs over every edge in TRAIT_DEPENDENTS bar Weather,
+    including the pairs roll_npc() already filters both ways (Headgear/Gear,
+    Age/Build). For those it is redundant and simply agrees with the upstream
+    pool. Redundant beats an exception list that has to be re-derived every
+    time an edge is added: a stale exception reports a conflict that is not
+    real, but a missed edge hides one that is.
+
+    Weather is exempt because its edge is not a filter. Nothing narrows the
+    Weather pool - the Backdrop's 'weather' flag is read at prompt-build time
+    by weather_sentence() and decides only whether the rolled Weather is
+    RENDERED. A kept Weather is therefore never illegal, only newly hidden or
+    newly shown, and checking it would report every Backdrop in the table as
+    conflicting.
+
+    Nothing is dropped. Both answers ride on the entry and the caller decides:
+    the picker this feeds greys ruled-out values and still lets them be
+    chosen, which mirrors --set-trait's own long-standing behaviour of
+    bypassing the roll pool. This function describes the pool; it does not
+    enforce it.
+
+    The rng is fixed rather than passed in. Every roll here is fully pinned,
+    so nothing is actually drawn and the seed cannot reach the result - but a
+    caller handing in a live rng would have its stream silently consumed by a
+    query, a bug that would only ever surface as an unrelated NPC changing.
+    """
+    subject = npc["Pronouns"].split("/")[0].strip().lower()
+    raw = dict(npc["_raw"])
+
+    baseline = {}
+    roll_npc(tables, random.Random(0), raw, probe=baseline)
+    pool = set(baseline.get(name, ()))
+
+    dependents = [d for d in TRAIT_DEPENDENTS.get(name, ()) if d != "Weather"]
+
+    # Deduplicated, order preserved. variant_table() repeats a bullet once per
+    # point of weight, because that is how the roller makes a heavier bullet
+    # more likely - fine for rng.choice(), wrong for a list somebody reads: a
+    # weight-30 bullet would appear thirty times in the picker, and "the value
+    # this NPC is wearing" would match all thirty of them.
+    #
+    # Weight is not lost, it is just not this function's subject. What a
+    # bullet's odds are is what --trait-odds answers.
+    candidates = list(dict.fromkeys(variant_table(tables, name, subject)))
+
+    out = []
+    for bullet in candidates:
+        current = bullet == raw.get(name)
+        # The value it already has cannot contradict what it is already
+        # wearing, and skipping it here is not an optimisation - running the
+        # check would compare the NPC against itself and could only ever
+        # report a conflict that predates this feature.
+        if dependents and not current:
+            forced = dict(raw, **{name: bullet})
+            after = {}
+            try:
+                roll_npc(tables, random.Random(0), forced, probe=after)
+            except SystemExit:
+                # Two pairings are refused outright rather than filtered: a
+                # 'young' Age with a 'figure' Build, and a 'plain' Role with a
+                # 'dressy' Outfit. roll_npc() checks those after the loop,
+                # where both values are known whether they were rolled or
+                # forced, because a pool filter cannot catch a pair that was
+                # BOTH forced - which is every pair in here.
+                #
+                # That refusal is a conflict of the hardest kind, so it is
+                # reported as one. Which dependent caused it is asked of the
+                # roller rather than parsed out of its message: free one at a
+                # time and see which one makes the refusal go away. Costs at
+                # most len(dependents) extra rolls, and only for a candidate
+                # that raised at all.
+                conflicts = []
+                for d in dependents:
+                    if d not in raw:
+                        continue
+                    trial = dict(forced)
+                    del trial[d]
+                    try:
+                        roll_npc(tables, random.Random(0), trial, probe={})
+                    except SystemExit:
+                        continue    # still refused, so freeing d is not the cure
+                    conflicts.append(d)
+                # Refused however we free them one at a time means more than
+                # one is implicated. Naming them all is the honest answer, and
+                # releasing them all is the remedy that actually works.
+                conflicts = conflicts or [d for d in dependents if d in raw]
+            else:
+                conflicts = [d for d in dependents
+                             if d in raw and raw[d] not in after.get(d, ())]
+        else:
+            conflicts = []
+
+        # What --release <conflicts> would actually free. Reported rather than
+        # left to the caller to derive, so the picker can name what moves
+        # without a copy of trait_cascade() in JavaScript.
+        releases = set()
+        for d in conflicts:
+            releases |= set(trait_cascade(d))
+        releases -= {name}
+
+        out.append({
+            "value": bullet,
+            "heading": heading_for(tables, name, subject, bullet),
+            "allowed": bullet in pool,
+            "current": current,
+            "conflicts": conflicts,
+            "releases": sorted(releases),
+        })
+    return out
+
+
 def regenerate_one(args):
     """Re-render one NPC's portrait and/or token from a stored manifest entry.
 
