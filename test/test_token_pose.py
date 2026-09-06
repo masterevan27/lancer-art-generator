@@ -36,6 +36,30 @@ class TestTokenTemplatePose(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, gen.TOKEN_TEMPLATE)
 
+    def test_the_framing_asserts_a_scale_and_not_only_a_ratio(self):
+        """"seven to eight heads tall" is a ratio, and a head too big for the
+        canvas satisfies it - which is exactly what came back, correct
+        proportions cropped at the shins. The scale has to be stated too."""
+        self.assertIn("the head drawn small in frame", gen.TOKEN_TEMPLATE)
+
+    def test_the_closing_tag_block_names_the_shot_distance(self):
+        """The tag block is the position a diffusion model weights hardest,
+        and it named the composition without ever naming the distance."""
+        self.assertIn("Full-length wide shot", gen.TOKEN_TEMPLATE)
+        self.assertIn("the whole figure clear of the frame edge",
+                      gen.TOKEN_TEMPLATE)
+
+    def test_the_shot_distance_leads_the_closing_tags(self):
+        """Ahead of "centered composition", not buried after the style words."""
+        tags = gen.TOKEN_TEMPLATE[gen.TOKEN_TEMPLATE.index("no environment."):]
+        self.assertLess(tags.index("Full-length wide shot"),
+                        tags.index("centered composition"))
+
+    def test_the_portrait_keeps_its_own_framing(self):
+        """The full-length tags belong to the token alone - the portrait is a
+        deliberately close shot and must not inherit them."""
+        self.assertNotIn("Full-length wide shot", gen.PORTRAIT_TEMPLATE)
+
     def test_the_framing_sentence_names_no_footwear(self):
         """It used to say "plain modern boots, no leg wraps or puttees", which
         is false for anyone barefoot, sandalled or in a sealed suit's integral

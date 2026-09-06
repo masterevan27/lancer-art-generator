@@ -649,21 +649,34 @@ PORTRAIT_TEMPLATE = (
 # false for every non-standing bullet - and "the arms free" contradicted any
 # pose braced on an arm. What replaces them says only what is true of every
 # pose in the table: the feet are in frame and the pose is not rigid.
+# What that sentence did NOT say was how big to draw the figure, and at CFG
+# 1.0 "the whole figure in frame" alone loses to the detail the rest of the
+# prompt asks for: the model anchors the head near the top, draws it at
+# portrait scale, and runs out of canvas somewhere around the shins - the feet
+# the sentence just promised are the first thing cropped. So the framing is
+# asserted twice more, in the two places that actually move it. "the head
+# drawn small in frame" is the scale instruction the head-count was standing
+# in for - seven-to-eight heads tall is a ratio, and a ratio is satisfied just
+# as well by a head too big for the canvas. And the closing tag block opens
+# with the shot scale, since that block is the position a diffusion model
+# weights hardest and it previously named the composition ("Centered
+# composition") without naming the distance.
 TOKEN_TEMPLATE = (
     "A full-body character illustration of {role}, {maturity} {gender} {age}, "
     "rendered in a detailed painterly illustration style with fine grain texture, clean "
     "linework and halftone dot shading worked into the shadows, moody cinematic lighting "
     "on the figure. {Subject} {is_are} "
     "facing the viewer, {possessive} whole figure in frame from the top of "
-    "{possessive} head to the soles of {possessive} feet, with clear empty space "
-    "above and below, in realistic adult proportions "
+    "{possessive} head to the soles of {possessive} feet, the head drawn small "
+    "in frame with clear empty space above and below, in realistic adult proportions "
     "roughly seven to eight heads tall. "
     "{Subject} {is_are} {height}, {build}, with {traits}{skin}, {hair}, {eyes}, and {feature}, wearing "
     "{outfit}, {faction_line}the clothing following the shape of that frame. {headgear} "
     "{Possessive} face carries {demeanor}. {gear_line}{Subject} {is_are} {stance}, both "
     "feet in frame, the pose natural and unforced. "
     "{glow_line} The background alone is a solid flat plain white, no "
-    "texture, no gradient, no shadow, no environment. Centered composition, dramatic "
+    "texture, no gradient, no shadow, no environment. Full-length wide shot, the whole "
+    "figure clear of the frame edge, centered composition, dramatic "
     "lighting, isolated character illustration, clean silhouette, painterly brushwork "
     "with heavy grain and dense halftone screentone worked into every shadow."
 )
