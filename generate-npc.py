@@ -662,6 +662,21 @@ PORTRAIT_TEMPLATE = (
 # with the shot scale, since that block is the position a diffusion model
 # weights hardest and it previously named the composition ("Centered
 # composition") without naming the distance.
+#
+# The background sentence went the same way, for a sharper reason: it read "a
+# solid flat plain white, no texture, no gradient, no shadow, no environment",
+# two sentences before a tail asking for "fine grain texture", "heavy grain"
+# and "dense halftone screentone worked into every shadow". Every flattening
+# word there has a direct contradiction in the same prompt. "The background
+# ALONE is" was meant to scope them, and scoping is what a diffusion text
+# encoder is worst at - the same failure as the leg-wraps veto above. So the
+# model chose, and which way it fell varied by roll: that is why some tokens
+# came back painterly and others cel-shaded with no grain and no halftone,
+# while the portrait, which carries none of these words, never drifted. The
+# negations were not achieving their own goal either - every generated token
+# background is faintly mottled grey rather than flat white. What replaces
+# them asserts the same requirement positively, for the background-removal
+# pass, without describing how anything is rendered.
 TOKEN_TEMPLATE = (
     "A full-body character illustration of {role}, {maturity} {gender} {age}, "
     "rendered in a detailed painterly illustration style with fine grain texture, clean "
@@ -671,15 +686,16 @@ TOKEN_TEMPLATE = (
     "{possessive} head to the soles of {possessive} feet, the head drawn small "
     "in frame with clear empty space above and below, in realistic adult proportions "
     "roughly seven to eight heads tall. "
-    "{Subject} {is_are} {height}, {build}, with {traits}{skin}, {hair}, {eyes}, and {feature}, wearing "
+    "{Subject} {is_are} {height}, {build}, {face}, and {traits}{skin}, {hair}, {eyes}, "
+    "and {feature}, wearing "
     "{outfit}, {faction_line}{possessive} clothing following the shape of "
     "{possessive} frame. {headgear} "
     "{Possessive} face carries {demeanor}. {gear_line}{Subject} {is_are} {stance}, both "
     "feet in frame, the pose natural and unforced. "
-    "{glow_line} The background alone is a solid flat plain white, no "
-    "texture, no gradient, no shadow, no environment. Full-length wide shot, the whole "
+    "{glow_line} Behind {object} the background is an empty plain white void. "
+    "Full-length wide shot, the whole "
     "figure clear of the frame edge, centered composition, dramatic "
-    "lighting, isolated character illustration, clean silhouette, painterly brushwork "
+    "lighting, high detail, isolated character illustration, clean silhouette, painterly brushwork "
     "with heavy grain and dense halftone screentone worked into every shadow."
 )
 

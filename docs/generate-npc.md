@@ -508,6 +508,15 @@ the whole silhouette forward a century. Nothing else in the prompt changed.
 
 If a new entry comes out looking dated, check its nouns before adding qualifiers.
 
+The token template carried a counter-example for a while: `no leg wraps or
+puttees`, bolted onto the framing sentence. It is exactly the qualifier this
+section warns against, and it did not work — a generated token wearing that
+prompt verbatim came back with grey ankle wraps over its boots. A negation
+inside a positive prompt still conditions the encoder on the words it forbids,
+so naming the garment is what reaches the render; the `no` in front of it
+largely does not. It has been removed. Wardrobe that keeps turning up unwanted
+is a noun problem in the Outfit bullet, not a veto to append here.
+
 ## Keeping figures adult and on-model
 
 The painterly style drifts toward short, soft-faced, large-headed figures that
@@ -524,6 +533,15 @@ Two of those three anchors are now conditional, keyed off a single flag:
 | opening phrase | `a fully grown adult {gender}` | `a young {gender}` |
 | face clause | `with mature adult facial structure - grown brow, cheekbones and jaw` | `with a young face, the brow and jaw not yet fully grown` |
 | token proportions | seven-to-eight heads tall | *unchanged* |
+
+The face clause is asserted in **both** templates. It was portrait-only for a
+time, and the tokens showed it: beside a painterly, halftoned portrait with
+modelled bone structure, the same NPC's token came back flat and cel-shaded
+with a generic face. A token can never match the portrait's face *resolution* —
+it is a full-body shot at seven-to-eight heads tall, so the head lands in
+roughly a third of the pixels a half-body portrait gives it — but it can at
+least stop asking for a different face. `test_token_fidelity.py` pins the
+parity.
 
 Proportion stays anchored either way, because it is what stops the chibi drift
 and a sixteen-year-old is within a head-height of adult anyway. Flag the bullet
