@@ -222,7 +222,7 @@ const CONFIG = {
     npcManifestPath: path.join('G:', 'gen', '.generated-npcs.json'),
     foundryNpcSubdir: 'LancerNPCs',
     foundrySpaceshipSubdir: 'LancerSpaceships',
-    foundryNpcActorType: '',
+    foundryNpcActorType: 'npc', // set explicitly here; the SHIPPED default is ''
     foundrySpaceshipActorType: 'deployable',
 };
 const KINDS = kindsLib.buildKinds(derivePaths(CONFIG), CONFIG);
