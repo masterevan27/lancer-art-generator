@@ -1,0 +1,37 @@
+{
+  "name": "Female Mech Pilot - House Crawthorne",
+  "created": "2026-09-07T00:57:03.162Z",
+  "settings": {
+    "count": 1,
+    "seed": null,
+    "pronouns": "she",
+    "server": "",
+    "portrait": true,
+    "token": true,
+    "keepRawToken": false,
+    "unarmed": false,
+    "overrides": [
+      {
+        "table": "Theme",
+        "value": "gundam",
+        "custom": false
+      },
+      {
+        "table": "Faction",
+        "value": "House Clawthorne || a purple rabbit-skull crest banner, tarnished gold trim and dangling bone charms || mil palette",
+        "custom": false
+      },
+      {
+        "table": "Outfit",
+        "value": "a glossy black bodysuit with a short pleated skirt panel at the hip, one arm sheathed in an articulated mechanical gauntlet running to the shoulder, over knee-high boots",
+        "custom": false
+      },
+      {
+        "table": "Role",
+        "value": "a mech pilot || mil",
+        "custom": false
+      }
+    ]
+  },
+  "kind": "create-form"
+}
