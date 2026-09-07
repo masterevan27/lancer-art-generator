@@ -3127,6 +3127,14 @@ def parse_args(argv=None):
                             "for the ones --trait-choices reports as conflicting. Each name "
                             "expands to its whole cascade, so releasing Outfit also re-rolls "
                             "the Headgear, Weapon and Gear it gates.")
+    regen.add_argument("--apply-only", action="store_true",
+                       help="with --reroll-trait or --set-trait: apply the edit to the "
+                            "manifest entry and stop. Renders nothing, contacts no "
+                            "ComfyUI server, and does not touch the entry's seed, files, "
+                            "portrait, token or dossier - only its traits, rawTraits, the "
+                            "derived flags and an artStale marker saying the stored art no "
+                            "longer matches. Prints the updated traits as JSON on stdout. "
+                            "Meant for staging several edits before one render.")
 
     run = p.add_argument_group("run mode")
     run.add_argument("--trait-odds", type=int, nargs="?", const=DEFAULT_ODDS_SAMPLES,
@@ -3209,6 +3217,18 @@ def parse_args(argv=None):
 
     if args.reroll_trait and args.overrides:
         p.error("--reroll-trait draws a new value and --set-trait names one; use one")
+
+    # --trait-choices before the edit flags, because it is refused above for
+    # carrying either of them: checking "nothing to apply" first would answer
+    # --trait-choices --apply-only with a complaint about the missing edit
+    # flag that adding one would not fix.
+    if args.apply_only:
+        if not args.regen_manifest:
+            p.error("--apply-only needs --regen-manifest and --regen-id")
+        if args.trait_choices:
+            p.error("--trait-choices only reports; drop --apply-only")
+        if not args.reroll_trait and not args.overrides:
+            p.error("--apply-only needs --reroll-trait or --set-trait; it has nothing to apply")
 
     args.release = [n.strip() for n in (args.release or "").split(",") if n.strip()]
     if args.release:
@@ -4043,6 +4063,49 @@ def npc_from_entry(entry, regen_id, warn=True):
     return npc
 
 
+def persist_traits(entry, npc):
+    """Write the rolled NPC's traits and raw bullets back onto its entry.
+
+    Shared by the render path and --apply-only so the two cannot drift. The
+    derived flag registers are written by persist_flags() alongside these, and
+    writing one without the other is what left set-trait entries holding new
+    flags over old bullets.
+    """
+    entry["traits"] = {k: v for k, v in npc.items() if not k.startswith("_")}
+    # Only when _raw is actually known. A legacy entry loaded with no rawTraits
+    # leaves npc["_raw"] unset, and this regen never had raw bullets to begin
+    # with - writing some in now would invent a provenance the entry never
+    # actually had.
+    if npc.get("_raw") is not None:
+        entry["rawTraits"] = dict(npc["_raw"])
+
+
+def persist_flags(entry, npc):
+    """Write the roll's derived flag registers back onto its entry.
+
+    npc_from_entry() reloads these to rebuild the filters the NEXT roll runs
+    against, so they and the traits above are one write in two halves.
+    """
+    entry["young"] = npc["_young"]
+    # Only when it is known. Rewriting an entry that predates the key with a
+    # fabricated False would claim the outfit is not 'notac' when nothing here
+    # knows either way, and a later re-roll would then trust the fabrication.
+    if npc.get("_outfit_notac") is not None:
+        entry["outfit_notac"] = npc["_outfit_notac"]
+    if npc.get("_gear_helmet") is not None:
+        entry["gear_helmet"] = npc["_gear_helmet"]
+    if npc.get("_hair_updo") is not None:
+        entry["hair_updo"] = npc["_hair_updo"]
+    if npc.get("_headgear_helmet") is not None:
+        entry["headgear_helmet"] = npc["_headgear_helmet"]
+    if npc.get("_headgear_crown") is not None:
+        entry["headgear_crown"] = npc["_headgear_crown"]
+    if npc.get("_hair_covered") is not None:
+        entry["hair_covered"] = npc["_hair_covered"]
+    if npc.get("_headgear_bare") is not None:
+        entry["headgear_bare"] = npc["_headgear_bare"]
+
+
 def regenerate_one(args):
     """Re-render one NPC's portrait and/or token from a stored manifest entry.
 
@@ -4055,6 +4118,13 @@ def regenerate_one(args):
     manifest = art.load_manifest(args.regen_manifest)
     folder_path, entry = find_regen_entry(manifest, args.regen_id, args.regen_manifest)
     npc = npc_from_entry(entry, args.regen_id)
+
+    # --apply-only's caller parses stdout whole, the same contract
+    # print_trait_choices() keeps. The re-roll, cascade, set and release
+    # reports below are diagnostics, so they go to stderr in that mode - and
+    # the GUI surfaces them, since "with Hair colour: ... -> ..." is exactly
+    # what a user needs to see after clicking Re-roll.
+    say = (lambda *a: print(*a, file=sys.stderr)) if args.apply_only else print
 
     # One trait re-rolled - and, on the raw path, everything a filter would
     # have had to reject alongside it. Everything else reproduced. Seeded from
@@ -4080,8 +4150,8 @@ def regenerate_one(args):
         rerolled = reroll_trait(
             tables, npc, args.reroll_trait,
             random.Random(args.new_seed if args.new_seed is not None else entry["seed"]))
-        print("re-rolled %s: %r -> %r"
-              % (args.reroll_trait, before.get(args.reroll_trait), rerolled))
+        say("re-rolled %s: %r -> %r"
+            % (args.reroll_trait, before.get(args.reroll_trait), rerolled))
         # Enumerated rather than summarised, which is the CLI's half of the
         # design doc's §6: somebody who re-rolls Theme expecting a new palette
         # gets a new outfit, weapon, hair and scene, and "and 11 others" would
@@ -4091,8 +4161,8 @@ def regenerate_one(args):
         # look like a smaller change than it was.
         for trait in (trait_cascade(args.reroll_trait) if cascading else ()):
             if trait != args.reroll_trait:
-                print("  with %s: %r -> %r"
-                      % (trait, before.get(trait), npc.get(trait)))
+                say("  with %s: %r -> %r"
+                    % (trait, before.get(trait), npc.get(trait)))
 
     # One trait pinned to a chosen value, everything else reproduced - the
     # mirror of the block above, which draws a value instead of taking one.
@@ -4144,15 +4214,36 @@ def regenerate_one(args):
             random.Random(args.new_seed if args.new_seed is not None else entry["seed"]),
             dict(args.overrides))
         for table in args.overrides:
-            print("set %s: %r -> %r" % (table, before.get(table), npc.get(table)))
+            say("set %s: %r -> %r" % (table, before.get(table), npc.get(table)))
         # Named rather than counted, for the same reason the re-roll cascade
         # above names its own: a release reaches further than the trait the
         # user typed, and finding that out from the render is the failure this
         # report exists to prevent.
         for trait in sorted(free):
             if trait not in args.overrides:
-                print("  with %s: %r -> %r"
-                      % (trait, before.get(trait), npc.get(trait)))
+                say("  with %s: %r -> %r"
+                    % (trait, before.get(trait), npc.get(trait)))
+
+    # The staged-edit exit. Everything above this line is the roll: the entry
+    # loaded, one trait re-rolled or pinned, `npc` replaced wholesale.
+    # Everything below it needs a ComfyUI server - art.find_server() is
+    # contacted even when both stages are skipped - a workflow, and the
+    # prompt/file locals the writer at the tail reads, so the cut is here and
+    # that writer is shared rather than duplicated.
+    if args.apply_only:
+        persist_traits(entry, npc)
+        persist_flags(entry, npc)
+        entry["artStale"] = True
+        entry["when"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        manifest[folder_path] = entry
+        art.save_manifest(args.regen_manifest, manifest)
+        json.dump({
+            "id": args.regen_id,
+            "traits": entry["traits"],
+            "rawTraits": entry.get("rawTraits"),
+            "artStale": True,
+        }, sys.stdout)
+        return 0
 
     seed = args.new_seed if args.new_seed is not None else entry["seed"]
     prompts = build_prompts(npc)
@@ -4250,35 +4341,27 @@ def regenerate_one(args):
     entry["portraitPrompt"] = portrait_prompt
     entry["token"] = token_file
     entry["tokenPrompt"] = token_prompt
-    entry["young"] = npc["_young"]
-    # Only when it is known. Rewriting an entry that predates the key with a
-    # fabricated False would claim the outfit is not 'notac' when nothing here
-    # knows either way, and a later re-roll would then trust the fabrication.
-    if npc.get("_outfit_notac") is not None:
-        entry["outfit_notac"] = npc["_outfit_notac"]
-    if npc.get("_gear_helmet") is not None:
-        entry["gear_helmet"] = npc["_gear_helmet"]
-    if npc.get("_hair_updo") is not None:
-        entry["hair_updo"] = npc["_hair_updo"]
-    if npc.get("_headgear_helmet") is not None:
-        entry["headgear_helmet"] = npc["_headgear_helmet"]
-    if npc.get("_headgear_crown") is not None:
-        entry["headgear_crown"] = npc["_headgear_crown"]
-    if npc.get("_hair_covered") is not None:
-        entry["hair_covered"] = npc["_hair_covered"]
-    if npc.get("_headgear_bare") is not None:
-        entry["headgear_bare"] = npc["_headgear_bare"]
+    persist_flags(entry, npc)
     # Only when a trait actually changed: a plain regen reproduces the entry
     # and rewriting traits it did not touch would just churn the manifest.
-    if rerolled is not None:
-        entry["traits"] = {k: v for k, v in npc.items() if not k.startswith("_")}
-        # Only when _raw is actually known. A legacy entry loaded above with
-        # no rawTraits leaves npc["_raw"] unset, and this regen never had raw
-        # bullets to begin with - writing some in now would invent a
-        # provenance the entry never actually had.
-        if npc.get("_raw") is not None:
-            entry["rawTraits"] = dict(npc["_raw"])
+    #
+    # args.overrides counts as a change. --set-trait runs reroll_from_raw()
+    # with `pinned`, which replaces `npc` wholesale, and persist_flags() above
+    # writes the NEW roll's registers unconditionally - so gating only on
+    # `rerolled` left the entry holding new flag registers over old bullets,
+    # which npc_from_entry() then reloads and filters the NEXT roll against.
+    # That is corruption, not staleness.
+    if rerolled is not None or args.overrides:
+        persist_traits(entry, npc)
     entry["when"] = time.strftime("%Y-%m-%d %H:%M:%S")
+    # A real render brings the art back in line with the traits. Popped rather
+    # than set False so an entry that never staged anything stays identical to
+    # what earlier versions wrote.
+    #
+    # Popped even for --no-portrait/--no-token: a partial render is the user
+    # explicitly asking for one stage, and leaving the marker up would nag
+    # about art they chose not to remake.
+    entry.pop("artStale", None)
     manifest[folder_path] = entry
     art.save_manifest(args.regen_manifest, manifest)
 

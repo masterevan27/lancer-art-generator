@@ -1085,6 +1085,37 @@ its stored bullets lost the flags the filters read — so there is nothing to pi
 the rest of it to. Both flags refuse such an entry and name the cure: re-roll
 the NPC once to record them.
 
+### Stacking several edits before one render
+
+Either flag alone re-renders, which is minutes of ComfyUI for a haircut you may
+not keep. `--apply-only` stops at the manifest:
+
+```
+python generate-npc.py --regen-manifest .generated-npcs.json \
+    --regen-id npc-Nadia-Okonkwo-1234 --reroll-trait Hair --apply-only
+```
+
+It applies the edit to the entry — `traits`, `rawTraits` and the derived flag
+registers — marks the entry `artStale`, prints the updated traits as JSON on
+stdout, and stops. Nothing is rendered, no ComfyUI is contacted, and the
+entry's `seed`, `files`, `portrait`, `token` and prompts are left describing
+the art that is still on disk, because that art is still what is on disk.
+
+The entry is the accumulator, so the edits stack: re-roll `Hair`, pin `Outfit`,
+re-roll it again, then run the same `--regen-manifest`/`--regen-id` without any
+edit flag to render the NPC you arrived at. That render clears `artStale`.
+Every edit re-reads the entry it just wrote, so `--trait-choices` and the
+conflict reports stay correct across the whole sequence rather than answering
+about the NPC you started with.
+
+The reports — `re-rolled Hair: ...`, `  with Hair colour: ...` — go to
+**stderr** under `--apply-only`, because stdout carries the JSON and nothing
+else. That is the same contract `--trait-choices` and `--trait-odds` keep.
+
+`--apply-only` needs `--reroll-trait` or `--set-trait`; on its own it has
+nothing to apply, and it is refused rather than reporting success for a run
+that wrote nothing.
+
 ## What a bullet's real odds are
 
 A weight tells you how a bullet compares to its neighbour. It does not tell you

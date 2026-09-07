@@ -955,7 +955,7 @@ class TestTheCascadeReport(unittest.TestCase):
                 tables=FIXTURE_TABLES, new_seed=None,
                 # regenerate_one() reads these since --set-trait joined the
                 # regen path; empty is the "this is a re-roll, not a pin" case.
-                overrides={}, release=[])
+                overrides={}, release=[], apply_only=False)
             out = io.StringIO()
             # The workflow is named but absent, which is as far as this can go
             # without a ComfyUI to render through - every print under test has
@@ -1057,7 +1057,7 @@ class TestTheRegenWriterActuallyRuns(unittest.TestCase):
                 regen_manifest=manifest_path, regen_id="writer-check-1",
                 reroll_trait="Eyes", new_seed=None, tables=FIXTURE_TABLES,
                 no_portrait=True, no_token=True, server=None,
-                overrides={}, release=[])
+                overrides={}, release=[], apply_only=False)
             stub_comfy = types.SimpleNamespace(base="stub://nowhere")
             with mock.patch.object(gen.art, "find_server", return_value=stub_comfy):
                 result = gen.regenerate_one(args)

@@ -47,6 +47,26 @@ def load_3d():
     return _cached_3d
 
 
+_cached_ship = None
+
+
+def load_ship_generator():
+    """The generate-spaceship.py module object, loaded once per process.
+
+    Same by-path load as load_generator(), for the same reason: the hyphen
+    keeps generate-spaceship.py off the normal import path.
+    """
+    global _cached_ship
+    if _cached_ship is None:
+        spec = importlib.util.spec_from_file_location(
+            "genship", REPO / "generate-spaceship.py")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["genship"] = module
+        spec.loader.exec_module(module)
+        _cached_ship = module
+    return _cached_ship
+
+
 def manifest_entry(seed=0, overrides=None):
     """One .generated-npcs.json entry, rolled from the fixture tables.
 
