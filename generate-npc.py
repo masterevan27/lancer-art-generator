@@ -126,9 +126,14 @@ REQUIRED_TABLES = [
     "Given names", "Family names", "Callsigns", "Pronouns", "Theme", "Age",
     "Build", "Height", "Skin", "Hair", "Hair colour", "Eyes", "Feature",
     "Demeanor", "Role",
-    "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Glow colour", "Backdrop",
-    "Glow placement", "Weather", "Stance",
+    "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Backdrop",
+    "Glow colour", "Glow placement", "Weather", "Stance",
 ]
+# Glow colour follows Backdrop for the reason Glow placement always has: a
+# scene that commits to a colour of light ("lit crimson", "red emergency
+# strip-lighting") is what filter_by_hue() matches the shade against, and it
+# cannot do that before the scene is rolled. The two glow tables now sit
+# together after the scene that motivates them both.
 
 # The tables a rolled Theme gates. Everything else - names, age, build, height,
 # skin, eyes, glow colour, weather, stance - describes the person or the moment
@@ -245,7 +250,13 @@ TRAIT_DEPENDENTS = {
     # with Backdrop freed alone, against none at all on a fresh roll. A pinned
     # Gear therefore cannot be trusted across a new Backdrop the way the
     # correction inside the roller can - it has to be re-rolled with it.
-    "Backdrop": ("Weather", "Glow placement", "Gear"),
+    #
+    # Glow colour is the fourth, and it is the same KIND of edge as Glow
+    # placement rather than Weather's: filter_by_hue() narrows the shade to the
+    # hue family the rolled scene's own light names, so a colour kept across a
+    # new Backdrop can be one that scene's light flatly contradicts - a
+    # teal-green glow in front of a wall of schematics lit crimson.
+    "Backdrop": ("Weather", "Glow colour", "Glow placement", "Gear"),
 
     # The cut carries a '{colour}' slot that roll_npc() fills from the rolled
     # colour, and that colour's tail is appended after the whole cut phrase. A
@@ -374,26 +385,313 @@ def estimate_tokens(text):
     return int(len(text) / CHARS_PER_TOKEN)
 
 
-# Words a rolled Weapon, Gear, Outfit, Headgear, Feature, Eyes or
-# Backdrop-scene bullet already uses when it describes something that would
-# actually cast colored light - a lit instrument panel, a glowing seam, a
-# neon sign, a muzzle flash.
-# The glow-colour sentences below only fire when at least one rolled bullet
-# matches, so the "faint {glow} glow" they describe always has something in
-# frame to have cast it, rather than landing on a scene with no light source
-# at all (a mech hangar in shadow, a dropship bay door against a plain sky).
-# Deliberately excludes plain daylight/dusk words like "sun" or "sunlit" -
-# natural light doesn't motivate an arbitrary saturated glow color either.
-LIGHT_SOURCE_WORDS = re.compile(
-    r"\b(glow\w*|lit|lighting|lights?|neon|lanterns?|beacons?|readouts?|"
-    r"monitors?|displays?|screens?|flames?|embers?|burning|instruments?|"
-    r"holographic|holograms?|headlamps?|glaring)\b|muzzle flash",
-    re.IGNORECASE,
+# Things a rolled Weapon, Gear, Outfit, Headgear, Feature, Eyes or
+# Backdrop-scene bullet names when it describes something that would actually
+# cast SATURATED light - a lit instrument panel, a glowing seam, a neon sign,
+# a muzzle flash. The glow-colour sentences below only fire when at least one
+# rolled bullet matches, so the "faint {glow} glow" they describe always has
+# something in frame to have cast it, rather than landing on a scene with no
+# coloured light at all.
+#
+# This used to be a flat word list that included the bare words 'lit',
+# 'light', 'lights', 'lighting' and 'glaring', and that is what made the glow
+# sentence fire on 88% of rolls - almost every scene in the Backdrop table
+# says "light" somewhere, and most of the time it is WHITE: floodlights over a
+# dock, fluorescent tubes in an office, "hard directional light", "flat white
+# light", a caged work lamp, grey daylight through a hole in a roof. A faint
+# magenta glow across a face lit by a work lamp is exactly the "out of place"
+# render this filter exists to prevent, so the generic words are gone.
+#
+# What is left is two kinds of match, and both name colour rather than merely
+# illumination:
+#
+#   EMITTERS   - things whose own light is coloured by what they are. A neon
+#                sign, an ember, a muzzle flash and a bank of readouts are all
+#                saturated by nature; a lamp, a bulb and a floodlight are not.
+#   COLOURED   - a hue word sitting within a few words of any light word, in
+#     _LIGHT     either order: "lit crimson", "cool blue interior lighting",
+#                "red emergency strip-lighting", "monitors glowing violet and
+#                cyan", "lit dull amber". This is what readmits the genuinely
+#                coloured uses of the plain words the list above dropped.
+#
+# Deliberately still excludes plain daylight and dusk - "sun", "sunlit",
+# "moonlight", "dawn". Natural light does not motivate an arbitrary saturated
+# glow colour either, and neither does a white one.
+# 'burning' carries its weight twice over in this table and only one of the two
+# is fire. "A downed transport burning", "its optics burning dull red", "a
+# burning wreck" are all light with a colour of their own; "a caged work lamp
+# burning against the canvas", "a single strip light burning away down a long
+# aisle", "a mirror panel burning white" are the table's own idiom for a lamp
+# being switched on, and every one of them is white. The lookbehinds keep the
+# first sense and drop the second - and a lamp that IS coloured ("a single
+# amber standby lamp burning") still reaches the glow through COLOURED_LIGHT
+# below, which is where a named hue belongs anyway.
+EMITTER_WORDS = (
+    r"glow\w*|neon|lanterns?|beacons?|readouts?|monitors?|displays?|screens?|"
+    r"flames?|(?<!lamp )(?<!light )(?<!bulb )(?<!panel )burning|smoulder\w*|"
+    r"smolder\w*|embers?|instruments?|holographic|"
+    r"holograms?|headlamps?|tail-?lights?|strobes?|chemlights?|flares?|"
+    r"flaring|sparks?|welding|arc-weld\w*|torchlit|torches|braziers?|"
+    r"candlelit|candlelight|firelight|explosions?|detonations?|muzzle flash"
 )
+
+# Hue words that can qualify a light, and the family each belongs to. The
+# family is what the Glow colour roll is matched against - "crimson" and
+# "red" have to agree, and "teal" and "green" have to agree, or the filter
+# below would only ever fire on an exact word match and never bind anything.
+# Deliberately no entry for white, grey or black: those are the absence of a
+# hue, and a scene lit white constrains the glow not at all.
+GLOW_HUE_FAMILIES = {
+    "red": "red", "crimson": "red", "scarlet": "red", "ruby": "red",
+    "amber": "amber", "orange": "amber", "copper": "amber", "brass": "amber",
+    "gold": "amber", "golden": "amber", "yellow": "amber", "sodium": "amber",
+    "green": "green", "teal": "green", "emerald": "green", "lime": "green",
+    "blue": "blue", "cobalt": "blue", "cyan": "blue", "azure": "blue",
+    "indigo": "blue", "sapphire": "blue",
+    "violet": "violet", "purple": "violet", "magenta": "violet",
+    "pink": "violet",
+}
+_HUE_WORD = re.compile(r"\b(%s)\b" % "|".join(sorted(GLOW_HUE_FAMILIES)),
+                       re.IGNORECASE)
+# Any word that means illumination, including the plain ones EMITTER_WORDS
+# dropped - here they are safe, because a hue has to be sitting next to them.
+_LIGHT_WORD = re.compile(
+    r"\b(?:%s|lit|light\w*|lamps?|bulbs?|luminous|glare|glaring)\b"
+    % EMITTER_WORDS, re.IGNORECASE)
+
+# How far apart a hue and a light word may sit and still be describing each
+# other. About two words of slack, which is what carries "red emergency
+# strip-lighting" and "lit dull amber".
+_NEAR_CHARS = 24
+# What ends the description regardless of distance. This is the guard the first
+# version was missing: it allowed commas inside the gap, and the gap in "armor
+# catching the pale light, a scatter of vivid red flowers" is twenty-one
+# characters - so a scene whose only light is PALE counted as coloured, and
+# every roll of it came back crimson off a colour that was flowers on the
+# ground. A hue on the far side of a comma, semicolon or dash belongs to a
+# different clause about a different thing.
+_CLAUSE_BREAK = re.compile(r"[,;:] | - |\. ")
+
+
+def _coloured_light_hues(text):
+    """Every hue word in `text` that is describing a light, lowercased.
+
+    A scan over two independent match lists rather than one alternating regex,
+    which is what the first version was. A single regex cannot report
+    overlapping matches, so "a bank of monitors glowing violet and cyan"
+    yielded only 'violet' - finditer resumed past the end of the first match
+    and never saw the second hue. That example is the one this file's comments
+    and docs/generate-npc.md both use, so it was wrong in the most visible
+    place available.
+    """
+    lights = [(m.start(), m.end()) for m in _LIGHT_WORD.finditer(text)]
+    for hue in _HUE_WORD.finditer(text):
+        for start, end in lights:
+            gap = (text[hue.end():start] if hue.end() <= start
+                   else text[end:hue.start()])
+            if len(gap) <= _NEAR_CHARS and not _CLAUSE_BREAK.search(gap):
+                yield hue.group(1).lower()
+                break
+
+
+LIGHT_SOURCE_WORDS = re.compile(
+    r"\b(?:%s)\b" % EMITTER_WORDS, re.IGNORECASE)
 
 
 def has_light_source(*texts):
-    return any(LIGHT_SOURCE_WORDS.search(text) for text in texts)
+    return any(LIGHT_SOURCE_WORDS.search(text)
+               or next(_coloured_light_hues(text), None) is not None
+               for text in texts)
+
+
+def light_hues(*texts):
+    """The hue families a coloured light in `texts` names, as a set.
+
+    Empty when nothing in the roll says what colour its light is - a bank of
+    readouts, an ember, an unqualified neon sign - which is the common case and
+    leaves the Glow colour roll unconstrained. When a scene DOES commit ("lit
+    crimson", "monitors glowing violet and cyan", "red emergency
+    strip-lighting"), this is what stops the portrait pairing it with a
+    teal-green glow and asking the model to render two contradictory light
+    sources at once.
+    """
+    return {GLOW_HUE_FAMILIES[word]
+            for text in texts
+            for word in _coloured_light_hues(text)
+            if word in GLOW_HUE_FAMILIES}
+
+
+def glow_hue_families(colour):
+    """The hue families a '## Glow colour' bullet's own text names."""
+    return {GLOW_HUE_FAMILIES[w]
+            for w in re.findall(r"[a-z]+", colour.lower())
+            if w in GLOW_HUE_FAMILIES}
+
+
+def filter_by_hue(options, hues):
+    """Glow colours that agree with a coloured light the roll already named.
+
+    A preference rather than a rule, like every other filter in this file bar
+    the two locks: a hue family with no shade in the table hands the whole pool
+    back rather than rolling nothing.
+
+    Fed from the Backdrop scene alone, not from the equipped sources. That is
+    a measurement rather than an oversight: across the whole of Outfit,
+    Headgear, Gear, Weapon, Feature and Eyes exactly three bullets name a
+    colour for the light they cast (a glowing chest core over crimson plate, a
+    kabuto's eyes lit red, glowing red cybernetic eyes), against 37 Backdrop
+    scenes that do. Reading those six tables here would make Glow colour a
+    dependent of all six in TRAIT_DEPENDENTS and widen six cascades to bind
+    three bullets.
+    """
+    if not hues:
+        return options
+    agree = [x for x in options if glow_hue_families(split_flags(x)[0]) & hues]
+    return agree or options
+
+
+# A '## Glow placement' bullet may name a PROP - the ground under the
+# subject's feet, a wall behind them, a stacked display wall, a skyline of
+# signage. Those read as badly as a contradictory colour when the rolled scene
+# has no such thing: "washes the towering display wall stacked behind her"
+# against a snowbound crash site, or "pools on the ground around him" against a
+# man floating weightless in an observation blister.
+#
+# Each flag here names the pattern the BACKDROP SCENE has to match for the
+# placement to be true of it. The scene alone, deliberately: reading the Outfit
+# or the Gear as well would add cascade edges to TRAIT_DEPENDENTS for every
+# table those props live on, and the two placements that used to assert worn
+# props - a suit's seams, a shoulder harness - were reworded instead to say
+# "{possessive} clothing" and "the near shoulder", which is true of every roll.
+# Backdrop already cascades to Glow placement, so this costs no new edge.
+#
+# 'ground' is the one that reads oddly at first glance: it matches the VERB the
+# scene puts the subject in rather than a noun for the floor. That is on
+# purpose and it is what makes the flag work. A scene that says "standing",
+# "walking", "crouched" has the subject's weight on something the light can
+# pool on; a weightless one says "floating" or "drifting" and has no ground at
+# all; and a half-body backdrop describes only what is behind the subject and
+# so contains no verb for them whatsoever - which is right too, since a
+# half-body shot crops above the ground the placement would light.
+# The text a prop gate is matched against. Two of them, and the split is the
+# whole reason 'ground' works at all:
+#
+#   'scene'  - the whole scene sentence. A prop that is somewhere in the frame
+#              is a prop, wherever the sentence mentions it.
+#   'stance' - the scene's OPENING CLAUSE only, up to the first comma or dash.
+#              For a full-body bullet that is "{Subject} {is_are} <verb> ...",
+#              so it is the one span that describes the SUBJECT rather than the
+#              scenery; for a half-body bullet ("Behind {object}, softly
+#              blurred ...") it describes the background and contains no verb
+#              for the subject at all, which is exactly the answer wanted.
+PLACEMENT_SCOPES = ("scene", "stance")
+
+
+def placement_scope_text(scope, scene):
+    """The span of `scene` a gate of `scope` is matched against."""
+    if scope != "stance":
+        return scene
+    # The first clause. Split on the punctuation the table uses to move from
+    # the subject to the surroundings - a comma, a spaced dash, a full stop.
+    return re.split(r"[,;] | - |\. ", scene, maxsplit=1)[0]
+
+
+# A '## Glow placement' bullet may name a PROP - the ground under the
+# subject's feet, a wall behind them, a stacked display wall, a skyline of
+# signage. Those read as badly as a contradictory colour when the rolled scene
+# has no such thing: "washes the towering display wall stacked behind her"
+# against a snowbound crash site, or "pools on the ground around him" against a
+# man floating weightless in an observation blister.
+#
+# Each entry is (scope, pattern): which span of the Backdrop has to match for
+# the placement to be true of it. The Backdrop and nothing else, deliberately -
+# reading the Outfit or the Gear as well would add cascade edges to
+# TRAIT_DEPENDENTS for every table those props live on, and the two placements
+# that used to assert worn props - a suit's seams, a shoulder harness - were
+# reworded instead to say "{possessive} clothing" and "the near shoulder",
+# which is true of every roll. Backdrop already cascades to Glow placement, so
+# this costs no new edge.
+#
+# 'ground' is the one worth reading twice. It matches the VERB the scene puts
+# the subject in rather than a noun for the floor, and it matches it in the
+# OPENING CLAUSE only. Both halves are load-bearing and the first version had
+# only the first, which made it useless: searching the whole sentence, "a hatch
+# stands cycling open behind" kept the ground placement on a weightless tumble
+# and "a work-mech kneeling in its cradle" kept it on a half-body hangar shot -
+# the two cases the flag was written to stop, passing on verbs belonging to the
+# scenery. 'braced' and 'planted' are gone from the list for a related reason:
+# a subject can be braced in the open door of a hovering ambulance with the
+# street far below, which is a subject verb and still no ground.
+PLACEMENT_REQUIRES = {
+    "ground": ("stance", re.compile(
+        r"\b(standing|stands|walking|striding|advancing|crouched|crouching|"
+        r"kneeling|kneels|wading|trudging|stepping)\b", re.IGNORECASE)),
+    # 'wall of' is excluded on purpose. The table uses "a wall of" as a figure
+    # of speech far more often than as a surface - a wall of white peaks, a
+    # wall of humming monitors, a wall of technical schematics - and the
+    # snowbound crash site it let through is the exact scene the docs use as
+    # the example of what this gate exists to prevent.
+    "wall": ("scene", re.compile(
+        r"\b(walls?(?!\s+of\s)|corridor|passage|room|bay|interior|bulkhead|"
+        r"alley|hangar|cabin|booth|office|shop|bar|compartment|tunnel|vault|"
+        r"den|doorway|stairwell|hold|blister|tube)\b", re.IGNORECASE)),
+    "screens": ("scene", re.compile(
+        r"\b(screens?|monitors?|displays?|readouts?|consoles?|terminals?|"
+        r"schematics?|repeaters?|telemetry|big board)\b", re.IGNORECASE)),
+    "signage": ("scene", re.compile(
+        r"\b(signage|neon|billboards?|skyline|hoardings?|marquee)\b",
+        re.IGNORECASE)),
+}
+
+# The mirror of the dict above: a flag whose pattern must NOT match.
+#
+# 'air' hangs the glow in the atmosphere as a haze, and hard vacuum has none -
+# the light would have nothing to scatter off. Weightlessness itself is
+# deliberately not in it, though the first draft had it: most of the
+# zero-gravity scenes are shirt-sleeve interiors - a station galley, a darkened
+# blister, a corridor on emergency power - and a pressurised compartment has as
+# much air to hold a haze as a street does. It is vacuum that has none, and the
+# vacuum scenes name it.
+#
+# 'ground' is here as well as in the dict above, and the pair is what makes it
+# honest. The verb test says the subject's weight is on something; this says
+# that something is not being described as weightless anyway, which catches the
+# scenes that open "floating" or "drifting" and then say "standing" of a piece
+# of scenery further along.
+PLACEMENT_FORBIDS = {
+    "air": ("scene", re.compile(
+        r"\b(vacuum|the void|starfield|airless|nebula|orbital|in orbit|EVA)\b",
+        re.IGNORECASE)),
+    "ground": ("scene", re.compile(
+        r"\b(weightless|freefall|zero-gravity|untethered|mid-tumble|"
+        r"drifting loose|nothing underfoot)\b", re.IGNORECASE)),
+}
+
+
+def filter_by_placement_prop(options, scene):
+    """Placements whose named prop the rolled Backdrop scene actually has.
+
+    A preference, with the usual fallback. The unflagged bullets keep the light
+    on or immediately around the figure and always qualify - ten of the sixteen
+    in the live table - so the pool never empties in practice and the fallback
+    never fires. The narrowest any live scene leaves it is eleven.
+    """
+    def ok(bullet):
+        for flag in split_flags(bullet)[1]:
+            want = PLACEMENT_REQUIRES.get(flag)
+            if want is not None:
+                scope, pattern = want
+                if not pattern.search(placement_scope_text(scope, scene)):
+                    return False
+            deny = PLACEMENT_FORBIDS.get(flag)
+            if deny is not None:
+                scope, pattern = deny
+                if pattern.search(placement_scope_text(scope, scene)):
+                    return False
+        return True
+
+    kept = [x for x in options if ok(x)]
+    return kept or options
 
 
 # What the prompt asserts about the subject's age, in the two highest-signal
@@ -540,6 +838,32 @@ CIVILIAN_UNARMED_COPIES = 3
 ROLE_LOCKS = {
     "admin": ("a colonial administrator",),
 }
+
+# Roles whose own text says they work for nobody, and which therefore may only
+# roll a Faction that is not an affiliation at all.
+#
+# "a freelance salvager || House Clawthorne" is the pairing this exists to
+# stop, and it is a flat contradiction rather than an odd combination: freelance
+# means unemployed by anyone, and the dossier prints the Faction under
+# "Affiliation", so the two lines of the same dossier disagree about whether
+# this person has an employer. The civ/mil split cannot catch it - House
+# Clawthorne is dropped from a civilian Role's pool for being 'mil', but
+# Smith-Shimano Corpro and IPS-Northstar are 'civ' and land on the freelancer
+# just as wrongly.
+#
+# Keyed on the exact Role bullet, the way ROLE_LOCKS is, rather than on a
+# ROLE_CATEGORIES bucket: independence is a property of the specific job and
+# not of the kind of work. The salvager's own bucket, Laborers, holds the
+# dockworker, who very much does have an employer.
+#
+# Deliberately NOT the mercenaries, though they were the first candidates. A
+# mercenary company is an affiliation - it has a name, a banner and a payroll -
+# and "a mercenary squad lead || Ashfall Vanguard" reads as the company they
+# fight for rather than as a contradiction. What earns a place here is a Role
+# whose own words rule an employer out, which so far is one of the twenty-two.
+UNAFFILIATED_ROLES = frozenset({
+    "a freelance salvager",
+})
 
 # The flag a Role's armament MUST carry, for the Roles whose whole identity is
 # the weapon. Read by apply_weapon_policy().
@@ -1091,6 +1415,41 @@ def filter_by_role_lock(options, role):
                    for f in split_flags(x)[1] if f in ROLE_LOCKS)]
 
 
+def filter_by_affiliation(options, role):
+    """Faction bullets a Role that works for nobody may roll.
+
+    For a Role in UNAFFILIATED_ROLES that is the two non-affiliations and
+    nothing else, found by the 'unaffiliated' flag rather than by their prose -
+    the same reason Weapon's empty bullet carries 'none' and Headgear's carries
+    'bare'. Every other Role gets the pool untouched.
+
+    Hard in intent, like filter_by_role_lock() and filter_by_backdrop_role():
+    handing the pool back would give the freelancer the employer the flag was
+    keeping off them, which is the whole of what it is for.
+
+    But it yields rather than rolling nothing, and the asymmetry with those two
+    is worth stating because it looks like an inconsistency. Those filters DROP
+    a small flagged minority from a large pool, so the pool cannot realistically
+    empty. This one KEEPS a minority - two bullets out of fifteen - and both of
+    them can be switched off from the Import GUI's Tables tab in two clicks,
+    which writes the same file this reads. A hard filter there would not produce
+    a contradiction, it would produce an IndexError on one roll in twenty-two,
+    with nothing in the traceback pointing at a checkbox in another program. So
+    it falls back and says so on stderr, which is the same shape the Headgear
+    'bare' filter uses for the same reason.
+    """
+    if role not in UNAFFILIATED_ROLES:
+        return options
+    kept = [x for x in options if "unaffiliated" in split_faction(x)[2]]
+    if kept:
+        return kept
+    print("! %r works for nobody, but '## Faction' has no bullet flagged "
+          "'unaffiliated' left enabled - falling back to the whole table, so "
+          "this NPC may come out with an employer the Role contradicts. "
+          "Re-enable Unaligned or Unregistered." % role, file=sys.stderr)
+    return options
+
+
 def filter_by_backdrop_role(options, role):
     """Backdrop scenes that assert an occupation, dropped for every other Role.
 
@@ -1628,6 +1987,14 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         if name in ("Faction", "Outfit"):
             options = filter_by_mil(options, role_mil, name)
 
+        # A Role whose own words say it works for nobody keeps only the
+        # non-affiliations. Runs AFTER the civ/mil split rather than before it,
+        # because this is the hard filter of the two: filter_by_mil() hands the
+        # whole pool back when it would empty, and running it second could
+        # therefore re-admit an employer this had just removed.
+        if name == "Faction":
+            options = filter_by_affiliation(options, npc["Role"])
+
         # Dress register, layered on top of civ/mil. Outfit only: a 'dressy'
         # Faction keeps its place in the pool and loses only its visual
         # segment, in build_prompts(). Role precedes Outfit in REQUIRED_TABLES,
@@ -1729,6 +2096,23 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
                 split_backdrop(npc["Backdrop"])[1]):
             on_figure = [x for x in options if "scene" not in split_flags(x)[1]]
             options = on_figure or options   # never filter the pool down to nothing
+
+        # A placement may also name a PROP the scene has to contain for it to
+        # be true - ground under the subject's feet, a wall, a display wall, a
+        # signage skyline - or an atmosphere it has to have, which vacuum does
+        # not. Runs after the 'scene' filter above rather than before it,
+        # because that one is the coarser test: a scene that casts no light at
+        # all disqualifies every environmental placement whatever props it has.
+        if name == "Glow placement":
+            options = filter_by_placement_prop(
+                options, split_backdrop(npc["Backdrop"])[1])
+
+        # The shade the glow takes, narrowed to agree with a coloured light the
+        # rolled scene already named. Backdrop precedes Glow colour in
+        # REQUIRED_TABLES for this, the same way it precedes Glow placement.
+        if name == "Glow colour":
+            options = filter_by_hue(
+                options, light_hues(split_backdrop(npc["Backdrop"])[1]))
 
         # The Weapon policy runs BEFORE 'notac' below, and the order is
         # load-bearing: being armed is a guarantee, 'notac' is only a
@@ -3256,6 +3640,17 @@ def reroll_trait(tables, npc, name, rng):
             split_backdrop(npc["Backdrop"])[1]):
         on_figure = [x for x in options if "scene" not in split_flags(x)[1]]
         options = on_figure or options
+
+    # The placement's named prop against that same stored scene, and the
+    # glow's shade against the hue that scene's own light commits to. Both
+    # mirror the roll-loop filters in roll_npc() - a re-roll that skipped them
+    # would be the one path back to the contradictions they exist to stop.
+    if name == "Glow placement":
+        options = filter_by_placement_prop(
+            options, split_backdrop(npc["Backdrop"])[1])
+    if name == "Glow colour":
+        options = filter_by_hue(
+            options, light_hues(split_backdrop(npc["Backdrop"])[1]))
 
     # 'hardtech' against the recorded outfit register - the second flag the
     # manifest stores separately, for the same reason 'young' is the first.

@@ -203,5 +203,89 @@ class TestFactionPigment(unittest.TestCase):
             COLOUR_WORDS)
 
 
+class TestUnaffiliatedRoles(unittest.TestCase):
+    """A Role whose own words say it works for nobody may not roll an employer.
+
+    "Laborers / a freelance salvager / House Clawthorne" is the pairing that
+    prompted this: the Role bullet says freelance and the dossier prints the
+    Faction under "Affiliation", so the same sheet says both that this person
+    works for nobody and that they work for a noble house.
+
+    It is not something the civ/mil split could have caught, which is the
+    argument for a filter of its own rather than a flag on the existing pair.
+    House Clawthorne is 'mil' and does get dropped for a civilian Role - and
+    then Smith-Shimano Corpro, which is 'civ', lands on the freelancer just as
+    wrongly.
+    """
+
+    LIVE = None
+
+    @classmethod
+    def setUpClass(cls):
+        cls.LIVE = gen.parse_tables(REPO / "prompts" / "npc-generator-tables.md")
+
+    def test_the_set_names_live_role_bullets(self):
+        """A Role reworded since would leave the set naming nobody, and a
+        filter keyed on a string nothing rolls is a silent no-op."""
+        roles = {gen.split_flags(b)[0] for b in self.LIVE["Role"]}
+        self.assertTrue(gen.UNAFFILIATED_ROLES)
+        for role in gen.UNAFFILIATED_ROLES:
+            self.assertIn(role, roles,
+                          "UNAFFILIATED_ROLES names %r, which the Role table "
+                          "does not offer" % role)
+
+    def test_the_pool_it_narrows_to_cannot_empty(self):
+        """The one guard a hard filter needs, the same one test_role_lock.py
+        and test_backdrop_role.py keep over theirs: this does not fall back to
+        the whole pool, so an empty result would be an empty roll."""
+        flagged = [b for b in self.LIVE["Faction"]
+                   if "unaffiliated" in gen.split_faction(b)[2]]
+        self.assertGreaterEqual(
+            len(set(flagged)), 2,
+            "'## Faction' must keep its non-affiliations flagged "
+            "'unaffiliated' - they are all an unaffiliated Role can roll")
+
+    def test_every_unaffiliated_bullet_has_an_empty_visual(self):
+        """The flag and the empty visual are two records of one fact.
+
+        A bullet flagged 'unaffiliated' that carried a livery would put an
+        employer's insignia on the clothing sentence of an NPC the dossier
+        calls unaligned.
+        """
+        for bullet in self.LIVE["Faction"]:
+            if "unaffiliated" not in gen.split_faction(bullet)[2]:
+                continue
+            self.assertEqual(
+                gen.split_faction(bullet)[1], "",
+                "a non-affiliation has no livery to show: %r" % bullet)
+
+    def test_a_freelancer_never_rolls_an_employer(self):
+        checked = 0
+        for seed in range(1500):
+            npc = gen.roll_npc(self.LIVE, random.Random(seed))
+            if npc["Role"] not in gen.UNAFFILIATED_ROLES:
+                continue
+            checked += 1
+            self.assertIn(
+                "unaffiliated", gen.split_faction(npc["_raw"]["Faction"])[2],
+                "seed %d: %r came out affiliated to %r"
+                % (seed, npc["Role"], npc["Faction"]))
+        self.assertTrue(checked, "no unaffiliated Role was rolled")
+
+    def test_everyone_else_still_reaches_the_whole_table(self):
+        """A filter that narrowed every Role would be a much larger change
+        than the one intended, and would pass the test above."""
+        seen = set()
+        for seed in range(1500):
+            npc = gen.roll_npc(self.LIVE, random.Random(seed))
+            if npc["Role"] in gen.UNAFFILIATED_ROLES:
+                continue
+            seen.add(gen.split_faction(npc["_raw"]["Faction"])[0])
+        names = {gen.split_faction(b)[0] for b in self.LIVE["Faction"]}
+        self.assertEqual(seen, names,
+                         "these affiliations became unreachable: %s"
+                         % sorted(names - seen))
+
+
 if __name__ == "__main__":
     unittest.main()

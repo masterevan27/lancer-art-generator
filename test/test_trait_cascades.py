@@ -30,13 +30,16 @@ LIVE = gen.parse_tables(REPO / "prompts" / "npc-generator-tables.md")
 # trait_cascade() promises to return.
 THEME_CASCADE_FROM_THE_DOC = (
     "Theme", "Hair", "Hair colour", "Feature", "Outfit", "Headgear", "Weapon",
-    "Gear", "Backdrop", "Glow placement", "Weather", "Stance",
+    "Gear", "Backdrop", "Glow colour", "Glow placement", "Weather", "Stance",
 )
 
-# The same section's "Kept - thirteen" list, in REQUIRED_TABLES order.
+# The same section's "Kept - twelve" list, in REQUIRED_TABLES order. Glow
+# colour left it when filter_by_hue() bound the shade to the rolled scene's
+# own light: a colour kept across a new Backdrop can be one that scene's light
+# contradicts, which is the same kind of edge Glow placement has always had.
 THEME_KEEP_SET_FROM_THE_DOC = (
     "Given names", "Family names", "Callsigns", "Pronouns", "Age", "Build",
-    "Height", "Skin", "Eyes", "Demeanor", "Role", "Faction", "Glow colour",
+    "Height", "Skin", "Eyes", "Demeanor", "Role", "Faction",
 )
 
 # The other cascades worth pinning by hand, in REQUIRED_TABLES order. Written
@@ -65,11 +68,12 @@ EXPECTED_CASCADES = {
     "Age": ("Age", "Build", "Hair", "Hair colour"),
     "Hair colour": ("Hair", "Hair colour"),
     "Role": ("Role", "Faction", "Outfit", "Headgear", "Weapon", "Gear",
-             "Backdrop", "Glow placement", "Weather", "Stance"),
+             "Backdrop", "Glow colour", "Glow placement", "Weather", "Stance"),
     "Outfit": ("Outfit", "Headgear", "Weapon", "Gear", "Stance"),
     "Weapon": ("Weapon", "Gear", "Stance"),
     "Gear": ("Gear", "Stance"),
-    "Backdrop": ("Gear", "Backdrop", "Glow placement", "Weather", "Stance"),
+    "Backdrop": ("Gear", "Backdrop", "Glow colour", "Glow placement",
+                 "Weather", "Stance"),
 }
 
 
@@ -383,7 +387,7 @@ class TestTraitCascade(unittest.TestCase):
         self.assertEqual(
             gen.trait_cascade("Role"),
             ("Role", "Faction", "Outfit", "Headgear", "Weapon", "Gear",
-             "Backdrop", "Glow placement", "Weather", "Stance"))
+             "Backdrop", "Glow colour", "Glow placement", "Weather", "Stance"))
         self.assertNotIn("Headgear", gen.TRAIT_DEPENDENTS["Role"])
         self.assertNotIn("Stance", gen.TRAIT_DEPENDENTS["Role"])
         self.assertNotIn("Glow placement", gen.TRAIT_DEPENDENTS["Role"])
