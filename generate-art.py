@@ -636,7 +636,14 @@ def load_manifest(path):
 
 
 def save_manifest(path, data):
-    path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
+    # Written to a sibling temp file and renamed, because the Import GUI reads
+    # this file every two seconds and answers [] for a half-written one, which
+    # reads to the browser as "the library is empty" and stops its poller
+    # mid-job. os.replace is atomic on both POSIX and Windows when source and
+    # destination share a directory.
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
+    os.replace(tmp, path)
 
 
 def manifest_images(manifest, entry):
