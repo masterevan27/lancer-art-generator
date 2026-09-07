@@ -44,7 +44,7 @@ class TestDeterminism(unittest.TestCase):
 class TestTheRollIsClean(unittest.TestCase):
     def test_no_flag_segment_or_placeholder_survives(self):
         # Backdrop and Faction are the two three-segment tables
-        # (generate-spaceship.py:867-874): roll_ship() deliberately keeps
+        # (generate-spaceship.py:876-882): roll_ship() deliberately keeps
         # their full "text || text || flags" string intact under these two
         # keys, because build_ship_prompts() and write_ship_dossier() re-split
         # them for themselves downstream (split_backdrop()/split_faction()).
@@ -54,12 +54,20 @@ class TestTheRollIsClean(unittest.TestCase):
         # table's flags come off in the loop, so "||" is checked everywhere
         # else; "{" is still checked everywhere, since the '{}' substitution
         # pass runs over every key with no exception for these two.
+        #
+        # Backdrop and Faction are not just excused from the "no ||" check -
+        # they are held to a stronger, positive one: exactly two separators,
+        # matching their three segments exactly, every time over 200 seeds.
+        # A blanket skip would also pass a Backdrop that kept a stray FOURTH
+        # segment; this would not.
         for rolled in roll_many(200):
             for name, value in rolled.items():
                 if name.startswith("_"):
                     continue
                 with self.subTest(trait=name):
-                    if name not in ("Backdrop", "Faction"):
+                    if name in ("Backdrop", "Faction"):
+                        self.assertEqual(value.count("||"), 2)
+                    else:
                         self.assertNotIn("||", value)
                     self.assertNotIn("{", value)
 

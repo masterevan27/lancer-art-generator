@@ -27,6 +27,14 @@ TABLES = ship.parse_tables(ship.DEFAULT_TABLES)
 # "1.5" has no space - and the tables carry no abbreviation in this shape.
 LOWER_SENTENCE_START = re.compile(r'\. [a-z]')
 
+# The mirror defect: a comma-joined MID-sentence continuation (Markings after
+# a faction visual, e.g.) that got capitalized as if it were a new sentence.
+# sentence_case() is only ever meant to run at a full-stop join; applying it
+# (or leaving stray capitalization) at a comma join would print ", A crest
+# painted..." mid-sentence. Nothing in LOWER_SENTENCE_START catches this - it
+# is the opposite failure - so it needs its own pattern.
+OVER_CAPITALIZED_COMMA_JOIN = re.compile(r', [A-Z]')
+
 
 class TestNoLowercaseSentenceStarts(unittest.TestCase):
     def test_no_prompt_starts_a_sentence_in_lower_case(self):
@@ -42,6 +50,21 @@ class TestNoLowercaseSentenceStarts(unittest.TestCase):
         self.assertEqual(
             offenders, [],
             "%d lowercase sentence-starts, first ten:\n%s"
+            % (len(offenders), "\n".join(offenders[:10])))
+
+    def test_no_comma_joined_clause_is_capitalized_as_if_a_new_sentence(self):
+        offenders = []
+        for seed in range(60):
+            rolled = ship.roll_ship(TABLES, random.Random(seed))
+            for label, text in zip(("portrait", "token"),
+                                   ship.build_ship_prompts(rolled)):
+                for m in OVER_CAPITALIZED_COMMA_JOIN.finditer(text):
+                    offenders.append(
+                        "seed %d %s: ...%s..."
+                        % (seed, label, text[max(0, m.start() - 40):m.end() + 30]))
+        self.assertEqual(
+            offenders, [],
+            "%d over-capitalized comma joins, first ten:\n%s"
             % (len(offenders), "\n".join(offenders[:10])))
 
 

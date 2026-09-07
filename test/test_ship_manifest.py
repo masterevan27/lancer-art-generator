@@ -10,7 +10,7 @@ rotted unnoticed (generate-npc.py:4273 gated `traits`/`rawTraits` on
 `rerolled is not None`, which is never true on a --set-trait path).
 generate-spaceship.py's regenerate_one() writes persist_traits()/
 persist_size() unconditionally on both edit paths (see its own comment at
-:2579-2585), and TestSetTraitPersists below is the ship-side test that would
+:2640-2646), and TestSetTraitPersists below is the ship-side test that would
 have caught the NPC bug had it existed there too.
 
 Run against test/fixtures/ship-tables-minimal.md rather than the live tables,
@@ -198,13 +198,46 @@ class TestEntryShape(StagedEditHarness):
                 self.assertIsInstance(saved[key], int)
 
 
+class TestManifestEntryFunction(unittest.TestCase):
+    """manifest_entry() itself, called directly - the function every freshly
+    rolled ship goes through, and the shape the GUI's grid reads for a new
+    ship. StagedEditHarness.setUp hand-plants an entry already carrying 19 of
+    REQUIRED_KEYS's 20 (**ship.token_metadata(band) supplies five more), so
+    TestEntryShape above proves regenerate_one() PRESERVES keys the fixture
+    already had - it is not a test of this function, which no test called
+    directly before this one. Delete "callsign" or "kind" from manifest_entry
+    and TestEntryShape stays green; this test would not.
+    """
+
+    def test_a_fresh_entry_carries_every_required_key_with_the_right_shapes(self):
+        seed = 5
+        rolled = ship.roll_ship(TABLES, random.Random(seed))
+        band = sp.size_of(rolled["_raw"]["Size"])
+        args = types.SimpleNamespace(tables=FIXTURE_TABLES, workflow=WORKFLOW,
+                                     max_token_px=ship.MAX_TOKEN_PX)
+        entry = ship.manifest_entry(
+            rolled, seed, "TST-0005", band, args,
+            written=["A Portrait.png", "A Token.png", "A.md"],
+            portrait_file="A Portrait.png", portrait_prompt="a portrait prompt",
+            token_file="A Token.png", token_prompt="a token prompt")
+
+        for key in TestEntryShape.REQUIRED_KEYS:
+            with self.subTest(key=key):
+                self.assertIn(key, entry)
+        self.assertEqual(entry["kind"], "spaceship")
+        self.assertRegex(entry["id"], r"^ship-[a-z0-9-]+-\d+$")
+        for key in TestEntryShape.SIZE_FIELDS:
+            with self.subTest(key=key):
+                self.assertIsInstance(entry[key], int)
+
+
 class TestSetTraitPersists(StagedEditHarness):
     """The D3-shaped regression, on the ship side: --set-trait's pin has to
     reach the manifest. generate-npc.py:4273-4280 gates that write on
     `rerolled is not None`, which a --set-trait path never sets - a pin
     renders and is never persisted. This is the test that would have caught
     that bug here, had ships shared the gate; they do not (see the writer's
-    own comment at :2579-2585), and this is what proves it.
+    own comment at :2640-2646), and this is what proves it.
 
     Detail is the trait exercised throughout: TRAIT_DEPENDENTS["Detail"] is
     (), so trait_choices() never has to reason about a downstream conflict
