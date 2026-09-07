@@ -2051,7 +2051,7 @@ ignored — so notes like this one are safe to leave inline.
 - a heavy angular rifle, its rear coil glowing, gripped low at {possessive} hip with the muzzle dipped toward the deck || hands gun weapon @cyberpunk
 - a slim, wire-wrapped katana with a faint glowing edge along the blade || hands weapon blade @cyberpunk
 - a boxy bullpup carbine with a top-feeding curved magazine, held level in both hands || hands gun mil weapon
-- a long-barrelled heavy revolver holstered under one arm in a worn leather rig || weapon simple sidearm
+<!-- - a long-barrelled heavy revolver holstered under one arm in a worn leather rig || weapon simple sidearm -->
 - a compact machine pistol with its wire stock folded, clipped to a chest sling || mil weapon simple sidearm
 - a slim vented pistol held low in a gloved hand, its muzzle angled at the ground || hands gun weapon simple
 - a service revolver holstered at the belt beneath an open jacket || weapon simple sidearm
