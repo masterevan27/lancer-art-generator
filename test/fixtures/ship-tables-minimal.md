@@ -31,8 +31,11 @@ Two deliberate departures from the "every equipment table alike" reading:
   LIGHT_CAP reachable-nothing test (see test_ship_policy.py) unreproducible
   and would contradict the very design this fixture is meant to exercise.
 
-Every bullet is one physical line, flags included - see task-3-brief.md's
-warning about `parse_tables()`'s bullet regex and continuation lines.
+Every bullet is one physical line, flags included. `parse_tables()`'s bullet
+regex is `^-\s+(.*?)\s*$` and continuation lines match nothing, so a
+hard-wrapped bullet is silently truncated at its first physical line and
+loses its whole flag segment - the exact defect that made
+`scene-and-spaceship-tables.md` unparseable, and easy to reintroduce by hand.
 
 ## Name prefixes
 

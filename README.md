@@ -63,6 +63,36 @@ rolling for it, since a single bullet in a pool of thirty rarely comes up. Full
 documentation, including worked examples for rolling a whole group of related NPCs:
 [`docs/generate-npc.md`](docs/generate-npc.md).
 
+### `generate-spaceship.py`
+
+Rolls random spaceships — patrol boats up to fleet carriers — from the tables in
+`prompts/spaceship-generator-tables.md` and generates each one a matched portrait
+and token, the same shape `generate-npc.py` produces for people. It shares that
+script's markdown table parser, theme filters, glow subsystem and ComfyUI
+plumbing by loading `generate-npc.py` by path rather than duplicating it — the
+same technique `generate-3d.py` already uses for `DEFAULT_MANIFEST` — so it
+changes zero lines of `generate-npc.py`, `generate-art.py` or `generate-3d.py`.
+What a hull is allowed to carry (which sizes a Ship type can roll, which
+equipment tables a given size may reach) lives in `ship_policy.py`.
+
+Unlike an NPC, a ship's token is not one fixed size: Foundry draws it across
+1 to 5 grid hexes depending on the rolled Size band, so the token's canvas, its
+aspect and the framing language in its prompt all vary per ship, and the
+manifest entry carries the grid width and height for the Foundry importer to
+set `token.width`/`token.height` from.
+
+```
+python generate-spaceship.py --dry-run --count 20
+python generate-spaceship.py --count 3
+python generate-spaceship.py --ship-type carrier --size huge
+python generate-spaceship.py --ship-catalogue
+```
+
+Start with `--dry-run`, same as the other two generators. See
+[`docs/spaceship-render-notes.md`](docs/spaceship-render-notes.md) for notes
+from the first real renders, including an open, unresolved framing issue on
+the largest (multi-hex) hulls.
+
 ### `generate-3d.py`
 
 Turns an NPC already in `.generated-npcs.json` into a printable 32 mm STL, a

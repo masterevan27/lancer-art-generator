@@ -45,48 +45,40 @@ Design documents to work from, all committed:
 
 ---
 
-## Task 1 — Merge the two halves into `generate-spaceship.py`
+## Task 1 — Merge the two halves into `generate-spaceship.py` — DONE
 
-**Repo** ART · **Blocked by** nothing · **Size** medium, mostly mechanical
+**Repo** ART · **Status:** complete, on branch `ultracode-spaceships`.
 
-Two uncommitted files are halves of one entry point, written in parallel by separate agents so they
-would not collide. Both work; `_ship_cli.py` runs end to end today.
+`_ship_roll.py` and `_ship_cli.py` — the two uncommitted halves this task originally described — no
+longer exist. They were merged into a single `generate-spaceship.py` (~2,900 lines) beside
+`generate-npc.py`, the duplicated definitions (`TRAIT_DEPENDENTS`, `REROLLABLE_TRAITS`,
+`RAW_REROLLABLE_TRAITS`, `check_tables`, `trait_cascade`, `PORTRAIT_SIZE`, `PLAN_FRAMING`,
+`TOKEN_LIMIT`, `CHARS_PER_TOKEN`) reconciled to one copy each, and the `from _ship_roll import ...`
+line dropped. `REQUIRED_TABLES`, `REROLLABLE_TRAITS`, `RAW_REROLLABLE_TRAITS` and `TRAIT_DEPENDENTS`
+remain literal top-level assignments at column 0, which the GUI's `lib/overrideTables.js:17-46`
+regex-parse depends on — verified against the merged file. `git diff --stat HEAD -- generate-npc.py
+generate-art.py generate-3d.py ship_policy.py` is empty: the merge changed zero lines of those four
+files, and stays that way.
 
-- `_ship_roll.py` (1,074 lines) — module loading, `REQUIRED_TABLES`, the filters, `roll_ship()`,
-  `ship_fields()`, the prompt templates, `build_ship_prompts()`.
-- `_ship_cli.py` (2,129 lines) — token sizing, output layout, `write_ship_dossier()`, the manifest
-  entry, regeneration, `reroll_ship_trait()`, `trait_choices()`, and the full argparse surface.
-  Its header comment (around line 62) contains its own merge instructions.
+Also done since this section was written: the sentence-join capitalization fix (former Task 2),
+`test/test_ship_*.py` (former Task 3), and a first real render against a running ComfyUI (former
+Task 4) — see `docs/spaceship-render-notes.md` for the render record. The test suite is at 1072
+passed, 0 failed, 0 skipped (`python -m unittest discover -s test -q`), up from the 999 pass / 1
+skip this section originally cited as the acceptance target.
 
-**Do:**
-
-1. Merge into a single `generate-spaceship.py` beside `generate-npc.py`, in the shape design §1
-   gives. Delete `_ship_roll.py` and `_ship_cli.py` — the deliverable is one hyphenated entry point.
-2. **Dedupe.** Both files independently define `TRAIT_DEPENDENTS`, `REROLLABLE_TRAITS`,
-   `RAW_REROLLABLE_TRAITS`, `check_tables`, `trait_cascade`, `PORTRAIT_SIZE`, `PLAN_FRAMING`,
-   `TOKEN_LIMIT` and `CHARS_PER_TOKEN`. Reconcile each — they may not be identical, and the
-   `_ship_cli.py` copy is generally the later one.
-3. Drop the `from _ship_roll import ...` line; those names become local.
-
-**Acceptance:**
-
-```bash
-python generate-spaceship.py --help
-python generate-spaceship.py --dry-run --count 20
-python generate-spaceship.py --ship-catalogue
-python -m unittest discover -s test -q                 # still 999 pass, 1 skip
-git diff --stat HEAD -- generate-npc.py generate-art.py generate-3d.py ship_policy.py   # empty
-```
-
-**Critical — the GUI parses this file's source text.** `REQUIRED_TABLES`, `REROLLABLE_TRAITS`,
-`RAW_REROLLABLE_TRAITS` and `TRAIT_DEPENDENTS` must survive the merge as **literal top-level
-assignments anchored at column 0**. `lib/overrideTables.js:17-46` in the GUI matches `^NAME\s*=`; a
-parse miss silently yields empty dropdowns and no reroll buttons, with only a stderr warning nobody
-reads. Verify by running that JS against the merged file.
+**Still open:** the wide-token framing problem. A multi-hex ship's token (the 5x3 'huge' case
+especially) does not reliably come back as a true top-down orthographic view — a prompt-level tuning
+attempt was tried and reverted (it cost real prompt-token budget for no framing improvement; see
+`docs/spaceship-render-notes.md`'s "Review round 1" section for the full accounting). The next
+attempt should look at the workflow or CFG level rather than more prompt wording, and is a scope/cost
+decision for the user to make, not something to pick up silently.
 
 ---
 
-## Task 2 — Fix the sentence-join capitalization bug
+## Task 2 — Fix the sentence-join capitalization bug — DONE
+
+**Done** — see Task 1's note above and `test/test_ship_prompts.py`. Left below for the historical
+reproduction steps.
 
 **Repo** ART · **Blocked by** 1 · **Size** small · **Do this before any real render**
 
@@ -109,7 +101,10 @@ letter.
 
 ---
 
-## Task 3 — Tests for the generator
+## Task 3 — Tests for the generator — DONE
+
+**Done** — see Task 1's note above. `test/test_ship_*.py` covers this and more; left below as the
+original test plan for reference.
 
 **Repo** ART · **Blocked by** 1 · **Size** medium
 
@@ -131,7 +126,10 @@ At minimum:
 
 ---
 
-## Task 4 — One real render against ComfyUI
+## Task 4 — One real render against ComfyUI — DONE, wide-token framing still open
+
+**Done** — see Task 1's note above and `docs/spaceship-render-notes.md` for the full render record,
+including the wide-token framing problem that is **still open** (last bullet below).
 
 **Repo** ART · **Blocked by** 2 · **Size** small, but needs a running ComfyUI
 

@@ -309,16 +309,30 @@ sample, `TOKEN_LIMIT = 512`) still passes, but headroom is now thin:
 - Portrait p99: 453 / 512 (unaffected — `PORTRAIT_TEMPLATE` was not
   touched).
 - Token p99: **499 / 512** — 13 tokens of headroom, down from roughly 363
-  before this change. The single longest sampled token prompt in the run was
-  513 tokens, one over the limit (the p99 assertion tolerates this — see the
-  test's own docstring on why p99 rather than max is asserted — but the
-  margin for the *next* change to this template is now small).
+  before this change. *(Superseded — this "363" figure was a coordinator
+  error: a single dry-run measurement compared against a p99, two different
+  statistics. The authoritative pre-tuning figure, measured the same way as
+  the number above, is p99 = 460, i.e. 52 tokens of headroom — see "Budget,
+  before and after the revert" below.)* The single longest sampled token
+  prompt in the run was 513 tokens, one over the limit (the p99 assertion
+  tolerates this — see the test's own docstring on why p99 rather than max is
+  asserted — but the margin for the *next* change to this template is now
+  small).
 
 This is a real constraint for whoever tunes `PLAN_FRAMING`/`TOKEN_TEMPLATE`
 next: there is only about a dozen tokens of headroom left at p99 before a
 further lengthening starts failing this test.
 
 ## Files changed
+
+*(Superseded by the revert — see "Review round 1: the tuning was reverted"
+below. At the time this section was written, mid-task, `generate-spaceship.py`
+did carry the `PLAN_FRAMING["huge"]`/`TOKEN_TEMPLATE` edit described here. It
+no longer does: the tuning was reverted verbatim, so this task's net effect on
+`generate-spaceship.py` is **zero changed lines** — `git diff --stat 97914cb
+HEAD -- generate-spaceship.py` is empty. The paragraph below is left as
+written for the historical record of what the tuning attempt touched before
+it was undone.)*
 
 - `generate-spaceship.py` — `PLAN_FRAMING["huge"]` and `TOKEN_TEMPLATE`'s
   opening sentence, as diffed above. Nothing else in this file changed.
