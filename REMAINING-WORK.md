@@ -133,18 +133,31 @@ including the wide-token framing problem that is **still open** (last bullet bel
 
 **Repo** ART · **Blocked by** 2 · **Size** small, but needs a running ComfyUI
 
-Everything so far is dry-run only. **No ship image has ever actually been generated.** Render at
-least a small ship (1 hex) and a huge one (5 hexes) and confirm:
+Real renders were run against ComfyUI. The 1-hex patrol boat (seed 4242, "Adamant") rendered cleanly
+with correct portrait style and a top-down orthographic token view. The 5-hex carrier (seed 9001,
+"Mourner's Due") rendered twice: once under the original token template, and once after a
+prompt-tuning attempt. Both renders produced a forced-perspective "looking down the flight deck"
+view rather than a flat orthographic top-down, with the trailing edge cropped flush against the
+canvas bottom. The tuning attempt narrowed the crop and symmetrized the margins but failed to
+produce an orthographic view or eliminate the crop; it also consumed real prompt-token budget,
+pushing the token prompt's p99 to 500/512 and its MAX to 513/512, with 2 of 800 ships' token
+prompts actually exceeding the 512-token limit (truncated). The tuning was reverted. The full
+render record, including both prompts, both before/after token images, pixel measurements, and
+the budget accounting, is in `docs/spaceship-render-notes.md`.
 
-- The portrait looks like the campaign's house style.
-- The token comes back cleanly background-removable, and the multi-hex token's aspect ratio is right
-  for its grid footprint — this is the part most likely to disappoint, since the wide-token framing
-  language has never been tested against the model.
+- The portrait looks like the campaign's house style. ✓
+- The token comes back cleanly background-removable. ✓ The multi-hex token's aspect ratio is correct
+  for its grid footprint (1920×1152 pixels for a 5×3 hex carrier). ✓ The framing is still open:
+  the model produces a dramatic raised view down the flight deck rather than a true orthographic
+  top-down, regardless of explicit anti-perspective language in the prompt. Only the carrier type
+  at the huge size band was tested; whether this is a carrier-specific bias or applies to all huge
+  hulls is unknown.
 - `write_ship_dossier()` output is correct and the manifest entry carries `kind`, `tokenWidth` and
-  `tokenHeight` as integers in grid units.
+  `tokenHeight` as integers. ✓ `gridWidth`/`gridHeight` (in grid units, not pixels) are also correct
+  and must be sent to Foundry instead of `tokenWidth`/`tokenHeight`.
 
-Design §4 claims no new ComfyUI workflow JSON is needed. **That claim is unverified** — check it
-against `workflows/api/*.json`.
+Design §4 claims no new ComfyUI workflow JSON is needed. **That claim is verified** — see the
+render notes' "Files changed" section.
 
 ---
 
