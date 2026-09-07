@@ -98,10 +98,10 @@ def table_keys(tables, name):
     variant added next month (a new pronoun, a new '+' table) is covered
     automatically, with no edit to the tests required.
 
-    Lives here rather than in one test module because two files need it and
-    one of them - test_theme_inert.py - is scheduled for deletion when Phase 4
-    starts tagging bullets. A permanent test importing from a doomed one would
-    go with it.
+    Lives here rather than in one test module because several files need it,
+    and the first of them - test_theme_inert.py - was scheduled for deletion
+    when Phase 4 started tagging bullets. A permanent test importing from a
+    doomed one would have gone with it.
     """
     return [k for k in tables if k == name or k.startswith(name + " (")]
 

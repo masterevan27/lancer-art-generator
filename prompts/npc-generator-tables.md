@@ -78,7 +78,7 @@ templates at the bottom of this file.
   in the file: it never falls back to the whole pool, because falling back
   would hand the scene to the Role it was kept from. An unflagged bullet is
   neutral and reachable by everyone, which is what some 157 of these are —
-  keep it that way unless the scene puts the subject *doing* the job rather
+  keep it that way unless the scene puts the subject _doing_ the job rather
   than merely standing somewhere. The comment above that table has the rest.
 - **Hair colour** bullets carry three segments as well — the colour itself,
   then an optional trailing clause, then optional flags. The first fills the
@@ -181,8 +181,10 @@ templates at the bottom of this file.
   third and last table `notac` reaches, after Weapon and Gear. Soft goods —
   cloth, straw, woven, leather and fur hats, caps, hoods, bandanas and
   headbands — plain eyewear, and the traditional and ceremonial register are
-  all deliberately unflagged: those are what a kimono _should_ reach, and a
-  kabuto above one is the point rather than an oversight. Two boundaries
+  all deliberately unflagged **for `hardtech`**: those are what a kimono
+  _should_ reach, and a kabuto above one is the point rather than an
+  oversight. Many of them do carry `crown`, which is a different question
+  entirely — see that flag below. Two boundaries
   worth knowing before you flag a new bullet: goggles count as eyewear, not
   hardware, and a traditional hat with a mask beneath it is the hat.
 - **Headgear** and **Gear** bullets may also carry `|| helmet`. On a Headgear
@@ -197,27 +199,55 @@ templates at the bottom of this file.
   what the Gear bullet is for. Flag only the bullets where the head is
   actually inside a helmet. A kabuto counts and carries `helmet` without
   `hardtech`, since the clash is one of silhouette rather than register.
+- **Headgear** bullets may also carry `|| crown`, marking something that sits
+  ON TOP of the skull without enclosing it — a wide brim, a tall or ceremonial
+  hat, a cap of any kind, a rig clamped over the crown. It is the softer half
+  of a pair with `helmet`, and the two divide the head into three registers:
+
+  | Flag     | What it says                | What it drops                             |
+  | -------- | --------------------------- | ----------------------------------------- |
+  | `helmet` | the head is inside it       | `updo` Hair **and** carried `helmet` Gear |
+  | `crown`  | it rests on top of the head | `updo` Hair only                          |
+  | neither  | it leaves the crown free    | nothing                                   |
+
+  That middle row is the whole reason this is a separate flag rather than
+  `helmet` on the hats. A sedge hat has no quarrel with a flight helmet
+  carried under one arm, and reusing `helmet` would have confiscated it.
+
+  `crown` is a claim about **volume**, `hardtech` one about **register**, and
+  they are orthogonal: a cybernetic headpiece clamped over the crown is
+  honestly both, and carries both. What must never happen is a woven,
+  lacquered or straw hat picking up `hardtech` — `notac` drops that register,
+  and those hats are precisely what a kimono should reach.
+
+  Flag what a topknot cannot fit under. A brow visor, a headset, an earpiece,
+  an ear implant and goggles pushed up onto the forehead all leave the top of
+  the head free and stay unflagged; so does a hood, which has slack enough to
+  go over gathered hair.
+
 - **Hair** bullets may carry `|| updo`, marking a cut whose mass sits on top
   of the skull — a topknot, a high ponytail, twin space buns, a bun crowned
   with a pin or a flower. Those are dropped whenever the Headgear roll came up
-  `helmet`, so nothing renders a bun growing through a flight helmet. Headgear
+  `helmet` or `crown`, so nothing renders a bun growing through a flight
+  helmet or a straw brim. Headgear
   is what yields on a fresh roll, since Hair is drawn first; the filter runs
-  both ways, so a pinned or `--set-trait` helmet drops the `updo` cuts from the
-  Hair pool instead. Forcing both by hand is honoured rather than refused, the
-  same way two helmets are.
-  It is gated on `helmet` rather than `hardtech` for the reason the flag above
-  gives: a headset, a brow visor or an ear implant leaves the crown free, and a
-  topknot above one is fine. Flag only what stands proud of the skull — hair
-  merely *pinned up off the collar*, a braid crown pinned close to the head, a
+  both ways, so a pinned or `--set-trait` hat or helmet drops the `updo` cuts
+  from the Hair pool instead. Forcing both by hand is honoured rather than
+  refused, the same way two helmets are.
+  It is gated on `helmet` and `crown` rather than on `hardtech` for the reason
+  the flag above gives: a headset, a brow visor or an ear implant leaves the
+  crown free, and a topknot above one is fine. Flag only what stands proud of
+  the skull — hair
+  merely _pinned up off the collar_, a braid crown pinned close to the head, a
   low bun, a bob or anything cropped all lie flat, and those are exactly the
   cuts a helmet goes on over.
 - **Hair** bullets may also carry `|| covered`, marking a cut that names
-  something *worn* as part of the phrase — a wrapped headscarf, a ponytail
+  something _worn_ as part of the phrase — a wrapped headscarf, a ponytail
   pulled through the back of a cap, ponytails held by a headset band. The
   bullet has already put an object on the head, so the Headgear pool is cut to
   the one bullet flagged `bare` and the NPC comes out bare-headed; anything
   else would describe two coverings in the same place.
-  The headgear *clause* then drops out of the prompt entirely, rather than
+  The headgear _clause_ then drops out of the prompt entirely, rather than
   printing the bare bullet's own sentence. "A wrapped headscarf ..." and "She
   is bare-headed." in one prompt contradict each other as flatly as the hat
   did, and a render told both does not get to pick the sensible one. The hair
@@ -226,17 +256,17 @@ templates at the bottom of this file.
   This is a strictly harder filter than `updo`, and gated wider on purpose.
   `updo` drops only `helmet` and hands back sixty other bullets, because a
   bun and a brow visor coexist; `covered` has nothing to hand back, because a
-  headscarf leaves no room for a hairband either. It is still not a *lock* —
+  headscarf leaves no room for a hairband either. It is still not a _lock_ —
   a file with no `bare` bullet gets the whole pool rather than an empty roll.
   Like `updo` the filter runs both ways: a pinned or `--set-trait` Headgear
   that is not `bare` drops the `covered` cuts from the Hair pool instead, and
   forcing both by hand is honoured rather than refused.
-  Flag only a thing genuinely *worn*. Hair ornaments are not: a clip, a
+  Flag only a thing genuinely _worn_. Hair ornaments are not: a clip, a
   ribbon, an ornamental pin, a flower or a mechanical binder is part of the
   hairstyle and leaves the head free for a hat.
 - The single **Headgear** bullet that leaves the head bare carries `|| bare`,
   which is what `covered` filters down to. It is a marker rather than a
-  preference — nothing is dropped *for* it — and it exists for the same
+  preference — nothing is dropped _for_ it — and it exists for the same
   reason `none` does on Weapon: a filter needs to be able to name the empty
   bullet without matching on its prose. Exactly one bullet should carry it.
 - A **Gear** bullet may carry a **role lock**, of which `admin` is so far the
@@ -1421,28 +1451,28 @@ ignored — so notes like this one are safe to leave inline.
 - x2 {Subject} {wear} a padded flight headset, earcups clamped over the ears and a boom mic swung down to the corner of {possessive} mouth, a coiled cable trailing from one side. || hardtech
 - {Subject} {wear} a lightweight comms earpiece with a slender mic arm tracking along the jaw. || hardtech
 - {Subject} {wear} scratched flight goggles pushed up onto {possessive} forehead.
-- {Subject} {wear} a soft crew cap pushed back on {possessive} head.
-- {Subject} {wear} a padded pilot skullcap with the visor unclipped and folded back. || hardtech
+- {Subject} {wear} a soft crew cap pushed back on {possessive} head. || crown
+- {Subject} {wear} a padded pilot skullcap with the visor unclipped and folded back. || hardtech crown
 - {Subject} {wear} a rolled bandana tied across {possessive} brow.
-- {Subject} {wear} a knitted watch cap pulled down to the eyebrows.
+- {Subject} {wear} a knitted watch cap pulled down to the eyebrows. || crown
 - {Subject} {wear} a composite ballistic helmet with its rail-mounted visor hinged up. || hardtech helmet
 - {Subject} {wear} a full flight helmet in scuffed pale grey-white, a tinted visor panel down over the eyes and a small lit accent lens at the temple, a thin tether cable trailing from the back. || hardtech helmet
 - {Subject} {wear} a monocular sensor rig strapped over one eye, its lens faintly lit. || hardtech
 - {Subject} {wear} heavy ear defenders slung around {possessive} neck rather than on {possessive} head. || hardtech
-- {Subject} {wear} a welding visor tipped back on top of {possessive} head. || hardtech
-- {Subject} {wear} a worn ushanka-style fur hat with the flaps down, a faded unit star pinned to the front.
-- {Subject} {wear} a tactical cap with a small circular unit emblem, dark sunglasses beneath it. || hardtech
+- {Subject} {wear} a welding visor tipped back on top of {possessive} head. || hardtech crown
+- {Subject} {wear} a worn ushanka-style fur hat with the flaps down, a faded unit star pinned to the front. || crown
+- {Subject} {wear} a tactical cap with a small circular unit emblem, dark sunglasses beneath it. || hardtech crown
 - {Subject} {wear} a night-vision helmet with the quad tubes flipped up clear of {possessive} eyes. || hardtech helmet
 - {Subject} {wear} a sleek black mechanical headset piece mounted flush against one ear. || hardtech
-- {Subject} {wear} a stiff peaked officer's cap, the brim polished and a small insignia set at the crown.
+- {Subject} {wear} a stiff peaked officer's cap, the brim polished and a small insignia set at the crown. || crown
 - {Subject} {wear} a hooded shroud drawn up over a full-face helmet, its visor tinted dark and a breather mask sealed across the lower face. || hardtech helmet
 - {Subject} {wear} a deep hood drawn up, a pair of goggles clipped across the brow of it.
-- {Subject} {wear} a flat-brimmed ball cap with a small stitched patch at the front.
+- {Subject} {wear} a flat-brimmed ball cap with a small stitched patch at the front. || crown
 - {Subject} {wear} an open-face crash helmet with the visor swung up clear of {possessive} eyes. || hardtech helmet
 - {Subject} {wear} a ballistic helmet with its visor tipped up and a black breather mask sealed over the lower face. || hardtech helmet
-- {Subject} {wear} a russet leather flight cap with ear flaps and a monocular scanner lens fixed down over one eye. || hardtech
-- {Subject} {wear} a wide woven sedge hat, its brim throwing {possessive} face into shadow.
-- {Subject} {wear} a pale cloth wrapped loosely over the lower face beneath a wide straw hat.
+- {Subject} {wear} a russet leather flight cap with ear flaps and a monocular scanner lens fixed down over one eye. || hardtech crown
+- {Subject} {wear} a wide woven sedge hat, its brim throwing {possessive} face into shadow. || crown
+- {Subject} {wear} a pale cloth wrapped loosely over the lower face beneath a wide straw hat. || crown
 - {Subject} {wear} a sleek integrated visor plate curving back over one ear, thin cable jacks seated at the jaw and temple, a faint accent light glowing along its edge. || hardtech
 - {Subject} {wear} a bulky visored rig clamped down over the eyes, a stub antenna and a cluster of cable jacks rising from the crown, a single indicator light glowing beneath the visor's edge. || hardtech
 - {Subject} {wear} a gold-trimmed headset clamped over one ear, a coiled cable trailing from it down past {possessive} collar.
@@ -1463,34 +1493,34 @@ ignored — so notes like this one are safe to leave inline.
 - {Subject} {wear} a chunky over-ear headset with a lit accent ring at each cup, the band nested into {possessive} hair. || hardtech
 - {Subject} {wear} a red-plated visor rig clamped down over the eyes, twin lens apertures lit faintly, a cluster of thin cables trailing back into {possessive} hair. || hardtech
 - {Subject} {wear} a sleek visored headset clamped over the eyes, a hinged jaw guard sealed below it and a cluster of thin cables trailing back into {possessive} hair. || hardtech
-- {Subject} {wear} a segmented white cybernetic headpiece clamped over the crown and one temple, faint cable jacks seated at the jaw. || hardtech
+- {Subject} {wear} a segmented white cybernetic headpiece clamped over the crown and one temple, faint cable jacks seated at the jaw. || hardtech crown
 - {Subject} {wear} a sealed tactical helmet with a smoked visor and an integrated breather mask, a coiled comms cable trailing from the jaw. || hardtech helmet
 - {Subject} {wear} a smooth blue-visored full-face helmet with a hood drawn up over it, a scarf wound loose at the throat. || hardtech helmet
-- {Subject} {wear} a flat wide-brimmed lacquered hat crowned with a bird skull and trailing feathers, the brim throwing {possessive} face into shadow.
-- {Subject} {wear} a bulky mechanical diagnostic rig clamped over the crown of {possessive} head, thick cabling trailing down to jacks at the collar, a status light lit at the side. || hardtech
+- {Subject} {wear} a flat wide-brimmed lacquered hat crowned with a bird skull and trailing feathers, the brim throwing {possessive} face into shadow. || crown
+- {Subject} {wear} a bulky mechanical diagnostic rig clamped over the crown of {possessive} head, thick cabling trailing down to jacks at the collar, a status light lit at the side. || hardtech crown
 - {Subject} {wear} a sleek angular powered helmet with raised sensor fins and a full dark visor down, a single braid of hair falling free beneath it. || hardtech helmet
 - {Subject} {wear} thin rectangular glasses framing sharp eyes.
 - {Subject} {wear} a sleek mechanical half-mask sealed over the nose and mouth, a small lens node mounted at the temple. || hardtech
 - {Subject} {wear} a close-fitted respirator mask across the lower face beneath narrow tactical eyewear. || hardtech
 - {Subject} {wear} a horned kabuto-style helmet with a trailing neck guard, its crest catching the last light. || helmet
-- {Subject} {wear} a wide flat lacquered hat rimmed in gold, a single red tassel hanging from the brim.
+- {Subject} {wear} a wide flat lacquered hat rimmed in gold, a single red tassel hanging from the brim. || crown
 - {Subject} {wear} a horned kabuto helmet with a scowling mempo faceplate, eyes lit with a faint red glow. || helmet
-- {Subject} {wear} a wide woven hat trimmed with small curved horns and hanging tassels, a segmented mechanical mask sealed over the nose and mouth beneath it, a faint accent light glowing at the seam.
-- {Subject} {wear} a wide straw hat trimmed with small hanging bells and a tattered red ribbon at the crown, rain streaming off the brim.
-- {Subject} {wear} a broad ceremonial hat strung with hanging tasseled bells, an antler-like crest rising from the crown.
-<!-- - {Subject} {wear} a broad woven hat bristling with jagged spikes at the crown, its brim battered and weathered. -->
-- {Subject} {wear} a broad dark hat trimmed with hanging chain ornaments and a feather crest, the brim shadowing {possessive} eyes.
-- {Subject} {wear} a wide straw hat over a patterned cloth headband tied at the brow.
+- {Subject} {wear} a wide woven hat trimmed with small curved horns and hanging tassels, a segmented mechanical mask sealed over the nose and mouth beneath it, a faint accent light glowing at the seam. || crown
+- {Subject} {wear} a wide straw hat trimmed with small hanging bells and a tattered red ribbon at the crown, rain streaming off the brim. || crown
+- {Subject} {wear} a broad ceremonial hat strung with hanging tasseled bells, an antler-like crest rising from the crown. || crown
+<!-- - {Subject} {wear} a broad woven hat bristling with jagged spikes at the crown, its brim battered and weathered. || crown -->
+- {Subject} {wear} a broad dark hat trimmed with hanging chain ornaments and a feather crest, the brim shadowing {possessive} eyes. || crown
+- {Subject} {wear} a wide straw hat over a patterned cloth headband tied at the brow. || crown
 - {Subject} {wear} a horned kabuto-style helmet with a riveted neck guard and cheek plates framing {possessive} face. || helmet
-- {Subject} {wear} a gilt-trimmed tricorn hat pinned with a skull-and-crossbones badge and a curling plume.
-- {Subject} {wear} a black tricorn hat trimmed in lace, a small skull-and-crossbones pinned above a red ribbon bow.
+- {Subject} {wear} a gilt-trimmed tricorn hat pinned with a skull-and-crossbones badge and a curling plume. || crown
+- {Subject} {wear} a black tricorn hat trimmed in lace, a small skull-and-crossbones pinned above a red ribbon bow. || crown
 - {Subject} {wear} a red bandana knotted at the brow, ends trailing into windblown hair.
 - {Subject} {wear} a pair of oversized over-ear headphones with a boom mic curling toward {possessive} cheek. || hardtech
-- {Subject} {wear} a matte combat helmet cinched down over a full rebreather mask, hoses looping to a chest-mounted filter. || hardtech
+- {Subject} {wear} a matte combat helmet cinched down over a full rebreather mask, hoses looping to a chest-mounted filter. || hardtech helmet
 - {Subject} {wear} a deep hood drawn low over {possessive} brow, shadowing {possessive} face down to the nose.
 - {Subject} {wear} heavy over-ear headphones with a glowing status ring on each cup. || hardtech
-- {Subject} {wear} a fin-eared tactical helmet with a mirrored visor. || hardtech @cyberpunk
-- {Subject} {wear} a streamlined flight helmet with cable ports ringing the crown, the visor cracked open to show eyes lit faintly beneath. || hardtech @gundam
+- {Subject} {wear} a fin-eared tactical helmet with a mirrored visor. || hardtech helmet @cyberpunk
+- {Subject} {wear} a streamlined flight helmet with cable ports ringing the crown, the visor cracked open to show eyes lit faintly beneath. || hardtech helmet @gundam
 - {Subject} {wear} brass-rimmed welding goggles pushed low over a heavy over-ear headset, a cable trailing to a shoulder pack. || hardtech
 - {Subject} {wear} a chrome respirator mask fitted along {possessive} jaw, a single lens glowing over one eye. || hardtech @cyberpunk
 - {Subject} {wear} a pair of scuffed brass-and-leather over-ear headphones with an exposed pivot joint. || hardtech
@@ -1500,7 +1530,7 @@ ignored — so notes like this one are safe to leave inline.
 - x2 {Subject} {wear} a slim hairband holding the hair back off {possessive} face.
 - {Subject} {wear} a wide fabric band knotted at the back of {possessive} head, hair gathered behind it.
 - {Subject} {wear} a slim glowing accent band swept back through {possessive} hair like a hairband.
-- {Subject} {wear} a wide woven hat, thin red-framed glasses catching the light and a long-stemmed pipe held between {possessive} lips.
+- {Subject} {wear} a wide woven hat, thin red-framed glasses catching the light and a long-stemmed pipe held between {possessive} lips. || crown
 - {Subject} {wear} a wide-brimmed felt hat canted low over one eye, a long feather trailing from the band.
 
 ## Demeanor
@@ -1929,20 +1959,40 @@ ignored — so notes like this one are safe to leave inline.
   Flags here: 'weapon' (an actual weapon), 'simple' (small and pocketable),
   'sidearm' (includes a holstered or openly worn pistol - the guaranteed-armed
   baseline for a mil Role), 'gun' (an actual firearm held in hand), 'hands'
-  (occupies at least one hand), 'mil' (military-issue), 'none' (the empty
-  bullet below - load-bearing, not inert: the Stance filter in roll_npc()
-  reads it directly to keep an unarmed NPC off an armed pose).
+  (occupies at least one hand), 'mil' (military-issue), 'blade' (an edged
+  weapon - see below), 'none' (the empty bullet below - load-bearing, not
+  inert: the Stance filter in roll_npc() reads it directly to keep an unarmed
+  NPC off an armed pose).
+
+  'blade' is the one flag here read through WEAPON_ROLES in generate-npc.py,
+  which names the flag a Role's armament MUST carry. It reads the opposite way
+  round from ROLE_LOCKS on Gear:
+
+    ROLE_LOCKS    this bullet is ONLY for these Roles   (keeps others out)
+    WEAPON_ROLES  these Roles get ONLY this bullet      (keeps them in)
+
+  A lock protects an emblem from the wrong job; this protects a job from the
+  wrong emblem. It does NOT reserve the blades - everyone else still rolls
+  them freely, and a pirate with a cutlass is still a pirate with a cutlass.
+
+  It exists because "a close-quarters blade specialist" kept coming back
+  holding a service pistol and no blade. The Role is 'mil', the 'mil' tier
+  restricts the pool to 'sidearm' bullets, and no blade is a 'sidearm' - the
+  two filters intersected to nothing and fell back to the whole table. So the
+  WEAPON_ROLES restriction OUTRANKS the 'sidearm' one rather than composing
+  with it. Adding a Role here means checking that some bullet actually carries
+  its flag; test_weapon_role.py fails on a dangling name in either direction.
 -->
 
 - x30 || none
 - a sidearm holstered high on a chest rig || mil weapon simple sidearm
 - a bullpup service carbine slung muzzle-down across {possessive} chest on its sling || mil weapon
 - a bullpup service carbine held at a low ready in both hands, rail-mounted optic on top || hands gun mil weapon
-- a katana with a colored glowing accent along its edge slung over {possessive} shoulder || mil weapon
-- a katana with a colored glowing accent along its edge held in {possessive} hands || hands mil weapon
+- a katana with a colored glowing accent along its edge slung over {possessive} shoulder || mil weapon blade
+- a katana with a colored glowing accent along its edge held in {possessive} hands || hands mil weapon blade
 - a service pistol worn openly at the thigh || mil weapon simple sidearm
 - a compact sidearm holstered at the hip and a utility belt of pouches at the waist || mil weapon simple sidearm
-- a sheathed katana crossed against {possessive} back alongside a second, shorter blade || mil weapon
+- a sheathed katana crossed against {possessive} back alongside a second, shorter blade || mil weapon blade
 - a suppressed precision rifle with a rail-mounted optic, slung muzzle-up over one shoulder, one hand resting on the sling at {possessive} chest || hands gun mil weapon
 - an AK-pattern assault rifle with a distinctive curved magazine held across {possessive} body || hands gun mil weapon
 - a suppressed short-barrelled carbine carried muzzle-down in one hand || hands gun mil weapon
@@ -1958,39 +2008,39 @@ ignored — so notes like this one are safe to leave inline.
 - x4 a sidearm holstered at the hip and a service rifle slung muzzle-down across {possessive} chest || mil weapon sidearm
 - x3 a service pistol worn openly at the thigh and a bullpup carbine slung across {possessive} back || mil weapon sidearm
 - x3 a holstered sidearm and a suppressed carbine slung muzzle-down over one shoulder || mil weapon sidearm
-- a plain combat knife sheathed at the hip || weapon simple
-- a folding push-dagger tucked into a boot sheath || weapon simple
+- a plain combat knife sheathed at the hip || weapon simple blade
+- a folding push-dagger tucked into a boot sheath || weapon simple blade
 - a compact hold-out pistol tucked into a shoulder rig, mostly hidden under a jacket || weapon simple
-- a slim single-edged blade held low and reversed at {possessive} side || hands mil weapon
+- a slim single-edged blade held low and reversed at {possessive} side || hands mil weapon blade
 - a massive twin-barreled support cannon carried braced against {possessive} hip || hands gun mil weapon
 - a heavy shoulder-mounted weapon pod worn like a backpack, twin barrels rising above {possessive} head, a sidearm holstered at {possessive} hip || mil weapon sidearm
 - a compact sidearm gripped low and loose in one hand || hands gun mil weapon simple
 - a bullpup service rifle with an under-barrel attachment held at a low ready in both hands || hands gun mil weapon
 - a suppressed marksman rifle with an extended barrel held low in one hand || hands gun mil weapon
-- a katana half-drawn from its sheath at the hip, {possessive} free hand steadying the scabbard || hands mil weapon
-- twin sheathed swords worn crosswise at the hip, tasseled cords hanging from the hilts || mil weapon
-- a sheathed katana carried loose in one hand, hanging point-down at {possessive} side || hands mil weapon
-- a sheathed katana worn at the hip, {possessive} hand resting loose on the hilt || weapon
-- a katana gripped and raised overhead in both hands mid-swing || hands weapon
-- a katana held drawn low in one hand, its point trailing near the ground || hands weapon
-- a katana held drawn across the body, a bundle of additional sheathed blades and a small demonic mask hanging at {possessive} hip || hands weapon
-- a bundle of sheathed blades bound together with cord at {possessive} hip || weapon
-- twin katanas, one gripped loose in each hand and lowered at {possessive} sides || hands weapon
-- a sheathed katana at {possessive} hip, one hand gripping the hilt, poised to draw || hands weapon
-- a pair of blades hovering motionless in the air to either side, faint markings etched along them || weapon
-- an oversized two-handed blade held low in one hand, its point trailing near the ground, a second shorter sword sheathed at {possessive} hip || hands weapon
-- a sheathed katana crossed against {possessive} back alongside a second blade drawn and gripped in {possessive} hand, its edge glowing faintly || hands mil weapon
-- a katana held upright close to {possessive} shoulder, its blade bared and ready || hands mil weapon
-- a sheathed katana rested up over one shoulder, gripped loosely by the scabbard in one hand || hands mil weapon
-- twin sheathed swords worn crossed at {possessive} hip, hilts angled outward || mil weapon
-- a katana held up close to {possessive} face, its blade angled back and ready in one hand || hands mil weapon
+- a katana half-drawn from its sheath at the hip, {possessive} free hand steadying the scabbard || hands mil weapon blade
+- twin sheathed swords worn crosswise at the hip, tasseled cords hanging from the hilts || mil weapon blade
+- a sheathed katana carried loose in one hand, hanging point-down at {possessive} side || hands mil weapon blade
+- a sheathed katana worn at the hip, {possessive} hand resting loose on the hilt || weapon blade
+- a katana gripped and raised overhead in both hands mid-swing || hands weapon blade
+- a katana held drawn low in one hand, its point trailing near the ground || hands weapon blade
+- a katana held drawn across the body, a bundle of additional sheathed blades and a small demonic mask hanging at {possessive} hip || hands weapon blade
+- a bundle of sheathed blades bound together with cord at {possessive} hip || weapon blade
+- twin katanas, one gripped loose in each hand and lowered at {possessive} sides || hands weapon blade
+- a sheathed katana at {possessive} hip, one hand gripping the hilt, poised to draw || hands weapon blade
+- a pair of blades hovering motionless in the air to either side, faint markings etched along them || weapon blade
+- an oversized two-handed blade held low in one hand, its point trailing near the ground, a second shorter sword sheathed at {possessive} hip || hands weapon blade
+- a sheathed katana crossed against {possessive} back alongside a second blade drawn and gripped in {possessive} hand, its edge glowing faintly || hands mil weapon blade
+- a katana held upright close to {possessive} shoulder, its blade bared and ready || hands mil weapon blade
+- a sheathed katana rested up over one shoulder, gripped loosely by the scabbard in one hand || hands mil weapon blade
+- twin sheathed swords worn crossed at {possessive} hip, hilts angled outward || mil weapon blade
+- a katana held up close to {possessive} face, its blade angled back and ready in one hand || hands mil weapon blade
 - a silver revolver raised and cocked, hammer drawn back || hands gun weapon simple
 - a slender rapier raised en garde, tip angled skyward || hands weapon
-- a long slim blade held loose at {possessive} side, its sheathed twin crossed low across {possessive} hip || hands weapon @neosamurai
+- a long slim blade held loose at {possessive} side, its sheathed twin crossed low across {possessive} hip || hands weapon blade @neosamurai
 - a slender rapier drawn point-first, its grip wrapped in worn leather || hands weapon
 - an antique-pattern pistol raised and cocked in one hand || hands gun weapon simple
 - an ornate curved saber, jeweled pommel bright against a worn leather scabbard at the hip || weapon
-- a curved blade raised overhead, wreathed in a faint inner glow || hands weapon @grimdark
+- a curved blade raised overhead, wreathed in a faint inner glow || hands weapon blade @grimdark
 - a suppressed carbine gripped low and ready in both hands, a weapon light and optic mounted along the top rail || hands gun mil weapon
 - a holstered pistol strapped high on {possessive} thigh || weapon simple sidearm
 - a bulky futuristic bullpup rifle gripped two-handed, vents glowing along the stock || hands gun mil weapon @cyberpunk
@@ -1999,7 +2049,7 @@ ignored — so notes like this one are safe to leave inline.
 - a second pistol worn holstered at the small of {possessive} back, grip peeking above the belt line || weapon sidearm
 - a compact pistol held loose at {possessive} side, muzzle dipped toward the floor || hands gun weapon simple
 - a heavy angular rifle, its rear coil glowing, gripped low at {possessive} hip with the muzzle dipped toward the deck || hands gun weapon @cyberpunk
-- a slim, wire-wrapped katana with a faint glowing edge along the blade || hands weapon @cyberpunk
+- a slim, wire-wrapped katana with a faint glowing edge along the blade || hands weapon blade @cyberpunk
 - a boxy bullpup carbine with a top-feeding curved magazine, held level in both hands || hands gun mil weapon
 - a long-barrelled heavy revolver holstered under one arm in a worn leather rig || weapon simple sidearm
 - a compact machine pistol with its wire stock folded, clipped to a chest sling || mil weapon simple sidearm

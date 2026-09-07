@@ -91,6 +91,28 @@ that the `npc-trait-import` skill documents every flag the tables actually use.
 That last one exists because the skill's own handoff checklist refuses a staged
 bullet whose flag is undocumented, which had quietly drifted five flags behind.
 
+**Changing the tables means re-checking that skill, and two test files enforce
+it rather than leaving it to habit.** The skill is documentation the generator
+silently depends on: a staging run copies its shape lines to write bullets, and
+`generate-npc.py` ignores an unrecognized flag rather than reporting one, so a
+skill that has fallen behind produces bullets that fail quietly in the render.
+
+- `test/test_import_skill_flags.py` — every flag the tables use appears in all
+  **three** places the skill names flags: its §0 flag table, its §4 per-table
+  shape lines, and its §3 routing rows. Add a flag and all three must follow.
+  A flag a run must never author (`Weapon/none`, `Headgear/bare` — an image
+  cannot show an absence) is exempted by name in `NEVER_STAGED`, with a reason.
+- `test/test_import_skill_shape.py` — the two gaps that one leaves. Every table
+  the generator rolls either has a shape line or is named in `NOT_STAGED` with
+  a reason, so a **new table** cannot be added without a decision about whether
+  the skill stages it; and each shape line's `||` **segment count** matches
+  what the generator actually reads, so a bullet staged from it cannot put its
+  flags where `flags_for()` reads prose. It also pins the three-segment table
+  list against `flags_for()` itself, so a fourth added there fails here.
+
+Between them: add a flag, add a table, or change a table's shape, and the suite
+tells you exactly which part of the skill to update.
+
 Theme visibility is measured rather than asserted, because the number is a
 property of the content and the content is authored over time:
 

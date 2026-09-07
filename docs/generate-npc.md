@@ -260,7 +260,7 @@ Two entries, the non-affiliations `Unaligned` and `Unregistered`, have
 nothing to show and leave the visual empty on purpose; `build_prompts` drops
 the clause entirely rather than leave a doubled comma. `Faction` also carries
 the `civ`/`mil` split `Outfit` does, filtered by Role the same way, and a
-`palette` flag: ten factions assert pigment of their own (dye in cloth,
+`palette` flag: eleven factions assert pigment of their own (dye in cloth,
 distinct from `Glow colour`'s light), which softens the closing palette
 line's claim from "the only saturated color" to "the only *other* saturated
 color" so the prompt stops contradicting a uniform it just described.
