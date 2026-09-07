@@ -84,3 +84,34 @@ class TestTokenMetadata(unittest.TestCase):
                     continue
                 with self.subTest(band=band, key=key):
                     self.assertIsInstance(value, int)
+
+
+class TestTokenCanvasBelowTheUnitCell(unittest.TestCase):
+    """--max-token-px carries no enforced minimum, and a value below one
+    64px-per-hex unit cell (4096px for 'small' up to 61440px for 'huge') is a
+    real, reachable call - a fix-round regression this pins directly: the
+    m-based clamp above once forced m=1 regardless of the budget, so
+    --max-token-px 20000 on a huge hull came back 61440px, three times over
+    what was asked for. Below the unit, aspect gives way instead of the
+    budget; below the absolute 64x64 floor there is no legal answer left at
+    all, and 64x64 - never a smaller or negative dimension - is what wins.
+    """
+
+    def test_a_budget_below_the_unit_cell_is_pinned_per_band(self):
+        for band in sp.SIZE_ORDER:
+            gw, gh = ship.TOKEN_GRID[band]
+            unit = 64 * 64 * gw * gh
+            max_px = unit - 1
+            w, h = ship.token_size(band, max_px=max_px)
+            with self.subTest(band=band, max_px=max_px):
+                self.assertEqual((w % 64, h % 64), (0, 0))
+                if max_px >= 64 * 64:
+                    self.assertLessEqual(
+                        w * h, max_px,
+                        "a budget between the 64x64 floor and this band's "
+                        "own unit cell must still be honoured")
+                else:
+                    self.assertEqual(
+                        (w, h), (64, 64),
+                        "below the absolute floor, 64x64 is the only legal "
+                        "answer - never a smaller or negative dimension")

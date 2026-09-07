@@ -1218,17 +1218,33 @@ def token_size(band, max_px=MAX_TOKEN_PX):
     fact: since TOKEN_GRID's width and height are small integers, w=64*gw*m
     and h=64*gh*m are BOTH exact multiples of 64 for every integer m, and
     their ratio is gw/gh exactly, whatever m is. So the clamp finds the
-    largest m whose (64*gw*m, 64*gh*m) canvas still fits the budget, floored
-    at 1 - which is comfortably at or above the 64px floor for every band,
-    since gw and gh are never less than 1.
+    largest m whose (64*gw*m, 64*gh*m) canvas still fits the budget.
+
+    That `m` is floored at 1 rather than 0, because m=0 is a 0x0 canvas - the
+    same ComfyUI failure the 64px floor exists to prevent - and the smallest
+    real canvas for a band is one unit cell, 64*gw x 64*gh. Below that unit
+    (4096px for 'small' up to 61440px for 'huge'), no integer m can fit the
+    budget at all, and --max-token-px carries no enforced minimum, so a user
+    passing e.g. --max-token-px 20000 on a huge hull is a real, reachable
+    call: forcing m=1 there would return a 61440px canvas against a 20000px
+    ask, breaking the very promise this function exists to keep. Below the
+    unit, aspect gives way instead of the budget - the pre-existing behaviour
+    this function had before the m-based rewrite above, kept as the fallback
+    for exactly the range it was always adequate for: a per-dimension floor
+    to 64, which can drift the ratio but never exceeds max_px by more than
+    the 64px floor itself can force (see the docstring's opening paragraph).
     """
     gw, gh = TOKEN_GRID[band]
     px = TOKEN_PX_PER_HEX[band]
     w, h = gw * px, gh * px
     if w * h > max_px:
         unit = 64 * 64 * gw * gh
-        m = max(1, int((max_px / unit) ** 0.5))
-        w, h = 64 * gw * m, 64 * gh * m
+        if max_px >= unit:
+            m = int((max_px / unit) ** 0.5)
+            w, h = 64 * gw * m, 64 * gh * m
+        else:
+            scale = (max_px / (w * h)) ** 0.5
+            w, h = (max(64, int(v * scale) // 64 * 64) for v in (w, h))
     return w, h
 
 

@@ -108,15 +108,23 @@ class TestTheEquipmentPolicyThroughTheRoller(unittest.TestCase):
 
 class TestTheReverseGates(unittest.TestCase):
     def test_a_huge_hull_is_never_a_patrol_boat(self):
+        seen = 0
         for rolled in roll_many(300):
             if sp.size_of(rolled["_raw"]["Size"]) == "huge":
+                seen += 1
                 self.assertNotEqual(ship.ship_type_of(rolled), "patrol")
+        self.assertGreater(seen, 0, "no huge hull was ever rolled - the "
+                                    "assertion is vacuous")
 
     def test_a_fitted_catapult_means_carrier_or_battleship(self):
+        seen = 0
         for rolled in roll_many(300):
             if rolled["Launch catapult"] != sp.NO_EQUIPMENT:
+                seen += 1
                 self.assertIn(ship.ship_type_of(rolled),
                               ("carrier", "battleship"))
+        self.assertGreater(seen, 0, "no fitted launch catapult was ever "
+                                    "rolled - the assertion is vacuous")
 
 
 class TestTokenSizeMatchesTheRolledBand(unittest.TestCase):
