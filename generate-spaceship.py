@@ -135,9 +135,18 @@ import ship_policy as sp        # noqa: E402  - after the by-path loads above
 
 # The borrowed surface, bound to module-level aliases so every use site is one
 # grep away and an NPC-side rename fails in test/test_shared_surface.py rather
-# than at render time. Design §1 pins the list at nineteen names; two more are
-# bound here and both are named in the tables file's own "flags that still
-# need a reader" table as obligations on this script:
+# than at render time. That "rather than at render time" claim holds for most
+# of the names below - they are read elsewhere in this file, and a rename
+# would otherwise surface as a behaviour change deep into a render rather than
+# up front in a test. It does NOT hold for all of them: THEME_SHARE,
+# flags_for, themes_of, glow_hue_families and CHARS_PER_TOKEN are bound here
+# but never actually read anywhere in this file today - there is no render
+# for a rename to break, so for these five the pin is a forward-looking churn
+# guard (documented reliance, and a test failure the moment one IS used
+# without updating this list) rather than a live dependency. Design §1 pins
+# the list at nineteen names; two more are bound here and both are named in
+# the tables file's own "flags that still need a reader" table as obligations
+# on this script:
 #
 #   filter_by_mil       '## Ship type' carries civ/mil and '## Faction',
 #                       '## Detail' and '## Markings' are filtered on it.
@@ -1089,7 +1098,17 @@ def build_ship_prompts(ship):
         "plan": PLAN_FRAMING[band],
     })
 
-    weather = weather_sentence(ship)
+    # PORTRAIT_TEMPLATE joins "{backdrop} {weather_line}", and every
+    # '## Backdrop' scene segment ends in a full stop, so a weather bullet
+    # always starts a new sentence here - sentence_case() belongs at this
+    # join for the same reason it is applied to faction_line/bridge_line
+    # above. It is a no-op today only by table convention: every 'clear'-
+    # flagged '## Weather' bullet (which is what makes weather_sentence()
+    # return '' anyway) is already lower-case, and every non-'clear' bullet
+    # in the live tables happens to already start with a capital. Nothing
+    # enforced that coupling before this line, and it costs no prompt tokens
+    # - it only changes a letter's case.
+    weather = sentence_case(weather_sentence(ship))
     fields["weather_line"] = weather + " " if weather else ""
 
     # In both templates {faction_line} sits directly after {detail}'s full
@@ -1881,10 +1900,12 @@ def parse_args(argv=None):
 
     out = p.add_argument_group("output")
     out.add_argument("--out", type=Path, default=None,
-                     help="root to write ship folders into (default: a fresh runN "
+                     help="this run's own output folder (default: a fresh runN "
                           "folder under %s, so a batch can be reviewed before any "
                           "of it is moved into Foundry by hand; passed explicitly, "
-                          "the path is used as-is with no runN folder inserted)"
+                          "the path is used as-is with no runN folder inserted - "
+                          "see --out-root to change where that fresh runN folder "
+                          "is numbered under instead)"
                           % DEFAULT_OUTPUT_ROOT)
     out.add_argument("--out-root", type=Path, default=None, metavar="DIR",
                      help="tree to number run folders under; --out names one "
@@ -2876,10 +2897,8 @@ def main(argv=None):
         # A hull code is a serial rather than a table roll, so it comes from a
         # stream of its own for the reason resolve_forced_bullets() gives about
         # its own: a code drawn off the ship's rng would make every trait after
-        # it move if the code's shape ever changed. Taken off the ship dict
-        # first, so that a roller half which decides to roll one itself wins
-        # over this one rather than silently disagreeing with it.
-        callsign = ship.get("callsign") or hull_code(random.Random("%d/hull" % seed))
+        # it move if the code's shape ever changed.
+        callsign = hull_code(random.Random("%d/hull" % seed))
         rolled.append((seed, ship, callsign, build_ship_prompts(ship)))
 
     out("%s: %d tables, %d ship(s) rolled from base seed %d"

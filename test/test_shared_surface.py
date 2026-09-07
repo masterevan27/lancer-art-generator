@@ -3,7 +3,17 @@
 The ship generator changes zero lines of generate-npc.py and generate-art.py
 and loads both by path instead. That is only safe while somebody can see what
 it depends on, so this file is the list: an NPC-side rename fails here, at test
-time, rather than three hundred lines into a render.
+time, rather than three hundred lines into a render - for most of the names
+below, which generate-spaceship.py actually reads. A handful are pinned but
+never read anywhere in generate-spaceship.py today (NPC_SURFACE's
+THEME_SHARE, flags_for, themes_of, glow_hue_families, CHARS_PER_TOKEN;
+ART_SURFACE's Comfy, Entry, WORKFLOW_DIR), so "rather than at render time" is
+not literally true of those - there is no render for a rename to break yet.
+They stay pinned anyway: Comfy and Entry are the return-type contracts of
+find_server()/entry_for() even though nothing names the type directly, and
+the rest are a forward-looking churn guard - documented reliance that turns
+into a real test failure the day one of them IS used without this list being
+updated, rather than a silent gap.
 
 It is also the input to the deferred lancerlib extraction (design 1, phase 2) -
 the empirical surface rather than the guessed one.
