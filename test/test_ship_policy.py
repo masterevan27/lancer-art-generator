@@ -39,12 +39,12 @@ about what the SIZE and MIL FLAGS do, so the fixture has to carry a bullet at
 every band of every table, and civilian and military hardware at each, or it
 would prove nothing about the filters it is testing.
 
-The live-tables class skips itself until prompts/spaceship-generator-tables.md
-exists. Delete that skip the day it lands - a skipping guard is a guard that is
-not guarding, and the staleness modes it covers (a type slug reworded out from
-under SHIP_TYPES, a size band the table and the matrix disagree about, a
-policy pointing at a pool the file cannot fill) are exactly the ones that go
-silent otherwise.
+The live-tables class used to skip itself until prompts/spaceship-generator-
+tables.md existed. It has existed since commit b6552d2, so that guard is gone
+- a skipping guard is a guard that is not guarding, and the staleness modes it
+covers (a type slug reworded out from under SHIP_TYPES, a size band the table
+and the matrix disagree about, a policy pointing at a pool the file cannot
+fill) are exactly the ones that go silent otherwise.
 """
 import contextlib
 import io
@@ -907,10 +907,6 @@ class TestTheLiveTables(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        if not LIVE_TABLES.exists():
-            raise unittest.SkipTest(
-                "%s does not exist yet - delete this skip when it lands"
-                % LIVE_TABLES.name)
         from test.helpers import load_generator
         cls.tables = load_generator().parse_tables(LIVE_TABLES)
 

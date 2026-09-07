@@ -1033,11 +1033,18 @@ def weather_sentence(ship):
     tuple, and print "hard vacuum, nothing at all between the hull and the
     stars" into a portrait of a hull on a rain-swept hardstand - which is
     exactly what it did before this line said _raw.
+
+    The TEXT still has to come from ship["Weather"], not from this same
+    split - _raw is read for the flag alone. roll_ship()'s '{}' pass runs
+    after _raw is recorded, so a bullet carrying a ship placeholder (none do
+    in the live tables today, which is why this went unnoticed) would ship
+    its brace text straight into the prompt if the raw bullet's own text were
+    returned here instead of the substituted trait.
     """
     if "weather" not in split_backdrop(ship["Backdrop"])[2]:
         return ""
-    text, flags = split_flags(ship["_raw"]["Weather"])
-    return "" if "clear" in flags else text
+    flags = split_flags(ship["_raw"]["Weather"])[1]
+    return "" if "clear" in flags else ship["Weather"]
 
 
 def faction_line(ship):
@@ -1201,13 +1208,27 @@ def token_size(band, max_px=MAX_TOKEN_PX):
     truncating one: the latent needs the multiple, and an off-aspect token is
     the failure the aspect match exists to prevent. Floored at 64 because a
     dimension of 0 is not a smaller image, it is a ComfyUI validation error.
+
+    Scaling both raw dimensions by the same factor and THEN independently
+    flooring each to its own nearest 64 does not actually keep that promise:
+    two independent roundings to a 64px grid can drift the ratio by several
+    percent, and for the 3:2 'large' band it did - 1728x1152 clamped to a
+    million pixels came back 1216x768, aspect 1.583 against a target of 1.5.
+    The fix treats (gw, gh) as the unit instead of trying to hit it after the
+    fact: since TOKEN_GRID's width and height are small integers, w=64*gw*m
+    and h=64*gh*m are BOTH exact multiples of 64 for every integer m, and
+    their ratio is gw/gh exactly, whatever m is. So the clamp finds the
+    largest m whose (64*gw*m, 64*gh*m) canvas still fits the budget, floored
+    at 1 - which is comfortably at or above the 64px floor for every band,
+    since gw and gh are never less than 1.
     """
     gw, gh = TOKEN_GRID[band]
     px = TOKEN_PX_PER_HEX[band]
     w, h = gw * px, gh * px
     if w * h > max_px:
-        scale = (max_px / (w * h)) ** 0.5
-        w, h = (max(64, int(v * scale) // 64 * 64) for v in (w, h))
+        unit = 64 * 64 * gw * gh
+        m = max(1, int((max_px / unit) ** 0.5))
+        w, h = 64 * gw * m, 64 * gh * m
     return w, h
 
 
