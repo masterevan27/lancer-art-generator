@@ -77,7 +77,7 @@ templates at the bottom of this file.
   exclusion, like `## Gear`'s `admin` lock and unlike every preference filter
   in the file: it never falls back to the whole pool, because falling back
   would hand the scene to the Role it was kept from. An unflagged bullet is
-  neutral and reachable by everyone, which is what some 155 of these are —
+  neutral and reachable by everyone, which is what some 157 of these are —
   keep it that way unless the scene puts the subject *doing* the job rather
   than merely standing somewhere. The comment above that table has the rest.
 - **Hair colour** bullets carry three segments as well — the colour itself,
@@ -2308,7 +2308,7 @@ ignored — so notes like this one are safe to leave inline.
   of a mech hangar is fine for a bar owner, and gets no flag. A scene that
   puts the subject mid-action is a claim about the person: flying the machine,
   welding its plating, annotating a clipboard on an inspection gantry, running
-  a triage tent. Some 155 of these bullets are ungated and should stay that
+  a triage tent. Some 157 of these bullets are ungated and should stay that
   way. Reach for a gate only where the sentence would be FALSE about a wrong
   Role, not merely unusual - over-gating this table is how you end up with
   three occupations that can only ever roll six scenes between them.
@@ -2322,8 +2322,13 @@ ignored — so notes like this one are safe to leave inline.
   Entries that led with the environment rendered the subject standing on a deck
   no matter how many "weightless" qualifiers were bolted on.
 
-  Thirty-one of these are zero-gravity, against 353 weighted entries in all, so
-  about one portrait in eleven comes up weightless. That figure is far below
+  Thirty-three of these are zero-gravity, against 353 weighted entries in all,
+  so about one portrait in eleven comes up weightless. Two readers counting
+  this by hand got 31 and 36, so it is worth saying where the line is: the
+  thirty-three are the scenes where the SUBJECT is weightless, which includes
+  the seven sealed-EVA vacuum ones and the one half-body bullet whose scene is
+  a zero-gravity cargo lock, and excludes a scene that merely mentions a
+  floating city. That figure is far below
   the "about a quarter" this note used to claim: the count was written when the
   table was a fraction of its present size and the standing entries carried an
   x3 weight, and the table outgrew it rather than the weighting changing. Add a
@@ -2629,9 +2634,9 @@ ignored — so notes like this one are safe to leave inline.
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} pushing off toward the viewer through a debris field in a sealed EVA pressure suit and helmet, visor down, one gauntlet thrust out at the camera and {possessive} tether whipping loose behind {object}, {possessive} body tilted no more than about 30 to 40 degrees off vertical - shattered panel fragments turn slowly past {object} against the starfield. || vacuum
 - A character portrait || {Subject} {is_are} standing magnet-soled on the outer hull of a colony cylinder in a sealed EVA pressure suit and helmet, visor down, one gauntlet raised against the glare and a survey slate clipped at {possessive} thigh - the cylinder's vast painted flank curves away behind {object} toward a distant mirror panel burning white. || vacuum
 - A character portrait || {Subject} {is_are} curled loose in a bunk niche's sleep sack with one arm floated free of the netting and {possessive} hair fanned around {possessive} face, {possessive} body turned a mild 20 to 30 degrees off vertical - stowed kit and a taped-up photograph line the niche wall behind {object}.
-- A dynamic character portrait || {Subject} {is_are} twisting weightless to catch a thrown wrench, {possessive} body rotating a mild 20 to 30 degrees off vertical with one hand snapping shut on it and the other flung back as counterweight - a workshop's tool boards and a drift of loose swarf hang motionless behind {object}.
+- A dynamic character portrait || {Subject} {is_are} twisting weightless to catch a thrown wrench, {possessive} body rotating a mild 20 to 30 degrees off vertical with one hand snapping shut on it and the other flung back as counterweight - a workshop's tool boards and a drift of loose swarf hang motionless behind {object}. || nogear
 - A close, low-angle character portrait || {Subject} {is_are} hanging inverted with {possessive} boots hooked through an overhead rail and {possessive} head lowest in frame, both hands working at an opened panel above {possessive} face and {possessive} hair falling the wrong way - conduit runs recede past {object} in dim standby light.
-- A character portrait || {Subject} {is_are} floating with {possessive} legs drawn up and {possessive} palms cupped around a wobbling sphere of water held in the air before {possessive} face, {possessive} body tilted no more than about 30 to 40 degrees off vertical - a survey bay's racked sample cases and a drifting pen hang behind {object}.
+- A character portrait || {Subject} {is_are} floating with {possessive} legs drawn up and {possessive} palms cupped around a wobbling sphere of water held in the air before {possessive} face, {possessive} body tilted no more than about 30 to 40 degrees off vertical - a survey bay's racked sample cases and a drifting pen hang behind {object}. || nogear
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} diving toward the viewer through the open ribs of a colony under construction in freefall, {possessive} body stretched into strong foreshortening with both arms swept back along {possessive} sides and {possessive} legs trailing, girders and taped bundles of cable streaking past to either side. Dramatic foreshortened composition.
 - A character portrait || {Subject} {is_are} turning slowly weightless inside the gutted interior of a derelict, {possessive} body tilted no more than about 30 to 40 degrees off vertical and one hand fending off a drifting sheet of torn panelling - frozen condensation glitters in the air around {object} wherever {possessive} lamp beam catches it.
 - A dynamic, gently canted-angle character portrait || {Subject} {is_are} pushing off hard from a hatch coaming with both feet, {possessive} body already tilted no more than about 30 to 40 degrees off vertical and {possessive} arms folding tight to {possessive} chest, a document wallet tumbling free of {possessive} grip behind {object} - numbered lockers fall away past {possessive} shoulder.
@@ -2650,7 +2655,7 @@ ignored — so notes like this one are safe to leave inline.
 - A character portrait || {Subject} {is_are} bent close over a paper plotting chart under a hooded lamp, drawing a bearing line with a parallel rule and a handset trapped between {possessive} shoulder and ear - the rest of the plot room falls away into red-lit gloom behind {object}. || nogear deskwork
 - A character portrait || {Subject} {is_are} wedged behind a desk buried under stacked paper with a handset trapped at {possessive} ear, stamping a form without looking down at it - mismatched desks, a dying pot plant and a wall of pinned duty notices crowd the office behind {object}. || nogear deskwork
 - A character portrait || {Subject} {is_are} standing at a wall-sized district map with a pin held between finger and thumb, threads already strung taut between a dozen markers across it - the ops room falls away behind {object}, one lamp burning over a table of spread photographs. || nogear deskwork
-- A character portrait || {Subject} {is_are} seated at a dispatch console with one hand flat on a transmit key and {possessive} eyes up on the status board, unit markers glowing in ranks above {object} - another operator's back blurs across the foreground and the room's handsets hang dead on their hooks. || deskwork
+- A character portrait || {Subject} {is_are} seated at a dispatch console with one hand flat on a transmit key and {possessive} eyes up on the status board, unit markers glowing in ranks above {object} - another operator's back blurs across the foreground and the room's handsets hang dead on their hooks. || nogear deskwork
 - A character portrait || {Subject} {is_are} leaning in over a seated radio operator's shoulder with one hand braced on the equipment rack, a headset held to one ear and the other ear open to the room - banks of receivers glow green down the bulkhead behind them. || nogear deskwork
 - A character portrait || {Subject} {is_are} sitting on the corner of a desk in a dark office reading down a long printout roll that spills from {possessive} hands to the floor, the only light a swan-neck lamp - rows of unmanned desks and dead monitors recede behind {object}. || nogear deskwork
 - A character portrait || {Subject} {is_are} writing on the far side of a glass status wall with a marker, the lettering running backwards toward the viewer and {possessive} face lit through it - beyond the glass a watch floor of glowing stations stretches away into the dark. || nogear deskwork

@@ -260,7 +260,7 @@ Two entries, the non-affiliations `Unaligned` and `Unregistered`, have
 nothing to show and leave the visual empty on purpose; `build_prompts` drops
 the clause entirely rather than leave a doubled comma. `Faction` also carries
 the `civ`/`mil` split `Outfit` does, filtered by Role the same way, and a
-`palette` flag: five factions assert pigment of their own (dye in cloth,
+`palette` flag: ten factions assert pigment of their own (dye in cloth,
 distinct from `Glow colour`'s light), which softens the closing palette
 line's claim from "the only saturated color" to "the only *other* saturated
 color" so the prompt stops contradicting a uniform it just described.
@@ -363,7 +363,7 @@ are still excluded, and so now is plain white.
 **The colour has to agree with the scene's own.** Where a scene commits to a
 hue, `filter_by_hue()` narrows the `Glow colour` pool to shades in the same
 family, so a wall of schematics *lit crimson* no longer stands behind a subject
-washed in teal-green. Thirty-eight of the live scenes commit; the rest — a bank
+washed in teal-green. Thirty-seven of the live scenes commit; the rest — a bank
 of readouts, an ember, an unqualified neon sign — cast light without saying what
 colour it is, and leave the shade free. The families are `red`, `amber`,
 `green`, `blue` and `violet`, matched on the shade's own words, which is why
@@ -374,11 +374,29 @@ a prop, and five flags say which: `ground`, `wall`, `screens`, `signage` and
 `air`. Each is matched against the rolled scene, so "washes the towering display
 wall stacked behind her" cannot land on a snowbound crash site and "pools on the
 ground around him" cannot land on a man floating weightless in an observation
-blister. `ground` is matched on the *verb* the scene gives the subject —
-standing, walking, crouched — which is also what keeps it off the weightless
-scenes and off every half-body one, since those describe only the background.
-`air` is the inverted one: the glow hangs as a haze, and hard vacuum has no
-atmosphere to hold it.
+blister.
+
+`ground` is the one worth reading twice, because the first version of it did
+not work. It is matched on the *verb* the scene gives the subject — standing,
+walking, crouched — **in the scene's opening clause only**, up to the first
+comma or dash. Both halves are load-bearing. A full-body scene opens `{Subject}
+{is_are} <verb>`, so the opening clause is the one span that describes the
+subject rather than the scenery; a half-body scene describes only the
+background and carries no verb for the subject at all. Matched over the whole
+sentence instead, "a hatch stands cycling open behind" kept the ground glow on
+a weightless tumble and "a work-mech kneeling in its cradle" kept it on a
+half-body hangar shot — the exact two cases the flag exists to stop, passing on
+verbs that belonged to the scenery. `braced` and `planted` were dropped from
+the verb list for a related reason: a subject can be braced in the open door of
+a hovering ambulance with the street far below, which is a subject verb and
+still no ground. `ground` additionally carries a `PLACEMENT_FORBIDS` entry, so
+a scene that calls itself weightless is refused however it opens.
+
+`wall` excludes "wall **of**" on purpose: the table uses that as a figure of
+speech — a wall of white peaks, a wall of humming monitors — far more often
+than as a surface, and the snowbound crash site it first let through is the
+scene this feature was written to fix. `air` is the inverted one: the glow
+hangs as a haze, and hard vacuum has no atmosphere to hold it.
 
 A prop gate reads the **scene** and nothing else. The two placements that used
 to assert something *worn* — a suit's seams, a shoulder harness — were reworded

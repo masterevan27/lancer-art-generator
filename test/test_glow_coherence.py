@@ -134,6 +134,34 @@ class TestHueAgreement(unittest.TestCase):
             with self.subTest(scene=scene):
                 self.assertEqual(gen.light_hues(scene), set())
 
+    def test_both_hues_of_a_pair_are_found(self):
+        """re.finditer cannot report overlapping matches.
+
+        The first version of this was one alternating regex, and it swallowed
+        the second hue of "X and Y" every time - "a bank of monitors glowing
+        violet and cyan" came back {violet} alone. That phrase is the example
+        this file, the module comment and docs/generate-npc.md all use, so the
+        bug was wrong in the most visible place available.
+        """
+        self.assertEqual(
+            gen.light_hues("a bank of monitors glowing violet and cyan"),
+            {"violet", "blue"})
+
+    def test_a_clause_boundary_stops_the_window(self):
+        """The live counterexample that made this a rule rather than a comment.
+
+        "...armor catching the pale light, a scatter of vivid red flowers
+        spread across the ground..." is a scene lit PALE with red PIGMENT on
+        the floor. The proximity window is 24 characters and the gap here is
+        21, so before the clause-break guard the scene counted as coloured
+        light and every roll of it came back crimson-red.
+        """
+        scene = ("{Subject} {is_are} standing before a weathered torii gate at "
+                 "night, armor catching the pale light, a scatter of vivid red "
+                 "flowers spread across the ground around {object}")
+        self.assertEqual(gen.light_hues(scene), set())
+        self.assertFalse(gen.has_light_source(scene))
+
     def test_pigment_is_not_light(self):
         """A red machine is not a red lamp.
 
@@ -224,14 +252,16 @@ class TestPlacementProps(unittest.TestCase):
                 for flag in props:
                     want = gen.PLACEMENT_REQUIRES.get(flag)
                     if want is not None:
+                        scope, pattern = want
                         self.assertTrue(
-                            want.search(scene),
-                            "seed %d: placement %r needs a '%s' in the scene "
-                            "and the scene is %r" % (seed, text, flag, scene))
+                            pattern.search(gen.placement_scope_text(scope, scene)),
+                            "seed %d: placement %r needs a '%s' in the %s and "
+                            "the scene is %r" % (seed, text, flag, scope, scene))
                     deny = gen.PLACEMENT_FORBIDS.get(flag)
                     if deny is not None:
+                        scope, pattern = deny
                         self.assertFalse(
-                            deny.search(scene),
+                            pattern.search(gen.placement_scope_text(scope, scene)),
                             "seed %d: placement %r cannot be true of %r"
                             % (seed, text, scene))
         self.assertTrue(checked, "no prop-gated placement was ever rolled")
