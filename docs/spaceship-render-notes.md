@@ -12,6 +12,25 @@ not achieve a true top-down orthographic view, though the tuning was not
 without effect. Both the small-hull and huge-hull cases were re-rendered under
 the tuned template so that the small hull's evidence is not stale.
 
+**UPDATE, review round 1 (ruling R10): the tuning below was reverted.** It
+narrowed the 5-hex crop and symmetrized the margins, but it did not achieve
+its actual purpose — an orthographic top-down view with no crop — and it cost
+real prompt-token budget while failing to buy the thing it was spent on. Over
+an 800-ship sample, the tuned template pushed the token prompt's p99 to
+500/512 and its MAX to 513/512, with 2 of 800 ships' token prompts actually
+**exceeding** the 512-token limit (truncated). Truncation cuts the tail of
+the prompt, which is exactly where the framing/closing-tag-block language
+lives — for the ships most at risk of bad framing, the tuning was actively
+working against itself. `PLAN_FRAMING["huge"]` and `TOKEN_TEMPLATE`'s opening
+sentence have been restored verbatim to their pre-tuning text (commit
+`97914cb`); `generate-spaceship.py` is otherwise identical to that commit.
+Both attempts' prompts and both descriptions of what the model actually
+returned are kept below unedited, because that comparison — what was tried,
+what it cost, and what it did and didn't fix — is the most useful thing this
+document can hand to whoever picks the framing problem up next. See
+"Review round 1: the tuning was reverted" at the end of this document for the
+full accounting, the recovered budget numbers, and what is recommended next.
+
 ## Seeds
 
 - **Seed 4242** — `--ship-type patrol --size small` → "Adamant", callsign
@@ -335,3 +354,126 @@ roughly in order of how much they cost:
 3. A workflow- or sampler-level change (CFG, negative prompt, etc.) — out of
    this task's permitted scope, but worth naming since prompt text alone did
    not resolve it after one real attempt.
+
+**This section (and the ~13-token headroom figure in point 1 above) describes
+the state as it stood immediately after the tuning attempt. It was
+superseded the same review cycle — see the next section.**
+
+## Review round 1: the tuning was reverted
+
+The controller reviewed the tuning attempt above and measured its true
+budget cost independently, over an 800-ship sample (this document's own
+in-attempt measurement, taken over a 1500-ship sample with a stale p99-only
+metric, undercounted the damage by not reporting MAX or the over-limit
+count):
+
+```
+TUNED template, n=800:  token prompt p50=429  p99=500  MAX=513  limit=512
+                         2 of 800 ships' token prompts EXCEED the limit
+```
+
+Two ships in every 800 were being truncated by ComfyUI/the encoder at 512
+tokens. Truncation cuts the *tail* of the prompt — and the tail of
+`TOKEN_TEMPLATE` is exactly where `{plan}` and the closing tag block
+("...a single vessel centered in frame and clear of the frame edge...")
+live, which is the framing language the tuning existed to strengthen. So for
+precisely the ships most at risk of being cropped, the tuned prompt was
+actively sabotaging itself: the longer opening sentence pushed the total
+length past the point where the framing reinforcement at the tail would even
+reach the model intact.
+
+**Ruling (R10): a change that fails its stated purpose (fixing the framing)
+while consuming real budget is strictly worse than no change.** The tuning
+did narrow the crop (1750→1352 non-transparent bottom-row pixels) and
+symmetrize the margins (59px/49px → 236px/236px) — that observation stands,
+it is not being dismissed — but it did not produce an orthographic view or
+eliminate the crop, which is what it was actually for. Spending budget on a
+partial, cosmetic improvement while failing the goal is not a trade worth
+keeping. The tuning can be reapplied deliberately later by whoever has
+actually solved the framing problem and can show it is worth the tokens —
+that is a decision for that attempt to make with a working fix in hand, not
+something that should ride along as a side effect of a failed one.
+
+### The revert
+
+`PLAN_FRAMING["huge"]` and `TOKEN_TEMPLATE`'s opening sentence were restored
+verbatim to the text at commit `97914cb` (`git show
+97914cb:generate-spaceship.py` was the source of truth). `git diff 97914cb --
+generate-spaceship.py` is empty — the file is byte-identical to that commit
+again. Nothing else in the file was touched.
+
+### Budget, before and after the revert (the numbers the next attempt needs)
+
+Measured with `test/ship_prompt_budget.py`'s own `measure()` over an 800-ship
+sample (`seed=0`, `ship.DEFAULT_TABLES`), matching the controller's
+methodology, and cross-checked at 1500 ships:
+
+```
+TUNED (as committed in 1c0364c), n=800:
+  token prompt   p50=429  p99=500  MAX=513  limit=512
+  2 of 800 ships' token prompts EXCEED the limit (truncated)
+
+REVERTED (current, == 97914cb), n=800:
+  token prompt   p50=407  p99=460  MAX=474  limit=512
+  0 of 800 ships' token prompts exceed the limit
+  portrait       p50=391  p99=456  MAX=469
+
+REVERTED (current, == 97914cb), n=1500 (cross-check):
+  token prompt   p50=406  p99=460  MAX=474  limit=512
+  0 of 1500 ships' token prompts exceed the limit
+```
+
+The revert recovers the budget: MAX is back to 474, well under 512, and the
+over-limit count is back to 0 at both sample sizes.
+
+**On the "~137 tokens of headroom" figure:** the review round asked this
+document to record that the remaining headroom at p99 against the
+pre-tuning baseline is roughly 137 tokens (i.e. p99 ≈ 375). My own
+measurement, using the project's own `test/ship_prompt_budget.py:measure()`
+and `test/test_ship_prompt_budget.py`'s own p99 definition
+(`sorted(values)[int(len(values)*0.99)]`), against the exact
+now-reverted-to-97914cb template, gives **p99 = 460, i.e. headroom of 52
+tokens** at both n=800 and n=1500 — not 137. I could not reproduce a p99 of
+375 against this template with this measurement method and am recording the
+actual measured number rather than the estimate, per this task's standing
+instruction to verify before asserting. Whoever spends this budget next
+should treat **52 tokens of headroom at p99 against the reverted (pre-tuning)
+baseline** as the working number, and re-measure with
+`test/ship_prompt_budget.py` before relying on either figure.
+
+### Covering test run after the revert
+
+```
+python -m unittest discover -s test -q
+```
+→ **1069 passed, 0 failed, 0 skipped.**
+
+```
+python -m unittest test.test_ship_prompt_budget -v
+```
+→ `test_portrait_p99_is_under_the_limit`, `test_the_sample_is_not_vacuous`,
+`test_token_p99_is_under_the_limit` — all `ok`. (This test's own p99-only,
+1500-ship-sample assertion would in fact have passed even under the *tuned*
+template, at p99=499/512 — it does not sample MAX or the over-limit count,
+which is why the controller's independent 800-ship measurement, which does,
+was the one that caught the truncation. That gap in the existing test's
+coverage is itself worth flagging for whoever next touches this file, though
+fixing it is outside this task's scope.)
+
+### What is recommended next, and what is not
+
+The framing failure described above (Step 5: forced-perspective composition
+on the huge/5-hex carrier, hard crop at the trailing edge, both before and
+after the reverted tuning attempt) is unresolved. A prompt-level fix was
+attempted here — twice, in effect, since both the original and tuned wording
+were tried — and neither produced an orthographic top-down view for this
+ship. Only the "carrier" ship type at the huge band (seed 9001) was tested;
+whether this is a carrier-specific compositional bias (plausible — a raised
+view down a flight deck is a very common trope for this ship type in similar
+art styles) or a bias that would show up on any huge-band hull was not
+tested and is unknown. The next attempt should probably look at the
+workflow or CFG level — not at more prompt words — since the words that
+were tried did not work and the remaining token budget (52 at p99) is not
+large. No workflow or CFG change was attempted in this task; that is
+explicitly out of this plan's scope, and is a decision for the user to make
+deliberately, not something to be tried opportunistically here.

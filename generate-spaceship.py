@@ -937,9 +937,8 @@ PLAN_FRAMING = {
     "small": "the whole hull roughly as long as it is wide across the wings",
     "medium": "a lean hull about twice as long as it is wide",
     "large": "a long hull about half again as long as it is broad",
-    "huge": "a vast hull, half again as long as it is broad, shrunk to fit "
-            "entirely inside the frame with the bow, the stern and both "
-            "wingtips all clear of the frame edge",
+    "huge": "a vast hull filling the frame bow to stern, half again as long "
+            "as it is broad",
 }
 
 PORTRAIT_TEMPLATE = (
@@ -968,14 +967,12 @@ PORTRAIT_TEMPLATE = (
 # grain/halftone tail, and scoping is what a diffusion text encoder is worst
 # at (generate-npc.py:1156-1169). It exists for the RMBG pass, not for style.
 TOKEN_TEMPLATE = (
-    "A flat top-down orthographic illustration of {ship}, {size}, viewed "
-    "straight down from directly overhead with no perspective and the bow "
-    "toward the top of the frame, the entire hull shrunk to fit inside the "
-    "frame from bow to stern and wingtip to wingtip with clear empty space "
-    "on all four sides and nothing cropped at any edge, rendered in a "
-    "detailed painterly illustration style with fine grain texture, clean "
-    "linework and halftone dot shading worked into the shadows, moody "
-    "cinematic lighting on the hull. "
+    "A top-down orthographic illustration of {ship}, {size}, seen from "
+    "directly above with the bow toward the top of the frame, the whole hull "
+    "in frame from bow to stern and wingtip to wingtip with clear empty space "
+    "on all four sides, rendered in a detailed painterly illustration style "
+    "with fine grain texture, clean linework and halftone dot shading worked "
+    "into the shadows, moody cinematic lighting on the hull. "
     "The hull is {hull}, {detail}. {armament_line}{bridge_line}"
     "{faction_line}{markings}, {condition}. "
     "{glow_line} Around the hull the background is an empty plain white void. "
