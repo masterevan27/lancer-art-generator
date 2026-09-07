@@ -1199,10 +1199,10 @@ MAX_TOKEN_PX = 2_400_000             # --max-token-px default
 def token_size(band, max_px=MAX_TOKEN_PX):
     """(width, height) for a token of this hull band, snapped to 64 and clamped.
 
-    Canvas aspect equals grid aspect exactly in every band, so Foundry
-    stretching the image into the token rectangle introduces no distortion -
-    which is the whole reason the height is a grid count rather than a taste
-    call about composition.
+    Canvas aspect equals grid aspect exactly whenever the budget admits at
+    least one full unit cell (see below); Foundry then stretches the image
+    into the token rectangle with no distortion, which is the whole reason
+    the height is a grid count rather than a taste call about composition.
 
     The clamp preserves aspect and re-snaps both dimensions to 64 rather than
     truncating one: the latent needs the multiple, and an off-aspect token is
@@ -1874,7 +1874,10 @@ def parse_args(argv=None):
                      help="pixel ceiling for a token canvas (default: %(default)s). "
                           "A band over it is scaled down with its aspect kept and "
                           "both dimensions re-snapped to 64, so the Foundry "
-                          "footprint is unchanged and only the render is cheaper")
+                          "footprint is unchanged and only the render is cheaper - "
+                          "except below the band's own 64px-per-hex unit "
+                          "(4096px 'small' up to 61440px 'huge'), where N wins and "
+                          "the aspect gives way instead")
 
     out = p.add_argument_group("output")
     out.add_argument("--out", type=Path, default=None,
