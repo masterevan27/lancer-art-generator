@@ -578,6 +578,25 @@ def filter_by_forced_catapult(options, tables):
 # The roll
 # --------------------------------------------------------------------------
 
+def sentence_case(text):
+    """`text` with its first character upper-cased and nothing else touched.
+
+    Not str.capitalize(), which lower-cases the remainder: 'a Karrakin hull'
+    would come back 'A karrakin hull' with the house name flattened, and the
+    live tables carry Karrakin, Chartered, Unaligned, Free and Trader. This is
+    the same slice-upper that ship_fields() already builds its 'Ship' key with.
+
+    The clauses this is applied to are bullets, and a bullet is authored to sit
+    mid-sentence; the templates then join several of them with a full stop.
+    Nothing capitalized them, so every prompt carried about two lowercase
+    sentence-starts. The NPC templates never hit this, because every clause of
+    theirs opens with a {Subject} that pronoun_fields() capitalizes
+    (generate-npc.py:1727) - a hull has no pronoun, so the capital has to be
+    put on here.
+    """
+    return text[:1].upper() + text[1:]
+
+
 def ship_fields(ship):
     """The subject fields both prompt templates substitute.
 
@@ -1065,7 +1084,13 @@ def build_ship_prompts(ship):
 
     weather = weather_sentence(ship)
     fields["weather_line"] = weather + " " if weather else ""
-    fields["faction_line"] = faction_line(ship)
+
+    # In both templates {faction_line} sits directly after {detail}'s full
+    # stop, or after armament_line's or bridge_line's if either is present -
+    # never after a comma - so whenever it is non-empty it always opens a new
+    # sentence. sentence_case("") is a no-op, so the empty case (no faction
+    # visual) is unaffected.
+    fields["faction_line"] = sentence_case(faction_line(ship))
 
     # Both already written and tested in ship_policy.py, and both return ''
     # rather than an empty clause - which is the whole of how an unarmed cargo
@@ -1074,7 +1099,23 @@ def build_ship_prompts(ship):
     # it is silhouette, and the renderer treats a tiered bridge tower as hull
     # shape rather than as fitted equipment.
     fields["armament_line"] = sp.armament_sentence(ship)
-    fields["bridge_line"] = sp.bridge_sentence(ship)
+
+    # bridge_sentence() returns "<bullet>. " and the bullet is authored lower
+    # case to sit mid-sentence. It always follows either the armament
+    # sentence's full stop or {detail}'s, so it always starts a sentence.
+    fields["bridge_line"] = sentence_case(sp.bridge_sentence(ship))
+
+    # Markings follows bridge_line's full stop - unless a faction visual sits
+    # between them, which ends in ", " and leaves Markings mid-sentence. The
+    # two unaffiliated Faction bullets have empty visuals, so faction_line
+    # cannot be relied on either way and the branch is real.
+    fields["markings"] = (ship["Markings"] if fields["faction_line"]
+                          else sentence_case(ship["Markings"]))
+
+    # {plan} opens the token's closing tag block, straight after "...an empty
+    # plain white void. ". Half of every occurrence of this defect was here,
+    # and the first write-up of the bug missed it.
+    fields["plan"] = sentence_case(PLAN_FRAMING[band])
 
     # A Faction flagged 'palette' asserts pigment of its own, and so does a
     # '## Hull' bullet flagged the same way - eleven of them describe a coat
