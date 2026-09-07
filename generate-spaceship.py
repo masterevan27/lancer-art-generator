@@ -1720,7 +1720,14 @@ def ship_trait_odds(tables, samples, rng):
 # ---------------------------------------------------------------------------
 
 
-def default_root():
+def default_root(args=None):
+    """The tree run folders are numbered under.
+
+    --out-root before the environment before the module default, because the
+    GUI configures a root per kind and the ship tree is not the NPC tree.
+    """
+    if args is not None and args.out_root:
+        return args.out_root
     return DEFAULT_OUTPUT_ROOT
 
 
@@ -1792,14 +1799,16 @@ def parse_args(argv=None):
                           "footprint is unchanged and only the render is cheaper")
 
     out = p.add_argument_group("output")
-    # --out is generate-npc.py's spelling and --out-root the one the GUI's ship
-    # job builder uses; aliased for the same reason --ship-type is.
-    out.add_argument("--out", "--out-root", dest="out", type=Path, default=None,
+    out.add_argument("--out", type=Path, default=None,
                      help="root to write ship folders into (default: a fresh runN "
                           "folder under %s, so a batch can be reviewed before any "
                           "of it is moved into Foundry by hand; passed explicitly, "
                           "the path is used as-is with no runN folder inserted)"
                           % DEFAULT_OUTPUT_ROOT)
+    out.add_argument("--out-root", type=Path, default=None, metavar="DIR",
+                     help="tree to number run folders under; --out names one "
+                          "run folder and wins over this. The import GUI "
+                          "passes it from config.spaceshipOutputRoot.")
     out.add_argument("--overwrite", action="store_true",
                      help="reuse an existing folder of the same name instead of suffixing it")
     out.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST,
@@ -2007,7 +2016,7 @@ def parse_args(argv=None):
     # which it has no business caring about.
     if (args.out is None and not args.regen_manifest and not args.trait_odds
             and not args.ship_catalogue):
-        args.out = next_run_folder(default_root())
+        args.out = next_run_folder(default_root(args))
 
     return args
 
