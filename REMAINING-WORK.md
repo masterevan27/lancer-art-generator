@@ -156,8 +156,10 @@ the budget accounting, is in `docs/spaceship-render-notes.md`.
   `tokenHeight` as integers. ✓ `gridWidth`/`gridHeight` (in grid units, not pixels) are also correct
   and must be sent to Foundry instead of `tokenWidth`/`tokenHeight`.
 
-Design §4 claims no new ComfyUI workflow JSON is needed. **That claim is verified** — see the
-render notes' "Files changed" section.
+Design §4 claims no new ComfyUI workflow JSON is needed. **That claim is verified**: both renders
+ran against the already-shipped `Lancer_Scene_Workflow_v1.json` and `Util_RemoveBackground_makeTransparent.json`
+(render notes, line 5). A caveat: the notes recommend that fixing the open framing problem may
+require workflow or CFG changes, which were not attempted here.
 
 ---
 
