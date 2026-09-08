@@ -962,13 +962,13 @@ failure at render time rather than a stray brace in a prompt.
 
   A LOWERCASE NOUN PHRASE WITH NO FULL STOP, and this is the first rule
   because an earlier draft of this table broke it on all thirty-five of
-  its bullets. The slot is `The hull is {hull}, {detail}.` in both
-  templates, so the value lands MID-SENTENCE and is used verbatim - a
-  bullet written as a standalone sentence renders as "The hull is A
-  colossal dark-blue fleet carrier, ... across the stern., a three-tier
-  lattice mast ...", with a capital letter inside a clause and a doubled
-  `., ` where the period met the comma, on one hundred per cent of rolls
-  and in both images. Every other prose table in this file - Detail,
+  its bullets. The slot is `The spacecraft's hull is {hull}, {detail}.`
+  in both templates, so the value lands MID-SENTENCE and is used
+  verbatim - a bullet written as a standalone sentence renders as "The
+  spacecraft's hull is A colossal dark-blue fleet carrier, ... across
+  the stern., a three-tier lattice mast ...", with a capital letter
+  inside a clause and a doubled `., ` where the period met the comma, on
+  one hundred per cent of rolls and in both images. Every other prose table in this file - Detail,
   Markings, Condition, Weapon, Shield generator, Launch catapult, Command
   bridge - is already written as a lowercase unterminated fragment for
   the same reason, and Hull was the only one that was not. Start with
@@ -982,6 +982,31 @@ failure at render time rather than a stray brace in a prompt.
   earlier draft. This table owns COLOUR, PROPORTION AND FORM: "a colossal
   dark-blue slab hull broadening to a squared bow block". The class word
   is the other table's and the silhouette is this one's.
+
+  NO DETAIL THAT ONLY MAKES SENSE ON WATER. This is the table that broke
+  the renders: two bullets here asked for a surface warship outright -
+  "a steel-grey hull on a wet-navy silhouette, a flared clipper bow above
+  a recessed anchor housing" and "a painted waterline stripe running its
+  whole length" - and krea2TurboInt8 gave back what they asked for, a
+  present-day battleship floating in the sea. Both are rewritten
+  ("dreadnought silhouette", "flared armoured bow above a recessed
+  docking cradle", "a painted registry stripe"), and
+  test/test_ship_spacecraft_register.py holds the rewrite over the live
+  table so the next one cannot come back in silence.
+
+  The line is narrow and it is about WATER, not about the naval register
+  as a whole. The setting names its ships after wet-navy ones on purpose
+  and this table leans on that: `prow`, `keel`, `stern`, `mast`, `flank`,
+  `belted`, `barbette`, `casemate` and `ram bow` are all carried by live
+  bullets and all read correctly on a starship, because science fiction
+  has used them since it had ships at all. What is barred is the handful
+  of details that describe a hull's relationship to a waterline and
+  nothing else - a waterline stripe, an anchor or hawse pipe, a clipper
+  bow, a gunwale, a bilge, draught marks, a bow wave. Those have no
+  spacecraft reading to fall back on, and the templates cannot out-argue
+  them: the sampler runs at CFG 1.0 with the negative conditioning zeroed
+  out (see the "Never write a negation" section), so a prompt that names
+  a waterline has named one.
 
   ONE PHYSICAL LINE PER BULLET, flags included, however long the line
   runs. parse_tables() in generate-npc.py matches a bullet with
@@ -1158,8 +1183,8 @@ failure at render time rather than a stray brace in a prompt.
 - a colossal dark-blue slab hull broadening to a squared bow block, a deep open deck recess cut the full length of each flank, ribbed radiator fins down the spine || carrier huge palette
 - an immense pale grey hull built as one flat-topped wedge, deep launch trenches recessed into both flanks and six boxed engine housings across the stern || carrier huge
 - a colossal white hull in red and blue panel blocking broken by hard black lining, a squared bow block, a low pedestal base and deep flank trenches || carrier huge @gundam palette
-- a steel-grey hull on a wet-navy silhouette, a flared clipper bow above a recessed anchor housing and three stepped barbette rings on a raised centreline deck || battleship large
-- a dark grey armoured hull with a long belted flank, riveted courses laid in overlapping bands and a painted waterline stripe running its whole length || battleship large
+- a steel-grey hull on a dreadnought silhouette, a flared armoured bow above a recessed docking cradle and three stepped barbette rings on a raised centreline deck || battleship large
+- a dark grey armoured hull with a long belted flank, riveted courses laid in overlapping bands and a painted registry stripe running its whole length || battleship large
 - a grey slab-sided citadel hull, a broad flat foredeck stepping up amidships, belt armour banded its whole length and six engine bells across the stern || battleship huge
 - a blue-black armoured hull built massively square, bare barbette rings ranked fore and aft on a raised deck and a stepped ram bow faced in angled plate || battleship huge
 - a dark iron hull like a cathedral laid on its side, a ram prow crowned with gilt statuary, kilometres of soot-blackened flank pierced by casemate recesses || battleship huge @grimdark palette

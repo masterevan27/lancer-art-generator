@@ -491,3 +491,107 @@ were tried did not work and the remaining token budget (52 at p99) is not
 large. No workflow or CFG change was attempted in this task; that is
 explicitly out of this plan's scope, and is a decision for the user to make
 deliberately, not something to be tried opportunistically here.
+
+---
+
+## Round 2: the hulls were rendering as surface ships in water
+
+Reported by the user against krea2TurboInt8: the generator's "spaceships"
+came back as present-day naval vessels floating in water. This is a
+different failure from the framing one above and it has a much plainer
+cause — **neither prompt template ever said the subject was a spacecraft.**
+
+Read the pre-change prompt back with that in mind and the model's output is
+the correct reading of it. Every class noun `## Ship type` draws on is a
+real-world naval one, because that is the register the setting is written
+in: *a cruiser*, *a destroyer*, *a patrol boat*, *a cargo ship*. The hull
+sentence opened `The hull is` and then spent twenty words on belted flanks,
+riveted courses and a raised centreline deck. The portrait's entire
+science-fiction content was the token `sci-fi` in the closing tag block; the
+token prompt's was nothing stronger than `vehicle`. Nothing anywhere
+contradicted "warship on the sea."
+
+Two live `## Hull` bullets went further and asked for water outright:
+
+- `a steel-grey hull on a **wet-navy silhouette**, a flared **clipper bow**
+  above a recessed **anchor housing** and three stepped barbette rings on a
+  raised centreline deck`
+- `... riveted courses laid in overlapping bands and a painted **waterline
+  stripe** running its whole length`
+
+No amount of template language wins an argument against a prompt that names
+a waterline. And it cannot be answered with a negation:
+`Lancer_Scene_Workflow_v1.json` samples at CFG 1.0 with `ConditioningZeroOut`
+wired to the negative input, so there is no negative conditioning for a "not
+a boat" to land in — which is the same reason the tables file carries a
+"Never write a negation" section.
+
+### The change
+
+Positive assertion, repeated at the three positions that carry weight, plus
+the two bullets:
+
+1. **Opening subject slot**, in front of the ship-type bullet rather than
+   behind it — the first words after the shot descriptor are the most
+   visible in the prompt. `{shot} of {ship}` → `{shot} of a spacecraft -
+   {ship}`.
+2. **The hull sentence**, which is where the naval vocabulary actually lands
+   and which ran two hundred-odd tokens unattributed. `The hull is {hull}` →
+   `The spacecraft's hull is {hull}`.
+3. **The closing tag block**, the position a diffusion model weights
+   hardest. Portrait: `atmospheric sci-fi vessel illustration` →
+   `atmospheric science fiction spacecraft illustration, a starship hull`.
+   Token: `isolated vehicle illustration` → `isolated spacecraft
+   illustration, a starship hull`, and `a single vessel centered in frame` →
+   `a single spacecraft centered in frame`.
+4. **The two water bullets**, rewritten to keep the dreadnought silhouette
+   and drop the water: `dreadnought silhouette`, `a flared armoured bow
+   above a recessed docking cradle`, `a painted registry stripe`.
+
+**None of the three template assertions names a LOCATION, deliberately.**
+"in outer space" in the closing block would be the strongest claim in the
+prompt and it would be wrong for four of the twenty-six `## Backdrop`
+scenes — the planetside hardstand, the atmospheric descent, the gas-giant
+cloud tops and the enclosed drydocks — and flatly self-contradictory in the
+token prompt, whose background sentence has just asked for an empty plain
+white void. What the subject *is* travels with it into every scene; where it
+is does not.
+
+### Budget
+
+The lesson of the reverted round-1 tuning is that prompt-token budget is the
+binding constraint here, so this was measured before and after over the same
+1500-ship sample (`test/ship_prompt_budget.py`, seed 0):
+
+| | portrait p99 | portrait MAX | token p99 | token MAX | over 512 |
+|---|---|---|---|---|---|
+| before | 453 | 469 | 460 | 474 | 0/1500 |
+| after | 466 | **482** | 472 | **485** | **0/1500** |
+
++13 tokens on the portrait's worst case and +11 on the token's, leaving 30
+and 27 tokens of headroom against the 512 ceiling. Unlike the round-1
+tuning, this does not put any prompt over the limit.
+
+### Tests
+
+`test/test_ship_spacecraft_register.py` is new and holds all of it over the
+live tables: that every prompt names the subject as a spacecraft, that the
+assertion lands in the opening slot rather than behind the ship-type bullet,
+that the closing tag block repeats it, that the hull sentence attributes the
+hull to the craft, and that no rolled subject bullet carries surface-navy
+water detail. That last guard is deliberately narrow — it bars a waterline,
+an anchor, a clipper bow, a gunwale, a bilge, draught marks and a bow wave,
+and explicitly leaves `prow`, `keel`, `mast`, `stern` and `flank` alone,
+since those read correctly on a starship and the live table is full of them.
+Full suite: 1080 tests, `OK`.
+
+### Still open
+
+This is a prompt-wording change only, verified by reading the assembled
+prompts and by the budget and register tests. **It has not been rendered
+against ComfyUI.** Whether the three assertions are enough to pull
+krea2TurboInt8 off the water on the hulls that were failing is the thing to
+check on the next real render, and the 1-hex/5-hex seeds above (4242, 9001)
+plus one of the two rewritten battleship bullets (seeds 6 and 97 roll them)
+are the cases to look at. The framing failure recorded in round 1 is
+untouched and remains open.

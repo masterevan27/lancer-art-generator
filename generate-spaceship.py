@@ -950,16 +950,48 @@ PLAN_FRAMING = {
             "as it is broad",
 }
 
+# The prompt asserts that the subject is a SPACECRAFT three times, in the
+# three positions that carry weight, and it is the same argument PLAN_FRAMING
+# makes about framing below. Every class noun '## Ship type' draws on is a
+# real-world naval one - cruiser, destroyer, patrol boat, cargo ship - because
+# that is the register the setting is written in, and '## Hull' then spends
+# twenty words on belted flanks and raised centreline decks. Read back with no
+# contradicting assertion anywhere in it, that prompt describes a warship on
+# the sea, and krea2TurboInt8 rendered exactly that: hulls floating in water.
+# The old prompt's entire science-fiction content was the word "sci-fi" in the
+# closing tag block, and the token prompt's was nothing stronger than
+# "vehicle".
+#
+# It has to be a positive assertion. Lancer_Scene_Workflow_v1.json samples at
+# CFG 1.0 with ConditioningZeroOut wired to the negative input, so there is no
+# negative conditioning for a "not a boat" to land in - the same reason the
+# tables file has a "Never write a negation" section.
+#
+# The three positions: the opening subject slot, in front of the ship-type
+# bullet rather than behind it, since the first words after the shot descriptor
+# are the most visible in the prompt; the hull sentence, which is where the
+# naval vocabulary actually lands and which went two hundred tokens
+# unattributed as a bare "The hull is"; and the closing tag block, the position
+# a diffusion model weights hardest.
+#
+# None of the three names a LOCATION, deliberately. "in outer space" in the
+# closing block would be the strongest claim in the prompt and it would be
+# wrong for four of the twenty-six '## Backdrop' scenes - the planetside
+# hardstand, the atmospheric descent, the gas-giant cloud tops and the enclosed
+# drydocks - and flatly contradictory in the token prompt, whose background
+# sentence has just asked for an empty plain white void. What the subject IS
+# travels with it into every scene; where it is does not.
 PORTRAIT_TEMPLATE = (
-    "{shot} of {ship}, {size}, rendered in a detailed painterly illustration "
-    "style with fine grain texture, clean linework and halftone dot shading "
-    "worked into the shadows, moody cinematic lighting. The hull is {hull}, "
+    "{shot} of a spacecraft - {ship}, {size}, rendered in a detailed painterly "
+    "illustration style with fine grain texture, clean linework and halftone "
+    "dot shading worked into the shadows, moody cinematic lighting. The "
+    "spacecraft's hull is {hull}, "
     "{detail}. {armament_line}{bridge_line}{faction_line}{markings}, "
     "{condition}. "
     "{backdrop} {weather_line}{glow_line} "
-    "Shallow depth of field, high detail, atmospheric sci-fi vessel "
-    "illustration, painterly brushwork with heavy grain and dense halftone "
-    "screentone worked into every shadow."
+    "Shallow depth of field, high detail, atmospheric science fiction "
+    "spacecraft illustration, a starship hull, painterly brushwork with heavy "
+    "grain and dense halftone screentone worked into every shadow."
 )
 
 # The token asserts FRAMING three times, in the three places that move it, for
@@ -976,17 +1008,19 @@ PORTRAIT_TEMPLATE = (
 # grain/halftone tail, and scoping is what a diffusion text encoder is worst
 # at (generate-npc.py:1156-1169). It exists for the RMBG pass, not for style.
 TOKEN_TEMPLATE = (
-    "A top-down orthographic illustration of {ship}, {size}, seen from "
+    "A top-down orthographic illustration of a spacecraft - {ship}, {size}, "
+    "seen from "
     "directly above with the bow toward the top of the frame, the whole hull "
     "in frame from bow to stern and wingtip to wingtip with clear empty space "
     "on all four sides, rendered in a detailed painterly illustration style "
     "with fine grain texture, clean linework and halftone dot shading worked "
     "into the shadows, moody cinematic lighting on the hull. "
-    "The hull is {hull}, {detail}. {armament_line}{bridge_line}"
+    "The spacecraft's hull is {hull}, {detail}. {armament_line}{bridge_line}"
     "{faction_line}{markings}, {condition}. "
     "{glow_line} Around the hull the background is an empty plain white void. "
-    "{plan}, a single vessel centered in frame and clear of the frame edge, "
-    "dramatic lighting, high detail, isolated vehicle illustration, clean "
+    "{plan}, a single spacecraft centered in frame and clear of the frame "
+    "edge, dramatic lighting, high detail, isolated spacecraft illustration, "
+    "a starship hull, clean "
     "silhouette, painterly brushwork with heavy grain and dense halftone "
     "screentone worked into every shadow."
 )
