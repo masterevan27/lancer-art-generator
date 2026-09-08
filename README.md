@@ -104,6 +104,20 @@ Blender 5.2. See [docs/generate-3d.md](docs/generate-3d.md).
 python generate-3d.py --filter Sokolova
 ```
 
+### `animate-portrait.py`
+
+Turns any portrait image into a looping animated `.webp` — a slow blink, a
+faint smile, a few degrees of head tilt — through Wan 2.2 image-to-video. It
+takes an image rather than a rolled NPC, so it is not wired into the
+generators or the import GUI; run it by hand on whatever portrait you like.
+Needs a running ComfyUI with the Wan 2.2 I2V models. See
+[docs/animate-portrait.md](docs/animate-portrait.md).
+
+```
+python animate-portrait.py "Jules Sokolova Portrait.png"
+python animate-portrait.py portrait.png -d "she laughs and looks away"
+```
+
 ### Tests
 
 Standard library `unittest`, no dependencies:

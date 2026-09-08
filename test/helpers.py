@@ -255,3 +255,23 @@ def foreign_texts(tables, name, theme):
     """
     own, other, neutral = _partition_by_theme(tables, name, theme)
     return other - own - neutral
+
+
+_cached_animate = None
+
+
+def load_animate():
+    """The animate-portrait.py module object, loaded once per process.
+
+    Same by-path load as load_generator(), for the same reason: the hyphen
+    keeps animate-portrait.py off the normal import path.
+    """
+    global _cached_animate
+    if _cached_animate is None:
+        spec = importlib.util.spec_from_file_location(
+            "animportrait", REPO / "animate-portrait.py")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["animportrait"] = module
+        spec.loader.exec_module(module)
+        _cached_animate = module
+    return _cached_animate
