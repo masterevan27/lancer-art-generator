@@ -349,6 +349,14 @@ for how often a gendered option comes up.
 HTML comments, blank lines, and any prose paragraph that isn't a bullet are
 ignored — so notes like this one are safe to leave inline.
 
+One table below is never rolled by `generate-npc.py` at all: `## Animation`,
+just above the Prompt templates. Its bullets are whole positive prompts for
+`animate-portrait.py`, which turns a finished portrait into a looping
+animation, and they reach that script two ways — `animate-portrait.py --roll`
+draws one at random, and the import GUI's NPC page offers the list on its
+Animated portrait panel. Nothing in the two image prompts reads it, so a
+bullet there changes no portrait or token.
+
 ---
 
 ## Given names
@@ -2837,6 +2845,35 @@ ignored — so notes like this one are safe to leave inline.
 - standing with one hip kicked out, one hand brushing a loose strand of hair back near {possessive} temple, the other resting low on {possessive} belt
 - standing with both hands laced behind {possessive} head, elbows out, utterly at ease || hands
 - standing with both weapons drawn, one leg braced forward and the coat's tails caught mid-swirl || armed gun
+
+## Animation
+
+<!-- Positive prompts for animate-portrait.py (Wan 2.2 image-to-video), one
+     per bullet. Not an NPC trait: generate-npc.py never rolls this table and
+     neither image prompt reads it. Readers are `animate-portrait.py --roll`
+     and the import GUI's Animated portrait panel.
+
+     Written to animate a portrait without changing who is in it. Wan moves
+     what the prompt names, so each bullet keeps the figure still - breathing,
+     at most a blink or a glance - and spends its motion on what the figure
+     wears (hair, scarves, coat tails, straps, a hat brim) and on the scene
+     behind them (smoke, cloud, rain, snow, embers, neon, starfields, ships,
+     distant gunfire). The closing clause pins the camera; Wan invents a
+     dolly-in given the chance, and a portrait that drifts stops being the
+     portrait it started as. Keep that clause on anything you add. Pronouns
+     are neutral on purpose, since one bullet serves every NPC. -->
+
+- the character stands still breathing gently. the wind gently moves their hair. the smoke in the background gently drifts by. the camera is locked off and does not move.
+- the character holds still, breathing slowly. their scarf and loose clothing ripple in a light breeze. clouds drift slowly across the sky behind them. the camera is locked off and does not move.
+- the character breathes gently and blinks once. strands of hair lift and settle in a soft wind. stars glitter faintly in the background and a single shooting star streaks past. the camera is locked off and does not move.
+- the character stays still. the tails of their coat sway in the wind. far behind them a spaceship slowly crosses the sky, its engine lights pulsing. the camera is locked off and does not move.
+- the character breathes steadily. dust and sparks drift through the air around them. distant muzzle flashes and tracer fire flicker silently in the background. the camera is locked off and does not move.
+- the character stands calmly. rain falls steadily in the background and water drips from the brim of their hat. their eyes slowly shift to one side and back. the camera is locked off and does not move.
+- the character holds still, breathing gently. neon signs in the background flicker and pulse. steam rises and drifts past behind them. the camera is locked off and does not move.
+- the character breathes slowly. a strap hanging from their gear sways slightly. holographic readouts in the background scroll and flicker. the camera is locked off and does not move.
+- the character stands still. snow falls gently and settles on their shoulders and hair. their breath fogs faintly in the cold air. the camera is locked off and does not move.
+- the character stays still, breathing gently. the light of a flickering flame plays across their face and clothing. embers rise and drift away in the background. the camera is locked off and does not move.
+- the character holds still. the fabric of their clothing stirs in a low breeze and loose hair drifts across their face. far behind them, dropships descend slowly through hazy clouds. the camera is locked off and does not move.
 
 ## Prompt templates
 

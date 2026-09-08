@@ -13,6 +13,7 @@ manifest or the output tree. It borrows only the ComfyUI plumbing.
     python animate-portrait.py portrait.png -d "she tilts her head and smiles"
     python animate-portrait.py portrait.png --out G:\\art\\jules.webp --seed 7
     python animate-portrait.py portrait.png --frames 49 --size 512
+    python animate-portrait.py portrait.png --roll --seed 7
     python animate-portrait.py portrait.png --dry-run
 
 Full documentation: docs/animate-portrait.md
@@ -22,6 +23,7 @@ import copy
 import importlib.util
 import json
 import random
+import re
 import sys
 import time
 import urllib.parse
@@ -31,6 +33,14 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 WORKFLOW = SCRIPT_DIR / "workflows" / "api" / "Util_Portrait_to_AnimatedWEBP_Wan22_v1.json"
+
+# The one table in the NPC generator's file that the NPC generator never
+# rolls: a pool of positive prompts for this script. It lives beside the NPC
+# tables rather than in a file of its own so the import GUI's Tables tab
+# edits it with the same editor, and so a portrait and its animation are
+# authored from one place.
+DEFAULT_TABLES = SCRIPT_DIR / "prompts" / "npc-generator-tables.md"
+ANIMATION_TABLE = "Animation"
 
 
 def _load_art():
@@ -75,6 +85,47 @@ DEFAULT_NEGATIVE = (
     "camera pan, camera zoom, cut, jump cut, text, watermark, blurry, "
     "low quality, worst quality"
 )
+
+
+def load_descriptions(tables_path):
+    """The `## Animation` bullets of a tables file, weights expanded.
+
+    A five-line reading of generate-npc.py's parse_tables() rather than an
+    import of it - that module is 4,600 lines of roll tables, and this needs
+    one heading. The conventions it honours are the two that file documents:
+    `## Heading` opens a table, `- text` is a bullet, and a leading `xN `
+    repeats the bullet N times. Anything else - prose, HTML comments, a
+    bullet the GUI has disabled by wrapping it in a comment - is not a bullet
+    and is skipped.
+    """
+    tables_path = Path(tables_path)
+    if not tables_path.exists():
+        raise SystemExit("no such tables file: %s" % tables_path)
+    found = []
+    inside = False
+    for line in tables_path.read_text(encoding="utf-8").splitlines():
+        heading = re.match(r"^##\s+(?!#)\s*(.*?)\s*$", line)
+        if heading:
+            inside = heading.group(1) == ANIMATION_TABLE
+            continue
+        bullet = re.match(r"^-\s+(.*?)\s*$", line)
+        if inside and bullet:
+            text = bullet.group(1)
+            weight = re.match(r"^x(\d+)\s+(.*)$", text)
+            count, text = (int(weight.group(1)), weight.group(2)) if weight else (1, text)
+            found.extend([text] * count)
+    if not found:
+        raise SystemExit(
+            "%s has no '## %s' table to roll a description from"
+            % (tables_path.name, ANIMATION_TABLE))
+    return found
+
+
+def roll_description(descriptions, seed):
+    """One entry, chosen by `seed` so a --roll is as repeatable as the render."""
+    if not descriptions:
+        raise SystemExit("no animation descriptions to roll from")
+    return random.Random(int(seed)).choice(descriptions)
 
 
 def snap_frames(frames):
@@ -239,9 +290,17 @@ def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description="Animate a portrait into a looping .webp via Wan 2.2 I2V.")
     parser.add_argument("image", help="the portrait to animate")
-    parser.add_argument(
+    motion = parser.add_mutually_exclusive_group()
+    motion.add_argument(
         "-d", "--describe", default=DEFAULT_DESCRIPTION,
         help="what the character does; defaults to a subtle idle motion")
+    motion.add_argument(
+        "--roll", action="store_true",
+        help="draw the description from the tables file's '## %s' table "
+             "instead; --seed pins the draw" % ANIMATION_TABLE)
+    parser.add_argument(
+        "--tables", type=Path, default=DEFAULT_TABLES,
+        help="the tables file --roll reads (default: %s)" % DEFAULT_TABLES.name)
     parser.add_argument("--negative", default=DEFAULT_NEGATIVE)
     parser.add_argument("--out", help="output .webp (default: <image>-animated.webp)")
     parser.add_argument("--size", type=int, default=480,
@@ -279,6 +338,11 @@ def main(argv=None):
     seed = resolve_seed(args.seed)
     destination = output_path(image, args.out)
 
+    # After the seed is settled, so one --seed reproduces both the draw and
+    # the render it went into.
+    if args.roll:
+        args.describe = roll_description(load_descriptions(args.tables), seed)
+
     if frames != args.frames:
         print("  frames %d -> %d (Wan takes 4n+1)" % (args.frames, frames))
 
@@ -286,7 +350,7 @@ def main(argv=None):
     print("%s -> %s" % (image.name, destination))
     print("  %dx%d, %d frames -> %d played at %.3g fps (%.1fs), seed %d"
           % (width, height, frames, total, args.fps, total / args.fps, seed))
-    print("  %s" % args.describe)
+    print("  %s%s" % ("(rolled) " if args.roll else "", args.describe))
 
     if args.dry_run:
         graph = build_graph(

@@ -109,13 +109,18 @@ python generate-3d.py --filter Sokolova
 Turns any portrait image into a looping animated `.webp` — a slow blink, a
 faint smile, a few degrees of head tilt — through Wan 2.2 image-to-video. It
 takes an image rather than a rolled NPC, so it is not wired into the
-generators or the import GUI; run it by hand on whatever portrait you like.
-Needs a running ComfyUI with the Wan 2.2 I2V models. See
+generators; run it by hand on whatever portrait you like, or from the import
+GUI's NPC page, whose Animated portrait panel runs it over a rolled NPC's
+portrait. `--roll` draws the motion from the `## Animation` table in
+`prompts/npc-generator-tables.md` — the one table there the NPC generator
+never rolls, written to move hair, clothing and backdrop while the figure
+holds still. Needs a running ComfyUI with the Wan 2.2 I2V models. See
 [docs/animate-portrait.md](docs/animate-portrait.md).
 
 ```
 python animate-portrait.py "Jules Sokolova Portrait.png"
 python animate-portrait.py portrait.png -d "she laughs and looks away"
+python animate-portrait.py portrait.png --roll --seed 7
 ```
 
 ### Tests

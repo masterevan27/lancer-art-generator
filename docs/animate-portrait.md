@@ -10,8 +10,10 @@ or the output tree, and it never writes to any of them. The only thing it
 borrows is `generate-art.py`'s ComfyUI plumbing — the client and the port
 probe.
 
-Nothing is wired into `lancer-npc-import-gui` or `generate-npc.py`. This is a
-tool you run by hand.
+`generate-npc.py` never calls it. `lancer-npc-import-gui`'s NPC page does -
+its Animated portrait panel runs this script over the NPC's portrait with a
+description chosen from the `## Animation` table - and it is equally a tool
+you run by hand on any image.
 
 ## Requirements
 
@@ -45,6 +47,9 @@ python animate-portrait.py portrait.png --out G:\art\jules.webp --seed 12345
 # longer and larger - costs render time roughly linearly
 python animate-portrait.py portrait.png --frames 49 --size 640
 
+# draw the description from the tables file's ## Animation table
+python animate-portrait.py portrait.png --roll --seed 7
+
 # build the job and print the graph without queueing anything
 python animate-portrait.py portrait.png --dry-run
 ```
@@ -70,6 +75,24 @@ to replace it:
 - **The camera is nailed down explicitly.** Given the chance Wan will invent a
   slow dolly-in, and a portrait that drifts is no longer a portrait of the
   thing it started as.
+
+### The `## Animation` table
+
+`--roll` draws the description from the `## Animation` table in
+`prompts/npc-generator-tables.md` instead - a pool of prompts written for NPC
+portraits specifically, each of which keeps the figure still and spends its
+motion on what they wear and what is behind them: hair and coat tails in a
+breeze, smoke, rain, snow, neon, a starfield, a ship crossing the sky. Every
+bullet ends by locking the camera, for the reason above. `--seed` pins the
+draw as well as the render, so `--roll --seed 7` is the same animation twice;
+`--tables` points it at another file with the same heading. `--roll` and `-d`
+are refused together, since each is the whole prompt.
+
+The NPC generator never rolls that table - nothing in its two image prompts
+reads it - so adding bullets there changes no portrait or token. The import
+GUI's Tables tab edits it like any other, and its NPC page's Animated portrait
+panel offers the same list with a re-roll, which is the ordinary way to reach
+this script from a rolled NPC.
 
 Restraint reads better than instruction here. "Smiles warmly" tends to produce
 a face working through a whole expression in two seconds; "the corner of their
@@ -102,6 +125,8 @@ it began.
 | Flag | Default | |
 |---|---|---|
 | `-d`, `--describe` | the idle motion above | the positive prompt |
+| `--roll` | off | draw the prompt from the tables file's `## Animation` table instead of `-d` |
+| `--tables` | `prompts/npc-generator-tables.md` | the file `--roll` reads |
 | `--negative` | a static/identity-drift guard | the negative prompt |
 | `--out` | `<image>-animated.webp` | output path |
 | `--size` | `480` | square render size, snapped down to a multiple of 16 |
