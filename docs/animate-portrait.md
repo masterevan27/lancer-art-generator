@@ -75,6 +75,13 @@ Restraint reads better than instruction here. "Smiles warmly" tends to produce
 a face working through a whole expression in two seconds; "the corner of their
 mouth lifts into a faint smile" produces something you can loop.
 
+The default assumes the face is visible. On a portrait shot from behind or in
+hard profile — the over-the-shoulder framing the NPC generator sometimes
+rolls — the blink and the smile have little to land on, and what you get is
+the head turn and the hair moving. That still reads as alive, but if you want
+the motion to be about the expression, either say so in `-d` or animate a
+portrait that shows the face.
+
 ## The loop
 
 The animation is generated forward, then played forward and back — so it ends
@@ -121,10 +128,12 @@ this repo per output. On a 12 GB card the two UNets do not both fit in VRAM, so
 ComfyUI swaps them at the handover and the first run of a session also pays to
 load them from disk.
 
-Expect **minutes, not seconds**, at the defaults. Raising `--frames` or
-`--size` raises it roughly in proportion. Start at the defaults, find a
-description and a seed you like, and only then turn the quality up on that
-seed.
+Expect **minutes, not seconds**, at the defaults. Measured on the campaign
+stack — an RTX 3080 12 GB with 32 GB of system RAM, ~13 GB of it free — a
+default 480x480 / 33-frame render took **198 seconds**, both model loads
+included. Raising `--frames` or `--size` raises it roughly in proportion.
+Start at the defaults, find a description and a seed you like, and only then
+turn the quality up on that seed.
 
 ## Troubleshooting
 
@@ -148,6 +157,10 @@ graph failed at three different nodes across three runs, and pushing further
 produced the plain-language version of the same problem —
 `DefaultCPUAllocator: not enough memory: you tried to allocate 15925248
 bytes`, i.e. ComfyUI could not allocate 15 MB.
+
+Freeing memory fixed it: the same portrait, the same seed, with ~13 GB free
+instead of ~4.6 GB, rendered in 198 seconds. Somewhere between those two
+figures is the floor for a default run on a 32 GB machine.
 
 **The fix is to free RAM**, in rough order of effort:
 
