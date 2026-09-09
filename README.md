@@ -257,6 +257,16 @@ repository somewhere other than `/g/GIT-REPOS/lancer-art-generator`):
 ln -s "/g/GIT-REPOS/lancer-art-generator/.claude/skills/npc-trait-import" ~/.claude/skills/npc-trait-import
 ```
 
+## The `spaceship-trait-import` skill
+
+`.agents/skills/spaceship-trait-import/SKILL.md` (Codex) and its matching
+`.claude/skills/spaceship-trait-import/SKILL.md` extract spaceship traits from
+reference images. Invoke `spaceship-trait-import` with images or a folder.
+It stages candidates in `prompts/staged-imports-spaceship/` with reference
+copies for the Import GUI's **Spaceships → Trait Imports** view. Hulls,
+equipment, scenes and lighting follow the ship generator's type/size policies;
+the skill leaves the live tables unchanged for selective review.
+
 ## License
 
 Dual-licensed, because this repository holds both prose and code:

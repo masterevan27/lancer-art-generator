@@ -20,6 +20,14 @@ prompts/staged-imports/*.json
 # asset library.
 prompts/staged-imports/refs/
 
+# Spaceship candidates use the GUI's separate staging directory.
+prompts/staged-imports-spaceship/*.json
+prompts/staged-imports-spaceship/refs/
+
 # Agent scratch: worktrees and subagent-driven-development ledgers
 .claude/worktrees/
 .superpowers/
+
+# Ignore the batch work directory, which is a local working folder for the spaceship-trait-import skill:
+prompts/ship-batch5-work
+
