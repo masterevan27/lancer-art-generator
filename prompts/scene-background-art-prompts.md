@@ -89,3 +89,172 @@ frame, smoke and dust and cloud and floodlights and running lights, is
 something a bullet in that table names, which is why they were put there. See
 `docs/animate-portrait.md` for what the render costs and where the `.webp`
 lands.
+
+The four sections below are more of the same job — alternates for the same slot,
+each composed for `--background` rather than as standalone pieces. They follow
+the same three rules the dropship yard does: nobody in the frame, the middle of
+the composition left quiet for a chat panel, and every moving element chosen
+from what a bullet in the `## Background Animation` table actually names, so
+`--roll` has something to move that the picture already contains.
+
+## Orbital Dock — Planetfall Gallery
+
+An observation gallery running along the throat of a Union orbital dock, looking
+out across the berths at the planet turning below. The structure is pushed to
+the frame edges and the middle is open sky and planet, with the motion — drifting
+stars, a vessel crossing the far distance, running lights along the berths —
+scattered through the deep field rather than the foreground.
+
+> A wide, cinematic establishing shot of an observation gallery inside a large
+> orbital dock, viewed from inside the gallery looking out through a continuous
+> wall of tall angular viewport panes that spans the whole frame. Heavy structural
+> ribs and riveted stanchions divide the glazing at intervals and frame both edges
+> of the frame, with cable runs, conduit and stencilled deck markings on the
+> bulkhead and grating underfoot. Beyond the glass the dock's berthing arms reach
+> away to the left and right in deep perspective, skeletal gantry structures
+> studded with small running lights and numbered berth markers, a heavy freighter
+> hull moored along the far arm with its spine lights glowing in a slow row. The
+> centre of the view opens out onto nothing but void and the vast curve of a planet
+> below, its cloud banks catching hard light along one limb, the terminator falling
+> away into a dark hemisphere flecked with the faint amber of settlements. Higher
+> up the black is scattered with stars, and a small distant vessel crosses the void
+> near the horizon line trailing a pale engine glow. A thin drift of vented gas
+> curls slowly from a coupling on the near berthing arm. Rendered in bold black
+> linework with halftone screentone dot shading worked into every shadow — under the
+> structural ribs, along the gantry trusses, in the planet's dark hemisphere — high
+> contrast throughout. Keep the palette restrained: greys, olive drab and rust on
+> the gallery structure, gantries and hull plating, with a teal-green atmospheric
+> haze and the cold pale planetlight as the dominant cool tones and the warm amber
+> of the berth running lights as the only saturated warm note, rather than a broad
+> rainbow of bright hues. Cinematic backlighting from the planet rims every surface
+> inside the gallery and throws long hard-edged shadows back across the deck toward
+> the viewer. Wide landscape composition, deep perspective, enormous sense of scale,
+> no people or figures anywhere in the frame, quiet and waiting rather than
+> mid-battle, grounded rather than glossy.
+
+### Settings
+
+CFG 1.0, 8 steps, Euler, Simple scheduler, no negative prompt. Generate at
+1920×1080 or another 16:9 landscape ratio.
+
+## Rain-Slick Arcology Street — Corpro Underlevel
+
+A street at the bottom of a corpro-state arcology stack, hard rain coming down
+past the signage. The wet ground and the neon are the point: they give the Wan
+pass rippling puddles, water running off every hard edge and a flickering light
+source, which is three bullets of the animation table at once. The street runs
+away down the middle of the frame and stays quiet.
+
+> A wide, cinematic establishing shot of a narrow street at the bottom of a
+> towering arcology stack at night in heavy rain, viewed from ground level looking
+> straight down the street into deep perspective. Sheer tenement and utility facades
+> rise out of frame on both sides, packed with fire escapes, ducting, hanging cable
+> bundles and stacked balconies, closing the frame in to left and right. Vertical
+> signage boards and hanging light strips project from the walls at every level,
+> glowing through the rain, and a heavy pedestrian bridge crosses overhead in the
+> middle distance. The street surface is cracked wet asphalt running with standing
+> water, its puddles holding broken reflections of the signage above, faded lane
+> markings and a manhole venting a slow column of steam to one side. Shuttered
+> storefronts, stacked crates, a dead vending kiosk and a row of bollards line the
+> edges of the pavement, pushed to the sides. Rain falls hard and straight, sheeting
+> off every ledge, awning and cable in the frame, and the air is thick with haze so
+> the far end of the street dissolves into glow. Far above, a sliver of sky between
+> the towers shows low cloud lit from beneath by the city. Rendered in bold black
+> linework with halftone screentone dot shading worked into every shadow — under the
+> balconies and bridge, along the ducting, in the haze at street level — high
+> contrast throughout. Keep the palette restrained: greys, olive drab and rust on
+> the facades, ducting and asphalt, with a teal-green atmospheric haze as the
+> dominant cool tone and the warm amber and dull red of the signage as the only
+> saturated warm notes, rather than a broad rainbow of bright hues. Cinematic
+> lighting comes almost entirely from the signage and the wet ground bouncing it
+> back, throwing hard-edged shadows up the walls. Wide landscape composition, deep
+> perspective, no people or figures anywhere in the frame, no vehicles, quiet and
+> waiting rather than mid-battle, grounded rather than glossy.
+
+### Settings
+
+CFG 1.0, 8 steps, Euler, Simple scheduler, no negative prompt. Generate at
+1920×1080 or another 16:9 landscape ratio. Bump to CFG ~2.0–2.5 and 10–12 steps
+if the street loses its vanishing point — the deep one-point perspective is the
+first thing turbo's low step count gives up.
+
+## Mech Bay — Cradle Deck, Third Watch
+
+A maintenance deck with a chassis up in its service cradle, lit by work lamps and
+console glow. Written for the console-and-indicator bullets in the animation
+table: every screen, status panel and running light in here is something the Wan
+pass can flicker, scroll or pulse without touching the geometry. The cradle sits
+off to one side and the deck opens up behind it.
+
+> A wide, cinematic establishing shot of the interior of a military mech
+> maintenance bay at night, viewed from the deck floor. A single large humanoid
+> mech stands held upright in a heavy service cradle set to the right of the frame,
+> seen from below at a low angle, armour panels removed along one flank to expose
+> ribbed actuator bundles and structural frame, umbilical hoses and power cabling
+> running from its open access ports down to deck couplings. Articulated gantry arms
+> and a catwalk wrap around it, hung with tool racks, chain hoists and coiled line.
+> To the left the bay opens out into deep perspective down a row of empty cradles,
+> each one marked with a stencilled bay number and lined with small status lights,
+> the far end of the row fading into haze. The near left wall carries a bank of
+> angled console screens and diagnostic panels glowing with blocky readouts,
+> waveform traces and rows of indicator lamps, with a rolling equipment cart and
+> stacked ammunition crates below them. Overhead, caged work lamps hang from an
+> exposed ceiling truss and throw hard cones of light down onto the deck plating,
+> and floor grates vent slow columns of steam that catch in the beams. Painted
+> safety lines, chevrons and drainage channels mark the deck. Rendered in bold black
+> linework with halftone screentone dot shading worked into every shadow — inside the
+> cradle structure, under the catwalk, in the steam — high contrast throughout. Keep
+> the palette restrained: greys, olive drab and rust on the mech plating, cradles,
+> deck and bulkheads, with a teal-green glow off the console screens as the dominant
+> cool tone and the warm amber of the work lamps and status lamps as the only
+> saturated warm note, rather than a broad rainbow of bright hues. Cinematic overhead
+> lighting rakes down across the mech's armour and throws long hard-edged shadows
+> across the deck toward the viewer. Wide landscape composition, deep perspective,
+> industrial and lived-in, no people or figures anywhere in the frame, quiet and
+> off-shift rather than mid-repair, grounded rather than glossy.
+
+### Settings
+
+CFG 1.0, 8 steps, Euler, Simple scheduler, no negative prompt. Generate at
+1920×1080 or another 16:9 landscape ratio. Bump to CFG ~2.0–2.5 and 10–12 steps
+if the cradle and the mech fuse into one mass — the exposed-frame flank is the
+detail turbo drops first.
+
+## Snowbound Wreck Field — The Morning After
+
+A battlefield gone cold: hulls half-buried in snow, a few fires still guttering
+along the ridge. Composed for the snow and ember bullets in the animation
+table — falling snow, wind lifting powder off the drifts, distant fires flickering
+on the horizon — with the wrecks arranged along the edges and a bare snowfield
+across the middle.
+
+> A wide, cinematic establishing shot of a frozen battlefield at dawn under falling
+> snow, viewed from ground level across an open snowfield. The broken hull of a
+> large downed mech lies half-buried in a drift on the left of the frame, seen from
+> behind and side-on, one arm thrown out and its torso split open, snow collected in
+> every horizontal surface and hanging in a shelf along its shoulder plating. On the
+> right, the burnt-out shell of an armoured transport sits canted in a shallow
+> crater, tracks thrown, hatches open, scorch marks streaking back across the snow
+> behind it. Between them the snowfield opens out unbroken toward the horizon,
+> crossed only by wind-carved drift lines and a scatter of shell craters ringed with
+> dark earth. Twisted structural debris, a bent antenna mast and a fallen signal pole
+> with its cabling trailing across the snow stand in the middle distance. The horizon
+> is a low ridgeline of dark rock under a heavy overcast sky, and along it several
+> small fires still burn in the wreckage, guttering low, thin columns of black smoke
+> rising from them and bending sideways in the wind. Snow falls steadily across the
+> whole frame and loose powder lifts off the tops of the drifts. Rendered in bold
+> black linework with halftone screentone dot shading worked into every shadow —
+> inside the split hull, under the transport, in the crater rims and the smoke — high
+> contrast throughout. Keep the palette restrained: greys, olive drab and rust on the
+> wreckage and exposed earth, with a teal-green cast in the snow shadows and the
+> overcast as the dominant cool tone and the warm orange of the distant fires as the
+> only saturated warm note, rather than a broad rainbow of bright hues. Cinematic
+> flat overcast light with a low hard rim of dawn along the ridge, shadows long and
+> soft-edged across the snow. Wide landscape composition, deep perspective, desolate
+> and still, no people or figures anywhere in the frame, the fighting long over
+> rather than mid-battle, grounded rather than glossy.
+
+### Settings
+
+CFG 1.0, 8 steps, Euler, Simple scheduler, no negative prompt. Generate at
+1920×1080 or another 16:9 landscape ratio.
