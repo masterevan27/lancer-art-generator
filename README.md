@@ -122,9 +122,19 @@ widescreen, a motion prompt that moves smoke and cloud and lights rather
 than a mouth, and `--roll` reading the `## Background Animation` table in
 `prompts/scene-and-spaceship-tables.md`. The output is a looping `.webp`
 sized and quantised to drop straight into SillyTavern's backgrounds folder.
-If you have no background still to animate yet, render one first from the
-`Default Animated Background` section of
-`prompts/scene-background-art-prompts.md`.
+If you have no background still to animate yet, render one first from
+`prompts/scene-background-art-prompts.md`, which carries five sections composed
+for this job rather than as standalone pieces — nobody in the frame, a quiet
+middle where a chat panel will sit, and every moving element named by a bullet
+in the animation table so `--roll` has something to move.
+
+`prompts/city-background-art-prompts.md` does the same job outside the house
+style: photorealistic modern and near-future cities at night, no linework, no
+halftone, nothing Lancer. Nothing in the pipeline enforces either look —
+`Lancer_Scene_Workflow_v1.json` carries a detail slider and no style LoRA — so
+the same workflow renders both families and the style lives entirely in the
+prompt text. That file carries a per-section motion line to pass with `-d`
+instead of using `--roll`, whose table names smoke, embers and dropships.
 
 By default the animation is played forward and back, so it lands on the frame
 it started on. `--no-pingpong` plays it forward once instead, at the same
