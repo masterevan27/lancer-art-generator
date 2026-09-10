@@ -17,13 +17,30 @@ from test.workflow_schema import (
     dynamic_combo_choices, expected_inputs, object_info, server_is_up)
 
 REPO = Path(__file__).resolve().parent.parent
-WORKFLOW = REPO / "workflows" / "api" / "Util_Portrait_to_AnimatedWEBP_Wan22_v1.json"
+WORKFLOWS = REPO / "workflows" / "api"
+WORKFLOW = WORKFLOWS / "Util_Portrait_to_AnimatedWEBP_Wan22_v1.json"
+FORWARD = WORKFLOWS / "Util_Portrait_to_AnimatedWEBP_Wan22_Forward_v1.json"
 
 ap = load_animate()
 
 
 def graph():
     return json.loads(WORKFLOW.read_text(encoding="utf-8"))
+
+
+def forward_graph():
+    return json.loads(FORWARD.read_text(encoding="utf-8"))
+
+
+def both_graphs():
+    """Every workflow this script queues, by file name.
+
+    The live-server checks below run over all of them: a renamed model or a
+    moved input breaks the forward-only graph exactly as it breaks the
+    looping one, and a check that only read the looping one would pass while
+    every --no-pingpong render failed.
+    """
+    return {WORKFLOW.name: graph(), FORWARD.name: forward_graph()}
 
 
 def links(node):
@@ -141,6 +158,62 @@ class TestWorkflowShape(unittest.TestCase):
         self.assertEqual(trim["inputs"]["start_index"], 1)
 
 
+class TestForwardWorkflowShape(unittest.TestCase):
+    """The --no-pingpong graph: the same render, saved without the loop."""
+
+    def test_the_workflow_file_is_checked_in(self):
+        self.assertTrue(FORWARD.exists(), "%s is missing" % FORWARD)
+
+    def test_every_link_points_at_a_real_node(self):
+        g = forward_graph()
+        for nid, node in g.items():
+            for ref in links(node):
+                with self.subTest(node=nid, ref=ref):
+                    self.assertIn(ref[0], g)
+
+    def test_the_decode_feeds_the_save_with_nothing_in_between(self):
+        g = forward_graph()
+        decode_id, _ = only(g, "VAEDecode")
+        _, save = only(g, "SaveAnimatedWEBP")
+        self.assertEqual(save["inputs"]["images"], [decode_id, 0])
+
+    def test_it_runs_on_stock_comfyui(self):
+        """The point of the second file: no KJNodes anywhere in it.
+
+        Bypassing the three loop nodes would not do - a dangling node still
+        executes, so the custom-node dependency would survive the flag.
+        """
+        g = forward_graph()
+        for cls in ("ReverseImageBatch", "GetImageRangeFromBatch", "ImageBatch"):
+            with self.subTest(cls=cls):
+                self.assertEqual(nodes_of(g, cls), {})
+
+    def test_it_renders_exactly_what_the_looping_workflow_renders(self):
+        """Everything up to the decode is the same graph, node for node.
+
+        The two files are edited by hand, and a model swapped in one of them
+        alone is a difference nothing else here would catch: the flag would
+        quietly become a second render rather than a second way to save one.
+        """
+        loop, forward = graph(), forward_graph()
+        shared = {n: d for n, d in loop.items()
+                  if d["class_type"] not in (
+                      "ReverseImageBatch", "GetImageRangeFromBatch",
+                      "ImageBatch", "SaveAnimatedWEBP")}
+        self.assertEqual(
+            {n: d for n, d in forward.items()
+             if d["class_type"] != "SaveAnimatedWEBP"},
+            shared)
+
+    def test_the_save_node_carries_the_same_settings(self):
+        """Only its input differs; the script patches the rest either way."""
+        _, loop_save = only(graph(), "SaveAnimatedWEBP")
+        _, save = only(forward_graph(), "SaveAnimatedWEBP")
+        for key in ("filename_prefix", "fps", "lossless", "quality", "method"):
+            with self.subTest(input=key):
+                self.assertEqual(save["inputs"][key], loop_save["inputs"][key])
+
+
 class TestWorkflowAgainstLiveServer(unittest.TestCase):
     """Re-derive what the server demands, so a ComfyUI update fails here."""
 
@@ -150,44 +223,51 @@ class TestWorkflowAgainstLiveServer(unittest.TestCase):
             raise unittest.SkipTest("no ComfyUI on 127.0.0.1:8000")
 
     def test_every_node_class_exists_on_the_server(self):
-        for nid, node in graph().items():
-            with self.subTest(node=nid, cls=node["class_type"]):
-                self.assertIsNotNone(object_info(node["class_type"]))
+        for name, g in both_graphs().items():
+            for nid, node in g.items():
+                with self.subTest(wf=name, node=nid, cls=node["class_type"]):
+                    self.assertIsNotNone(object_info(node["class_type"]))
 
     def test_every_required_input_is_present(self):
-        for nid, node in graph().items():
-            schema = object_info(node["class_type"])
-            if schema is None:
-                continue
-            required = schema["input"].get("required", {})
-            for key in expected_inputs(required, node["inputs"]):
-                with self.subTest(node=nid, cls=node["class_type"], input=key):
-                    self.assertIn(key, node["inputs"])
+        for wf, g in both_graphs().items():
+            for nid, node in g.items():
+                schema = object_info(node["class_type"])
+                if schema is None:
+                    continue
+                required = schema["input"].get("required", {})
+                for key in expected_inputs(required, node["inputs"]):
+                    with self.subTest(wf=wf, node=nid, input=key):
+                        self.assertIn(key, node["inputs"])
 
     def test_every_named_model_and_option_is_one_the_server_offers(self):
-        for nid, node in graph().items():
-            schema = object_info(node["class_type"])
-            if schema is None:
+        for wf, g in both_graphs().items():
+            for nid, node in g.items():
+                self.check_choices(wf, nid, node)
+
+    def check_choices(self, wf, nid, node):
+        """One node's enumerated inputs, against what the server enumerates."""
+        schema = object_info(node["class_type"])
+        if schema is None:
+            return
+        required = schema["input"].get("required", {})
+        for name, definition in required.items():
+            choices = definition[0]
+            meta = definition[1] if len(definition) > 1 else {}
+            value = node["inputs"].get(name)
+            if not isinstance(choices, list) or isinstance(value, list):
                 continue
-            required = schema["input"].get("required", {})
-            for name, definition in required.items():
-                choices = definition[0]
-                meta = definition[1] if len(definition) > 1 else {}
-                value = node["inputs"].get(name)
-                if not isinstance(choices, list) or isinstance(value, list):
-                    continue
-                if value is None:
-                    continue
-                if meta.get("image_upload"):
-                    # LoadImage.image: the enumerated list is only what is
-                    # sitting in the input folder right now. The checked-in
-                    # placeholder is never a member - animate-portrait.py
-                    # uploads the real portrait and patches the reference in
-                    # before queueing. Same exemption test_3d_workflows.py
-                    # makes, for the same reason.
-                    continue
-                with self.subTest(node=nid, cls=node["class_type"], input=name):
-                    self.assertIn(value, choices)
+            if value is None:
+                continue
+            if meta.get("image_upload"):
+                # LoadImage.image: the enumerated list is only what is
+                # sitting in the input folder right now. The checked-in
+                # placeholder is never a member - animate-portrait.py
+                # uploads the real portrait and patches the reference in
+                # before queueing. Same exemption test_3d_workflows.py
+                # makes, for the same reason.
+                continue
+            with self.subTest(wf=wf, node=nid, input=name):
+                self.assertIn(value, choices)
 
 
 class TestGraphPatching(unittest.TestCase):
@@ -264,13 +344,24 @@ class TestGraphPatching(unittest.TestCase):
             with self.subTest(cls=cls):
                 self.assertEqual(nodes_of(g, cls), {})
 
-    def test_patching_leaves_the_checked_in_workflow_alone(self):
+    def test_the_flag_picks_the_workflow_rather_than_editing_one(self):
+        """--no-pingpong reads the forward file; the loop is not cut at run
+        time, so what ships is what renders."""
+        g = self.build(pingpong=False, frames=65, width=832, height=480)
+        self.assertEqual(set(g), set(forward_graph()))
+        _, i2v = only(g, "WanImageToVideo")
+        self.assertEqual(i2v["inputs"]["length"], 65)
+
+    def test_patching_leaves_the_checked_in_workflows_alone(self):
         """build_graph is called once per run; a shared dict would leak."""
-        before = json.loads(WORKFLOW.read_text(encoding="utf-8"))
-        self.build(width=768, description="mutated")
-        self.assertEqual(json.loads(WORKFLOW.read_text(encoding="utf-8")), before)
-        _, i2v = only(self.build(), "WanImageToVideo")
-        self.assertEqual(i2v["inputs"]["width"], 480)
+        for path, pingpong in ((WORKFLOW, True), (FORWARD, False)):
+            with self.subTest(wf=path.name):
+                before = json.loads(path.read_text(encoding="utf-8"))
+                self.build(width=768, description="mutated", pingpong=pingpong)
+                self.assertEqual(
+                    json.loads(path.read_text(encoding="utf-8")), before)
+                _, i2v = only(self.build(pingpong=pingpong), "WanImageToVideo")
+                self.assertEqual(i2v["inputs"]["width"], 480)
 
 
 class TestArgumentHandling(unittest.TestCase):
@@ -283,6 +374,29 @@ class TestArgumentHandling(unittest.TestCase):
     def test_frames_never_snap_below_a_single_frame(self):
         self.assertEqual(ap.snap_frames(1), 1)
         self.assertEqual(ap.snap_frames(2), 1)
+
+    def test_a_length_can_also_be_snapped_upwards(self):
+        """The one caller matching a length, rather than honouring a ceiling."""
+        self.assertEqual(ap.snap_frames_up(30), 33)
+        self.assertEqual(ap.snap_frames_up(33), 33)
+        self.assertEqual(ap.snap_frames_up(64), 65)
+
+    def test_the_loop_very_nearly_doubles_what_was_generated(self):
+        """One frame is dropped from each end of the reversed half."""
+        self.assertEqual(ap.played_frames(33, True), 64)
+        self.assertEqual(ap.played_frames(49, True), 96)
+
+    def test_playing_forward_shows_exactly_what_was_generated(self):
+        self.assertEqual(ap.played_frames(33, False), 33)
+
+    def test_a_forward_loop_is_as_long_as_the_ping_pong_it_replaces(self):
+        """Within a frame: a ping-pong total is even, a Wan length is odd."""
+        for frames in (25, 33, 49):
+            with self.subTest(frames=frames):
+                forward = ap.forward_frames(frames)
+                self.assertEqual(forward, ap.snap_frames(forward))
+                self.assertLessEqual(
+                    abs(forward - ap.played_frames(frames, True)), 1)
 
     def test_size_snaps_to_the_sixteen_pixel_grid(self):
         self.assertEqual(ap.snap_size(500), 496)
@@ -314,6 +428,31 @@ class TestArgumentHandling(unittest.TestCase):
 
     def test_no_pingpong_turns_the_loop_off(self):
         self.assertFalse(ap.parse_args(["p.png", "--no-pingpong"]).pingpong)
+
+    def test_dropping_the_loop_does_not_halve_the_animation(self):
+        """The whole point of the flag as shipped: same length, no ping-pong.
+
+        Without a frame default of its own, --no-pingpong would render half
+        as much animation as the same command without it.
+        """
+        looped = ap.parse_args(["p.png"])
+        forward = ap.parse_args(["p.png", "--no-pingpong"])
+        self.assertEqual(forward.frames, ap.forward_frames(looped.frames))
+        self.assertLessEqual(
+            abs(ap.played_frames(forward.frames, False)
+                - ap.played_frames(looped.frames, True)), 1)
+
+    def test_an_explicit_frame_count_still_means_frames_generated(self):
+        """--frames is a render cost either way, not a playback length."""
+        for argv in (["p.png", "--frames", "49"],
+                     ["p.png", "--no-pingpong", "--frames", "49"]):
+            with self.subTest(argv=argv):
+                self.assertEqual(ap.parse_args(argv).frames, 49)
+
+    def test_the_background_preset_leaves_the_frame_default_alone(self):
+        """Only the sizes and the prompts are per-preset; length is per-loop."""
+        self.assertEqual(ap.parse_args(["c.png", "--background"]).frames,
+                         ap.parse_args(["p.png"]).frames)
 
     def test_a_seed_of_minus_one_is_replaced_by_a_random_one(self):
         """Two runs with the default seed must not be the same render."""

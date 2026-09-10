@@ -22,6 +22,7 @@ manifest or the output tree. It borrows only the ComfyUI plumbing.
 
     python animate-portrait.py canyon.png --background
     python animate-portrait.py canyon.png --background --roll --seed 7
+    python animate-portrait.py canyon.png --background --no-pingpong
 
 Full documentation: docs/animate-portrait.md
 """
@@ -40,7 +41,16 @@ import uuid
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-WORKFLOW = SCRIPT_DIR / "workflows" / "api" / "Util_Portrait_to_AnimatedWEBP_Wan22_v1.json"
+WORKFLOWS = SCRIPT_DIR / "workflows" / "api"
+WORKFLOW = WORKFLOWS / "Util_Portrait_to_AnimatedWEBP_Wan22_v1.json"
+
+# The same graph with the ping-pong tail cut off: the decode feeds the save
+# node directly. A second checked-in file rather than three deletions from
+# the first, because those three nodes are the graph's only custom-node
+# dependency (KJNodes) - as a file of its own it is a workflow that opens
+# and runs on stock ComfyUI, and it is covered by the same shape tests the
+# looping one is rather than only by a patching test.
+WORKFLOW_FORWARD = WORKFLOWS / "Util_Portrait_to_AnimatedWEBP_Wan22_Forward_v1.json"
 
 # The one table in the NPC generator's file that the NPC generator never
 # rolls: a pool of positive prompts for this script. It lives beside the NPC
@@ -131,6 +141,11 @@ BACKGROUND_NEGATIVE = (
 Preset = collections.namedtuple(
     "Preset", "describe negative tables table width height prefix quality")
 
+# Generated frames, before the loop doubles them: 33 in, a 64-frame 4-second
+# loop out at 16 fps. The forward-only default is derived from this one rather
+# than written down beside it, so raising this raises both.
+DEFAULT_FRAMES = 33
+
 PORTRAIT_PRESET = Preset(
     describe=DEFAULT_DESCRIPTION, negative=DEFAULT_NEGATIVE,
     tables=DEFAULT_TABLES, table=ANIMATION_TABLE,
@@ -198,6 +213,35 @@ def snap_frames(frames):
     return max(1, ((int(frames) - 1) // 4) * 4 + 1)
 
 
+def snap_frames_up(frames):
+    """The nearest frame count Wan will accept, at or above `frames`.
+
+    Rounding the other way, for the one caller that is matching a length
+    rather than honouring a ceiling: a ping-pong total is always even and a
+    Wan length is always odd, so an exact match is arithmetically impossible
+    and the choice is one frame over or three frames under.
+    """
+    return max(1, -(-(int(frames) - 1) // 4) * 4 + 1)
+
+
+def played_frames(frames, pingpong):
+    """How many frames the finished .webp actually shows.
+
+    Ping-pong plays the batch forward and then back minus the frame at each
+    end, so it is very nearly double. Forward-only shows what was generated.
+    """
+    return frames + max(1, frames - 2) if pingpong else frames
+
+
+def forward_frames(frames):
+    """Frames to generate for a forward loop as long as `frames` ping-ponged.
+
+    What makes --no-pingpong a usable default rather than a way to halve the
+    output: without this, dropping the loop silently halves the animation.
+    """
+    return snap_frames_up(played_frames(frames, True))
+
+
 def snap_size(pixels):
     """The nearest multiple of 16 at or below `pixels` (the latent grid)."""
     return max(16, (int(pixels) // 16) * 16)
@@ -220,7 +264,7 @@ def _node(graph, class_type):
     found = [n for n, d in graph.items() if d["class_type"] == class_type]
     if len(found) != 1:
         raise RuntimeError(
-            "%s appears %d times in %s" % (class_type, len(found), WORKFLOW.name))
+            "%s appears %d times in the workflow" % (class_type, len(found)))
     return found[0]
 
 
@@ -228,10 +272,15 @@ def build_graph(image_ref, description, negative, width, height, frames, fps,
                 steps, cfg, seed, prefix, pingpong=True):
     """The checked-in workflow, patched into one job. -> a new graph dict.
 
+    Which of the two workflows is chosen by `pingpong`: they differ only in
+    what sits between the decode and the save, and every patch below applies
+    to both.
+
     Deep-copied from a fresh read every call: the graph is mutated in place
     here, and a shared dict would carry one run's settings into the next.
     """
-    graph = copy.deepcopy(json.loads(WORKFLOW.read_text(encoding="utf-8")))
+    source = WORKFLOW if pingpong else WORKFLOW_FORWARD
+    graph = copy.deepcopy(json.loads(source.read_text(encoding="utf-8")))
 
     graph[_node(graph, "LoadImage")]["inputs"]["image"] = image_ref
 
@@ -262,13 +311,6 @@ def build_graph(image_ref, description, negative, width, height, frames, fps,
         # doubled frame at the turnaround and again at the seam.
         graph[_node(graph, "GetImageRangeFromBatch")]["inputs"].update(
             start_index=1, num_frames=max(1, frames - 2))
-    else:
-        # Dropped, not just bypassed - a dangling node still executes, and
-        # these three are the graph's only custom-node dependency (KJNodes).
-        decode = _node(graph, "VAEDecode")
-        save["images"] = [decode, 0]
-        for cls in ("ReverseImageBatch", "GetImageRangeFromBatch", "ImageBatch"):
-            del graph[_node(graph, cls)]
 
     return graph
 
@@ -362,6 +404,12 @@ def resolve_preset(args):
     args.prefix = preset.prefix
     args.width = snap_size(args.width or args.size or preset.width)
     args.height = snap_size(args.height or args.size or preset.height)
+    # Mode-dependent for the same reason the sizes are preset-dependent: what
+    # the caller cares about is how long the animation runs, and the number of
+    # frames that buys depends on whether the loop is going to double them.
+    if args.frames is None:
+        args.frames = (DEFAULT_FRAMES if args.pingpong
+                       else forward_frames(DEFAULT_FRAMES))
     return args
 
 
@@ -392,8 +440,11 @@ def parse_args(argv=None):
                              "(default: 480; 832x480 with --background)")
     parser.add_argument("--width", type=int, help="override --size")
     parser.add_argument("--height", type=int, help="override --size")
-    parser.add_argument("--frames", type=int, default=33,
-                        help="frames generated, snapped to 4n+1 (default: 33)")
+    parser.add_argument("--frames", type=int,
+                        help="frames generated, snapped to 4n+1 (default: %d, "
+                             "or %d with --no-pingpong, which are the same "
+                             "length played)"
+                             % (DEFAULT_FRAMES, forward_frames(DEFAULT_FRAMES)))
     parser.add_argument("--fps", type=float, default=16.0)
     parser.add_argument("--steps", type=int, default=20)
     parser.add_argument("--cfg", type=float, default=3.5)
@@ -402,7 +453,9 @@ def parse_args(argv=None):
                         help="webp quality 0-100 (default: 90; 80 with "
                              "--background)")
     parser.add_argument("--no-pingpong", dest="pingpong", action="store_false",
-                        help="play forward only; the loop point will show")
+                        help="play forward only, at the same length: --frames "
+                             "defaults to the whole loop rather than half of "
+                             "it, so it costs roughly twice the render")
     parser.add_argument("--dry-run", action="store_true",
                         help="build the job and print it; queue nothing")
     parser.add_argument("--server", help="ComfyUI address (default: probe 8000-8015)")
@@ -432,10 +485,12 @@ def main(argv=None):
     if frames != args.frames:
         print("  frames %d -> %d (Wan takes 4n+1)" % (args.frames, frames))
 
-    total = frames + max(1, frames - 2) if args.pingpong else frames
+    total = played_frames(frames, args.pingpong)
     print("%s -> %s" % (image.name, destination))
-    print("  %dx%d, %d frames -> %d played at %.3g fps (%.1fs), seed %d"
-          % (width, height, frames, total, args.fps, total / args.fps, seed))
+    print("  %dx%d, %d frames -> %d played %s at %.3g fps (%.1fs), seed %d"
+          % (width, height, frames, total,
+             "ping-ponged" if args.pingpong else "forward",
+             args.fps, total / args.fps, seed))
     print("  %s%s" % ("(rolled) " if args.roll else "", args.describe))
 
     if args.dry_run:

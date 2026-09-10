@@ -126,11 +126,18 @@ If you have no background still to animate yet, render one first from the
 `Default Animated Background` section of
 `prompts/scene-background-art-prompts.md`.
 
+By default the animation is played forward and back, so it lands on the frame
+it started on. `--no-pingpong` plays it forward once instead, at the same
+length and about twice the render — the right choice when the motion has a
+direction, like drifting smoke or crossing cloud, that a reversed half would
+give away.
+
 ```
 python animate-portrait.py "Jules Sokolova Portrait.png"
 python animate-portrait.py portrait.png -d "she laughs and looks away"
 python animate-portrait.py portrait.png --roll --seed 7
 python animate-portrait.py canyon.png --background --roll --seed 7
+python animate-portrait.py canyon.png --background --no-pingpong
 ```
 
 ### Tests

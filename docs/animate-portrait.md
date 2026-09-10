@@ -32,8 +32,9 @@ you run by hand on any image.
     `wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors` in `models/diffusion_models`
   - `wan_2.1_vae.safetensors` in `models/vae`
   - `umt5_xxl_fp8_e4m3fn_scaled.safetensors` in `models/text_encoders`
-- **KJNodes**, for the ping-pong loop only. `--no-pingpong` drops those three
-  nodes from the graph and runs on stock ComfyUI nodes alone.
+- **KJNodes**, for the ping-pong loop only. `--no-pingpong` renders a second
+  checked-in workflow that has no such nodes in it, so that mode runs on stock
+  ComfyUI alone.
 
 The VAE is the Wan **2.1** one on purpose. `wan2.2_vae` belongs to the 5B TI2V
 checkpoint; the 14B high/low-noise I2V pair this workflow uses is a 2.1-VAE
@@ -57,6 +58,9 @@ python animate-portrait.py portrait.png --frames 49 --size 640
 
 # draw the description from the tables file's ## Animation table
 python animate-portrait.py portrait.png --roll --seed 7
+
+# a background that runs once forward instead of ping-ponging, same length
+python animate-portrait.py canyon.png --background --no-pingpong
 
 # build the job and print the graph without queueing anything
 python animate-portrait.py portrait.png --dry-run
@@ -212,9 +216,35 @@ turnaround and again at the seam.
 This doubles playback length for free. The default 33 generated frames become a
 64-frame, 4-second loop at 16 fps.
 
-`--no-pingpong` plays forward once. Half the file size, and the only reason to
-use it is if the motion you asked for genuinely ends somewhere other than where
-it began.
+### Playing forward instead
+
+Ping-pong is wrong for some motion. Smoke that drifts left and then, visibly,
+right again reads as a video being scrubbed rather than as weather; so does
+cloud crossing a sky, a rotating fan, or anything else with a direction. That
+is a background problem more often than a portrait one, because a blink and a
+head tilt genuinely do return to where they started and drifting weather never
+does.
+
+`--no-pingpong` renders a second workflow —
+`Util_Portrait_to_AnimatedWEBP_Wan22_Forward_v1.json` — which is the same graph
+with the reverse-trim-rejoin tail replaced by a save node wired straight to the
+decode. Same models, same seed, same two-stage denoise; only the saving
+differs. It is a separate file rather than three deletions at run time because
+those three nodes are the only KJNodes in the graph, and as a file of its own
+it opens and runs on stock ComfyUI.
+
+The loop is the same length either way. `--frames` defaults to `33` when the
+loop doubles it and `65` when it does not, so both modes produce a roughly
+4-second animation at 16 fps. They land one frame apart, not exactly equal: a
+ping-pong total is always even and a Wan length is always odd, so 64 played
+frames become 65.
+
+That length is not free the second time. Ping-pong buys its second half by
+replaying frames that are already rendered; forward-only has to render them,
+so the same 4 seconds costs roughly twice the time and produces roughly twice
+the file. Passing `--frames` yourself overrides the default in both modes, and
+means frames generated in both — `--no-pingpong --frames 33` is a 2-second
+animation, not a 4-second one.
 
 ## Options
 
@@ -228,13 +258,13 @@ it began.
 | `--out` | `<image>-animated.webp` | output path |
 | `--size` | `480` | square render size, snapped down to a multiple of 16 |
 | `--width`, `--height` | — | override `--size`; `832`×`480` with `--background` |
-| `--frames` | `33` | frames generated, snapped down to `4n+1` |
+| `--frames` | `33` | frames generated, snapped down to `4n+1`; `65` with `--no-pingpong` |
 | `--fps` | `16` | playback rate written into the webp |
 | `--steps` | `20` | total sampler steps, split evenly between the two passes |
 | `--cfg` | `3.5` | |
 | `--seed` | `-1` (roll one) | pin it to reproduce a result |
 | `--quality` | `90` | webp quality, 0–100; `80` with `--background` |
-| `--no-pingpong` | off | play forward only |
+| `--no-pingpong` | off | play forward only, at the same length and about twice the render |
 | `--dry-run` | off | print the job, queue nothing |
 | `--server` | probe 8000–8015 | e.g. `127.0.0.1:8000` |
 | `--timeout` | `3600` | seconds to wait for the render |
@@ -262,11 +292,16 @@ Raising `--frames` or `--size` raises the render time roughly in proportion.
 Start at the defaults, find a description and a seed you like, and only then
 turn the quality up on that seed.
 
+`--no-pingpong` roughly doubles both numbers at the shipped defaults, because
+it renders the frames ping-pong gets by replaying.
+
 The background number is worth a second look for a different reason: 3.9 MB is
 a lot of wallpaper for a page that fetches it on every load. `--quality` is a
 weak lever here — dropping it from 80 to 50 saves under a third — so if the
 file needs to be smaller, cut `--frames` instead. 25 frames still ping-pongs
-into a 48-frame, 3-second loop.
+into a 48-frame, 3-second loop. A forward-only background is the expensive
+choice on both counts, and worth it only when the motion has a direction the
+reverse would give away.
 
 ## Troubleshooting
 
@@ -321,7 +356,9 @@ fp8-scaled, so they have no such alternative.
 ## How it works
 
 `workflows/api/Util_Portrait_to_AnimatedWEBP_Wan22_v1.json` is the graph; the
-script patches it and queues it.
+script patches it and queues it. `--no-pingpong` patches and queues
+`Util_Portrait_to_AnimatedWEBP_Wan22_Forward_v1.json` instead, which is the
+same file through step 3 and skips step 4.
 
 1. The portrait is uploaded to ComfyUI's input folder (rather than referenced
    by path — the server may not share a filesystem with this script).
@@ -332,7 +369,7 @@ script patches it and queues it.
    low-noise UNet finishes. Same seed, same step count, handover at the
    midpoint — it is one denoise across two models, not two renders.
 4. The decoded frames are reversed, trimmed and rejoined into the ping-pong
-   loop.
+   loop. `--no-pingpong` has no such nodes; the decode feeds the save directly.
 5. `SaveAnimatedWEBP` writes it, and the script downloads it to `--out`.
 
 ## Tests
