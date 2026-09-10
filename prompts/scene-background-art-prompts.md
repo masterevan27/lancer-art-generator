@@ -29,3 +29,63 @@ CFG 1.0, 8 steps, Euler, Simple scheduler, no negative prompt. Generate wide —
 ### Note on the reference
 
 The source image is a soft, heavily saturated all-blue night scene with bright green foliage and glossy anime-style rendering. The prompt above keeps everything load-bearing about it — the circular porthole with planetrise, the ivy framing it, the shelf clutter and plants, the reclining pilot on the bunk, the red ceiling panel, the rug — but swaps the rendering for the campaign's black linework and halftone screentone, and reins the palette back to grey/olive/rust plus the teal-green accent so it sits in the same visual family as the canyon skirmish piece rather than reading as standalone fan art.
+
+## Default Animated Background — Dropship Yard at Dusk
+
+The starting point for `animate-portrait.py --background` when you don't have a
+background of your own yet. Composed for that job rather than as a standalone
+piece: a wide, deep frontier landing yard with the interest pushed to the edges
+and the horizon, a quiet middle where a chat panel will sit, and smoke, cloud,
+dust and running lights scattered through it so the Wan pass has something to
+move. Nobody is in the frame on purpose — a background this will sit behind
+already has a portrait in front of it.
+
+> A wide, cinematic establishing shot of a military dropship landing yard on a
+> dusty frontier world at dusk, viewed from ground level across an open apron of
+> cracked concrete. Two heavy dropships sit on landing struts toward the left and
+> right edges of the frame, their rear ramps lowered, blocky hulls stencilled with
+> unit codes and hazard chevrons, running lights glowing along their spines. Between
+> them the apron opens out empty toward the horizon, marked with faded guidance lines
+> and scattered cargo pallets, crates and coiled cable pushed to the sides. A row of
+> corrugated prefab hangars and fuel drums lines the middle distance on the left,
+> with tall floodlight masts rising above them, their beams cutting hard cones through
+> the dust. On the right a communications mast and a cluster of antennas stand against
+> the sky. Thin columns of smoke rise from a burn barrel and from something venting
+> beyond the hangars, drifting sideways in a low wind, and loose dust hangs in the air
+> at knee height across the whole apron. The horizon is a low broken ridgeline under a
+> deep dusk sky, banded cloud stretched across it and catching the last light, a large
+> pale moon low above the ridge and the first stars showing higher up. Rendered in bold
+> black linework with halftone screentone dot shading worked into every shadow — under
+> the dropship hulls, along the hangar corrugations, in the dust and smoke — high
+> contrast throughout. Keep the palette restrained: greys, olive drab and rust on the
+> hulls, hangars and concrete, with a teal-green atmospheric haze as the dominant cool
+> tone and the warm amber of the floodlights and running lights as the only saturated
+> warm note, rather than a broad rainbow of bright hues. Cinematic low sidelight rakes
+> across the apron and throws long hard-edged shadows toward the viewer. Wide landscape
+> composition, deep perspective, no people or figures anywhere in the frame, quiet and
+> waiting rather than mid-battle, grounded rather than glossy.
+
+### Settings
+
+CFG 1.0, 8 steps, Euler, Simple scheduler, no negative prompt. Generate at
+1920×1080 or another 16:9 landscape ratio.
+
+### Note on animating it
+
+Render the still, then feed it to the animator. Two commands, because the still
+is a Krea 2 job and the animation is a Wan job:
+
+    python generate-art.py --prompts prompts/scene-background-art-prompts.md --filter Default-Animated-Background --width 1920 --height 1080 --output-prefix LancerBackgrounds
+
+    python animate-portrait.py "<the rendered png>" --background --roll --seed 7
+
+`--filter` is a regex over the section slug, so it also takes a partial name.
+Add `--download-to <folder>` to the first command to get the still out of
+ComfyUI's output tree and somewhere you can point the second one at.
+
+The `--roll` draws from the `## Background Animation` table in
+`prompts/scene-and-spaceship-tables.md`. Every element this prompt puts in the
+frame, smoke and dust and cloud and floodlights and running lights, is
+something a bullet in that table names, which is why they were put there. See
+`docs/animate-portrait.md` for what the render costs and where the `.webp`
+lands.

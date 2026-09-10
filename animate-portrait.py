@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""Turn one portrait into a looping animated .webp through Wan 2.2 I2V.
+"""Turn one image into a looping animated .webp through Wan 2.2 I2V.
 
-Point it at an image, get back a short animation of that same face - a blink,
-a faint smile, a few degrees of head tilt - that loops back to the source
-frame without a visible cut.
+Point it at a portrait, get back a short animation of that same face - a
+blink, a faint smile, a few degrees of head tilt - that loops back to the
+source frame without a visible cut.
+
+Point it at a scene with --background and the same machinery animates a
+landscape instead: drifting smoke, flickering neon, cloud crossing a sky,
+sized and quantised for a SillyTavern chat background.
 
 A standalone entry point rather than a flag on generate-npc.py: this takes any
 image on disk, not a rolled NPC, and it has no use for the tables, the
@@ -16,9 +20,13 @@ manifest or the output tree. It borrows only the ComfyUI plumbing.
     python animate-portrait.py portrait.png --roll --seed 7
     python animate-portrait.py portrait.png --dry-run
 
+    python animate-portrait.py canyon.png --background
+    python animate-portrait.py canyon.png --background --roll --seed 7
+
 Full documentation: docs/animate-portrait.md
 """
 import argparse
+import collections
 import copy
 import importlib.util
 import json
@@ -41,6 +49,12 @@ WORKFLOW = SCRIPT_DIR / "workflows" / "api" / "Util_Portrait_to_AnimatedWEBP_Wan
 # authored from one place.
 DEFAULT_TABLES = SCRIPT_DIR / "prompts" / "npc-generator-tables.md"
 ANIMATION_TABLE = "Animation"
+
+# The same arrangement one file over, for --background. Scene motion is not
+# an NPC trait, so its pool lives with the other subject-free scene tables
+# rather than in the NPC file, and the Tables tab edits it the same way.
+BACKGROUND_TABLES = SCRIPT_DIR / "prompts" / "scene-and-spaceship-tables.md"
+BACKGROUND_TABLE = "Background Animation"
 
 
 def _load_art():
@@ -86,9 +100,55 @@ DEFAULT_NEGATIVE = (
     "low quality, worst quality"
 )
 
+# The same job for a landscape. Every clause moves weather, light, machinery
+# or sky rather than a subject, because a background has no subject to move -
+# and because a clause about a person is an invitation for Wan to draw one
+# into an empty frame. The last clause pins the camera for the same reason it
+# does above.
+BACKGROUND_DESCRIPTION = (
+    "Smoke, dust and thin haze drift slowly across the scene. Cloud slides "
+    "gently across the sky, and distant lights flicker and pulse. Loose "
+    "cables, banners and stray debris stir in a light wind. The buildings, "
+    "terrain and machinery stay exactly where they are, and the camera is "
+    "locked off and does not move."
+)
 
-def load_descriptions(tables_path):
-    """The `## Animation` bullets of a tables file, weights expanded.
+# The portrait guard's middle clause is about a face keeping its identity,
+# which a canyon does not have. What breaks a background instead is its
+# geometry crawling - walls leaning, a horizon sliding - so the guard is
+# rewritten around that and around the camera staying put.
+BACKGROUND_NEGATIVE = (
+    "static, frozen, still image, no motion, camera pan, camera zoom, camera "
+    "shake, dolly, parallax, warping geometry, melting buildings, shifting "
+    "horizon, crawling terrain, morphing, cut, jump cut, text, watermark, "
+    "blurry, low quality, worst quality"
+)
+
+# What --background actually is: one bundle of defaults, swapped as a set.
+# Everything downstream of parse_args - the upload, the graph, the loop, the
+# download - is the same job either way, which is why this is a flag on this
+# script rather than a second script beside it.
+Preset = collections.namedtuple(
+    "Preset", "describe negative tables table width height prefix quality")
+
+PORTRAIT_PRESET = Preset(
+    describe=DEFAULT_DESCRIPTION, negative=DEFAULT_NEGATIVE,
+    tables=DEFAULT_TABLES, table=ANIMATION_TABLE,
+    width=480, height=480, prefix="AnimatedPortraits", quality=90)
+
+# 832x480 is Wan 2.2's native landscape bucket, and SillyTavern scales a
+# background to the window with CSS - so rendering it larger buys nothing but
+# render time. Quality 80 rather than the portrait's 90 because this file is
+# fetched on every page load of the chat UI, and a 64-frame webp at 90 is
+# several megabytes of wallpaper.
+BACKGROUND_PRESET = Preset(
+    describe=BACKGROUND_DESCRIPTION, negative=BACKGROUND_NEGATIVE,
+    tables=BACKGROUND_TABLES, table=BACKGROUND_TABLE,
+    width=832, height=480, prefix="AnimatedBackgrounds", quality=80)
+
+
+def load_descriptions(tables_path, heading=ANIMATION_TABLE):
+    """The `## <heading>` bullets of a tables file, weights expanded.
 
     A five-line reading of generate-npc.py's parse_tables() rather than an
     import of it - that module is 4,600 lines of roll tables, and this needs
@@ -104,9 +164,9 @@ def load_descriptions(tables_path):
     found = []
     inside = False
     for line in tables_path.read_text(encoding="utf-8").splitlines():
-        heading = re.match(r"^##\s+(?!#)\s*(.*?)\s*$", line)
-        if heading:
-            inside = heading.group(1) == ANIMATION_TABLE
+        match = re.match(r"^##\s+(?!#)\s*(.*?)\s*$", line)
+        if match:
+            inside = match.group(1) == heading
             continue
         bullet = re.match(r"^-\s+(.*?)\s*$", line)
         if inside and bullet:
@@ -117,7 +177,7 @@ def load_descriptions(tables_path):
     if not found:
         raise SystemExit(
             "%s has no '## %s' table to roll a description from"
-            % (tables_path.name, ANIMATION_TABLE))
+            % (tables_path.name, heading))
     return found
 
 
@@ -286,25 +346,50 @@ def save_result(comfy, record, destination):
     return data
 
 
+def resolve_preset(args):
+    """Fill whatever the caller left unset from the chosen preset.
+
+    Applied after parsing rather than as argparse defaults because which
+    default is right is not known until --background has been seen. Every
+    option keeps its "unset" value as None so an explicit flag is always
+    distinguishable from a default, and so it always wins.
+    """
+    preset = BACKGROUND_PRESET if args.background else PORTRAIT_PRESET
+    for name in ("describe", "negative", "tables", "quality"):
+        if getattr(args, name) is None:
+            setattr(args, name, getattr(preset, name))
+    args.table = preset.table
+    args.prefix = preset.prefix
+    args.width = snap_size(args.width or args.size or preset.width)
+    args.height = snap_size(args.height or args.size or preset.height)
+    return args
+
+
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
-        description="Animate a portrait into a looping .webp via Wan 2.2 I2V.")
-    parser.add_argument("image", help="the portrait to animate")
+        description="Animate an image into a looping .webp via Wan 2.2 I2V.")
+    parser.add_argument("image", help="the portrait or scene to animate")
+    parser.add_argument(
+        "--background", action="store_true",
+        help="animate a scene rather than a face: widescreen, scene motion, "
+             "and --roll reads the '## %s' table" % BACKGROUND_TABLE)
     motion = parser.add_mutually_exclusive_group()
     motion.add_argument(
-        "-d", "--describe", default=DEFAULT_DESCRIPTION,
-        help="what the character does; defaults to a subtle idle motion")
+        "-d", "--describe",
+        help="what moves; defaults to a subtle idle motion for the preset")
     motion.add_argument(
         "--roll", action="store_true",
-        help="draw the description from the tables file's '## %s' table "
-             "instead; --seed pins the draw" % ANIMATION_TABLE)
+        help="draw the description from the preset's table instead; "
+             "--seed pins the draw")
     parser.add_argument(
-        "--tables", type=Path, default=DEFAULT_TABLES,
-        help="the tables file --roll reads (default: %s)" % DEFAULT_TABLES.name)
-    parser.add_argument("--negative", default=DEFAULT_NEGATIVE)
+        "--tables", type=Path,
+        help="the tables file --roll reads (default: %s, or %s with "
+             "--background)" % (DEFAULT_TABLES.name, BACKGROUND_TABLES.name))
+    parser.add_argument("--negative")
     parser.add_argument("--out", help="output .webp (default: <image>-animated.webp)")
-    parser.add_argument("--size", type=int, default=480,
-                        help="square render size, snapped to 16 (default: 480)")
+    parser.add_argument("--size", type=int,
+                        help="square render size, snapped to 16 "
+                             "(default: 480; 832x480 with --background)")
     parser.add_argument("--width", type=int, help="override --size")
     parser.add_argument("--height", type=int, help="override --size")
     parser.add_argument("--frames", type=int, default=33,
@@ -313,8 +398,9 @@ def parse_args(argv=None):
     parser.add_argument("--steps", type=int, default=20)
     parser.add_argument("--cfg", type=float, default=3.5)
     parser.add_argument("--seed", type=int, default=-1, help="-1 rolls one")
-    parser.add_argument("--quality", type=int, default=90,
-                        help="webp quality 0-100 (default: 90)")
+    parser.add_argument("--quality", type=int,
+                        help="webp quality 0-100 (default: 90; 80 with "
+                             "--background)")
     parser.add_argument("--no-pingpong", dest="pingpong", action="store_false",
                         help="play forward only; the loop point will show")
     parser.add_argument("--dry-run", action="store_true",
@@ -322,7 +408,7 @@ def parse_args(argv=None):
     parser.add_argument("--server", help="ComfyUI address (default: probe 8000-8015)")
     parser.add_argument("--timeout", type=float, default=3600.0,
                         help="seconds to wait for the render (default: 3600)")
-    return parser.parse_args(argv)
+    return resolve_preset(parser.parse_args(argv))
 
 
 def main(argv=None):
@@ -332,8 +418,7 @@ def main(argv=None):
     if not args.dry_run and not image.exists():
         raise SystemExit("no such image: %s" % image)
 
-    width = snap_size(args.width or args.size)
-    height = snap_size(args.height or args.size)
+    width, height = args.width, args.height
     frames = snap_frames(args.frames)
     seed = resolve_seed(args.seed)
     destination = output_path(image, args.out)
@@ -341,7 +426,8 @@ def main(argv=None):
     # After the seed is settled, so one --seed reproduces both the draw and
     # the render it went into.
     if args.roll:
-        args.describe = roll_description(load_descriptions(args.tables), seed)
+        args.describe = roll_description(
+            load_descriptions(args.tables, args.table), seed)
 
     if frames != args.frames:
         print("  frames %d -> %d (Wan takes 4n+1)" % (args.frames, frames))
@@ -357,7 +443,7 @@ def main(argv=None):
             image_ref="<uploaded at run time>", description=args.describe,
             negative=args.negative, width=width, height=height, frames=frames,
             fps=args.fps, steps=args.steps, cfg=args.cfg, seed=seed,
-            prefix="AnimatedPortraits/" + image.stem, pingpong=args.pingpong)
+            prefix=args.prefix + "/" + image.stem, pingpong=args.pingpong)
         print(json.dumps(graph, indent=2))
         return 0
 
@@ -369,7 +455,7 @@ def main(argv=None):
         image_ref=ref, description=args.describe, negative=args.negative,
         width=width, height=height, frames=frames, fps=args.fps,
         steps=args.steps, cfg=args.cfg, seed=seed,
-        prefix="AnimatedPortraits/" + image.stem, pingpong=args.pingpong)
+        prefix=args.prefix + "/" + image.stem, pingpong=args.pingpong)
     graph[_node(graph, "SaveAnimatedWEBP")]["inputs"]["quality"] = args.quality
 
     started = time.time()

@@ -1,14 +1,22 @@
 # animate-portrait.py
 
-Turns a portrait image into a looping animated `.webp` — the same face, alive:
-a slow blink, a few degrees of head tilt, the start of a smile. Point it at any
-image on disk and it writes the animation next to it.
+Turns an image into a looping animated `.webp`. Point it at a portrait and you
+get the same face, alive: a slow blink, a few degrees of head tilt, the start of
+a smile. Point it at a scene with `--background` and you get a living
+establishing shot instead — drifting smoke, moving cloud, flickering lights —
+sized for a SillyTavern chat background. Either way it writes the animation next
+to the source image.
 
 It is a standalone entry point rather than a flag on `generate-npc.py` because
 it takes an image, not a rolled NPC. It has no use for the tables, the manifest
 or the output tree, and it never writes to any of them. The only thing it
 borrows is `generate-art.py`'s ComfyUI plumbing — the client and the port
 probe.
+
+The name is now narrower than the script. `--background` is a flag rather than a
+second script because everything below the defaults — the upload, the graph, the
+two-stage denoise, the ping-pong loop, the download — is one job either way, and
+because the filename is referenced from `lancer-npc-import-gui`'s settings.
 
 `generate-npc.py` never calls it. `lancer-npc-import-gui`'s NPC page does -
 its Animated portrait panel runs this script over the NPC's portrait with a
@@ -52,6 +60,10 @@ python animate-portrait.py portrait.png --roll --seed 7
 
 # build the job and print the graph without queueing anything
 python animate-portrait.py portrait.png --dry-run
+
+# animate a background instead: widescreen, scene motion, scene table
+python animate-portrait.py canyon.png --background
+python animate-portrait.py canyon.png --background --roll --seed 7
 ```
 
 The output defaults to `<image name>-animated.webp` in the same folder as the
@@ -105,6 +117,90 @@ the head turn and the hair moving. That still reads as alive, but if you want
 the motion to be about the expression, either say so in `-d` or animate a
 portrait that shows the face.
 
+## Backgrounds
+
+`--background` swaps one bundle of defaults as a set. Nothing else about the
+run changes.
+
+| | portrait | `--background` |
+|---|---|---|
+| render size | 480×480 | 832×480 |
+| motion prompt | breathe, blink, faint smile | smoke, cloud, lights, wind |
+| negative prompt | guards the face's identity | guards the geometry from crawling |
+| `--roll` reads | `## Animation` in `npc-generator-tables.md` | `## Background Animation` in `scene-and-spaceship-tables.md` |
+| ComfyUI output folder | `AnimatedPortraits/` | `AnimatedBackgrounds/` |
+| `--quality` | 90 | 80 |
+
+Every one of those is still overridable. `--background --size 640` renders
+square, `--background -d "..."` writes its own motion, `--background --tables
+other.md` reads someone else's pool.
+
+832×480 is Wan 2.2's native landscape bucket, and SillyTavern scales a
+background to the window with CSS, so rendering larger buys render time and
+nothing else. Quality drops to 80 for the same kind of reason: the chat UI
+fetches this file on every page load, and a 64-frame 832×480 webp at quality 90
+is several megabytes of wallpaper.
+
+### The `## Background Animation` table
+
+The scene-side twin of `## Animation`, living in
+`prompts/scene-and-spaceship-tables.md` because scene motion is not an NPC
+trait. Same format, same `--seed` reproducibility, edited by the import GUI's
+Tables tab like any other.
+
+Its bullets follow one extra rule the portrait table does not need: **none of
+them names a subject.** No character, no figure, no pronoun, no face or hair.
+A background has nobody in it, and a clause about a person is an invitation for
+Wan to draw one into an empty frame. What the bullets do name is weather, light,
+machinery and sky — smoke, cloud, rain, snow, embers, neon, holographic
+readouts, searchlights, a dropship crossing the far distance — plus a clause
+saying the buildings and terrain hold still, because the way an animated
+establishing shot fails is geometry that crawls. A test enforces the
+subject-free rule and the camera-lock clause, so a bullet that breaks either
+fails the suite rather than a render.
+
+### If you have no background to animate yet
+
+`--background` takes an image, same as the portrait path. To get one, render
+the `Default Animated Background` section of
+`prompts/scene-background-art-prompts.md` first — a wide dusk landing yard
+composed for this job, with a quiet middle where the chat panel sits and plenty
+of smoke, dust, cloud and lights at the edges for the Wan pass to move.
+
+```
+python generate-art.py --prompts prompts/scene-background-art-prompts.md --filter Default-Animated-Background --width 1920 --height 1080 --download-to G:\art\backgrounds
+python animate-portrait.py "G:\art\backgrounds\<the rendered png>" --background --roll --seed 7
+```
+
+Two commands rather than one because the still is a Krea 2 job and the
+animation is a Wan job. Any wide image works here; the shipped prompt is a
+starting point, not a requirement.
+
+### Installing it in SillyTavern
+
+Copy the finished `.webp` into SillyTavern's backgrounds folder, which for the
+default profile is:
+
+```
+<SillyTavern>/data/default-user/backgrounds/
+```
+
+Then open **User Settings**, find the **Character Handling** group in the
+right-hand column, and tick **Animated background thumbnails**. That checkbox
+matters more than its tooltip admits: with it off, SillyTavern substitutes a
+frozen still frame for the applied background, not just for the picker grid.
+Refresh the page, open the background menu, and pick the new file. Use the lock
+button there while you are in a particular chat to pin it to that chat rather
+than globally.
+
+Character avatars are a different story and no file you produce here will help
+with them. SillyTavern re-encodes every uploaded avatar to a static PNG,
+because the character card format stores its JSON in a PNG text chunk. An
+animated avatar is flattened to its first frame on upload. The nearest
+equivalent is an expression sprite, which is served from disk untouched: drop
+the `.webp` into `data/default-user/characters/<Character Name>/` as
+`neutral.webp` and enable the Character Expressions extension.
+
 ## The loop
 
 The animation is generated forward, then played forward and back — so it ends
@@ -124,19 +220,20 @@ it began.
 
 | Flag | Default | |
 |---|---|---|
+| `--background` | off | animate a scene rather than a face; swaps every default marked below |
 | `-d`, `--describe` | the idle motion above | the positive prompt |
-| `--roll` | off | draw the prompt from the tables file's `## Animation` table instead of `-d` |
-| `--tables` | `prompts/npc-generator-tables.md` | the file `--roll` reads |
-| `--negative` | a static/identity-drift guard | the negative prompt |
+| `--roll` | off | draw the prompt from the preset's table instead of `-d` |
+| `--tables` | `prompts/npc-generator-tables.md` | the file `--roll` reads; `scene-and-spaceship-tables.md` with `--background` |
+| `--negative` | a static/identity-drift guard | the negative prompt; a static/crawling-geometry guard with `--background` |
 | `--out` | `<image>-animated.webp` | output path |
 | `--size` | `480` | square render size, snapped down to a multiple of 16 |
-| `--width`, `--height` | — | override `--size` for a non-square render |
+| `--width`, `--height` | — | override `--size`; `832`×`480` with `--background` |
 | `--frames` | `33` | frames generated, snapped down to `4n+1` |
 | `--fps` | `16` | playback rate written into the webp |
 | `--steps` | `20` | total sampler steps, split evenly between the two passes |
 | `--cfg` | `3.5` | |
 | `--seed` | `-1` (roll one) | pin it to reproduce a result |
-| `--quality` | `90` | webp quality, 0–100 |
+| `--quality` | `90` | webp quality, 0–100; `80` with `--background` |
 | `--no-pingpong` | off | play forward only |
 | `--dry-run` | off | print the job, queue nothing |
 | `--server` | probe 8000–8015 | e.g. `127.0.0.1:8000` |
@@ -154,11 +251,22 @@ ComfyUI swaps them at the handover and the first run of a session also pays to
 load them from disk.
 
 Expect **minutes, not seconds**, at the defaults. Measured on the campaign
-stack — an RTX 3080 12 GB with 32 GB of system RAM, ~13 GB of it free — a
-default 480x480 / 33-frame render took **198 seconds**, both model loads
-included. Raising `--frames` or `--size` raises it roughly in proportion.
+stack — an RTX 3080 12 GB with 32 GB of system RAM — both model loads included:
+
+| preset | render | output |
+|---|---|---|
+| portrait, 480×480, 33 frames | 198 s (~13 GB RAM free) | — |
+| `--background`, 832×480, 33 frames | 364 s (~4.9 GB RAM free) | 3.9 MB |
+
+Raising `--frames` or `--size` raises the render time roughly in proportion.
 Start at the defaults, find a description and a seed you like, and only then
 turn the quality up on that seed.
+
+The background number is worth a second look for a different reason: 3.9 MB is
+a lot of wallpaper for a page that fetches it on every load. `--quality` is a
+weak lever here — dropping it from 80 to 50 saves under a third — so if the
+file needs to be smaller, cut `--frames` instead. 25 frames still ping-pongs
+into a 48-frame, 3-second loop.
 
 ## Troubleshooting
 
@@ -185,7 +293,9 @@ bytes`, i.e. ComfyUI could not allocate 15 MB.
 
 Freeing memory fixed it: the same portrait, the same seed, with ~13 GB free
 instead of ~4.6 GB, rendered in 198 seconds. Somewhere between those two
-figures is the floor for a default run on a 32 GB machine.
+figures is the floor for a default run on a 32 GB machine, and it is a narrow
+gap — an 832×480 `--background` render later completed cleanly with ~4.9 GB
+free. Treat anything under ~5 GB as a coin flip rather than a hard failure.
 
 **The fix is to free RAM**, in rough order of effort:
 
@@ -229,6 +339,8 @@ script patches it and queues it.
 
 ```
 python -m unittest test.test_animate_portrait
+python -m unittest test.test_animation_table
+python -m unittest test.test_background_animation_table
 ```
 
 The graph half runs anywhere. The live half re-derives every required input

@@ -2,8 +2,10 @@
 
 Roll tables for generators that don't exist yet — a mech generator and a
 spaceship generator — plus any future use of environment shots behind an NPC.
-Nothing reads this file today; it's staged ahead of those scripts the way
-`mech-catalogue-art-prompts.md` is staged ahead of authored mech art.
+Only **Background Animation** is read today, by
+`animate-portrait.py --background --roll`; the rest is staged ahead of those
+scripts the way `mech-catalogue-art-prompts.md` is staged ahead of authored
+mech art.
 
 Same convention as `npc-generator-tables.md`: every `## Heading` is a table,
 every `-` bullet is one option, and a bullet may start `xN ` to weight it N
@@ -18,6 +20,11 @@ generator that needs the NPC table's tighter portrait-composition contract
 (opening phrase paired with scene, weather gating, zero-g staging) should keep
 using `Backdrop` in `npc-generator-tables.md` instead; this table is the
 looser, general-purpose one.
+
+**Background Animation** entries are Wan 2.2 motion prompts rather than
+scene descriptions — what moves in a finished background still, not what is
+in it. See that table's own comment for the rules an added bullet has to
+keep, and `docs/animate-portrait.md` for the script that rolls them.
 
 **Spaceships** entries describe one vessel each — hull shape, markings,
 lighting — the way `Outfit` or `Gear` describe one item, so a future generator
@@ -141,7 +148,7 @@ can roll one and drop it into its own prompt template.
   the hull, running lights picking it out against the planet's curve below.
 - A dark diamond-hulled gunship settling into a floodlit dock at night,
   twin belly thrusters glowing amber beneath it, antennae bristling from
-  the upper hull and running lights blinking against falling snow.
+  the upper hull and its running lights flashing slowly against falling snow.
 - A hulking grey angular transport perched on a mountaintop landing
   platform, its blunt prow overhanging the edge, cable-strung support
   towers rising alongside and a second ship crossing the sky beyond.
@@ -172,3 +179,37 @@ can roll one and drop it into its own prompt template.
 - A sleek matte-black gunship raised on service jacks in a bright interior
   hangar, its rear engine nacelle pulled and sparking beneath an overhead
   gantry crane, yellow-suited ground crew working around it.
+
+## Background Animation
+
+<!-- Positive prompts for `animate-portrait.py --background` (Wan 2.2
+     image-to-video), one per bullet. The scene-side twin of the `##
+     Animation` table in npc-generator-tables.md, and it lives here rather
+     than there because scene motion is not an NPC trait.
+
+     Written to animate a landscape without changing what the landscape is.
+     Wan moves what the prompt names, so every bullet spends its motion on
+     weather, light, machinery and sky - smoke, cloud, rain, snow, embers,
+     neon, holographic readouts, searchlights, a ship crossing the distance -
+     and none of them names a subject. That last part is load-bearing: a
+     background has nobody in it, and a clause about a character is an
+     invitation for Wan to draw one into an empty frame. Buildings, terrain
+     and hardware are named only to say they hold still, because the failure
+     mode of an animated establishing shot is geometry that crawls.
+
+     The closing clause pins the camera, for the reason the `## Animation`
+     table gives. Keep it on anything you add, and keep each bullet to one
+     line - the parser reads the first line of a bullet and nothing else. -->
+
+- smoke drifts slowly across the scene and thin dust hangs in the air. distant fires flicker along the horizon. the buildings and terrain hold still. the camera is locked off and does not move.
+- low cloud slides across the sky and long shadows creep slowly over the ground. loose cables and hanging wires sway in the wind. the camera is locked off and does not move.
+- rain falls steadily and runs off every hard edge in the frame. puddles ripple and the reflected lights shiver in them. the camera is locked off and does not move.
+- neon signage flickers and pulses through heavy haze. steam vents from grates and drifts slowly upward. the camera is locked off and does not move.
+- snow falls gently and settles over the wreckage. wind lifts loose powder off the ground in slow curls. the camera is locked off and does not move.
+- embers rise from burning debris and drift out of frame. heat shimmer distorts the air above the fires. the camera is locked off and does not move.
+- a dropship descends slowly through the haze in the far distance, its running lights flashing slowly. dust stirs on the ground far below it. the camera is locked off and does not move.
+- stars drift almost imperceptibly beyond the viewport. a distant vessel crosses the void, engine glow pulsing steadily. the camera is locked off and does not move.
+- holographic readouts scroll and flicker across the console screens. indicator lights pulse in sequence along the bulkhead. the camera is locked off and does not move.
+- searchlights sweep slowly across the compound and across the low cloud above it. dust drifts through the beams. the camera is locked off and does not move.
+- silent tracer fire and muzzle flashes flicker along a distant ridgeline. columns of smoke lean slowly in the wind. the camera is locked off and does not move.
+- tall grass and hanging vines stir in a slow breeze. shafts of light shift as cloud passes overhead. the camera is locked off and does not move.

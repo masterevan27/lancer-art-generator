@@ -117,10 +117,20 @@ never rolls, written to move hair, clothing and backdrop while the figure
 holds still. Needs a running ComfyUI with the Wan 2.2 I2V models. See
 [docs/animate-portrait.md](docs/animate-portrait.md).
 
+`--background` points the same machinery at a scene instead of a face:
+widescreen, a motion prompt that moves smoke and cloud and lights rather
+than a mouth, and `--roll` reading the `## Background Animation` table in
+`prompts/scene-and-spaceship-tables.md`. The output is a looping `.webp`
+sized and quantised to drop straight into SillyTavern's backgrounds folder.
+If you have no background still to animate yet, render one first from the
+`Default Animated Background` section of
+`prompts/scene-background-art-prompts.md`.
+
 ```
 python animate-portrait.py "Jules Sokolova Portrait.png"
 python animate-portrait.py portrait.png -d "she laughs and looks away"
 python animate-portrait.py portrait.png --roll --seed 7
+python animate-portrait.py canyon.png --background --roll --seed 7
 ```
 
 ### Tests

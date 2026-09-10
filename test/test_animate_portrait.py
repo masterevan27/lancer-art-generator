@@ -6,6 +6,8 @@ while the live half re-derives the required input set from /object_info so a
 renamed model or a moved input fails here rather than three minutes into a
 render. Skipped, not failed, when no server answers.
 """
+import contextlib
+import io
 import json
 import unittest
 from pathlib import Path
@@ -379,6 +381,117 @@ class TestSavingTheResult(unittest.TestCase):
         self.assertIn("filename=loop.webp", asked)
         self.assertIn("subfolder=AnimatedPortraits", asked)
         self.assertIn("type=output", asked)
+
+
+class TestBackgroundPreset(unittest.TestCase):
+    """--background swaps one bundle of defaults; everything else is shared.
+
+    The flag exists because a background and a portrait differ only in their
+    defaults - shape, motion, negative, which table --roll reads, where the
+    render lands. The graph, the upload, the loop and the download are the
+    same job, so they stay one script rather than two.
+    """
+
+    def test_the_flag_is_off_so_the_portrait_path_is_the_default(self):
+        self.assertFalse(ap.parse_args(["p.png"]).background)
+
+    def test_a_background_renders_widescreen_rather_than_square(self):
+        """SillyTavern paints a background across the window, and Wan 2.2's
+        native landscape bucket is 832x480."""
+        opts = ap.parse_args(["bg.png", "--background"])
+        self.assertEqual((opts.width, opts.height), (832, 480))
+
+    def test_a_portrait_still_renders_square(self):
+        opts = ap.parse_args(["p.png"])
+        self.assertEqual((opts.width, opts.height), (480, 480))
+
+    def test_size_still_overrides_both_sides(self):
+        opts = ap.parse_args(["bg.png", "--background", "--size", "640"])
+        self.assertEqual((opts.width, opts.height), (640, 640))
+
+    def test_an_explicit_dimension_beats_the_preset(self):
+        opts = ap.parse_args(["bg.png", "--background", "--width", "1280"])
+        self.assertEqual((opts.width, opts.height), (1280, 480))
+
+    def test_the_default_motion_moves_the_scene_not_a_face(self):
+        text = ap.BACKGROUND_DESCRIPTION.lower()
+        self.assertNotIn("blink", text)
+        self.assertNotIn("smile", text)
+        self.assertIn("camera", text)
+
+    def test_a_background_gets_the_scene_description_by_default(self):
+        opts = ap.parse_args(["bg.png", "--background"])
+        self.assertEqual(opts.describe, ap.BACKGROUND_DESCRIPTION)
+
+    def test_the_background_negative_drops_the_face_guards(self):
+        """Nothing in a landscape has an identity to drift, and naming a
+        face in the negative invites Wan to put one in the frame."""
+        text = ap.BACKGROUND_NEGATIVE.lower()
+        self.assertIn("static", text)
+        self.assertNotIn("face", text)
+        self.assertNotIn("limbs", text)
+
+    def test_describing_the_motion_still_wins_over_the_preset(self):
+        opts = ap.parse_args(["bg.png", "--background", "-d", "rain falls"])
+        self.assertEqual(opts.describe, "rain falls")
+
+    def test_roll_reads_the_background_table_from_the_scene_tables(self):
+        opts = ap.parse_args(["bg.png", "--background", "--roll"])
+        self.assertEqual(Path(opts.tables), ap.BACKGROUND_TABLES)
+        self.assertEqual(opts.table, ap.BACKGROUND_TABLE)
+
+    def test_roll_still_reads_the_npc_animation_table_for_a_portrait(self):
+        opts = ap.parse_args(["p.png", "--roll"])
+        self.assertEqual(Path(opts.tables), ap.DEFAULT_TABLES)
+        self.assertEqual(opts.table, ap.ANIMATION_TABLE)
+
+    def test_an_explicit_tables_file_beats_the_preset(self):
+        opts = ap.parse_args(["bg.png", "--background", "--tables", "x.md"])
+        self.assertEqual(Path(opts.tables), Path("x.md"))
+
+    def test_the_webp_is_smaller_by_default_because_a_page_loads_it(self):
+        self.assertEqual(ap.parse_args(["bg.png", "--background"]).quality, 80)
+        self.assertEqual(ap.parse_args(["p.png"]).quality, 90)
+
+    def test_the_two_kinds_land_in_separate_comfy_folders(self):
+        self.assertEqual(ap.parse_args(["bg.png", "--background"]).prefix,
+                         "AnimatedBackgrounds")
+        self.assertEqual(ap.parse_args(["p.png"]).prefix, "AnimatedPortraits")
+
+
+class TestBackgroundDryRun(unittest.TestCase):
+    """The whole flag, end to end, without a server."""
+
+    def graph_for(self, argv):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            ap.main(argv)
+        printed = out.getvalue()
+        return json.loads(printed[printed.index("{"):])
+
+    def test_a_background_dry_run_carries_the_preset_into_the_graph(self):
+        g = self.graph_for(["bg.png", "--background", "--dry-run", "--seed", "3"])
+        _, i2v = only(g, "WanImageToVideo")
+        self.assertEqual(i2v["inputs"]["width"], 832)
+        self.assertEqual(i2v["inputs"]["height"], 480)
+        positive = g[i2v["inputs"]["positive"][0]]["inputs"]["text"]
+        self.assertEqual(positive, ap.BACKGROUND_DESCRIPTION)
+        _, save = only(g, "SaveAnimatedWEBP")
+        self.assertTrue(
+            save["inputs"]["filename_prefix"].startswith("AnimatedBackgrounds/"),
+            save["inputs"]["filename_prefix"])
+
+    def test_the_portrait_dry_run_is_unchanged(self):
+        g = self.graph_for(["p.png", "--dry-run", "--seed", "3"])
+        _, i2v = only(g, "WanImageToVideo")
+        self.assertEqual(i2v["inputs"]["width"], 480)
+        self.assertEqual(i2v["inputs"]["height"], 480)
+        positive = g[i2v["inputs"]["positive"][0]]["inputs"]["text"]
+        self.assertEqual(positive, ap.DEFAULT_DESCRIPTION)
+        _, save = only(g, "SaveAnimatedWEBP")
+        self.assertTrue(
+            save["inputs"]["filename_prefix"].startswith("AnimatedPortraits/"),
+            save["inputs"]["filename_prefix"])
 
 
 if __name__ == "__main__":
