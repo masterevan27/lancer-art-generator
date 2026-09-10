@@ -105,8 +105,16 @@ and stays dark, so the panel has somewhere to sit.
 ### Settings
 
 CFG 1.0, 8 steps, Euler, Simple scheduler, no negative prompt. Generate at
-1920×1080 or another 16:9 landscape ratio. Bump to CFG ~2.0–2.5 and 10–12 steps
-if the street grid loses its perspective or the towers merge into one mass.
+1920×1080 or another 16:9 landscape ratio.
+
+**Do not raise CFG on these.** The other prompt files suggest bumping to ~2.5
+when a layout drifts; on a photorealistic night city it does not drift, it
+disintegrates — CFG 2.5 at 12 steps returned a frame of coloured noise with the
+composition still faintly visible underneath, and CFG 1.0 at the default steps
+returned a clean image from the same prompt. The `detail_slider` LoRA in
+`Lancer_Scene_Workflow_v1.json` runs at strength 2, which is already a lot of
+push for a turbo model. Fix a bad frame by rewording the prompt or re-rolling
+the seed, not by turning up guidance.
 
 ## Observation Deck — Glass and City
 
@@ -140,9 +148,10 @@ animation a second layer to work with.
 ### Settings
 
 CFG 1.0, 8 steps, Euler, Simple scheduler, no negative prompt. Generate at
-1920×1080 or another 16:9 landscape ratio. Bump to CFG ~2.0–2.5 and 10–12 steps
-if the interior collapses and the frame becomes a plain skyline — the deck
-furniture and the reflections in the glass are the first things turbo drops.
+1920×1080 or another 16:9 landscape ratio. If the interior collapses and the
+frame becomes a plain skyline, re-roll the seed rather than raising CFG — see
+the warning under **Downtown From Above**. The deck furniture and the
+reflections in the glass are the first things turbo drops.
 
 ## Rain on the Avenue — Street Level
 
@@ -151,24 +160,29 @@ of frame on both sides. The wet road running away down the centre is the quiet
 middle, and it is also where most of the motion lives: rain, running water and
 shivering reflections.
 
-> A wide, cinematic photograph of a wide downtown avenue at night in heavy rain,
-> camera at street level in the middle of the road looking straight down it into
-> deep perspective. Modern glass and steel towers rise out of frame on both sides,
-> their lower floors lit from within, ground-level retail frontages glowing behind
-> wet plate glass, illuminated signage and awnings projecting over the pavement.
-> Traffic signals, streetlights on tall slim poles, and a row of parked cars line
-> both kerbs, all beaded with water. The avenue itself runs empty away from the
-> camera, black asphalt sheeted with standing water, lane markings and a crosswalk
-> in the foreground, the whole surface holding long broken reflections of the
-> signage and the towers above. Rain falls hard and straight through every light,
-> sheeting off awnings, ledges and signal housings, and a manhole in the near
-> middle distance vents a slow column of steam. Far down the avenue the buildings
-> dissolve into rain haze and glow, and above them a narrow strip of overcast sky
-> is underlit by the city. Photorealistic, shot on a full-frame camera with a wide
-> lens, long exposure, high dynamic range, crisp detail, natural colour, visible
-> rain streaks and strong specular highlights on every wet surface. No people and no
-> figures anywhere in the frame, and no moving vehicles. Not an illustration, no
-> linework, no halftone, no cel shading, no painterly brushwork.
+> A wide, cinematic photograph of a wide downtown avenue late at night in heavy
+> rain, long after dark, camera at street level in the middle of the road looking
+> straight down it into deep perspective. The sky is black night sky, no daylight
+> anywhere in the frame. Modern glass and steel towers rise out of frame on both
+> sides, mostly dark with scattered lit office floors, ground-level retail
+> frontages glowing behind wet plate glass, illuminated signage and awnings
+> projecting over the pavement. Traffic signals, streetlights on tall slim poles,
+> and a row of parked cars line both kerbs, all beaded with water. The avenue
+> itself runs empty away from the camera, black asphalt sheeted with standing
+> water, lane markings and a crosswalk in the foreground, the whole surface holding
+> long broken reflections of the signage and the towers above. Rain falls hard and
+> straight through every light, sheeting off awnings, ledges and signal housings,
+> and a manhole in the near middle distance vents a slow column of steam. Far down
+> the avenue the buildings dissolve into rain haze and glow, and above them a narrow
+> strip of black overcast night sky is underlit a dull orange by the city's own
+> light. Everything in the frame is lit only by artificial light — streetlights,
+> signage, shopfronts and traffic signals — against deep darkness. Photorealistic,
+> shot on a full-frame camera with a wide lens, long exposure, high dynamic range,
+> crisp detail, natural colour, visible rain streaks and strong specular highlights
+> on every wet surface. Deep night, nighttime, dark. No people and no figures
+> anywhere in the frame, and no moving vehicles. Not an illustration, no linework,
+> no halftone, no cel shading, no painterly brushwork. Not daytime, not dawn, not
+> dusk, not an overcast grey daylight scene.
 
 **Motion:** `rain falls steadily and sheets off every awning, ledge and sign in the frame. standing water on the road ripples and the reflected lights shiver and break in it. steam drifts slowly up from the manhole and the signage flickers. the buildings, the parked cars and the street hold still. the camera is locked off and does not move.`
 
