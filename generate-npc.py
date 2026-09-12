@@ -1391,6 +1391,17 @@ def heading_for(tables, name, subject, bullet):
     additive = "%s (%s) +" % (name, subject)
     if bullet in tables.get(additive, []):
         return additive
+    # A bullet that sits in the base table is the base table's, whatever
+    # groups also hold it; one that does not is looked for in the groups the
+    # family references. Base before group, so a text duplicated between the
+    # two is reported once, under the parent, the same way a base/variant
+    # duplicate is reported under the variant above.
+    if bullet in tables.get(name, ()):
+        return name
+    for target in references_in(tables, name):
+        for key in group_headings(tables, target, subject):
+            if bullet in tables[key]:
+                return key
     return name
 
 
@@ -1502,14 +1513,28 @@ def trait_odds(tables, samples, rng):
     """
     counts = {key: {bullet: 0 for bullet in bullets}
               for key, bullets in tables.items()}
+    reported = set(group_tables(tables))
     for _ in range(samples):
         npc = roll_npc(tables, rng)
         subject = npc["Pronouns"].split("/")[0]
         for name, bullet in npc["_raw"].items():
-            counts[heading_for(tables, name, subject, bullet)][bullet] += 1
+            heading = heading_for(tables, name, subject, bullet)
+            counts[heading][bullet] += 1
+            # A member counts twice: once under its group, and once as the
+            # reference row of the parent that entered the group. The parent's
+            # rows then still sum to one and the group's rows sum to the
+            # reference's figure, which is the number the Chances panel puts
+            # beside '=> Flight suits'. Exact because check_tables() allows one
+            # reference per group per table.
+            if heading in reported:
+                for target, reference in references_in(tables, name).items():
+                    if heading in group_headings(tables, target, subject):
+                        counts[heading_for(tables, name, subject, reference)][reference] += 1
+                        break
     return {key: {bullet: n / samples for bullet, n in bullets.items()}
             for key, bullets in counts.items()
-            if any(k == key or key.startswith(k + " (") for k in REQUIRED_TABLES)}
+            if key in reported
+            or any(k == key or key.startswith(k + " (") for k in REQUIRED_TABLES)}
 
 
 def dress_policy_for(category):

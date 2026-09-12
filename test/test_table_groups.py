@@ -279,3 +279,27 @@ class TestResolution(unittest.TestCase):
             self.assertIsNone(gen.reference_target(raw), seed)
             self.assertNotEqual(raw, "a jacket || civ", seed)
             self.assertIn(raw, legal, seed)
+
+
+class TestAttribution(unittest.TestCase):
+    def test_heading_for_answers_the_group_for_a_member(self):
+        self.assertEqual(gen.heading_for(GROUPS, "Outfit", "he", "scuffed plate || mil"), "Plates")
+        self.assertEqual(gen.heading_for(GROUPS, "Outfit", "she", "a fitted plate"), "Plates (she) +")
+        self.assertEqual(gen.heading_for(GROUPS, "Outfit", "she", "a crop top || civ"), "Crop tops")
+        self.assertEqual(gen.heading_for(GROUPS, "Outfit", "he", "grey coveralls"), "Outfit")
+        self.assertEqual(gen.heading_for(GROUPS, "Outfit", "he", "=> Plates"), "Outfit")
+
+    def test_trait_odds_reports_groups_and_charges_the_reference_row(self):
+        odds = gen.trait_odds(GROUPS, 3000, random.Random(5))
+        for key in ["Plates", "Plates (she) +", "Neon (beta)", "Civvies", "Crop tops"]:
+            self.assertIn(key, odds, key)
+            self.assertEqual(set(odds[key]), set(GROUPS[key]), key)
+        # The parent's rows still sum to one, reference rows included...
+        outfit_total = sum(odds["Outfit"].values()) + sum(odds["Outfit (she) +"].values())
+        self.assertAlmostEqual(outfit_total, 1.0, places=6)
+        # ...and a group's rows sum to its reference row.
+        plates = sum(odds["Plates"].values()) + sum(odds["Plates (she) +"].values())
+        self.assertAlmostEqual(plates, odds["Outfit"]["=> Plates"], places=6)
+        self.assertGreater(odds["Outfit"]["=> Plates"], 0.05)
+        self.assertEqual(odds["Civvies"]["a cardigan || civ"] + odds["Civvies"]["a sundress || civ"],
+                         odds["Outfit"]["=> Civvies"])
