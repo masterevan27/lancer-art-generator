@@ -121,12 +121,31 @@ def pools_by_table(tables, npc):
     time, from a pool with the hands-occupying bullets removed. That second
     pool is the one that decided the value, so it is the one to judge against.
 
+    A table that references a group is pinned same as any other, so its own
+    forced value short-circuits before step 5 ever runs (spec §4.3: "a forced
+    override ... never triggers step 5") - the pool PoolRecorder captures for
+    it is therefore the PARENT pool alone, '=> Name' bullets and all, never
+    the member roll_npc() would otherwise have drawn next. Each '=> Name'
+    bullet in a recorded pool is expanded here into that group's own member
+    pool - not re-derived from the tables file, but read back from `probe`,
+    which roll_npc() fills in unconditionally for every group a table
+    references (spec §4.3 step 4), narrowed exactly as this NPC's pinned
+    traits narrow everything else. That expansion is trusted rather than
+    replaced with a fresh `group_headings()`-based member list because the
+    fresh list would offer every member the group table names, including
+    ones this NPC's own Role or Theme has already ruled out (a mil Role's
+    civ-only group, say) - which is precisely the kind of false negative this
+    whole file exists to catch, not manufacture. The probe's own correctness
+    is what ProbeCoversTheTables (test_set_trait_value.py) and
+    test_table_groups.py pin; this function only reads it.
+
     Pronouns and Theme are absent from the result by design. Both are drawn
     only when they were not forced, so pinning them skips the draw entirely -
     and neither is filtered by anything, so there is no pool to check.
     """
     rng = PoolRecorder(0)
-    gen.roll_npc(tables, rng, dict(npc["_raw"]))
+    probe = {}
+    gen.roll_npc(tables, rng, dict(npc["_raw"]), probe=probe)
     subject = npc["Pronouns"].split("/")[0]
     reachable = {name: set(gen.variant_table(tables, name, subject))
                  for name in gen.REQUIRED_TABLES}
@@ -143,7 +162,11 @@ def pools_by_table(tables, npc):
                 "pool %r could belong to any of %r - the fixture has given two "
                 "tables the same bullet, so this attribution is no longer sound"
                 % (bullets, owners))
-        out[owners[0]] = bullets
+        expanded = []
+        for bullet in bullets:
+            target = gen.reference_target(bullet)
+            expanded.extend(probe[target] if target in probe else [bullet])
+        out[owners[0]] = expanded
     return out
 
 
