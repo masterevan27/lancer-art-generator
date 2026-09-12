@@ -4138,10 +4138,25 @@ def trait_choices(tables, npc, name):
     #
     # Weight is not lost, it is just not this function's subject. What a
     # bullet's odds are is what --trait-odds answers.
-    candidates = list(dict.fromkeys(variant_table(tables, name, subject)))
+    # A reference is expanded into its group's members, each carrying the
+    # group as its heading; the reference itself is never offered, since it is
+    # not a value a prompt can hold. `allowed` for a member is two tests, both
+    # read off the probe: the reference survived in the parent pool, and the
+    # member survived in the group's own pool (recorded under the group's
+    # heading by the draw site).
+    candidates = []
+    for bullet in dict.fromkeys(variant_table(tables, name, subject)):
+        target = reference_target(bullet)
+        if target is None:
+            candidates.append((bullet, bullet in pool))
+            continue
+        group_pool = set(baseline.get(target, ()))
+        for member in dict.fromkeys(b for key in group_headings(tables, target, subject)
+                                    for b in tables[key]):
+            candidates.append((member, bullet in pool and member in group_pool))
 
     out = []
-    for bullet in candidates:
+    for bullet, allowed in candidates:
         current = bullet == raw.get(name)
         # The value it already has cannot contradict what it is already
         # wearing, and skipping it here is not an optimisation - running the
@@ -4198,7 +4213,7 @@ def trait_choices(tables, npc, name):
         out.append({
             "value": bullet,
             "heading": heading_for(tables, name, subject, bullet),
-            "allowed": bullet in pool,
+            "allowed": allowed,
             "current": current,
             "conflicts": conflicts,
             "releases": sorted(releases),

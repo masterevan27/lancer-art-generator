@@ -320,3 +320,28 @@ class TestAttribution(unittest.TestCase):
         self.assertGreater(odds["Outfit (she) +"]["=> Crop tops"], 0)
         self.assertAlmostEqual(sum(odds["Crop tops"].values()),
                                 odds["Outfit (she) +"]["=> Crop tops"], places=6)
+
+
+class TestChoices(unittest.TestCase):
+    def test_members_are_offered_under_their_group_and_the_reference_is_not(self):
+        npc = roll(11)
+        choices = gen.trait_choices(GROUPS, npc, "Outfit")
+        values = [c["value"] for c in choices]
+        self.assertNotIn("=> Plates", values)
+        self.assertIn("scuffed plate || mil", values)
+        plate = next(c for c in choices if c["value"] == "scuffed plate || mil")
+        self.assertEqual(plate["heading"], "Plates")
+        coveralls = next(c for c in choices if c["value"] == "grey coveralls")
+        self.assertEqual(coveralls["heading"], "Outfit")
+
+    def test_allowed_follows_both_the_reference_and_the_member(self):
+        mil = next(b for b in GROUPS["Role"] if "mil" in gen.split_flags(b)[1])
+        npc = roll(11, Role=mil)
+        choices = {c["value"]: c for c in gen.trait_choices(GROUPS, npc, "Outfit")}
+        self.assertFalse(choices["a cardigan || civ"]["allowed"], "Civvies left the pool for a mil Role")
+        self.assertTrue(choices["scuffed plate || mil"]["allowed"])
+
+    def test_the_current_member_is_marked_current(self):
+        npc = roll(11, Outfit="lacquered plate")
+        choices = {c["value"]: c for c in gen.trait_choices(GROUPS, npc, "Outfit")}
+        self.assertTrue(choices["lacquered plate"]["current"])
