@@ -1284,9 +1284,16 @@ def check_group_references(tables):
     three thousand lines and 'a reference is malformed' is not actionable.
     """
     problems = []
+    # Keyed by base rather than by name, so a target seen under 'Outfit' is
+    # still 'seen' when 'Outfit (she) +' is checked next: a group is
+    # referenced once per FAMILY, not once per table in it, or references_in()
+    # - which resolves first-occurrence-wins across the whole family - would
+    # silently pick one of two references and trait_odds() would credit the
+    # reference row to the wrong bullet.
+    family_seen = {}
     for name, bullets in tables.items():
         base = name.partition(" (")[0]
-        seen = {}
+        seen = family_seen.setdefault(base, {})
         # dict.fromkeys(): parse_tables() expands 'x2 => Plates' into two
         # identical strings, which is one reference, not two.
         for bullet in dict.fromkeys(bullets):
@@ -1314,11 +1321,22 @@ def check_group_references(tables):
                     "members, the reference takes only @theme tags"
                     % (name, bullet, " ".join(flags)))
             if target in seen:
-                problems.append(
-                    "'## %s' references '## %s' more than once (%r and %r); "
-                    "use one bullet with an xN weight"
-                    % (name, target, seen[target], bullet))
-            seen[target] = bullet
+                prev_name, prev_bullet = seen[target]
+                if prev_name == name:
+                    problems.append(
+                        "'## %s' references '## %s' more than once (%r and %r); "
+                        "use one bullet with an xN weight"
+                        % (name, target, prev_bullet, bullet))
+                else:
+                    suffix = name[len(base):]
+                    hint = ("; a group is referenced once per family, and this "
+                             "subject's own slice of it goes in '## %s' instead"
+                             % (target + suffix)) if suffix else \
+                        "; a group is referenced once per family"
+                    problems.append(
+                        "'## %s': %r - '## %s' already references '## %s' (%r)%s"
+                        % (name, bullet, prev_name, target, prev_bullet, hint))
+            seen[target] = (name, bullet)
             themed = bool(themes_of(split_flags(bullet)[1]))
             for key in tables:
                 if not (key == target or key.startswith(target + " (")):
@@ -1525,7 +1543,7 @@ def trait_odds(tables, samples, rng):
             # rows then still sum to one and the group's rows sum to the
             # reference's figure, which is the number the Chances panel puts
             # beside '=> Flight suits'. Exact because check_tables() allows one
-            # reference per group per table.
+            # reference per group per family.
             if heading in reported:
                 for target, reference in references_in(tables, name).items():
                     if heading in group_headings(tables, target, subject):

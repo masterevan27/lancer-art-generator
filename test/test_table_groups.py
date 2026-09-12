@@ -107,6 +107,18 @@ class TestCheckGroupReferences(unittest.TestCase):
         tables["Outfit"] = [b for b in tables["Outfit"] if b != "=> Plates || @alpha"] + ["=> Plates"]
         self.assertEqual(self.check(tables), [])
 
+    def test_one_reference_per_group_per_family(self):
+        """A target referenced once from the base table and again from its
+        '(she) +' variant is not two references in two tables - it is the
+        same group claimed twice by one family, which references_in()'s
+        first-occurrence-wins would resolve silently and trait_odds() would
+        then credit to the wrong bullet."""
+        tables = fixture_tables()
+        tables["Plates"] = ["a plate"]
+        tables["Outfit"].append("=> Plates")
+        tables["Outfit (she) +"] = ["=> Plates"]
+        self.assertTrue(any("family" in p for p in self.check(tables)))
+
     def test_a_group_cannot_reference_a_group(self):
         tables = fixture_tables()
         tables["Outfit"].append("=> Plates")
@@ -303,3 +315,8 @@ class TestAttribution(unittest.TestCase):
         self.assertGreater(odds["Outfit"]["=> Plates"], 0.05)
         self.assertEqual(odds["Civvies"]["a cardigan || civ"] + odds["Civvies"]["a sundress || civ"],
                          odds["Outfit"]["=> Civvies"])
+        # ...even when the reference itself lives in a '+' variant rather
+        # than the base table.
+        self.assertGreater(odds["Outfit (she) +"]["=> Crop tops"], 0)
+        self.assertAlmostEqual(sum(odds["Crop tops"].values()),
+                                odds["Outfit (she) +"]["=> Crop tops"], places=6)
