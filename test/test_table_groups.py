@@ -139,3 +139,108 @@ class TestCheckGroupReferences(unittest.TestCase):
             gen.check_tables(tables, Path("tables.md"))
         self.assertIn("Nowhere", str(cm.exception))
         self.assertIn("Headgear", str(cm.exception))
+
+
+GROUPS = gen.parse_tables(GROUPS_FIXTURE)
+
+
+def roll(seed, **overrides):
+    return gen.roll_npc(GROUPS, random.Random(seed), overrides or None)
+
+
+def outfit_family(npc):
+    """Which fixture family the rolled Outfit came from."""
+    raw = npc["_raw"]["Outfit"]
+    for key in ["Plates", "Plates (she) +", "Neon (beta)", "Civvies", "Crop tops"]:
+        if raw in GROUPS[key]:
+            return key.partition(" (")[0]
+    return raw
+
+
+class TestResolution(unittest.TestCase):
+    def test_a_drawn_reference_resolves_to_a_member_and_raw_holds_the_member(self):
+        seen = set()
+        for seed in range(200):
+            npc = roll(seed)
+            raw = npc["_raw"]["Outfit"]
+            self.assertIsNone(gen.reference_target(raw), "%d: _raw holds a reference" % seed)
+            self.assertIsNone(gen.reference_target(npc["Outfit"]))
+            seen.add(outfit_family(npc))
+        self.assertIn("Plates", seen)
+        self.assertIn("grey coveralls", seen)
+
+    def test_a_group_is_one_slot(self):
+        """Plates holds four weighted members and grey coveralls is one bullet;
+        with the reference weighing one slot they come up about as often."""
+        counts = {"Plates": 0, "grey coveralls": 0}
+        n = 3000
+        for seed in range(n):
+            fam = outfit_family(roll(seed))
+            if fam in counts:
+                counts[fam] += 1
+        ratio = counts["Plates"] / counts["grey coveralls"]
+        self.assertGreater(ratio, 0.75, counts)
+        self.assertLess(ratio, 1.33, counts)
+
+    def test_members_are_weighted_inside_the_group(self):
+        counts = {}
+        for seed in range(3000):
+            npc = roll(seed)
+            if outfit_family(npc) == "Plates":
+                counts[npc["_raw"]["Outfit"]] = counts.get(npc["_raw"]["Outfit"], 0) + 1
+        self.assertGreater(counts["x2 dented plate".replace("x2 ", "")], counts["lacquered plate"] * 1.4, counts)
+
+    def test_an_ineligible_group_leaves_the_pool(self):
+        """Civvies holds only civ members. A mil Role drops them, and the
+        reference goes with them rather than falling back to the members."""
+        mil = next(b for b in GROUPS["Role"] if "mil" in gen.split_flags(b)[1])
+        for seed in range(300):
+            self.assertNotEqual(outfit_family(roll(seed, Role=mil)), "Civvies", seed)
+
+    def test_a_themed_reference_obeys_the_theme_filter_and_share(self):
+        alpha = next(b for b in GROUPS["Theme"] if gen.split_flags(b)[0] == "alpha")
+        beta = next(b for b in GROUPS["Theme"] if gen.split_flags(b)[0] == "beta")
+        for seed in range(300):
+            self.assertNotEqual(outfit_family(roll(seed, Theme=alpha)), "Neon", seed)
+        hits = sum(1 for seed in range(600) if outfit_family(roll(seed, Theme=beta)) == "Neon")
+        self.assertGreater(hits / 600, 0.4, "a themed group should carry the theme share")
+
+    def test_a_womens_variant_joins_the_group_and_a_womens_reference_is_hers_alone(self):
+        she = next(b for b in GROUPS["Pronouns"] if b.startswith("she"))
+        he = next(b for b in GROUPS["Pronouns"] if b.startswith("he"))
+        raws_she = {roll(s, Pronouns=she)["_raw"]["Outfit"] for s in range(600)}
+        raws_he = {roll(s, Pronouns=he)["_raw"]["Outfit"] for s in range(600)}
+        self.assertIn("a fitted plate", raws_she)
+        self.assertIn("a crop top || civ", raws_she)
+        self.assertNotIn("a fitted plate", raws_he)
+        self.assertNotIn("a crop top || civ", raws_he)
+
+    def test_the_probe_records_each_groups_pool_and_stays_inert(self):
+        probe = {}
+        plain = roll(7)
+        probed = gen.roll_npc(GROUPS, random.Random(7), None, probe=probe)
+        self.assertEqual(plain, probed)
+        self.assertIn("Plates", probe)
+        self.assertTrue(set(probe["Plates"]) <= set(GROUPS["Plates"] + GROUPS["Plates (she) +"]))
+        self.assertIn("=> Plates", probe["Outfit"])
+
+    def test_same_seed_reproduces_the_member(self):
+        for seed in range(50):
+            self.assertEqual(roll(seed)["_raw"]["Outfit"], roll(seed)["_raw"]["Outfit"])
+
+    def test_a_forced_member_is_kept_and_a_forced_reference_is_refused(self):
+        npc = roll(3, Outfit="scuffed plate || mil")
+        self.assertEqual(npc["_raw"]["Outfit"], "scuffed plate || mil")
+        self.assertEqual(npc["Outfit"], "scuffed plate")
+        with self.assertRaises(SystemExit) as cm:
+            roll(3, Outfit="=> Plates")
+        self.assertIn("Outfit", str(cm.exception))
+
+    def test_a_file_without_references_rolls_as_before(self):
+        """The minimal fixture and its snapshot are the gate; this is the same
+        statement made against the groups fixture with its references removed."""
+        stripped = {k: [b for b in v if gen.reference_target(b) is None] for k, v in GROUPS.items()}
+        for seed in range(30):
+            a = gen.roll_npc(stripped, random.Random(seed), None)
+            b = gen.roll_npc(stripped, random.Random(seed), None)
+            self.assertEqual(a, b)

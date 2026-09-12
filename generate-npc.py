@@ -2307,7 +2307,9 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
     for name in REQUIRED_TABLES:
         if name in ("Pronouns", "Theme", "Stance"):
             continue
-        options = narrow(name, variant_table(tables, name, subject))
+        pool_in = variant_table(tables, name, subject)
+        options = pool_in if any(reference_target(b) is not None for b in pool_in) \
+            else narrow(name, pool_in)
 
         # Rolled either way, so that forcing a trait does not shift the rest
         # of the run's random stream and change every NPC after it. The
@@ -2320,6 +2322,34 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # the function where `options` is exactly what the roller is about to
         # choose from, which is what makes it the honest answer to "what could
         # this table have produced for this NPC".
+        # Groups. A '=> Name' bullet is one slot of this pool whose value is
+        # drawn second, from '## Name'. The members are filtered TOGETHER with
+        # the parent pool, as one union, rather than on their own: nearly every
+        # gate in narrow() hands the whole pool back sooner than empty it, so
+        # a civ-only group filtered alone would be re-admitted for a mil Role
+        # the moment the mil gate emptied it - which the flat list never did.
+        # Run as a union the group's members meet the same fallbacks the
+        # parent's own bullets do, and a group whose members all fell leaves
+        # the pool. The union is the parent pool itself when there are no
+        # references, so a file without groups narrows exactly as before.
+        members = {}
+        pools = {}
+        for bullet in dict.fromkeys(options):
+            target = reference_target(bullet)
+            if target is not None and target not in members:
+                members[target] = [b for key in group_headings(tables, target, subject)
+                                   for b in tables[key]]
+        if members:
+            parent_set = set(options)
+            member_sets = {t: set(m) for t, m in members.items()}
+            survivors = narrow(name, options + [b for m in members.values() for b in m])
+            pools = {t: [b for b in survivors if b in member_sets[t]] for t in members}
+            pool = [b for b in survivors if b in parent_set
+                    and (reference_target(b) is None or pools[reference_target(b)])]
+            options = pool or options   # never filter the pool down to nothing
+            if probe is not None:
+                for target, drawn_from in pools.items():
+                    probe[target] = list(drawn_from)
         if probe is not None:
             probe[name] = list(options)
         value = rng.choice(options)
@@ -2344,7 +2374,23 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # decided from inside that table's own iteration.
         forced = (overrides or {}).get(name)
         if forced is not None:
+            # A reference is not a value: pasted into a prompt it would read
+            # '=> Flight suits'. --set-trait and the GUI offer members, never
+            # references (see trait_choices), so reaching here is a typo or an
+            # old preset, and both want the table named.
+            if reference_target(forced) is not None:
+                raise SystemExit(
+                    "%s: %r is a group reference, not a value - name one of the "
+                    "group's own bullets" % (name, forced))
             value = forced
+        elif reference_target(value) is not None:
+            # The second draw of the two-stage roll. Only a drawn reference
+            # reaches this line, so a file with no groups consumes exactly the
+            # numbers it did before. The fallback to the unfiltered members is
+            # for the one case the pool guard above kept an emptied reference
+            # because everything else had emptied too.
+            target = reference_target(value)
+            value = rng.choice(pools[target] or members[target])
 
         # Recorded here: after a forced value has replaced the draw, so _raw
         # describes the NPC rather than the bullet it discarded, and before
