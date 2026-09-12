@@ -2088,7 +2088,7 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
     headgear_crown = False
     weapon_hands = False
     weapon_flags = ()
-    def narrow(name, options):
+    def narrow(name, options, theme_share=True):
         """One table's pool, `options` in and the drawn-from list out.
 
         Every filter the loop below used to apply inline, in the same order,
@@ -2098,6 +2098,13 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         a group's members and the parent pool together (see the draw site)
         runs them through exactly the gates the flat list passed. Consumes no
         randomness: the snapshot test is what holds that.
+
+        `theme_share=False` skips the duplication step and nothing else, for
+        the one caller that hands in a pool it is about to split back apart -
+        see the draw site, which sizes the share separately for the parent and
+        for each group so that a group's bulk cannot inflate the parent's
+        realized theme share. Every other caller leaves it alone and gets the
+        chain exactly as it was.
         """
         # Theme gates every appearance table: its own tagged bullets plus the
         # neutral pool, with the tagged ones weighted up so the theme is
@@ -2106,7 +2113,8 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # across it - which is what lets a soldier be neosamurai in uniform.
         if name in THEMED_TABLES:
             options = filter_by_theme(options, theme, name)
-            options = apply_theme_share(options, theme, name)
+            if theme_share:
+                options = apply_theme_share(options, theme, name)
 
         # The Age/Build pairing runs both ways. When the Build was forced
         # to a bullet flagged 'figure' and the Age is being rolled, it is the
@@ -2366,15 +2374,36 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # choose from, which is what makes it the honest answer to "what could
         # this table have produced for this NPC".
         # Groups. A '=> Name' bullet is one slot of this pool whose value is
-        # drawn second, from '## Name'. The members are filtered TOGETHER with
-        # the parent pool, as one union, rather than on their own: nearly every
-        # gate in narrow() hands the whole pool back sooner than empty it, so
-        # a civ-only group filtered alone would be re-admitted for a mil Role
-        # the moment the mil gate emptied it - which the flat list never did.
-        # Run as a union the group's members meet the same fallbacks the
-        # parent's own bullets do, and a group whose members all fell leaves
-        # the pool. The union is the parent pool itself when there are no
-        # references, so a file without groups narrows exactly as before.
+        # drawn second, from '## Name'. The DROP filters run over the members
+        # and the parent pool TOGETHER, as one union, rather than over the
+        # members alone: nearly every gate in narrow() hands the whole pool
+        # back sooner than empty it, so a civ-only group filtered alone would
+        # be re-admitted for a mil Role the moment the mil gate emptied it -
+        # which the flat list never did. Run as a union the group's members
+        # meet the same fallbacks the parent's own bullets do, and a group
+        # whose members all fell leaves the pool.
+        #
+        # The theme SHARE is the one step that cannot run on the union, and it
+        # is taken separately on each side below. apply_theme_share duplicates
+        # a tagged bullet until it holds THEME_SHARE of the pool it is handed,
+        # so sizing it against parent-plus-members and then splitting the
+        # members back out leaves every copy behind in the parent: on the live
+        # file that put 192 copies of one tagged bullet in a 230-entry Outfit
+        # pool, and over 4000 rolls a theme the realized themed Outfit share
+        # read 0.86 against a 0.60 target while 2000 rolls turned up 154
+        # distinct outfits. Sized per side those read 0.69 and 164. A
+        # tagged reference is weighted against the parent's own size (spec
+        # section 3, "Themed groups") and a tagged member of a neutral group
+        # against its own group's (spec section 3, "filtered and weighted
+        # inside the group only").
+        #
+        # The rejected alternative was to lift apply_theme_share out of
+        # narrow() and run it after the split on both sides. That reorders the
+        # share behind the civ/mil and weapon-policy filters, which is exactly
+        # the trade apply_theme_share's docstring says not to make - a theme's
+        # tagged weapons would re-inflate past WEAPON_POLICY's unarmed bias.
+        # Keeping the share inside narrow() and skipping it for the union pass
+        # leaves the filter order untouched on every path.
         members = {}
         pools = {}
         for bullet in dict.fromkeys(options):
@@ -2383,24 +2412,36 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
                 members[target] = [b for key in group_headings(tables, target, subject)
                                    for b in tables[key]]
         if members:
-            parent_set = set(options)
             member_sets = {t: set(m) for t, m in members.items()}
-            survivors = narrow(name, options + [b for m in members.values() for b in m])
-            pools = {t: [b for b in survivors if b in member_sets[t]] for t in members}
-            # Three levels, each a fallback for the one before. `parent` is
-            # the narrowed parent pool - spec step 2's survivors restricted
-            # back to the parent's own bullets - and `pool` is that pool with
-            # an emptied reference dropped, spec step 3's "unless that would
-            # empty the parent pool, in which case leave it": the "leave it"
-            # target is `parent`, the narrowed pool, not the raw `options` the
-            # union started from. `options` is the last resort, needed because
-            # the union can survive narrow() while every PARENT bullet is
-            # filtered out - e.g. a themed reference dropped by the theme gate
-            # and a civ bullet dropped by a mil Role, while the reference's
-            # own members keep the union non-empty. `parent` is then empty and
-            # `options` (never filtered to nothing) stands in; step 5's own
-            # fallback to the unfiltered members completes the draw from there.
-            parent = [b for b in survivors if b in parent_set]
+            survivors = narrow(name, options + [b for m in members.values() for b in m],
+                               theme_share=False)
+            pools = {}
+            for target, member_set in member_sets.items():
+                kept = [b for b in survivors if b in member_set]
+                if name in THEMED_TABLES:
+                    kept = apply_theme_share(kept, theme, name)
+                pools[target] = kept
+            # `parent` is the parent list alone through the whole chain, share
+            # included: byte-for-byte what this table did before groups
+            # existed, with a reference sitting in it as one flagless slot.
+            # `pool` is that pool with an emptied reference dropped, spec step
+            # 3's "unless that would empty the parent pool, in which case leave
+            # it" - the "leave it" target being `parent`.
+            #
+            # `options` behind it is belt-and-braces rather than a level the
+            # roller reaches. Every gate in narrow() hands its whole input back
+            # sooner than return nothing, which is the invariant rng.choice()
+            # has always rested on, so a non-empty parent list cannot narrow to
+            # an empty one. It was a live third level while `parent` was carved
+            # out of the union's survivors - the union could stay alive on a
+            # group's members while every parent bullet fell - and it is kept
+            # here for the same reason the `or options` guards inside narrow()
+            # are kept: the draw below cannot be allowed to meet an empty list,
+            # whatever a future filter does.
+            #
+            # Step 5's own fallback to the unfiltered members completes the
+            # draw when an emptied reference was kept.
+            parent = narrow(name, options)
             pool = [b for b in parent
                     if reference_target(b) is None or pools[reference_target(b)]]
             options = pool or parent or options
