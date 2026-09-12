@@ -1336,16 +1336,18 @@ def reference_target(bullet):
     (gundam) || @gundam') resolves to the heading and keeps its tag where
     themes_of() finds it. A bare '=>' with nothing after it is not a reference
     - a typo should roll as literal text and be seen, not point at nothing.
+
+    A leading space before '=> ' disqualifies the bullet. The prefix check runs
+    on the raw bullet first: split_flags()'s .strip() would otherwise treat
+    ' => x' as a reference, making the distinction impossible.
     """
-    # Check the original bullet for the prefix (must start exactly with it)
+    # Check the original bullet for the prefix (must start exactly with it,
+    # rejecting leading whitespace before the => token)
     if not bullet.startswith(REFERENCE_PREFIX):
         return None
 
-    # Extract the prose segment (before ||, ignoring flags)
-    prose = bullet.partition("||")[0]
-
-    # Return the target (text after prefix, stripped), or None if empty
-    target = prose[len(REFERENCE_PREFIX):].strip()
+    # Extract the target, removing the prefix and stripping trailing whitespace
+    target = split_flags(bullet)[0][len(REFERENCE_PREFIX):].strip()
     return target or None
 
 
