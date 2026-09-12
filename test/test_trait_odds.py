@@ -22,7 +22,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from test.helpers import FIXTURE_TABLES, REPO, core_of, load_generator
+from test.helpers import FIXTURE_TABLES, REPO, bullets_for, core_of, load_generator
 
 gen = load_generator()
 TABLES = gen.parse_tables(FIXTURE_TABLES)
@@ -138,9 +138,7 @@ class TestRawBullets(unittest.TestCase):
     def test_each_raw_bullet_is_a_line_in_the_file(self):
         for seed in range(40):
             for name, raw in roll(seed)["_raw"].items():
-                pool = [b for key in LIVE if key == name or key.startswith(name + " (")
-                        for b in TABLES.get(key, [])]
-                self.assertIn(raw, pool or TABLES[name],
+                self.assertIn(raw, bullets_for(TABLES, name),
                               "%s: %r is not a bullet in the tables file" % (name, raw))
 
     def test_a_forced_trait_is_recorded_as_forced(self):

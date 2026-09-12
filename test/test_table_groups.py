@@ -357,3 +357,13 @@ class TestShipsHaveNoGroups(unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             ship.check_tables(tables, Path("ship.md"))
         self.assertIn("not supported for ships", str(cm.exception))
+
+
+class TestHelpersFollowReferences(unittest.TestCase):
+    def test_table_keys_reaches_a_familys_groups(self):
+        from test.helpers import table_keys, bullets_for
+        self.assertEqual(table_keys(GROUPS, "Outfit"),
+                         ["Outfit", "Outfit (she) +", "Plates", "Plates (she) +",
+                          "Neon (beta)", "Civvies", "Crop tops"])
+        self.assertIn("a fitted plate", bullets_for(GROUPS, "Outfit"))
+        self.assertEqual(table_keys(GROUPS, "Headgear"), ["Headgear"])
