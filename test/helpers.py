@@ -143,7 +143,8 @@ def table_keys(tables, name):
 
 
 def bullets_for(tables, name):
-    """A table's bullets, including its per-pronoun variant tables."""
+    """A table's bullets, including its per-pronoun variant tables and,
+    through table_keys(), any group it references."""
     return [bullet for key in table_keys(tables, name) for bullet in tables[key]]
 
 
