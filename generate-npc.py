@@ -1320,6 +1320,83 @@ def heading_for(tables, name, subject, bullet):
     return name
 
 
+# A group reference: a bullet whose text is '=> Name' points a rolled table at
+# a second table, '## Name', whose bullets are the variants of one look. The
+# reference is one slot in the parent pool and the member is drawn second, so
+# eleven flight suits weigh what one distinct jacket weighs. The '=>' token
+# was free: nothing in the file or the parsers used it, and unlike '{' it can
+# never be mistaken for a pronoun placeholder by the format() pass.
+REFERENCE_PREFIX = "=> "
+
+
+def reference_target(bullet):
+    """The group heading a reference bullet names, or None for a plain bullet.
+
+    Read off the prose segment only, so a themed reference ('=> Black dresses
+    (gundam) || @gundam') resolves to the heading and keeps its tag where
+    themes_of() finds it. A bare '=>' with nothing after it is not a reference
+    - a typo should roll as literal text and be seen, not point at nothing.
+    """
+    # Check the original bullet for the prefix (must start exactly with it)
+    if not bullet.startswith(REFERENCE_PREFIX):
+        return None
+
+    # Extract the prose segment (before ||, ignoring flags)
+    prose = bullet.partition("||")[0]
+
+    # Return the target (text after prefix, stripped), or None if empty
+    target = prose[len(REFERENCE_PREFIX):].strip()
+    return target or None
+
+
+def is_reference(bullet):
+    return reference_target(bullet) is not None
+
+
+def references_in(tables, name):
+    """{group heading: reference bullet} over base table `name` and its variants.
+
+    One entry per group, first occurrence wins: parse_tables() expands an 'xN'
+    reference into N identical strings, and check_tables() refuses two
+    DIFFERENT reference texts for one group, so there is only ever one text to
+    keep.
+    """
+    out = {}
+    for key in tables:
+        if not (key == name or key.startswith(name + " (")):
+            continue
+        for bullet in tables[key]:
+            target = reference_target(bullet)
+            if target is not None and target not in out:
+                out[target] = bullet
+    return out
+
+
+def group_headings(tables, target, subject):
+    """The headings one pronoun set draws a group from: the target and its
+    variants, in variant_table()'s own order and restricted to those present.
+
+    Exact names rather than a startswith() - a themed sibling group is named
+    'Flight suits (gundam)' by convention, and it is a group of its own, not a
+    pronoun variant of 'Flight suits'.
+    """
+    return [key for key in (target, "%s (%s)" % (target, subject), "%s (%s) +" % (target, subject))
+            if key in tables]
+
+
+def group_tables(tables):
+    """Every heading some table references, plus those headings' variants."""
+    targets = set()
+    for name in tables:
+        targets.update(references_in(tables, name))
+    out = set()
+    for key in tables:
+        base, _, _ = key.partition(" (")
+        if key in targets or (base in targets and key != base):
+            out.add(key)
+    return out
+
+
 def trait_odds(tables, samples, rng):
     """Each bullet's chance of being rolled, as {heading: {bullet: fraction}}.
 
