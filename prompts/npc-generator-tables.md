@@ -26,6 +26,19 @@ bullet. Anything after the weight is used verbatim in the prompt, so write
 bullets as sentence fragments that read correctly when dropped into the
 templates at the bottom of this file.
 
+A bullet of the form `- => Name` is a **group reference**: one slot of this
+table whose value is drawn second, from the `## Name` table. Ten near-identical
+black dresses in a `## Black dresses` table then weigh what one distinct jacket
+weighs, and the specific dress is chosen inside the group. A reference takes an
+`xN ` weight like any bullet and may carry `@theme` tags (`- => Black dresses
+(gundam) || @gundam`), which make the whole group a themed one; it carries no
+other flags, since `civ`, `mil`, `notac` and `dressy` belong on the members. A
+group may have `(she)` and `(she) +` variants like any table, and a reference
+placed in `## Outfit (she) +` makes the group women-only. One level only: a
+group table holds no references. The script refuses a reference that names a
+missing table, a rolled table, or a group twice from one table. The `###`
+sub-headings under Callsigns are the other kind of grouping, cosmetic only.
+
 `||` splits a bullet into segments. Thirteen tables use it:
 
 - **Age** and **Build** bullets carry a paired flag. `|| young` on an Age entry
