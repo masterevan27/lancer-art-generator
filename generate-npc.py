@@ -1305,6 +1305,34 @@ def check_group_references(tables):
                     "'## %s': %r - a group reference is only read in a rolled "
                     "table, and not in %s" % (name, bullet, ", ".join(UNGROUPABLE_TABLES)))
                 continue
+            # Two more tables whose value does not always come from the main
+            # draw site, and whose second path knows nothing about groups. A
+            # Backdrop flagged 'nogear' re-draws Gear after the loop, and
+            # reroll_trait()'s legacy path - for an entry written before _raw
+            # existed - rebuilds the draw by hand for any of REROLLABLE_TRAITS.
+            # A reference in one of those tables would resolve on most rolls
+            # and reach the dossier and the prompt as the literal '=> Name'
+            # text on the rest, which is the worst shape a bug can have: it
+            # looks authored, and only some NPCs carry it.
+            #
+            # Refused rather than resolved. Spec section 8 keeps every table
+            # but Outfit out of scope, and teaching two more draw sites to
+            # resolve references is a feature with its own filter questions -
+            # the nogear re-draw has already narrowed its pool by hand by the
+            # time it draws - not a paragraph of this one.
+            if base == "Gear":
+                problems.append(
+                    "'## %s': %r - Gear is also drawn by the 'nogear' Gear "
+                    "re-draw, which does not resolve a group; the reference "
+                    "would reach the prompt as its own text" % (name, bullet))
+                continue
+            if base in REROLLABLE_TRAITS:
+                problems.append(
+                    "'## %s': %r - %s is also drawn by the legacy re-roll of "
+                    "an NPC without _raw, which does not resolve a group; the "
+                    "reference would reach the prompt as its own text"
+                    % (name, bullet, base))
+                continue
             if target not in tables:
                 problems.append(
                     "'## %s': %r names '## %s', which this file does not have "
@@ -1478,14 +1506,28 @@ def references_in(tables, name):
 
 
 def group_headings(tables, target, subject):
-    """The headings one pronoun set draws a group from: the target and its
-    variants, in variant_table()'s own order and restricted to those present.
+    """The headings one pronoun set draws a group from, in variant_table()'s
+    two forms: a '(she)' variant is used INSTEAD OF the group, a '(she) +' one
+    is added to it, and the base table alone is the fallback.
+
+    Written to mirror variant_table() rather than to return every variant that
+    happens to be present. A group is a table like any other - the tables file
+    preamble promises exactly that, "like any table" - so a '## Plates (she)'
+    written to stand in for the masculine plates has to replace them here too.
+    Unioned instead, it would give a group the one shape no rolled table has,
+    and every caller would inherit the same wrong pool: the draw site
+    concatenates what this returns, heading_for() searches it in order, and
+    trait_odds() and trait_choices() both walk it to decide which members a
+    subject can reach at all.
 
     Exact names rather than a startswith() - a themed sibling group is named
     'Flight suits (gundam)' by convention, and it is a group of its own, not a
     pronoun variant of 'Flight suits'.
     """
-    return [key for key in (target, "%s (%s)" % (target, subject), "%s (%s) +" % (target, subject))
+    replacement = "%s (%s)" % (target, subject)
+    if replacement in tables:
+        return [replacement]
+    return [key for key in (target, "%s (%s) +" % (target, subject))
             if key in tables]
 
 

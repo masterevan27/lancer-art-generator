@@ -46,6 +46,21 @@ class TestReferenceHelpers(unittest.TestCase):
         self.assertEqual(gen.group_headings(tables, "Flight suits (gundam)", "she"),
                          ["Flight suits (gundam)"])
 
+    def test_a_replacement_group_variant_replaces_the_group_the_way_a_table_does(self):
+        """variant_table()'s two forms, mirrored: 'Name (she)' stands in for
+        the group, 'Name (she) +' is added to it. A group is a table like any
+        other and the preamble says so; returning both would give it the one
+        shape no rolled table has."""
+        tables = {"Plates": ["a"], "Plates (she)": ["b"], "Plates (she) +": ["c"],
+                  "Plates (he) +": ["d"]}
+        self.assertEqual(gen.group_headings(tables, "Plates", "she"), ["Plates (she)"])
+        self.assertEqual(gen.group_headings(tables, "Plates", "he"),
+                         ["Plates", "Plates (he) +"])
+        self.assertEqual(gen.group_headings(tables, "Plates", "they"), ["Plates"])
+        # The same answer variant_table() gives for a rolled table of the same
+        # shape, which is the whole point of mirroring it.
+        self.assertEqual(gen.variant_table(tables, "Plates", "she"), ["b"])
+
     def test_group_tables_is_every_referenced_heading_with_its_variants(self):
         tables = {
             "Outfit": ["=> Flight suits"], "Outfit (she) +": ["=> Crop tops"],
@@ -144,6 +159,34 @@ class TestCheckGroupReferences(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertTrue(any("only read in" in p for p in self.check(tables)))
 
+    def test_gear_is_refused_because_the_nogear_re_draw_does_not_resolve(self):
+        """A Backdrop flagged 'nogear' re-draws Gear after the main loop, from
+        a pool it narrowed by hand. That path knows nothing about groups, so a
+        grouped Gear would resolve on most rolls and paste '=> Name' into the
+        prompt on the rest."""
+        tables = fixture_tables()
+        tables["Plates"] = ["a plate"]
+        tables["Gear"].append("=> Plates")
+        [problem] = self.check(tables)
+        self.assertIn("nogear", problem)
+        self.assertIn("Gear", problem)
+
+    def test_a_rerollable_trait_is_refused_because_the_legacy_re_roll_does_not_resolve(self):
+        """reroll_trait() rebuilds the draw by hand for an entry written before
+        _raw existed, for any of REROLLABLE_TRAITS. Same shape of bug, same
+        refusal - and the message names that path rather than the nogear one,
+        because they are fixed in different places."""
+        for name in gen.REROLLABLE_TRAITS:
+            if name not in gen.REQUIRED_TABLES:
+                continue
+            tables = fixture_tables()
+            tables["Plates"] = ["a plate"]
+            tables[name].append("=> Plates")
+            with self.subTest(table=name):
+                [problem] = self.check(tables)
+                self.assertIn("legacy re-roll", problem)
+                self.assertIn(name, problem)
+
     def test_check_tables_refuses_a_malformed_file_with_every_problem_listed(self):
         tables = fixture_tables()
         tables["Outfit"] += ["=> Nowhere", "=> Headgear"]
@@ -163,7 +206,8 @@ def roll(seed, **overrides):
 def outfit_family(npc):
     """Which fixture family the rolled Outfit came from."""
     raw = npc["_raw"]["Outfit"]
-    for key in ["Plates", "Plates (she) +", "Neon (beta)", "Civvies", "Crop tops"]:
+    for key in ["Plates", "Plates (she) +", "Neon (beta)", "Civvies",
+                "Civvies (he)", "Crop tops"]:
         if raw in GROUPS[key]:
             return key.partition(" (")[0]
     return raw
@@ -226,6 +270,24 @@ class TestResolution(unittest.TestCase):
         self.assertIn("a crop top || civ", raws_she)
         self.assertNotIn("a fitted plate", raws_he)
         self.assertNotIn("a crop top || civ", raws_he)
+
+    def test_a_replacement_group_variant_stands_in_for_the_base_members(self):
+        """'## Civvies (he)' replaces '## Civvies' for a man, the way
+        'Build (she)' replaces 'Build'. The base members are not merely
+        outweighed for him - they are not in his pool at all."""
+        he = next(b for b in GROUPS["Pronouns"] if b.startswith("he"))
+        she = next(b for b in GROUPS["Pronouns"] if b.startswith("she"))
+        base = {"a cardigan || civ", "a sundress || civ"}
+        probe = {}
+        gen.roll_npc(GROUPS, random.Random(0), {"Pronouns": he}, probe=probe)
+        self.assertEqual(set(probe["Civvies"]), {"a knit jumper || civ"})
+        raws_he = {roll(s, Pronouns=he)["_raw"]["Outfit"] for s in range(600)}
+        raws_she = {roll(s, Pronouns=she)["_raw"]["Outfit"] for s in range(600)}
+        self.assertIn("a knit jumper || civ", raws_he)
+        self.assertFalse(base & raws_he, raws_he & base)
+        # And she still draws the base members, since she has no variant of it.
+        self.assertTrue(base <= raws_she, base - raws_she)
+        self.assertNotIn("a knit jumper || civ", raws_she)
 
     def test_the_probe_records_each_groups_pool_and_stays_inert(self):
         probe = {}
@@ -290,7 +352,7 @@ class TestResolution(unittest.TestCase):
         tables = {**GROUPS, "Outfit": ["=> Civvies", "a jacket || civ"]}
         del tables["Outfit (she) +"]
         mil = next(b for b in GROUPS["Role"] if "mil" in gen.split_flags(b)[1])
-        legal = {"a cardigan || civ", "a sundress || civ"}
+        legal = {"a cardigan || civ", "a sundress || civ", "a knit jumper || civ"}
         for seed in range(50):
             npc = gen.roll_npc(tables, random.Random(seed), {"Role": mil})
             raw = npc["_raw"]["Outfit"]
@@ -325,15 +387,14 @@ class TestTheThemeShareIsSizedAgainstTheParent(unittest.TestCase):
         four members hanging off the two references: the recorded parent pool
         has to carry exactly the share the same three bullets carry on their
         own, whatever the groups behind them weigh."""
-        he = next(b for b in GROUPS["Pronouns"] if b.startswith("he"))
+        they = next(b for b in GROUPS["Pronouns"] if b.startswith("they"))
         beta = next(b for b in GROUPS["Theme"] if gen.split_flags(b)[0] == "beta")
         plain = next(b for b in GROUPS["Role"] if "mil" not in gen.split_flags(b)[1])
         parent = ["grey coveralls", "=> Neon (beta) || @beta", "=> Civvies"]
         tables = {**GROUPS, "Outfit": parent}
-        del tables["Outfit (she) +"]
         probe = {}
         gen.roll_npc(tables, random.Random(0),
-                     {"Pronouns": he, "Theme": beta, "Role": plain}, probe=probe)
+                     {"Pronouns": they, "Theme": beta, "Role": plain}, probe=probe)
         self.assertAlmostEqual(tagged_share(probe["Outfit"], beta),
                                tagged_share(self.parent_only(parent, beta), beta),
                                places=9, msg=probe["Outfit"])
@@ -347,7 +408,7 @@ class TestTheThemeShareIsSizedAgainstTheParent(unittest.TestCase):
         tag is 'filtered and weighted inside the group only', so the member's
         share is sized against its own group and does not move when the parent
         or a sibling group grows."""
-        he = next(b for b in GROUPS["Pronouns"] if b.startswith("he"))
+        they = next(b for b in GROUPS["Pronouns"] if b.startswith("they"))
         beta = next(b for b in GROUPS["Theme"] if gen.split_flags(b)[0] == "beta")
         plain = next(b for b in GROUPS["Role"] if "mil" not in gen.split_flags(b)[1])
         civvies = ["a cardigan || civ", "a sundress || civ",
@@ -355,10 +416,9 @@ class TestTheThemeShareIsSizedAgainstTheParent(unittest.TestCase):
 
         def group_pool(parent):
             tables = {**GROUPS, "Outfit": parent, "Civvies": civvies}
-            del tables["Outfit (she) +"]
             probe = {}
             gen.roll_npc(tables, random.Random(0),
-                         {"Pronouns": he, "Theme": beta, "Role": plain}, probe=probe)
+                         {"Pronouns": they, "Theme": beta, "Role": plain}, probe=probe)
             return probe["Civvies"]
 
         small = group_pool(["grey coveralls", "=> Civvies"])
@@ -380,10 +440,18 @@ class TestAttribution(unittest.TestCase):
         self.assertEqual(gen.heading_for(GROUPS, "Outfit", "she", "a crop top || civ"), "Crop tops")
         self.assertEqual(gen.heading_for(GROUPS, "Outfit", "he", "grey coveralls"), "Outfit")
         self.assertEqual(gen.heading_for(GROUPS, "Outfit", "he", "=> Plates"), "Outfit")
+        # A replacement group variant, attributed the way variant_table()
+        # would roll it: his jumper is 'Civvies (he)', and the base members
+        # are not his to be attributed at all.
+        self.assertEqual(gen.heading_for(GROUPS, "Outfit", "he", "a knit jumper || civ"),
+                         "Civvies (he)")
+        self.assertEqual(gen.heading_for(GROUPS, "Outfit", "she", "a cardigan || civ"),
+                         "Civvies")
 
     def test_trait_odds_reports_groups_and_charges_the_reference_row(self):
         odds = gen.trait_odds(GROUPS, 3000, random.Random(5))
-        for key in ["Plates", "Plates (she) +", "Neon (beta)", "Civvies", "Crop tops"]:
+        for key in ["Plates", "Plates (she) +", "Neon (beta)", "Civvies",
+                "Civvies (he)", "Crop tops"]:
             self.assertIn(key, odds, key)
             self.assertEqual(set(odds[key]), set(GROUPS[key]), key)
         # The parent's rows still sum to one, reference rows included...
@@ -393,8 +461,14 @@ class TestAttribution(unittest.TestCase):
         plates = sum(odds["Plates"].values()) + sum(odds["Plates (she) +"].values())
         self.assertAlmostEqual(plates, odds["Outfit"]["=> Plates"], places=6)
         self.assertGreater(odds["Outfit"]["=> Plates"], 0.05)
-        self.assertEqual(odds["Civvies"]["a cardigan || civ"] + odds["Civvies"]["a sundress || civ"],
-                         odds["Outfit"]["=> Civvies"])
+        # Civvies is the replacement-variant case: a man's rows live under
+        # 'Civvies (he)' INSTEAD of the base two, so the reference row is the
+        # sum across both headings and neither alone.
+        self.assertAlmostEqual(odds["Civvies"]["a cardigan || civ"]
+                               + odds["Civvies"]["a sundress || civ"]
+                               + odds["Civvies (he)"]["a knit jumper || civ"],
+                               odds["Outfit"]["=> Civvies"], places=6)
+        self.assertGreater(odds["Civvies (he)"]["a knit jumper || civ"], 0)
         # ...even when the reference itself lives in a '+' variant rather
         # than the base table.
         self.assertGreater(odds["Outfit (she) +"]["=> Crop tops"], 0)
@@ -416,10 +490,24 @@ class TestChoices(unittest.TestCase):
 
     def test_allowed_follows_both_the_reference_and_the_member(self):
         mil = next(b for b in GROUPS["Role"] if "mil" in gen.split_flags(b)[1])
-        npc = roll(11, Role=mil)
+        # Pronouns pinned: Civvies has a '(he)' replacement variant, so a man
+        # is not offered the two base bullets this asserts on at all.
+        they = next(b for b in GROUPS["Pronouns"] if b.startswith("they"))
+        npc = roll(11, Role=mil, Pronouns=they)
         choices = {c["value"]: c for c in gen.trait_choices(GROUPS, npc, "Outfit")}
         self.assertFalse(choices["a cardigan || civ"]["allowed"], "Civvies left the pool for a mil Role")
         self.assertTrue(choices["scuffed plate || mil"]["allowed"])
+
+    def test_a_replacement_group_variant_is_the_only_one_offered(self):
+        """The picker offers what the roller could produce, so a man is offered
+        his own Civvies and not the two the variant replaced."""
+        he = next(b for b in GROUPS["Pronouns"] if b.startswith("he"))
+        npc = roll(11, Pronouns=he)
+        choices = {c["value"]: c for c in gen.trait_choices(GROUPS, npc, "Outfit")}
+        self.assertIn("a knit jumper || civ", choices)
+        self.assertEqual(choices["a knit jumper || civ"]["heading"], "Civvies (he)")
+        self.assertNotIn("a cardigan || civ", choices)
+        self.assertNotIn("a sundress || civ", choices)
 
     def test_the_current_member_is_marked_current(self):
         npc = roll(11, Outfit="lacquered plate")
@@ -444,6 +532,6 @@ class TestHelpersFollowReferences(unittest.TestCase):
         from test.helpers import table_keys, bullets_for
         self.assertEqual(table_keys(GROUPS, "Outfit"),
                          ["Outfit", "Outfit (she) +", "Plates", "Plates (she) +",
-                          "Neon (beta)", "Civvies", "Crop tops"])
+                          "Neon (beta)", "Civvies", "Civvies (he)", "Crop tops"])
         self.assertIn("a fitted plate", bullets_for(GROUPS, "Outfit"))
         self.assertEqual(table_keys(GROUPS, "Headgear"), ["Headgear"])

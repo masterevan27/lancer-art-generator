@@ -91,6 +91,14 @@ Used by the test suite. Not used by the generator at runtime.
 - a cardigan || civ
 - a sundress || civ
 
+## Civvies (he)
+
+The one REPLACEMENT group variant here - Plates has an additive '(she) +' one.
+A man's Civvies are these and not the two above, the same way 'Build (she)'
+replaces 'Build' rather than adding to it.
+
+- a knit jumper || civ
+
 ## Crop tops
 - a crop top || civ
 

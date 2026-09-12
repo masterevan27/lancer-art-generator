@@ -36,7 +36,10 @@ other flags, since `civ`, `mil`, `notac` and `dressy` belong on the members. A
 group may have `(she)` and `(she) +` variants like any table, and a reference
 placed in `## Outfit (she) +` makes the group women-only. One level only: a
 group table holds no references. The script refuses a reference that names a
-missing table, a rolled table, or a group twice from one table. The `###`
+missing table or a rolled table, one that claims a group a second time for the
+same family (a table and its variants count as one), and one written in a table
+the script also draws somewhere that cannot resolve it - Gear, which a `nogear`
+backdrop re-draws, and the traits an old entry re-rolls by hand. The `###`
 sub-headings under Callsigns are the other kind of grouping, cosmetic only.
 
 `||` splits a bullet into segments. Thirteen tables use it:
