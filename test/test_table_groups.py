@@ -345,3 +345,15 @@ class TestChoices(unittest.TestCase):
         npc = roll(11, Outfit="lacquered plate")
         choices = {c["value"]: c for c in gen.trait_choices(GROUPS, npc, "Outfit")}
         self.assertTrue(choices["lacquered plate"]["current"])
+
+
+class TestShipsHaveNoGroups(unittest.TestCase):
+    def test_the_ship_check_refuses_a_reference(self):
+        from test.helpers import load_ship_generator
+        ship = load_ship_generator()
+        tables = ship.parse_tables(REPO / "test" / "fixtures" / "ship-tables-minimal.md")
+        tables["Hull"] = list(tables["Hull"]) + ["=> Hulls"]
+        tables["Hulls"] = ["a hull"]
+        with self.assertRaises(SystemExit) as cm:
+            ship.check_tables(tables, Path("ship.md"))
+        self.assertIn("not supported for ships", str(cm.exception))

@@ -374,6 +374,16 @@ def check_tables(tables, path, repeated=()):
             % (path.name, ", ".join(missing))
         )
 
+    # The NPC roller resolves a '=> Name' group reference at its draw site;
+    # this file has a roller of its own that does not, and would paste the
+    # reference into a prompt as text. Refused here until ships grow groups.
+    for name, bullets in tables.items():
+        for bullet in bullets:
+            if npc.reference_target(bullet) is not None:
+                raise SystemExit(
+                    "%s: '## %s' has a group reference %r, and groups are not "
+                    "supported for ships yet" % (path.name, name, bullet))
+
 
 def trait_cascade(name):
     """`name` plus every trait a re-roll of it invalidates, transitively.
