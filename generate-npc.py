@@ -2344,9 +2344,23 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
             member_sets = {t: set(m) for t, m in members.items()}
             survivors = narrow(name, options + [b for m in members.values() for b in m])
             pools = {t: [b for b in survivors if b in member_sets[t]] for t in members}
-            pool = [b for b in survivors if b in parent_set
-                    and (reference_target(b) is None or pools[reference_target(b)])]
-            options = pool or options   # never filter the pool down to nothing
+            # Three levels, each a fallback for the one before. `parent` is
+            # the narrowed parent pool - spec step 2's survivors restricted
+            # back to the parent's own bullets - and `pool` is that pool with
+            # an emptied reference dropped, spec step 3's "unless that would
+            # empty the parent pool, in which case leave it": the "leave it"
+            # target is `parent`, the narrowed pool, not the raw `options` the
+            # union started from. `options` is the last resort, needed because
+            # the union can survive narrow() while every PARENT bullet is
+            # filtered out - e.g. a themed reference dropped by the theme gate
+            # and a civ bullet dropped by a mil Role, while the reference's
+            # own members keep the union non-empty. `parent` is then empty and
+            # `options` (never filtered to nothing) stands in; step 5's own
+            # fallback to the unfiltered members completes the draw from there.
+            parent = [b for b in survivors if b in parent_set]
+            pool = [b for b in parent
+                    if reference_target(b) is None or pools[reference_target(b)]]
+            options = pool or parent or options
             if probe is not None:
                 for target, drawn_from in pools.items():
                     probe[target] = list(drawn_from)

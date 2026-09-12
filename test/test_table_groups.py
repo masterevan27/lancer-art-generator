@@ -244,3 +244,38 @@ class TestResolution(unittest.TestCase):
             a = gen.roll_npc(stripped, random.Random(seed), None)
             b = gen.roll_npc(stripped, random.Random(seed), None)
             self.assertEqual(a, b)
+
+    def test_the_raw_pool_is_the_last_resort_when_the_union_survives_but_every_parent_bullet_falls(self):
+        """A themed reference the theme gate drops, next to a civ bullet the
+        mil gate drops: the union stays alive through the reference's own
+        (untagged) members, but the parent's own two bullets both empty out,
+        so `parent` is empty too and the fallback has to reach the raw,
+        un-narrowed pool. A reference drawn from there still resolves through
+        its member pool exactly as a narrowed one would."""
+        tables = {**GROUPS, "Outfit": ["=> Neon (beta) || @beta", "a jacket || civ"]}
+        del tables["Outfit (she) +"]
+        alpha = next(b for b in GROUPS["Theme"] if gen.split_flags(b)[0] == "alpha")
+        mil = next(b for b in GROUPS["Role"] if "mil" in gen.split_flags(b)[1])
+        legal = {"a jacket || civ", "a neon techwear jacket", "a neon visor jacket"}
+        for seed in range(50):
+            npc = gen.roll_npc(tables, random.Random(seed), {"Theme": alpha, "Role": mil})
+            raw = npc["_raw"]["Outfit"]
+            self.assertIsNone(gen.reference_target(raw), seed)
+            self.assertIn(raw, legal, seed)
+
+    def test_an_emptied_reference_falls_back_to_the_narrowed_parent_not_the_raw_pool(self):
+        """A reference bullet that itself carries no flags survives the mil
+        gate even though both of its members do not, so the narrowed parent
+        pool - not the raw one - holds just that reference; a sibling bullet
+        the SAME gate actually dropped from the union (the civ jacket) must
+        not be re-admitted by a fallback that reached further than it should."""
+        tables = {**GROUPS, "Outfit": ["=> Civvies", "a jacket || civ"]}
+        del tables["Outfit (she) +"]
+        mil = next(b for b in GROUPS["Role"] if "mil" in gen.split_flags(b)[1])
+        legal = {"a cardigan || civ", "a sundress || civ"}
+        for seed in range(50):
+            npc = gen.roll_npc(tables, random.Random(seed), {"Role": mil})
+            raw = npc["_raw"]["Outfit"]
+            self.assertIsNone(gen.reference_target(raw), seed)
+            self.assertNotEqual(raw, "a jacket || civ", seed)
+            self.assertIn(raw, legal, seed)
