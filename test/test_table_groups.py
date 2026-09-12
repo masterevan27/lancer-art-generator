@@ -498,6 +498,29 @@ class TestChoices(unittest.TestCase):
         self.assertFalse(choices["a cardigan || civ"]["allowed"], "Civvies left the pool for a mil Role")
         self.assertTrue(choices["scuffed plate || mil"]["allowed"])
 
+    def test_a_member_is_offered_when_the_reference_was_kept_with_an_empty_pool(self):
+        """Step 3 keeps an emptied reference sooner than empty the parent pool,
+        and step 5 then draws from the UNFILTERED member list - so on this NPC
+        every Civvies member is a value the roller genuinely produces.
+        `allowed` has to follow the draw site there, or the picker greys out
+        the only outfits left and offers nothing at all."""
+        they = next(b for b in GROUPS["Pronouns"] if b.startswith("they"))
+        mil = next(b for b in GROUPS["Role"] if "mil" in gen.split_flags(b)[1])
+        tables = {**GROUPS, "Outfit": ["=> Civvies", "a jacket || civ"]}
+        del tables["Outfit (she) +"]
+        npc = gen.roll_npc(tables, random.Random(0),
+                           {"Role": mil, "Pronouns": they})
+        probe = {}
+        gen.roll_npc(tables, random.Random(0), dict(npc["_raw"]), probe=probe)
+        self.assertEqual(probe["Outfit"], ["=> Civvies"])
+        self.assertEqual(probe["Civvies"], [],
+                         "the group pool has to be empty or this asserts nothing")
+        choices = {c["value"]: c for c in gen.trait_choices(tables, npc, "Outfit")}
+        self.assertTrue(choices["a cardigan || civ"]["allowed"])
+        self.assertTrue(choices["a sundress || civ"]["allowed"])
+        # The sibling the mil gate actually dropped is still ruled out.
+        self.assertFalse(choices["a jacket || civ"]["allowed"])
+
     def test_a_replacement_group_variant_is_the_only_one_offered(self):
         """The picker offers what the roller could produce, so a man is offered
         his own Civvies and not the two the variant replaced."""

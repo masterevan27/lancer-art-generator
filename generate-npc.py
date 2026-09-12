@@ -4226,17 +4226,27 @@ def trait_choices(tables, npc, name):
     # not a value a prompt can hold. `allowed` for a member is two tests, both
     # read off the probe: the reference survived in the parent pool, and the
     # member survived in the group's own pool (recorded under the group's
-    # heading by the draw site).
+    # heading by the draw site) - with the one exception the draw site itself
+    # makes, spelled out below.
     candidates = []
     for bullet in dict.fromkeys(variant_table(tables, name, subject)):
         target = reference_target(bullet)
         if target is None:
             candidates.append((bullet, bullet in pool))
             continue
+        # An empty group pool beside a reference that is still in the parent
+        # pool is step 3's "unless that would empty the parent pool, in which
+        # case leave it": the reference was kept with nothing under it, and
+        # step 5 then draws from the UNFILTERED member list. Every member is
+        # reachable in that case, so requiring one to be in the (empty) group
+        # pool would grey out values the roller can genuinely produce. The
+        # reference's own membership of `pool` still carries the answer for
+        # the ordinary case, where an emptied reference has already left.
         group_pool = set(baseline.get(target, ()))
         for member in dict.fromkeys(b for key in group_headings(tables, target, subject)
                                     for b in tables[key]):
-            candidates.append((member, bullet in pool and member in group_pool))
+            allowed = bullet in pool and (not group_pool or member in group_pool)
+            candidates.append((member, allowed))
 
     out = []
     for bullet, allowed in candidates:
