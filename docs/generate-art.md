@@ -57,7 +57,7 @@ root or anywhere else.
 | `mech-catalogue-art-prompts.md` (default) | 67 |
 | `battlemap-art-prompts.md` | 6 |
 | `equipment-art-prompts.md` | 4 |
-| `scene-background-art-prompts.md` | 1 |
+| `scene-background-art-prompts.md` | 22 |
 
 A prompt block is either a fenced code block or a blockquote — the mech and
 equipment files use fences, the battlemap and background files use `>`. Whichever

@@ -123,7 +123,8 @@ than a mouth, and `--roll` reading the `## Background Animation` table in
 `prompts/scene-and-spaceship-tables.md`. The output is a looping `.webp`
 sized and quantised to drop straight into SillyTavern's backgrounds folder.
 If you have no background still to animate yet, render one first from
-`prompts/scene-background-art-prompts.md`, which carries five sections composed
+`prompts/scene-background-art-prompts.md`, which carries twenty-two scenes in
+the same painterly house style as the NPC portraits. Twenty of them are composed
 for this job rather than as standalone pieces — nobody in the frame, a quiet
 middle where a chat panel will sit, and every moving element named by a bullet
 in the animation table so `--roll` has something to move.

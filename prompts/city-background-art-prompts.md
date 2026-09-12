@@ -2,7 +2,7 @@
 
 Animated chat backgrounds of modern and near-future cities at night, for
 SillyTavern. **These are deliberately outside the campaign's house style.**
-Every other prompt file here asks for bold black linework, halftone screentone
+Every other prompt file here asks for the campaign's linework, halftone screentone
 and the restrained grey/olive/rust palette; these ask for photographic realism
 instead, and each prompt says so explicitly at the end so the render cannot
 drift back toward illustration. Nothing about them is Lancer, and they are not
