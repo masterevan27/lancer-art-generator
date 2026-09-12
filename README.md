@@ -104,6 +104,22 @@ Blender 5.2. See [docs/generate-3d.md](docs/generate-3d.md).
 python generate-3d.py --filter Sokolova
 ```
 
+### `generate-expressions.py`
+
+Makes transparent static WebP expression sprites from a generated NPC's
+portrait or any supplied character image. It supports all 28 SillyTavern
+default labels, weighted prompt tables, custom expressions, safe add/replace
+variants and exact-file redo.
+
+```powershell
+python generate-expressions.py --id npc-jules-sokolova-40213 --dry-run
+python generate-expressions.py --id npc-jules-sokolova-40213 -e joy,anger
+python generate-expressions.py --image portrait.png --custom "battle focus=cold determination"
+```
+
+See [docs/generate-expressions.md](docs/generate-expressions.md) for setup,
+selection rules, variant safety and SillyTavern custom-label configuration.
+
 ### `animate-portrait.py`
 
 Turns any portrait image into a looping animated `.webp` — a slow blink, a

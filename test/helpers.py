@@ -275,3 +275,19 @@ def load_animate():
         spec.loader.exec_module(module)
         _cached_animate = module
     return _cached_animate
+
+
+_cached_expressions = None
+
+
+def load_expressions():
+    """The generate-expressions.py module object, loaded once per process."""
+    global _cached_expressions
+    if _cached_expressions is None:
+        spec = importlib.util.spec_from_file_location(
+            "genexpressions", REPO / "generate-expressions.py")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["genexpressions"] = module
+        spec.loader.exec_module(module)
+        _cached_expressions = module
+    return _cached_expressions

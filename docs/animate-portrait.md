@@ -203,7 +203,9 @@ because the character card format stores its JSON in a PNG text chunk. An
 animated avatar is flattened to its first frame on upload. The nearest
 equivalent is an expression sprite, which is served from disk untouched: drop
 the `.webp` into `data/default-user/characters/<Character Name>/` as
-`neutral.webp` and enable the Character Expressions extension.
+`neutral.webp` and enable the Character Expressions extension. To generate the
+whole labelled sprite set, variants, or custom expressions from one portrait,
+use [`generate-expressions.py`](generate-expressions.md).
 
 ## The loop
 
