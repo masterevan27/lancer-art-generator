@@ -57,7 +57,9 @@ python generate-npc.py --count 3
 ```
 
 Adding options to a table needs no code change — every `-` bullet under a `##`
-heading in the tables file is one option. The exception is `GENDER_TRAITS` in the
+heading in the tables file is one option. A `- => Name` bullet is a group
+reference, one slot that resolves from `## Name`; the tables file's own
+preamble explains it. The exception is `GENDER_TRAITS` in the
 script, a short clause the prompt asserts for every NPC of one gender rather than
 rolling for it, since a single bullet in a pool of thirty rarely comes up. Full
 documentation, including worked examples for rolling a whole group of related NPCs:
@@ -265,8 +267,9 @@ Nothing here depends on it: the generator runs standalone, and every table edit
 it makes is an edit you could make in a text editor. It matters to this
 repository only because it is a second writer of
 `prompts/npc-generator-tables.md`, so a table's on-disk shape — the `- ` bullet
-under a `##` heading, the `|| flag` suffixes, the `xN ` weight prefix — is a
-contract between the two, not just a convention. See that repository's README.
+under a `##` heading, the `|| flag` suffixes, the `xN ` weight prefix, the
+`=> Name` group reference — is a contract between the two, not just a
+convention. See that repository's README.
 
 ## The `npc-trait-import` Claude Code skill
 

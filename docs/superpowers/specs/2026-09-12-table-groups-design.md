@@ -94,13 +94,21 @@ with the heading and line named, rather than in a prompt.
 - **Existence and level.** The named table must exist and have at least one
   bullet. It must not be a `REQUIRED_TABLES` name or a pronoun variant of one,
   and it must not itself contain a reference. One level only.
-- **One reference per group per table.** A table references a given group at
-  most once; weight is expressed with `xN` on that one bullet. This is what
-  lets the odds report attribute a group's draws back to its reference row.
-- **Variants.** A group may have `Name (she)` and `Name (she) +` tables. The
-  existing `variant_table()` lookup is by name, so this works unchanged: a
-  women-only member goes in `## Flight suits (she) +`, and a reference in
-  `## Outfit (she) +` makes a whole group women-only.
+- **One reference per group per family.** A table and its pronoun variants
+  reference a given group at most once between them; weight is expressed with
+  `xN` on that one bullet. A family rather than a table, because a woman's
+  pool is the base table and her variant together - two references to one
+  group across them would leave the odds report crediting a group's draws to
+  whichever bullet it found first. This is what lets it attribute them back to
+  the reference row exactly.
+- **Variants.** A group may have `Name (she)` and `Name (she) +` tables, in
+  `variant_table()`'s own two forms and with its meanings: `Name (she)`
+  replaces the group for that subject, `Name (she) +` is added to it. A
+  women-only member goes in `## Flight suits (she) +`; a whole feminine
+  rewrite of a group goes in `## Flight suits (she)`; and a reference in
+  `## Outfit (she) +` makes the group itself women-only. `group_headings()`
+  mirrors `variant_table()` so that the draw site, `heading_for()`,
+  `trait_odds()` and `trait_choices()` all read the same pool.
 - **Themed groups.** A reference tagged `|| @gundam` behaves at the parent
   level exactly as a tagged bullet does today: dropped for other themes, and
   duplicated up to `THEME_SHARE` for its own. Members of a themed group carry
@@ -152,19 +160,34 @@ That is the first regression gate.
 Nearly every filter in the chain hands the whole pool back rather than empty
 it. Filtering a group's members on their own would therefore re-admit, say,
 a civ-only group for a mil NPC the moment the mil filter emptied it, which
-is a flag-semantics change the flat list never had. So the members are
-filtered together with the parent pool, as one union, exactly as they sit in
-the flat list today:
+is a flag-semantics change the flat list never had. So the drop filters run
+over the members and the parent pool together, as one union, exactly as they
+sit in the flat list today:
 
 1. For each distinct reference in `options`, collect the member list
    `variant_table(tables, target, subject)`. Build the union: `options`
    followed by every member list.
-2. Run `narrow(name, union)` once. The parent pool is the survivors that are
-   parent bullets (references included); each group's member pool is the
-   survivors that are its members. Multiplicities are preserved, so `xN`
-   weights and the theme share's duplication behave as they do now, and a
-   tagged reference is dropped or duplicated by the same code that treats a
-   tagged outfit.
+2. Run the drop filters over the union once - `narrow(name, union,
+   theme_share=False)`. Each group's member pool is the survivors that are its
+   members. The parent pool is the parent list narrowed on its own,
+   `narrow(name, options)`, which is byte-for-byte the pre-feature chain with
+   each reference sitting in it as one flagless slot. Multiplicities are
+   preserved either way, so `xN` weights behave as they do now.
+
+   The theme share is the one step that cannot run over the union.
+   `apply_theme_share()` duplicates a theme's own bullets until they hold
+   `THEME_SHARE` of the pool it is handed, so a multiplier sized against
+   parent-plus-members leaves every copy behind in the parent when the members
+   are split back out - measured on the live file at 0.80 tagged against a
+   0.60 target, 192 copies of one bullet in a 230-entry pool. It therefore
+   runs once per side: inside the parent's own `narrow()` call, and again over
+   each group's member pool. A tagged reference is then dropped or duplicated
+   against the parent's own size, which is what §3's "Themed groups" intends,
+   and a tagged member of a neutral group is weighted against its own group's
+   size, which is §3's "filtered and weighted inside the group only". It is
+   not lifted out of `narrow()` to run after the split on both sides: that
+   would reorder the share behind the civ/mil and weapon-policy filters, which
+   `apply_theme_share()`'s own docstring says not to trade for.
 3. Remove from the parent pool every reference whose member pool is empty,
    unless that would empty the parent pool, in which case leave it (the
    "never filter to nothing" convention every filter here follows).
@@ -181,9 +204,16 @@ today, and never triggers step 5. A forced value that is itself a reference
 is refused with the table named, since a reference is not a value.
 
 The four other draw sites (Pronouns, Theme, Stance, the `nogear` Gear
-re-draw) and the legacy no-raw re-roll path do not resolve references. The
-check in 4.1 refuses references in any table those sites read, so the
-question never arises.
+re-draw) and the legacy no-`_raw` re-roll path do not resolve references.
+`check_group_references()` refuses a reference in every table one of them
+reads, each with its own message naming the site: `Pronouns`, `Theme` and
+`Stance` because those three are drawn outside the loop; `Gear` because a
+Backdrop flagged `nogear` re-draws it after the loop from a pool it has
+narrowed by hand; and every table in `REROLLABLE_TRAITS` because
+`reroll_trait()` rebuilds the draw by hand for an entry written before `_raw`
+existed. Refused rather than resolved - see §8 - because a reference in one of
+those tables would resolve on most rolls and paste `=> Name` into the dossier
+and the prompt on the rest.
 
 ### 4.4 What is recorded
 
@@ -206,7 +236,8 @@ referenced from `name` or its variants, return that group's heading.
 `trait_odds()` counts a resolved member under its group heading and also
 increments the reference row under the parent, so the parent's rows still sum
 to one and the group's rows show each member's overall probability. Finding
-the reference row is exact because a table references a group at most once.
+the reference row is exact because one family - a table and its variants
+together - references a group at most once.
 The output filter admits group tables (and their variants) alongside required
 tables. `test_trait_odds` gains: a group's rows sum to the reference row's
 figure; every member is reported even at zero; the family-sums-to-one test
@@ -361,6 +392,14 @@ tagged gundam flight suit) and 3 references. The three-member candidates the clu
   a content pass for later.
 - Any table other than Outfit. The mechanism is generic; applying it
   elsewhere is a curation decision per table.
+- `Gear`, and every table in `REROLLABLE_TRAITS` (`Callsigns`, `Build`,
+  `Height`, `Skin`, `Hair`, `Eyes`, `Feature`, `Demeanor`, `Headgear`,
+  `Glow colour`, `Glow placement`). Each of those has a second draw site that
+  does not resolve references - the `nogear` Gear re-draw and the legacy
+  no-`_raw` re-roll - so `check_tables()` refuses them by name until those two
+  sites resolve as well. Teaching them to is its own change, with its own
+  filter questions: the `nogear` re-draw has already narrowed its pool by hand
+  by the time it draws.
 
 ## 9. Acceptance
 

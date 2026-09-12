@@ -53,20 +53,106 @@ class ProbeCoversTheTables(unittest.TestCase):
         self.assertEqual(missing, [], "unrecorded tables have no legal values")
 
     def test_every_recorded_pool_is_non_empty(self):
+        # Restricted to REQUIRED_TABLES: those are the only keys roll_npc()
+        # promises never to draw dry (every filter chain here falls back
+        # rather than empties). A group's own pool is a different promise -
+        # roll_npc() records it whether or not its reference survived to be
+        # drawn (spec §4.3 step 4, task-11 addendum ruling R1) - so nothing
+        # says a group's member pool itself is never empty, only that an
+        # emptied one does not leave its reference sitting in the parent
+        # pool undropped, checked below.
         probe = {}
         gen.roll_npc(LIVE, random.Random(4), None, probe=probe)
-        empty = sorted(t for t, pool in probe.items() if not pool)
+        empty = sorted(t for t in gen.REQUIRED_TABLES
+                       if t in probe and not probe[t])
         self.assertEqual(empty, [])
+
+        # The tightening spec §4.3 step 3 promises: a group whose own pool
+        # came back empty must have had its reference dropped from its
+        # parent's recorded pool - UNLESS dropping it would have left the
+        # parent pool with nothing at all, the one case step 3 says to leave
+        # it. That fallback only ever empties every reference in the parent
+        # pool at once (roll_npc() only falls back to the un-filtered parent
+        # list when the filtered one is empty), so "every bullet remaining
+        # in the parent's own recorded pool is itself a reference to an
+        # empty group" is the exact condition under which a still-present
+        # reference is not a bug.
+        parent_of = {}
+        for name in gen.REQUIRED_TABLES:
+            for target, ref in gen.references_in(LIVE, name).items():
+                parent_of[target] = (name, ref)
+        for target, pool in probe.items():
+            if target in gen.REQUIRED_TABLES or pool:
+                continue
+            with self.subTest(group=target):
+                parent, ref = parent_of[target]
+                self.assertTrue(
+                    ref not in probe[parent] or all(
+                        gen.reference_target(b) and not probe[gen.reference_target(b)]
+                        for b in probe[parent]),
+                    "%r's recorded member pool is empty, but its reference "
+                    "%r is still in %r's recorded pool without every other "
+                    "bullet there also being an emptied reference - spec "
+                    "step 3 only keeps a dropped reference when removing it "
+                    "would leave the parent pool with nothing at all"
+                    % (target, ref, parent))
 
     def test_the_rolled_value_is_in_its_own_recorded_pool(self):
         # The pool is what the draw came from, so this is the tightest
-        # statement that the record is of the right list.
+        # statement that the record is of the right list. This roll is not
+        # pinned, so a REQUIRED table that references a group can still run
+        # step 5 for real: probe[name] is recorded BEFORE that draw (spec
+        # §4.3 step 4 records the parent pool, then step 5 runs), so a
+        # REQUIRED table's own _raw value is the resolved MEMBER whenever it
+        # came from a group, and that member's text is never literally in
+        # the parent-level pool recorded for it - only the '=> Name'
+        # reference is. The direct check therefore only applies as-is when
+        # the raw value is not itself a group's member; when it is, what
+        # has to hold is R3's pair: the reference is in the parent's own
+        # recorded pool, and the member is in the group's own recorded pool.
+        #
+        # A probed roll also records a pool for every group a rolled table
+        # references (R1), whether or not that reference was the one drawn,
+        # and those keys have no _raw entry to compare against (_raw is
+        # REQUIRED_TABLES only - R2). The group-side half of the same
+        # invariant, entered from the group's own key: find the REQUIRED
+        # table whose family references it, and if THAT table's raw value is
+        # one of this group's own members, it has to be one this roll
+        # actually recorded for the group.
         for seed in range(10):
             probe = {}
             npc = gen.roll_npc(LIVE, random.Random(seed), None, probe=probe)
+            subject = npc["Pronouns"].split("/")[0].strip().lower()
             for table, pool in probe.items():
                 with self.subTest(seed=seed, table=table):
-                    self.assertIn(npc["_raw"][table], pool)
+                    if table in gen.REQUIRED_TABLES:
+                        raw = npc["_raw"][table]
+                        if raw in pool:
+                            continue
+                        refs = gen.references_in(LIVE, table)
+                        target = next(
+                            (t for t in refs if raw in
+                             {b for key in gen.group_headings(LIVE, t, subject)
+                              for b in LIVE[key]}), None)
+                        self.assertIsNotNone(
+                            target, "%r's raw %r is in neither its own "
+                            "recorded pool nor any group %r references"
+                            % (table, raw, table))
+                        self.assertIn(refs[target], pool)
+                        self.assertIn(raw, probe[target])
+                        continue
+                    parent = next(
+                        (name for name in gen.REQUIRED_TABLES
+                         if table in gen.references_in(LIVE, name)), None)
+                    self.assertIsNotNone(
+                        parent, "%r is recorded in the probe but is not a "
+                        "REQUIRED table, and no REQUIRED table's family "
+                        "references it as a group" % table)
+                    raw = npc["_raw"][parent]
+                    members = {b for key in gen.group_headings(LIVE, table, subject)
+                               for b in LIVE[key]}
+                    if raw in members:
+                        self.assertIn(raw, pool)
 
 
 def raw_npc(tables=LIVE, seed=0):
@@ -99,9 +185,26 @@ class ChoicesDescribeTheCurrentNpc(unittest.TestCase):
         # Once, not once per point of weight: variant_table() repeats a
         # heavier bullet to make rng.choice() favour it, which is the right
         # shape for a draw and the wrong one for a list somebody reads.
+        #
+        # A '=> Name' reference is not a value a prompt can hold, so
+        # trait_choices() never offers it - it expands one level into the
+        # group's own members instead (Task 6, generate-npc.py ~4147-4156).
+        # `expected` has to do the same expansion, in the same order
+        # (group_headings()'s own order: the group's base heading, then its
+        # '(subject)' or '(subject) +' variant), or this test would start
+        # failing the moment any table gained a reference - which is exactly
+        # what Task 11 did to Outfit.
         npc = raw_npc(seed=2)
         subject = npc["Pronouns"].split("/")[0].strip().lower()
-        expected = list(dict.fromkeys(gen.variant_table(LIVE, "Outfit", subject)))
+        expected = []
+        for bullet in dict.fromkeys(gen.variant_table(LIVE, "Outfit", subject)):
+            target = gen.reference_target(bullet)
+            if target is None:
+                expected.append(bullet)
+                continue
+            expected.extend(dict.fromkeys(
+                b for key in gen.group_headings(LIVE, target, subject)
+                for b in LIVE[key]))
         got = [c["value"] for c in gen.trait_choices(LIVE, npc, "Outfit")]
         self.assertEqual(got, expected)
 

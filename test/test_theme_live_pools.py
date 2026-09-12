@@ -24,6 +24,7 @@ functions branch on `name` to decide the bullet's '||' shape (Backdrop keeps
 flags in a third segment, everything else in the second), and a variant shares
 its base table's shape, not its own key's.
 """
+import random
 import unittest
 
 from test.helpers import REPO, load_generator, table_keys
@@ -40,6 +41,39 @@ THEMES = sorted(set(LIVE["Theme"]))
 # one theme has been tagged so heavily into a table that the others are left
 # rolling from scraps, not on ordinary authoring.
 POOL_FLOOR = 0.5
+
+# And how far ABOVE THEME_SHARE a pool the roller actually draws from may sit.
+# apply_theme_share duplicates a theme's own bullets until they hold
+# THEME_SHARE of the pool *as it reaches that function*, and the drop filters
+# that run after it take tagged and neutral bullets at different rates, so the
+# realized figure drifts either side of the target - that drift is measured,
+# not asserted, by `python -m test.theme_visibility`.
+#
+# What this ceiling is for is the other failure: duplication sized against a
+# pool bigger than the one the copies land in. The group draw site did exactly
+# that - the share was taken over the parent pool and every referenced group's
+# members as one union, and the members were then split back out leaving all
+# the copies behind - and the live Outfit pool read 0.80+ against a 0.60
+# target, 192 copies of one bullet in 230 entries. Nothing anywhere asserted an
+# upper bound, so the suite stayed green through it.
+#
+# 0.20 rather than the 0.15 the first draft of this ceiling used, because 0.15
+# leaves no margin at all: measured across every theme at 20 seeds, the worst
+# pool today is Outfit at exactly 0.750, where the 'dressy' and 'notac' drops
+# take neutral bullets after the duplication step. 0.15 would pass on that
+# number and fail on the next tagged Outfit bullet somebody writes. The same
+# sweep on the union-sized code read 0.896, so 0.20 still catches the bug this
+# exists for, with room on both sides of it.
+SHARE_CEILING = 0.20
+
+# Weapon is the one table whose later filters re-concentrate the pool rather
+# than merely thin it. apply_weapon_policy restricts a mil Role to bullets
+# flagged 'sidearm', and a theme that tags weapons tags armed ones, so the
+# tagged share climbs after the duplication step instead of drifting around
+# it. Worst measured across every theme at 80 seeds: 0.872. This is a
+# regression ceiling for that table, not a figure it should be approaching -
+# if it ever needs raising again, measure first and say what moved.
+WEAPON_CEILING = 0.90
 
 
 def keys(name):
@@ -116,6 +150,49 @@ class TestNoThemeStarvesALiveTable(unittest.TestCase):
                             "%r - other themes have taken so much of this "
                             "table that %r is rolling from what is left"
                             % (key, distinct, base, theme, theme))
+
+
+class TestNoThemeOverwhelmsALiveTable(unittest.TestCase):
+    """The ceiling to go with the floor above, and the only one anywhere.
+
+    Measured off `probe`, not off pool_for(): the pools above are what the two
+    theme functions produce in isolation, and the whole class of bug this
+    catches lives in what roll_npc() does with them afterwards. probe[name] is
+    the list the roller is about to choose from, group members resolved and
+    every later filter applied, which is the only pool a reader of an NPC
+    could be misled by.
+
+    Deterministic - a fixed seed per roll and every theme forced in turn, so a
+    failure here is content or code moving, never a sample coming up short.
+    """
+
+    SEEDS = 20
+
+    def pools(self, theme, seed):
+        probe = {}
+        gen.roll_npc(LIVE, random.Random(seed), {"Theme": theme}, probe=probe)
+        return probe
+
+    def test_no_recorded_pool_sits_far_above_the_target_share(self):
+        for theme in THEMES:
+            for seed in range(self.SEEDS):
+                probe = self.pools(theme, seed)
+                for name in gen.THEMED_TABLES:
+                    pool = probe[name]
+                    tagged = sum(1 for b in pool
+                                 if theme in gen.themes_of(gen.flags_for(name, b)))
+                    share = tagged / len(pool)
+                    ceiling = (WEAPON_CEILING if name == "Weapon"
+                               else gen.THEME_SHARE + SHARE_CEILING)
+                    with self.subTest(table=name, theme=theme, seed=seed):
+                        self.assertLessEqual(
+                            share, ceiling,
+                            "%s under theme %r draws from a pool that is "
+                            "%.3f tagged against a target of %.2f - %d of %d "
+                            "entries. Something is sizing the theme share "
+                            "against a bigger pool than the one it lands in."
+                            % (name, theme, share, gen.THEME_SHARE,
+                               tagged, len(pool)))
 
 
 if __name__ == "__main__":

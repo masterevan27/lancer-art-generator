@@ -1,0 +1,150 @@
+# Minimal fixture tables
+
+Used by the test suite. Not used by the generator at runtime.
+
+## Theme
+- x2 alpha
+- beta
+
+## Given names
+- Test
+
+## Family names
+- Subject
+
+## Callsigns
+- Fixture
+
+## Pronouns
+- she/her/her/woman
+- he/him/his/man
+- they/them/their/person
+
+## Age
+- in {possessive} thirties
+- in {possessive} late teens || young
+
+## Build
+- lean and wiry
+- full-figured through the hips || figure
+
+## Height
+- of average height
+
+## Skin
+- pale skin
+
+## Hair
+- a short {colour} crop
+- a long {colour} braid || @alpha
+- a shaved head, {colour} at the stubble || @beta
+
+## Hair colour
+- black
+- greying || || older
+- silver-white || fading to green at the tips || @alpha
+
+## Eyes
+- grey eyes
+- dark eyes, steady and unreadable
+
+## Feature
+- a scar across one cheek
+- a line of chrome ports along one temple || @beta
+
+## Demeanor
+- a flat stare
+
+## Role
+- a dockworker
+- a colonial administrator
+- a Union marine soldier || mil
+
+## Faction
+- Unaligned || unaligned and freelance
+- Baronies || heavy brocade and gold braid || dressy
+- Dress uniform || in dress uniform || mil
+
+## Outfit
+- grey coveralls
+- => Plates
+- => Neon (beta) || @beta
+- => Civvies
+- an elaborate floral kimono || civ notac dressy
+
+## Outfit (she) +
+- => Crop tops
+
+## Plates
+- lacquered plate
+- scuffed plate || mil
+- x2 dented plate
+
+## Plates (she) +
+- a fitted plate
+
+## Neon (beta)
+- a neon techwear jacket
+- a neon visor jacket
+
+## Civvies
+- a cardigan || civ
+- a sundress || civ
+
+## Civvies (he)
+
+The one REPLACEMENT group variant here - Plates has an additive '(she) +' one.
+A man's Civvies are these and not the two above, the same way 'Build (she)'
+replaces 'Build' rather than adding to it.
+
+- a knit jumper || civ
+
+## Crop tops
+- a crop top || civ
+
+## Headgear
+- {Subject} {is_are} bare-headed.
+- {Subject} {wear} a wide woven hat. || @alpha
+- {Subject} {wear} a sealed flight helmet. || hardtech
+
+## Weapon
+
+One armament bullet here is deliberately compound - it contains " and " of
+its own, the way 25 of the 56 live ones do - so that `carry_sentence()`'s
+comma join is reachable from a plain roll. Without it every rolled carry
+sentence has exactly two halves, and the "A and B and C" run-on that join
+exists to prevent cannot be produced at all.
+
+- x2 || none
+- a service pistol worn openly at the thigh || mil weapon simple sidearm
+- a holstered sidearm and a slung carbine || mil weapon sidearm
+- a long blade worn edge-up at the waist || mil weapon sidearm hands gun @alpha
+
+## Gear
+- a battered data-slate || hands
+- a canvas tool roll at the hip
+- a hard-shelled tactical backpack || mil
+
+## Glow colour
+- teal-green
+
+## Glow placement
+- falls across one side of {possessive} face against warm dim ambient light on the other
+- rims {possessive} shoulders and hair from behind
+- washes across the scene behind {object} || scene
+
+## Backdrop
+- A half-body character portrait || Behind {object} is a plain wall.
+- A character portrait || {Subject} {is_are} in a temple courtyard. || weather @alpha
+- A character portrait || {Subject} {is_are} firing a sidearm down a corridor. || nogear
+- A character portrait || {Subject} {is_are} under a neon sign in the rain. || weather
+
+## Weather
+- in steady rain
+- || clear
+
+## Stance
+- standing squarely
+- {possessive} hands in {possessive} pockets || hands
+- {possessive} weapon raised and sighted down the barrel || gun
+- one hand resting on a sheathed blade at the hip || armed

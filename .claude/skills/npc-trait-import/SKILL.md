@@ -407,6 +407,12 @@ the image will not fit this file. Apply all of these:
   doesn't read as a weapon. No `gun`/`weapon`/`simple`/`sidearm` here; those
   flags live on `Weapon` now.
 - **Outfit**: `<noun phrase clause> || [civ] [mil] [notac] [dressy]`
+- **Groups**: a heading that a rolled table enters through a
+  `- => Heading` bullet (see "How the script reads this file" in the tables
+  file) takes the shape line of the table that references it, flags
+  included. Stage a variant of an existing family under the group's exact
+  heading (`"table": "Flight suits"`) rather than under `Outfit`. A run
+  never authors a `=>` bullet: creating a group is a curation decision.
 - **Headgear**: `{Subject} {wear} <full sentence>. || [hardtech] [helmet] [crown]`
   Flag it if the piece is a helmet, a visor or lens rig, sensor or
   night-vision hardware, a breather mask, a comms headset, anything cabled or
@@ -731,7 +737,8 @@ against the file you just wrote and fix anything they surface:
 1. **It parses.** Valid JSON, and `entries` is non-empty.
 2. **Every `table` is a real `## heading`** in `npc-generator-tables.md`,
    matched exactly including any variant suffix. The importer refuses
-   anything else.
+   anything else. A group heading is a real heading too, and the right
+   target for a variant of the family it holds.
 3. **Every flag is in §0's table.** Unknown flags fail quietly forever.
 4. **Every `@theme` tag resolves** — to a theme in the live `## Theme` table
    (get the list with the one-liner in §0) **or** to a `Theme` entry staged in
