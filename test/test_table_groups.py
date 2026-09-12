@@ -54,3 +54,88 @@ class TestReferenceHelpers(unittest.TestCase):
         }
         self.assertEqual(gen.group_tables(tables),
                          {"Flight suits", "Flight suits (she) +", "Flight suits (he)", "Crop tops"})
+
+
+def fixture_tables():
+    """A fresh copy of the minimal fixture, so a test can add groups to it."""
+    return {k: list(v) for k, v in gen.parse_tables(FIXTURE_TABLES).items()}
+
+
+class TestCheckGroupReferences(unittest.TestCase):
+    def check(self, tables):
+        return gen.check_group_references(tables)
+
+    def test_a_well_formed_file_has_no_complaints(self):
+        tables = fixture_tables()
+        tables["Outfit"] += ["=> Plates", "=> Neon (beta) || @beta"]
+        tables["Outfit (she) +"] = ["=> Crop tops"]
+        tables["Plates"] = ["lacquered plate", "scuffed plate || mil"]
+        tables["Plates (she) +"] = ["a fitted plate"]
+        tables["Neon (beta)"] = ["a neon jacket", "a neon visor jacket"]
+        tables["Crop tops"] = ["a crop top || civ"]
+        self.assertEqual(self.check(tables), [])
+
+    def test_a_missing_target_is_named(self):
+        tables = fixture_tables()
+        tables["Outfit"].append("=> Nowhere")
+        [problem] = self.check(tables)
+        self.assertIn("Nowhere", problem)
+        self.assertIn("Outfit", problem)
+
+    def test_a_rolled_table_or_its_variant_cannot_be_a_group(self):
+        for target in ["Headgear", "Build (she)", "Outfit (she) +"]:
+            tables = fixture_tables()
+            tables.setdefault(target, ["x"])
+            tables["Outfit"].append("=> " + target)
+            with self.subTest(target=target):
+                self.assertTrue(any("rolled table" in p for p in self.check(tables)), self.check(tables))
+
+    def test_a_reference_carries_no_behavioural_flags(self):
+        tables = fixture_tables()
+        tables["Plates"] = ["a plate"]
+        tables["Outfit"].append("=> Plates || civ @alpha")
+        [problem] = self.check(tables)
+        self.assertIn("civ", problem)
+        self.assertNotIn("@alpha", problem.split("carries flags")[1].split(";")[0])
+
+    def test_one_reference_per_group_per_table(self):
+        tables = fixture_tables()
+        tables["Plates"] = ["a plate"]
+        tables["Outfit"] += ["=> Plates", "=> Plates || @alpha"]
+        self.assertTrue(any("more than once" in p for p in self.check(tables)))
+        # An xN weight is N copies of ONE text, which is fine.
+        tables["Outfit"] = [b for b in tables["Outfit"] if b != "=> Plates || @alpha"] + ["=> Plates"]
+        self.assertEqual(self.check(tables), [])
+
+    def test_a_group_cannot_reference_a_group(self):
+        tables = fixture_tables()
+        tables["Outfit"].append("=> Plates")
+        tables["Plates"] = ["a plate", "=> Heavy plates"]
+        tables["Heavy plates"] = ["a heavy plate"]
+        self.assertTrue(any("one level" in p for p in self.check(tables)))
+
+    def test_a_themed_groups_members_carry_no_tags(self):
+        tables = fixture_tables()
+        tables["Outfit"].append("=> Neon (beta) || @beta")
+        tables["Neon (beta)"] = ["a neon jacket", "a neon visor || @beta"]
+        [problem] = self.check(tables)
+        self.assertIn("a neon visor", problem)
+        # A neutral group's members may be tagged; the tag then filters inside the group.
+        tables["Outfit"][-1] = "=> Neon (beta)"
+        self.assertEqual(self.check(tables), [])
+
+    def test_a_reference_lives_only_in_a_rolled_table_the_main_draw_handles(self):
+        for name in ["Pronouns", "Theme", "Stance", "Animation"]:
+            tables = fixture_tables()
+            tables["Plates"] = ["a plate"]
+            tables.setdefault(name, []).append("=> Plates")
+            with self.subTest(name=name):
+                self.assertTrue(any("only read in" in p for p in self.check(tables)))
+
+    def test_check_tables_refuses_a_malformed_file_with_every_problem_listed(self):
+        tables = fixture_tables()
+        tables["Outfit"] += ["=> Nowhere", "=> Headgear"]
+        with self.assertRaises(SystemExit) as cm:
+            gen.check_tables(tables, Path("tables.md"))
+        self.assertIn("Nowhere", str(cm.exception))
+        self.assertIn("Headgear", str(cm.exception))

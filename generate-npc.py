@@ -1268,6 +1268,74 @@ def parse_tables(md_path):
     return {name: options for name, options in tables.items() if options}
 
 
+# The three rolled tables the main draw site does not handle: Pronouns and
+# Theme are drawn before the loop from unfiltered lists, Stance after it from
+# (bullet, flags) pairs. A reference in any of them would be pasted into the
+# prompt as text, so the check refuses it rather than letting that happen.
+UNGROUPABLE_TABLES = ("Pronouns", "Theme", "Stance")
+
+
+def check_group_references(tables):
+    """Every way a '=> Name' bullet can be wrong, as a list of complaints.
+
+    A list rather than the first failure, because a file being regrouped by
+    hand tends to get several things wrong at once and a run per complaint is
+    slow. Each complaint names the heading and the bullet, since the file is
+    three thousand lines and 'a reference is malformed' is not actionable.
+    """
+    problems = []
+    for name, bullets in tables.items():
+        base = name.partition(" (")[0]
+        seen = {}
+        # dict.fromkeys(): parse_tables() expands 'x2 => Plates' into two
+        # identical strings, which is one reference, not two.
+        for bullet in dict.fromkeys(bullets):
+            target = reference_target(bullet)
+            if target is None:
+                continue
+            if base not in REQUIRED_TABLES or base in UNGROUPABLE_TABLES:
+                problems.append(
+                    "'## %s': %r - a group reference is only read in a rolled "
+                    "table, and not in %s" % (name, bullet, ", ".join(UNGROUPABLE_TABLES)))
+                continue
+            if target not in tables:
+                problems.append(
+                    "'## %s': %r names '## %s', which this file does not have "
+                    "(or which has no bullets)" % (name, bullet, target))
+                continue
+            if target.partition(" (")[0] in REQUIRED_TABLES:
+                problems.append(
+                    "'## %s': %r - a group cannot be a rolled table or a "
+                    "variant of one" % (name, bullet))
+            flags = [f for f in split_flags(bullet)[1] if not f.startswith("@")]
+            if flags:
+                problems.append(
+                    "'## %s': %r carries flags %s; flags belong on the group's "
+                    "members, the reference takes only @theme tags"
+                    % (name, bullet, " ".join(flags)))
+            if target in seen:
+                problems.append(
+                    "'## %s' references '## %s' more than once (%r and %r); "
+                    "use one bullet with an xN weight"
+                    % (name, target, seen[target], bullet))
+            seen[target] = bullet
+            themed = bool(themes_of(split_flags(bullet)[1]))
+            for key in tables:
+                if not (key == target or key.startswith(target + " (")):
+                    continue
+                for member in tables[key]:
+                    if reference_target(member) is not None:
+                        problems.append(
+                            "'## %s': %r - a group cannot reference another "
+                            "group (one level only)" % (key, member))
+                    if themed and themes_of(flags_for(base, member)):
+                        problems.append(
+                            "'## %s': %r carries a theme tag inside a themed "
+                            "group; the tag belongs on the '## %s' reference "
+                            "alone" % (key, member, name))
+    return problems
+
+
 def check_tables(tables, path, repeated=()):
     for name in repeated:
         print("! %s: '## %s' appears more than once; the blocks are merged, so "
@@ -1280,6 +1348,12 @@ def check_tables(tables, path, repeated=()):
             "%s is missing the table(s) the prompt templates need: %s"
             % (path.name, ", ".join(missing))
         )
+
+    problems = check_group_references(tables)
+    if problems:
+        raise SystemExit(
+            "%s: the group references are not well formed:\n  %s"
+            % (path.name, "\n  ".join(problems)))
 
 
 def variant_table(tables, name, subject):
