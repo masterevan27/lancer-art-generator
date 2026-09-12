@@ -1268,6 +1268,120 @@ def parse_tables(md_path):
     return {name: options for name, options in tables.items() if options}
 
 
+# The three rolled tables the main draw site does not handle: Pronouns and
+# Theme are drawn before the loop from unfiltered lists, Stance after it from
+# (bullet, flags) pairs. A reference in any of them would be pasted into the
+# prompt as text, so the check refuses it rather than letting that happen.
+UNGROUPABLE_TABLES = ("Pronouns", "Theme", "Stance")
+
+
+def check_group_references(tables):
+    """Every way a '=> Name' bullet can be wrong, as a list of complaints.
+
+    A list rather than the first failure, because a file being regrouped by
+    hand tends to get several things wrong at once and a run per complaint is
+    slow. Each complaint names the heading and the bullet, since the file is
+    three thousand lines and 'a reference is malformed' is not actionable.
+    """
+    problems = []
+    # Keyed by base rather than by name, so a target seen under 'Outfit' is
+    # still 'seen' when 'Outfit (she) +' is checked next: a group is
+    # referenced once per FAMILY, not once per table in it, or references_in()
+    # - which resolves first-occurrence-wins across the whole family - would
+    # silently pick one of two references and trait_odds() would credit the
+    # reference row to the wrong bullet.
+    family_seen = {}
+    for name, bullets in tables.items():
+        base = name.partition(" (")[0]
+        seen = family_seen.setdefault(base, {})
+        # dict.fromkeys(): parse_tables() expands 'x2 => Plates' into two
+        # identical strings, which is one reference, not two.
+        for bullet in dict.fromkeys(bullets):
+            target = reference_target(bullet)
+            if target is None:
+                continue
+            if base not in REQUIRED_TABLES or base in UNGROUPABLE_TABLES:
+                problems.append(
+                    "'## %s': %r - a group reference is only read in a rolled "
+                    "table, and not in %s" % (name, bullet, ", ".join(UNGROUPABLE_TABLES)))
+                continue
+            # Two more tables whose value does not always come from the main
+            # draw site, and whose second path knows nothing about groups. A
+            # Backdrop flagged 'nogear' re-draws Gear after the loop, and
+            # reroll_trait()'s legacy path - for an entry written before _raw
+            # existed - rebuilds the draw by hand for any of REROLLABLE_TRAITS.
+            # A reference in one of those tables would resolve on most rolls
+            # and reach the dossier and the prompt as the literal '=> Name'
+            # text on the rest, which is the worst shape a bug can have: it
+            # looks authored, and only some NPCs carry it.
+            #
+            # Refused rather than resolved. Spec section 8 keeps every table
+            # but Outfit out of scope, and teaching two more draw sites to
+            # resolve references is a feature with its own filter questions -
+            # the nogear re-draw has already narrowed its pool by hand by the
+            # time it draws - not a paragraph of this one.
+            if base == "Gear":
+                problems.append(
+                    "'## %s': %r - Gear is also drawn by the 'nogear' Gear "
+                    "re-draw, which does not resolve a group; the reference "
+                    "would reach the prompt as its own text" % (name, bullet))
+                continue
+            if base in REROLLABLE_TRAITS:
+                problems.append(
+                    "'## %s': %r - %s is also drawn by the legacy re-roll of "
+                    "an NPC without _raw, which does not resolve a group; the "
+                    "reference would reach the prompt as its own text"
+                    % (name, bullet, base))
+                continue
+            if target not in tables:
+                problems.append(
+                    "'## %s': %r names '## %s', which this file does not have "
+                    "(or which has no bullets)" % (name, bullet, target))
+                continue
+            if target.partition(" (")[0] in REQUIRED_TABLES:
+                problems.append(
+                    "'## %s': %r - a group cannot be a rolled table or a "
+                    "variant of one" % (name, bullet))
+            flags = [f for f in split_flags(bullet)[1] if not f.startswith("@")]
+            if flags:
+                problems.append(
+                    "'## %s': %r carries flags %s; flags belong on the group's "
+                    "members, the reference takes only @theme tags"
+                    % (name, bullet, " ".join(flags)))
+            if target in seen:
+                prev_name, prev_bullet = seen[target]
+                if prev_name == name:
+                    problems.append(
+                        "'## %s' references '## %s' more than once (%r and %r); "
+                        "use one bullet with an xN weight"
+                        % (name, target, prev_bullet, bullet))
+                else:
+                    suffix = name[len(base):]
+                    hint = ("; a group is referenced once per family, and this "
+                             "subject's own slice of it goes in '## %s' instead"
+                             % (target + suffix)) if suffix else \
+                        "; a group is referenced once per family"
+                    problems.append(
+                        "'## %s': %r - '## %s' already references '## %s' (%r)%s"
+                        % (name, bullet, prev_name, target, prev_bullet, hint))
+            seen[target] = (name, bullet)
+            themed = bool(themes_of(split_flags(bullet)[1]))
+            for key in tables:
+                if not (key == target or key.startswith(target + " (")):
+                    continue
+                for member in tables[key]:
+                    if reference_target(member) is not None:
+                        problems.append(
+                            "'## %s': %r - a group cannot reference another "
+                            "group (one level only)" % (key, member))
+                    if themed and themes_of(flags_for(base, member)):
+                        problems.append(
+                            "'## %s': %r carries a theme tag inside a themed "
+                            "group; the tag belongs on the '## %s' reference "
+                            "alone" % (key, member, name))
+    return problems
+
+
 def check_tables(tables, path, repeated=()):
     for name in repeated:
         print("! %s: '## %s' appears more than once; the blocks are merged, so "
@@ -1280,6 +1394,12 @@ def check_tables(tables, path, repeated=()):
             "%s is missing the table(s) the prompt templates need: %s"
             % (path.name, ", ".join(missing))
         )
+
+    problems = check_group_references(tables)
+    if problems:
+        raise SystemExit(
+            "%s: the group references are not well formed:\n  %s"
+            % (path.name, "\n  ".join(problems)))
 
 
 def variant_table(tables, name, subject):
@@ -1317,7 +1437,111 @@ def heading_for(tables, name, subject, bullet):
     additive = "%s (%s) +" % (name, subject)
     if bullet in tables.get(additive, []):
         return additive
+    # A bullet that sits in the base table is the base table's, whatever
+    # groups also hold it; one that does not is looked for in the groups the
+    # family references. Base before group, so a text duplicated between the
+    # two is reported once, under the parent, the same way a base/variant
+    # duplicate is reported under the variant above.
+    if bullet in tables.get(name, ()):
+        return name
+    for target in references_in(tables, name):
+        for key in group_headings(tables, target, subject):
+            if bullet in tables[key]:
+                return key
     return name
+
+
+# A group reference: a bullet whose text is '=> Name' points a rolled table at
+# a second table, '## Name', whose bullets are the variants of one look. The
+# reference is one slot in the parent pool and the member is drawn second, so
+# eleven flight suits weigh what one distinct jacket weighs. The '=>' token
+# was free: nothing in the file or the parsers used it, and unlike '{' it can
+# never be mistaken for a pronoun placeholder by the format() pass.
+REFERENCE_PREFIX = "=> "
+
+
+def reference_target(bullet):
+    """The group heading a reference bullet names, or None for a plain bullet.
+
+    Read off the prose segment only, so a themed reference ('=> Black dresses
+    (gundam) || @gundam') resolves to the heading and keeps its tag where
+    themes_of() finds it. A bare '=>' with nothing after it is not a reference
+    - a typo should roll as literal text and be seen, not point at nothing.
+
+    A leading space before '=> ' disqualifies the bullet. The prefix check runs
+    on the raw bullet first: split_flags()'s .strip() would otherwise treat
+    ' => x' as a reference, making the distinction impossible.
+    """
+    # Check the original bullet for the prefix (must start exactly with it,
+    # rejecting leading whitespace before the => token)
+    if not bullet.startswith(REFERENCE_PREFIX):
+        return None
+
+    # Extract the target, removing the prefix and stripping trailing whitespace
+    target = split_flags(bullet)[0][len(REFERENCE_PREFIX):].strip()
+    return target or None
+
+
+def is_reference(bullet):
+    return reference_target(bullet) is not None
+
+
+def references_in(tables, name):
+    """{group heading: reference bullet} over base table `name` and its variants.
+
+    One entry per group, first occurrence wins: parse_tables() expands an 'xN'
+    reference into N identical strings, and check_tables() refuses two
+    DIFFERENT reference texts for one group, so there is only ever one text to
+    keep.
+    """
+    out = {}
+    for key in tables:
+        if not (key == name or key.startswith(name + " (")):
+            continue
+        for bullet in tables[key]:
+            target = reference_target(bullet)
+            if target is not None and target not in out:
+                out[target] = bullet
+    return out
+
+
+def group_headings(tables, target, subject):
+    """The headings one pronoun set draws a group from, in variant_table()'s
+    two forms: a '(she)' variant is used INSTEAD OF the group, a '(she) +' one
+    is added to it, and the base table alone is the fallback.
+
+    Written to mirror variant_table() rather than to return every variant that
+    happens to be present. A group is a table like any other - the tables file
+    preamble promises exactly that, "like any table" - so a '## Plates (she)'
+    written to stand in for the masculine plates has to replace them here too.
+    Unioned instead, it would give a group the one shape no rolled table has,
+    and every caller would inherit the same wrong pool: the draw site
+    concatenates what this returns, heading_for() searches it in order, and
+    trait_odds() and trait_choices() both walk it to decide which members a
+    subject can reach at all.
+
+    Exact names rather than a startswith() - a themed sibling group is named
+    'Flight suits (gundam)' by convention, and it is a group of its own, not a
+    pronoun variant of 'Flight suits'.
+    """
+    replacement = "%s (%s)" % (target, subject)
+    if replacement in tables:
+        return [replacement]
+    return [key for key in (target, "%s (%s) +" % (target, subject))
+            if key in tables]
+
+
+def group_tables(tables):
+    """Every heading some table references, plus those headings' variants."""
+    targets = set()
+    for name in tables:
+        targets.update(references_in(tables, name))
+    out = set()
+    for key in tables:
+        base, _, _ = key.partition(" (")
+        if key in targets or (base in targets and key != base):
+            out.add(key)
+    return out
 
 
 def trait_odds(tables, samples, rng):
@@ -1349,14 +1573,28 @@ def trait_odds(tables, samples, rng):
     """
     counts = {key: {bullet: 0 for bullet in bullets}
               for key, bullets in tables.items()}
+    reported = set(group_tables(tables))
     for _ in range(samples):
         npc = roll_npc(tables, rng)
         subject = npc["Pronouns"].split("/")[0]
         for name, bullet in npc["_raw"].items():
-            counts[heading_for(tables, name, subject, bullet)][bullet] += 1
+            heading = heading_for(tables, name, subject, bullet)
+            counts[heading][bullet] += 1
+            # A member counts twice: once under its group, and once as the
+            # reference row of the parent that entered the group. The parent's
+            # rows then still sum to one and the group's rows sum to the
+            # reference's figure, which is the number the Chances panel puts
+            # beside '=> Flight suits'. Exact because check_tables() allows one
+            # reference per group per family.
+            if heading in reported:
+                for target, reference in references_in(tables, name).items():
+                    if heading in group_headings(tables, target, subject):
+                        counts[heading_for(tables, name, subject, reference)][reference] += 1
+                        break
     return {key: {bullet: n / samples for bullet, n in bullets.items()}
             for key, bullets in counts.items()
-            if any(k == key or key.startswith(k + " (") for k in REQUIRED_TABLES)}
+            if key in reported
+            or any(k == key or key.startswith(k + " (") for k in REQUIRED_TABLES)}
 
 
 def dress_policy_for(category):
@@ -1892,11 +2130,24 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
     headgear_crown = False
     weapon_hands = False
     weapon_flags = ()
-    for name in REQUIRED_TABLES:
-        if name in ("Pronouns", "Theme", "Stance"):
-            continue
-        options = variant_table(tables, name, subject)
+    def narrow(name, options, theme_share=True):
+        """One table's pool, `options` in and the drawn-from list out.
 
+        Every filter the loop below used to apply inline, in the same order,
+        reading the loop's state (young, role_mil, outfit_notac, the forced_*
+        flags, npc["Role"], npc["Backdrop"]) through the closure - so the call
+        from the loop is the code that used to sit there, and a second call on
+        a group's members and the parent pool together (see the draw site)
+        runs them through exactly the gates the flat list passed. Consumes no
+        randomness: the snapshot test is what holds that.
+
+        `theme_share=False` skips the duplication step and nothing else, for
+        the one caller that hands in a pool it is about to split back apart -
+        see the draw site, which sizes the share separately for the parent and
+        for each group so that a group's bulk cannot inflate the parent's
+        realized theme share. Every other caller leaves it alone and gets the
+        chain exactly as it was.
+        """
         # Theme gates every appearance table: its own tagged bullets plus the
         # neutral pool, with the tagged ones weighted up so the theme is
         # actually visible rather than merely available. Applied first, so the
@@ -1904,7 +2155,8 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # across it - which is what lets a soldier be neosamurai in uniform.
         if name in THEMED_TABLES:
             options = filter_by_theme(options, theme, name)
-            options = apply_theme_share(options, theme, name)
+            if theme_share:
+                options = apply_theme_share(options, theme, name)
 
         # The Age/Build pairing runs both ways. When the Build was forced
         # to a bullet flagged 'figure' and the Age is being rolled, it is the
@@ -2143,6 +2395,14 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # own 'hardtech' flag rather than on 'mil' - see filter_by_hardtech().
         if name == "Headgear" and outfit_notac:
             options = filter_by_hardtech(options, outfit_notac)
+        return options
+
+    for name in REQUIRED_TABLES:
+        if name in ("Pronouns", "Theme", "Stance"):
+            continue
+        pool_in = variant_table(tables, name, subject)
+        options = pool_in if any(reference_target(b) is not None for b in pool_in) \
+            else narrow(name, pool_in)
 
         # Rolled either way, so that forcing a trait does not shift the rest
         # of the run's random stream and change every NPC after it. The
@@ -2155,6 +2415,81 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # the function where `options` is exactly what the roller is about to
         # choose from, which is what makes it the honest answer to "what could
         # this table have produced for this NPC".
+        # Groups. A '=> Name' bullet is one slot of this pool whose value is
+        # drawn second, from '## Name'. The DROP filters run over the members
+        # and the parent pool TOGETHER, as one union, rather than over the
+        # members alone: nearly every gate in narrow() hands the whole pool
+        # back sooner than empty it, so a civ-only group filtered alone would
+        # be re-admitted for a mil Role the moment the mil gate emptied it -
+        # which the flat list never did. Run as a union the group's members
+        # meet the same fallbacks the parent's own bullets do, and a group
+        # whose members all fell leaves the pool.
+        #
+        # The theme SHARE is the one step that cannot run on the union, and it
+        # is taken separately on each side below. apply_theme_share duplicates
+        # a tagged bullet until it holds THEME_SHARE of the pool it is handed,
+        # so sizing it against parent-plus-members and then splitting the
+        # members back out leaves every copy behind in the parent: on the live
+        # file that put 192 copies of one tagged bullet in a 230-entry Outfit
+        # pool, and over 4000 rolls a theme the realized themed Outfit share
+        # read 0.86 against a 0.60 target while 2000 rolls turned up 154
+        # distinct outfits. Sized per side those read 0.69 and 164. A
+        # tagged reference is weighted against the parent's own size (spec
+        # section 3, "Themed groups") and a tagged member of a neutral group
+        # against its own group's (spec section 3, "filtered and weighted
+        # inside the group only").
+        #
+        # The rejected alternative was to lift apply_theme_share out of
+        # narrow() and run it after the split on both sides. That reorders the
+        # share behind the civ/mil and weapon-policy filters, which is exactly
+        # the trade apply_theme_share's docstring says not to make - a theme's
+        # tagged weapons would re-inflate past WEAPON_POLICY's unarmed bias.
+        # Keeping the share inside narrow() and skipping it for the union pass
+        # leaves the filter order untouched on every path.
+        members = {}
+        pools = {}
+        for bullet in dict.fromkeys(options):
+            target = reference_target(bullet)
+            if target is not None and target not in members:
+                members[target] = [b for key in group_headings(tables, target, subject)
+                                   for b in tables[key]]
+        if members:
+            member_sets = {t: set(m) for t, m in members.items()}
+            survivors = narrow(name, options + [b for m in members.values() for b in m],
+                               theme_share=False)
+            pools = {}
+            for target, member_set in member_sets.items():
+                kept = [b for b in survivors if b in member_set]
+                if name in THEMED_TABLES:
+                    kept = apply_theme_share(kept, theme, name)
+                pools[target] = kept
+            # `parent` is the parent list alone through the whole chain, share
+            # included: byte-for-byte what this table did before groups
+            # existed, with a reference sitting in it as one flagless slot.
+            # `pool` is that pool with an emptied reference dropped, spec step
+            # 3's "unless that would empty the parent pool, in which case leave
+            # it" - the "leave it" target being `parent`.
+            #
+            # `options` behind it is belt-and-braces rather than a level the
+            # roller reaches. Every gate in narrow() hands its whole input back
+            # sooner than return nothing, which is the invariant rng.choice()
+            # has always rested on, so a non-empty parent list cannot narrow to
+            # an empty one. It was a live third level while `parent` was carved
+            # out of the union's survivors - the union could stay alive on a
+            # group's members while every parent bullet fell - and it is kept
+            # here for the same reason the `or options` guards inside narrow()
+            # are kept: the draw below cannot be allowed to meet an empty list,
+            # whatever a future filter does.
+            #
+            # Step 5's own fallback to the unfiltered members completes the
+            # draw when an emptied reference was kept.
+            parent = narrow(name, options)
+            pool = [b for b in parent
+                    if reference_target(b) is None or pools[reference_target(b)]]
+            options = pool or parent or options
+            if probe is not None:
+                for target, drawn_from in pools.items():
+                    probe[target] = list(drawn_from)
         if probe is not None:
             probe[name] = list(options)
         value = rng.choice(options)
@@ -2179,7 +2514,23 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # decided from inside that table's own iteration.
         forced = (overrides or {}).get(name)
         if forced is not None:
+            # A reference is not a value: pasted into a prompt it would read
+            # '=> Flight suits'. --set-trait and the GUI offer members, never
+            # references (see trait_choices), so reaching here is a typo or an
+            # old preset, and both want the table named.
+            if reference_target(forced) is not None:
+                raise SystemExit(
+                    "%s: %r is a group reference, not a value - name one of the "
+                    "group's own bullets" % (name, forced))
             value = forced
+        elif reference_target(value) is not None:
+            # The second draw of the two-stage roll. Only a drawn reference
+            # reaches this line, so a file with no groups consumes exactly the
+            # numbers it did before. The fallback to the unfiltered members is
+            # for the one case the pool guard above kept an emptied reference
+            # because everything else had emptied too.
+            target = reference_target(value)
+            value = rng.choice(pools[target] or members[target])
 
         # Recorded here: after a forced value has replaced the draw, so _raw
         # describes the NPC rather than the bullet it discarded, and before
@@ -3870,10 +4221,35 @@ def trait_choices(tables, npc, name):
     #
     # Weight is not lost, it is just not this function's subject. What a
     # bullet's odds are is what --trait-odds answers.
-    candidates = list(dict.fromkeys(variant_table(tables, name, subject)))
+    # A reference is expanded into its group's members, each carrying the
+    # group as its heading; the reference itself is never offered, since it is
+    # not a value a prompt can hold. `allowed` for a member is two tests, both
+    # read off the probe: the reference survived in the parent pool, and the
+    # member survived in the group's own pool (recorded under the group's
+    # heading by the draw site) - with the one exception the draw site itself
+    # makes, spelled out below.
+    candidates = []
+    for bullet in dict.fromkeys(variant_table(tables, name, subject)):
+        target = reference_target(bullet)
+        if target is None:
+            candidates.append((bullet, bullet in pool))
+            continue
+        # An empty group pool beside a reference that is still in the parent
+        # pool is step 3's "unless that would empty the parent pool, in which
+        # case leave it": the reference was kept with nothing under it, and
+        # step 5 then draws from the UNFILTERED member list. Every member is
+        # reachable in that case, so requiring one to be in the (empty) group
+        # pool would grey out values the roller can genuinely produce. The
+        # reference's own membership of `pool` still carries the answer for
+        # the ordinary case, where an emptied reference has already left.
+        group_pool = set(baseline.get(target, ()))
+        for member in dict.fromkeys(b for key in group_headings(tables, target, subject)
+                                    for b in tables[key]):
+            allowed = bullet in pool and (not group_pool or member in group_pool)
+            candidates.append((member, allowed))
 
     out = []
-    for bullet in candidates:
+    for bullet, allowed in candidates:
         current = bullet == raw.get(name)
         # The value it already has cannot contradict what it is already
         # wearing, and skipping it here is not an optimisation - running the
@@ -3930,7 +4306,7 @@ def trait_choices(tables, npc, name):
         out.append({
             "value": bullet,
             "heading": heading_for(tables, name, subject, bullet),
-            "allowed": bullet in pool,
+            "allowed": allowed,
             "current": current,
             "conflicts": conflicts,
             "releases": sorted(releases),

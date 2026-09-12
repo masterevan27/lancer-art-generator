@@ -157,9 +157,16 @@ import ship_policy as sp        # noqa: E402  - after the by-path loads above
 #   split_hair_colour   NOT borrowed - listed here only to say so. Ships have
 #                       no analogue and flags_for() never reaches its branch.
 #
+# One further name is bound for a reason outside that obligations list:
+#
+#   reference_target    check_tables() refuses a '=> Name' group reference in
+#                       any ship table; this file has no roller of its own
+#                       for groups yet (table-groups design, Task 7).
+#
 # Everything else this module touches off npc.* goes through one of these
 # names. Nothing is called as npc.something inline.
 parse_tables = npc.parse_tables
+reference_target = npc.reference_target
 variant_table = npc.variant_table
 heading_for = npc.heading_for
 split_flags = npc.split_flags
@@ -373,6 +380,16 @@ def check_tables(tables, path, repeated=()):
             "%s is missing the table(s) the prompt templates need: %s"
             % (path.name, ", ".join(missing))
         )
+
+    # The NPC roller resolves a '=> Name' group reference at its draw site;
+    # this file has a roller of its own that does not, and would paste the
+    # reference into a prompt as text. Refused here until ships grow groups.
+    for name, bullets in tables.items():
+        for bullet in bullets:
+            if reference_target(bullet) is not None:
+                raise SystemExit(
+                    "%s: '## %s' has a group reference %r, and groups are not "
+                    "supported for ships yet" % (path.name, name, bullet))
 
 
 def trait_cascade(name):

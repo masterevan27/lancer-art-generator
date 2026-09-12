@@ -122,12 +122,29 @@ def table_keys(tables, name):
     and the first of them - test_theme_inert.py - was scheduled for deletion
     when Phase 4 started tagging bullets. A permanent test importing from a
     doomed one would have gone with it.
+
+    Followed through group references too: a '=> Plates' bullet in Outfit
+    means every Plates bullet is content Outfit can deal, so a theme or
+    visibility measurement over Outfit has to see it. Only one level, which is
+    what check_group_references() enforces.
     """
-    return [k for k in tables if k == name or k.startswith(name + " (")]
+    gen = load_generator()
+    keys = [k for k in tables if k == name or k.startswith(name + " (")]
+    for key in list(keys):
+        for bullet in tables[key]:
+            target = gen.reference_target(bullet)
+            if target is None:
+                continue
+            for group_key in tables:
+                if (group_key == target or group_key.startswith(target + " (")) \
+                        and group_key not in keys:
+                    keys.append(group_key)
+    return keys
 
 
 def bullets_for(tables, name):
-    """A table's bullets, including its per-pronoun variant tables."""
+    """A table's bullets, including its per-pronoun variant tables and,
+    through table_keys(), any group it references."""
     return [bullet for key in table_keys(tables, name) for bullet in tables[key]]
 
 

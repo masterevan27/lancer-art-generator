@@ -158,7 +158,7 @@ class TestEveryTableHasAShape(unittest.TestCase):
     def test_no_shape_line_names_a_table_that_does_not_exist(self):
         """The other direction. A shape line for a table the generator dropped
         tells a run to stage bullets nothing will ever read."""
-        known = set(gen.REQUIRED_TABLES)
+        known = set(gen.REQUIRED_TABLES) | {k.partition(" (")[0] for k in gen.group_tables(LIVE)}
         # Variants are legitimate targets and are named in the skill's routing
         # prose ('Headgear (she) +'), so compare on the base name.
         for table in SHAPE_LINES:
@@ -168,6 +168,18 @@ class TestEveryTableHasAShape(unittest.TestCase):
                     base, known,
                     "the import skill has a shape line for %r, which is not a "
                     "table the generator rolls" % table)
+
+    def test_a_group_table_takes_the_shape_of_the_table_that_references_it(self):
+        """A '## Flight suits' that Outfit enters through '- => Flight suits'
+        holds Outfit-shaped bullets, so it needs no shape line of its own and
+        must not have one that disagrees."""
+        for name in gen.REQUIRED_TABLES:
+            for group, reference in gen.references_in(LIVE, name).items():
+                with self.subTest(group=group):
+                    self.assertNotIn(group, SHAPE_LINES,
+                                     "%s is a group of %s and takes its shape line" % (group, name))
+                    self.assertTrue(name in SHAPE_LINES or name in NOT_STAGED,
+                                    "%s references %s but has no shape line" % (name, group))
 
 
 class TestTheSegmentCountsAgree(unittest.TestCase):

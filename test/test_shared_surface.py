@@ -24,9 +24,9 @@ from test.helpers import load_ship_generator
 
 ship = load_ship_generator()
 
-NPC_SURFACE = ("parse_tables", "variant_table", "heading_for", "split_flags",
-               "split_backdrop", "split_faction", "flags_for", "themes_of",
-               "filter_by_theme", "apply_theme_share", "filter_by_mil",
+NPC_SURFACE = ("parse_tables", "reference_target", "variant_table", "heading_for",
+               "split_flags", "split_backdrop", "split_faction", "flags_for",
+               "themes_of", "filter_by_theme", "apply_theme_share", "filter_by_mil",
                "THEME_SHARE", "has_light_source", "light_hues",
                "glow_hue_families", "filter_by_hue", "estimate_tokens",
                "TOKEN_LIMIT", "CHARS_PER_TOKEN", "Knobs", "entry_for",
