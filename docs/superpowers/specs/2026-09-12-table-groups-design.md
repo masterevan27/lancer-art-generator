@@ -138,31 +138,47 @@ helper family beside `split_flags()` does the reading:
 
 The body of the `REQUIRED_TABLES` loop in `roll_npc()` that turns
 `variant_table(tables, name, subject)` into the drawn-from `options` list is
-extracted into `filter_pool(tables, name, options, npc, ctx)`. It contains
-every filter the loop applies today for that table, named functions and the
-inlined ones alike, in the same order, and it never touches `rng`. The loop
-calls it once per table exactly where the inlined code was, so the roll
-snapshot is byte-identical before any group exists. That is the first
-regression gate.
+extracted into a nested function `narrow(name, options)` defined inside
+`roll_npc()`, which closes over the loop's state (`young`, `role_mil`, the
+forced-trait flags and so on) rather than threading it through a context
+object. It contains every filter the loop applies today for that table,
+named functions and the inlined ones alike, in the same order, and it never
+touches `rng`. The loop calls it once per table exactly where the inlined
+code was, so the roll snapshot is byte-identical before any group exists.
+That is the first regression gate.
 
 ### 4.3 Resolution at the draw site
 
-At the single draw site, after `options` has been filtered:
+Nearly every filter in the chain hands the whole pool back rather than empty
+it. Filtering a group's members on their own would therefore re-admit, say,
+a civ-only group for a mil NPC the moment the mil filter emptied it, which
+is a flag-semantics change the flat list never had. So the members are
+filtered together with the parent pool, as one union, exactly as they sit in
+the flat list today:
 
-1. For each distinct reference in `options`, build the member pool:
-   `filter_pool(tables, name, variant_table(tables, target, subject), ...)`,
-   using the parent table's `name` so the members see the parent's filters.
-   Record it in the probe under the group's heading.
-2. Remove from `options` every reference whose member pool is empty, unless
-   that would empty `options`, in which case leave it (the "never filter to
-   nothing" convention every filter here follows).
-3. Record `probe[name] = list(options)` and draw `value = rng.choice(options)`.
-4. If `value` is a reference, draw again: `value = rng.choice(member pool)`.
+1. For each distinct reference in `options`, collect the member list
+   `variant_table(tables, target, subject)`. Build the union: `options`
+   followed by every member list.
+2. Run `narrow(name, union)` once. The parent pool is the survivors that are
+   parent bullets (references included); each group's member pool is the
+   survivors that are its members. Multiplicities are preserved, so `xN`
+   weights and the theme share's duplication behave as they do now, and a
+   tagged reference is dropped or duplicated by the same code that treats a
+   tagged outfit.
+3. Remove from the parent pool every reference whose member pool is empty,
+   unless that would empty the parent pool, in which case leave it (the
+   "never filter to nothing" convention every filter here follows).
+4. Record each member pool in the probe under the group's heading and the
+   parent pool under `name`, then draw `value = rng.choice(parent pool)`.
+5. If `value` is a reference, draw again from its member pool (falling back
+   to the unfiltered member list if that pool is somehow empty).
 
-With no references in the pool, steps 1, 2 and 4 do nothing and the stream is
-unchanged. When a reference is drawn, one extra draw is consumed, which is the
-intended change to that seed. A forced override for the table still performs
-the parent draw and discards it, as today, and never triggers step 4.
+With no references in the pool, the union is the pool, and steps 3 and 5 do
+nothing, so the stream is unchanged. When a reference is drawn, one extra
+draw is consumed, which is the intended change to that seed. A forced
+override for the table still performs the parent draw and discards it, as
+today, and never triggers step 5. A forced value that is itself a reference
+is refused with the table named, since a reference is not a value.
 
 The four other draw sites (Pronouns, Theme, Stance, the `nogear` Gear
 re-draw) and the legacy no-raw re-roll path do not resolve references. The
@@ -215,11 +231,16 @@ for ships yet. Nothing else changes there.
 
 ### 4.8 Determinism gates
 
-- Gate 1: mechanism landed, tables file unchanged. `roll-snapshot.json` must
-  pass untouched. A fixture tables file with groups exercises resolution.
-- Gate 2: the Outfit first pass landed. The snapshot is recaptured once, in
-  the commit that changes the tables file, with the recapture named in the
-  commit message as the reason.
+`test/fixtures/roll-snapshot.json` pins the roll of `test/fixtures/tables-minimal.md`,
+not of the live tables file, and that fixture is not regrouped.
+
+- Gate 1: mechanism landed, tables files unchanged. `roll-snapshot.json`
+  must pass untouched, and `ProbeIsInert` must hold. A separate fixture
+  `test/fixtures/tables-groups.md` exercises resolution.
+- Gate 2: the Outfit first pass landed in the live file. The snapshot is
+  still untouched; the gate is the full suite plus a `--trait-odds` readout
+  showing Flight suits at one slot's share of Outfit, recorded in the commit
+  message.
 
 ## 5. The import GUI
 
@@ -344,7 +365,7 @@ tagged gundam flight suit) and 3 references. The three-member candidates the clu
 ## 9. Acceptance
 
 - `python -m unittest discover test` passes in the generator at both gates,
-  with the snapshot untouched at gate 1 and recaptured once at gate 2.
+  with the snapshot untouched at both.
 - A tables fixture with a neutral group, a themed group and a women-only group
   rolls: the reference is one slot, an empty member pool drops the reference,
   a themed reference obeys the theme filter and share, `_raw` holds the
