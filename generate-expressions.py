@@ -511,7 +511,7 @@ def parse_args(argv=None):
     source.add_argument("--limit", type=int, metavar="N")
 
     select = parser.add_argument_group("expressions")
-    select.add_argument("-e", "--expressions", default="all")
+    select.add_argument("-e", "--expressions", default=None)
     select.add_argument("--custom", action="append", default=[],
                         metavar="LABEL[=PROMPT]")
     select.add_argument("--describe")
@@ -530,7 +530,9 @@ def parse_args(argv=None):
     render.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
 
-    args.expressions_explicit = _flag_present(argv, ("-e", "--expressions"))
+    args.expressions_explicit = args.expressions is not None
+    if args.expressions is None:
+        args.expressions = "all"
     npc_flags = ("--manifest", "--id", "--filter", "--exclude", "--limit")
     args.npc_mode = _flag_present(argv, npc_flags)
     if bool(args.image) == bool(args.npc_mode):

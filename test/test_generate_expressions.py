@@ -90,6 +90,27 @@ class TestArgumentsAndSources(unittest.TestCase):
         self.assertEqual(jobs[0].name, "Hero")
         self.assertEqual(jobs[0].output_dir, image.parent / "Hero-expressions")
 
+    def test_attached_short_expression_value_is_an_explicit_selection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            image = Path(tmp) / "Hero.png"
+            image.write_bytes(b"png")
+            args = expressions.parse_args([
+                "--image", str(image), "-ejoy", "--custom", "battle=x"])
+        custom = expressions.parse_custom_specs(args.custom)
+        labels, full = expressions.select_labels(
+            args.expressions, args.expressions_explicit, custom, {})
+        self.assertEqual(labels, ("joy", "battle"))
+        self.assertFalse(full)
+
+    def test_attached_short_expression_value_conflicts_with_file_redo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            image = Path(tmp) / "Hero.png"
+            image.write_bytes(b"png")
+            with contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaisesRegex(SystemExit, "2"):
+                    expressions.parse_args([
+                        "--image", str(image), "--file", "joy.webp", "-ejoy"])
+
     def test_npc_selection_and_portrait_resolution_follow_the_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
