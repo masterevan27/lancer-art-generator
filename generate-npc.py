@@ -2045,11 +2045,17 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
     headgear_crown = False
     weapon_hands = False
     weapon_flags = ()
-    for name in REQUIRED_TABLES:
-        if name in ("Pronouns", "Theme", "Stance"):
-            continue
-        options = variant_table(tables, name, subject)
+    def narrow(name, options):
+        """One table's pool, `options` in and the drawn-from list out.
 
+        Every filter the loop below used to apply inline, in the same order,
+        reading the loop's state (young, role_mil, outfit_notac, the forced_*
+        flags, npc["Role"], npc["Backdrop"]) through the closure - so the call
+        from the loop is the code that used to sit there, and a second call on
+        a group's members and the parent pool together (see the draw site)
+        runs them through exactly the gates the flat list passed. Consumes no
+        randomness: the snapshot test is what holds that.
+        """
         # Theme gates every appearance table: its own tagged bullets plus the
         # neutral pool, with the tagged ones weighted up so the theme is
         # actually visible rather than merely available. Applied first, so the
@@ -2296,6 +2302,12 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # own 'hardtech' flag rather than on 'mil' - see filter_by_hardtech().
         if name == "Headgear" and outfit_notac:
             options = filter_by_hardtech(options, outfit_notac)
+        return options
+
+    for name in REQUIRED_TABLES:
+        if name in ("Pronouns", "Theme", "Stance"):
+            continue
+        options = narrow(name, variant_table(tables, name, subject))
 
         # Rolled either way, so that forcing a trait does not shift the rest
         # of the run's random stream and change every NPC after it. The
