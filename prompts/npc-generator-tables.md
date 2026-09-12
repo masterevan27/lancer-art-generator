@@ -1742,122 +1742,60 @@ bullet there changes no portrait or token.
 -->
 
 - a heavy work jacket over a stained undersuit, sleeves shoved to the elbow || civ
-- a fitted flight suit with the top half unzipped and knotted at the waist
-- layered grey work coveralls patched at both knees || civ
-- a long weatherproof coat over practical fatigues
+- => Flight suits
+- => Work coveralls
+- => Long coats over fatigues
 - a tailored jacket cut close, with a high collar || civ
 - an armored vest worn over civilian clothes, its plates visibly mismatched || civ
-- a sleeveless thermal top, arms bare, forearms wrapped in worn tape || civ
+- => Tank tops
 - a hooded utility poncho over a pressure-suit liner
 - a quilted thermal jacket over layered underlayers || civ
 - a canvas work apron over rolled shirtsleeves || civ
 - a pressure-suit undersuit with the armor plates stripped off
-- a battered leather jacket gone soft with years of wear || civ
-- a modern combat uniform in faded broken-pattern camouflage, padded combat shirt with the sleeves pushed to the elbow, knee-padded trousers || mil
-- a modular plate carrier loaded with magazine pouches over a padded combat shirt, MOLLE straps cinched flat || mil
-- a composite plate harness over a dark undersuit, magazine pouches racked across the front and a small status indicator lit at the collar || mil
-- scuffed hardshell carapace armor over a sealed undersuit, repainted in patches, helmet clipped at the belt || mil
-- a formal service uniform, sharp high collar and rank tabs, a slim data-tab clipped at the breast || mil
-- an armored softshell greatcoat over slim uniform trousers and composite-soled boots || mil
-- a dust-caked arid-pattern combat uniform under a slim chest rig, a shemagh loose at the neck || mil
-- a low-profile plate carrier over a sweat-stained combat shirt, tags visible at the collar || mil
-- an EVA-rated hardsuit with the helmet seals open and the gauntlets stowed
-- a hooded recon softshell in broken-pattern camouflage, hood down, face paint half worn off || mil
-- a multicam combat uniform under a modular plate carrier, magazine pouches ranked across the chest, knee-padded trousers and fingerless tactical gloves || mil
+- => Leather jackets
+- => Combat uniforms and plate carriers
+- => Hardsuits and segmented armor
+- => Dress uniforms
 - a powered load-bearing exo-frame strapped over a combat uniform, actuators tracking the limbs and a status strip lit at the hip || mil
-- a sealed hardshell combat suit with segmented plating at the shoulders, chest and shins over a close dark bodyglove || mil
-- weathered olive-green camouflage tactical gear, a plate carrier vest worn over a long-sleeve field jacket, camo trousers, fingerless tactical gloves and scuffed combat boots || mil
 - a fitted black techwear jacket, sleeves lined with small data ports, over a form-fitting undersuit || civ
-- a black tactical jacket, unzipped and open, its interior lining faintly glowing, over a fitted dark bodysuit with light plating at the shoulders, forearms and shins
-- a worn olive field jacket with the collar up over a ribbed dark turtleneck and a slim chest rig, fingerless tactical gloves || mil
+- => Open jackets over plated or glowing bodysuits
+- => Field jackets
 - a high-collared black tactical pilot jacket with glowing cable tubing threading down the front || mil
 - a long dark coat lined with thin glowing cabling, a spiked collar choker at the throat || civ
-- a weathered black field jacket stencilled with a unit number and a small hazard patch, worn over a coarse knit jumper || mil
-- a black military utility jacket stencilled with a unit number and a hazard triangle patch, hanging open over a plain olive tank top || mil
-- a form-fitting armored bodysuit of segmented black plating, neural-interface cabling running from a plug at the collar
+- => Unlit tactical bodysuits
 - a heavy hooded weatherproof cloak, the hood pulled low and the face half lost in its shadow || civ
-- a tan and beige flight suit with rust-red accents, padded shoulder and knee armor and utility straps at the thighs || mil
-- a fitted maroon-red flight suit with a cream chest yoke and shoulder rank patches, a rolled tan poncho-cloak bundled loosely at the waist, a bandolier of pouches slung crosswise over the chest, white gloves, and knee-high brown boots wrapped in pale canvas leggings || mil
-- a dark olive-grey tactical coat over practical field gear, collar up and sleeves pushed back, no insignia or unit markings anywhere on the kit
-- a fitted tactical flight suit with a high collar, buckled straps, small unit patches and an armband || mil
-- a black tactical bodysuit with sharp angular trim and a high collar piece lit with small accent glows, a barcode marking inked at the collarbone
-- a black formal dress uniform with a high standing collar and small rank pips, a double row of buttons, dull red piping at the shoulder boards, a ribbon rack at the breast and white dress gloves || mil
-- a sealed grey tactical suit with layered armor pads at the shoulders and knees, a chest rig of ranked pouches and a long split-tailed shroud coat hanging to the ankles
+- => Glowing-seam bodysuits
+- => Caped armor suits
 - a faded rescue-crew jumpsuit, its high-visibility panels dulled to grime, a cropped hooded jacket over it and armored greaves strapped over the shins || civ
 - an oversized grey hooded jacket with the sleeves hanging long over a high black collar wrap, harness straps crossing the chest, cargo trousers with armored knee panels
-- a dark armored combat suit under a loaded chest rig, a long asymmetric white half-cape hanging from one shoulder to the ankle
 - a black hooded field jacket webbed with pull-tabs and cinch straps, a pale shoulder shroud thrown over one side, a chest rig above cargo trousers with padded thighs
 - a sealed white-and-grey field suit with an armored gorget at the throat, a plate carrier and a compact pack strapped over it, padded knees and heavy boots || mil
-- an olive bomber jacket over a black bodysuit and plate carrier, grey cargo trousers and a drop-leg holster rig strapped down one thigh
-- an olive field jacket with the sleeves pushed back over a close black bodysuit, a chest rig of magazine pouches, armored knee and shin guards above heavy trainers
-- a sealed rescue hardsuit of segmented panels with armored boots and a hard equipment pack riding high on the shoulders || civ
-- a segmented armored bodysuit under an open hooded jacket, a long scarf wound at the throat and trailing loose behind
-- a heavy insulated flight jacket over a hooded pullover, cargo trousers and strapped knee pads
+- => Bomber and flight jackets
 - a plate carrier over a dark bodysuit with a powered leg exo-frame braced from hip to boot
 - an oversized rollneck sweater with the sleeves pushed back, harness straps over both shoulders and enormously baggy cargo trousers gathered at the ankle || civ
-- a dark travel-worn robe with a crimson underlayer at the collar and sleeves, belted over wide hakama-style trousers || civ notac
-- layered white pilgrim's robes gone travel-stained at the hem, a coarse rope belt cinched at the waist || civ notac
-- a weathered haori-style jacket over a high-collared undershirt, sleeves bound back with cord || civ notac
-- segmented lacquered armor plates over a dark underrobe, a torn banner cord trailing from one shoulder
+- => Plain traditional robes
+- => Lacquered samurai armor
 - a heavy hooded work jacket with a reflective hazard stripe down one sleeve and patched insignia at the shoulder || civ
 - an oversized weatherproof jacket bristling with pouches and straps, worn over a slung backpack with its harness crossing {possessive} chest || civ
-- a battered set of heavy segmented plate armor, scorched and scarred at the shoulders and forearms, in dull combat red || mil
-- a segmented white technical armor shell with dark reinforced wrapping at the thighs, scorched and battle-worn || mil
-- a weathered mustard-yellow flight suit with a shoulder star patch and a small unit patch at the chest, a pale scarf knotted loose at the throat || mil
-- an olive tactical jumpsuit under a cropped chest harness loaded with hip pouches, fingerless gloves and low tactical boots || mil
-- a weathered leather jacket with a segmented armor plate at one shoulder, worn open over a dark top || civ
 - a padded jacket with riveted metal pauldrons at both shoulders, a scarf wound loose at the throat || civ
-- a fitted black tactical bodysuit with buckled strap detailing at the shoulder and ribbed panel seams || civ
-- a navy flight jumpsuit under a cropped tactical vest loaded with chest pouches, a sidearm holstered at the hip || mil
-- a segmented composite tactical armor suit with actuated knee joints and a compact backpack module, worn over an olive combat shirt || mil
-- a sleek black powered tactical exo-suit with segmented plating at the knees and shoulders, a long dark half-cape trailing from one shoulder || mil
-- segmented dark armor pauldrons over a hooded travel robe, striped forearm wraps and small ornamental tassels at the shoulder
-- a sleek angular powered armor suit with an oversized intake-vented backpack module, warning stencils and exposed cabling trailing from the shoulder || mil
-- heavy segmented composite armor with a large stencilled unit number across the shoulder plate, status lights lit along the collar || mil
-- a white flight jacket with a stencilled red-and-black shoulder patch marking a service unit || mil
-- a mottled camouflage jacket worn open over a plain dark tee stencilled with a bold unit number, cargo trousers and fingerless tactical gloves || mil
-- a sealed high-collared armored bodysuit with heavy pauldron-style shoulder plating and integrated sensor housings at each shoulder
-- a fitted dark tactical bodysuit segmented with rust-orange trim plating at the joints and collar, a long weathered rust-colored cape trailing from one shoulder
-- segmented crimson-lacquered armor plates over a floral-patterned quilted robe, tasseled cords trailing from one shoulder and a wrapped bundle slung across the back || civ notac dressy
-- full lacquered samurai armor in dark green and black with segmented shoulder pauldrons over a trailing hakama-style skirt, ornamental tassels at the waist || civ notac dressy
-- dark samurai robes with a long crimson cloak trailing from the shoulders, one leg bared and banded with tattooed markings || civ notac dressy
-- a tattered dark robe hanging open at the chest, its hems torn and trailing loose || civ notac
-- a dark robe with a pale patterned collar, red fingerless gloves laced to the wrist || civ notac
-- a dark patterned robe with a bright orange underlining, a string of prayer beads wound at one wrist || civ notac
+- => Kimonos and fine robes
 - ragged wrapped cloth bindings over bare limbs, one wrist bound in worn bandaging, feet bare in simple woven sandals || civ notac
-- a dark robe traced with gold embroidered trim, a purple sash knotted at the waist and small tassels hanging loose || civ notac dressy
-- a dark kimono cinched with a wide white sash tied in a full bow at the back || civ notac dressy
 - a fringed pleated mantle draped over the shoulders and swagged with hanging chain loops, worn over a dark strapped underlayer || civ notac dressy
 - a sleeveless tank top with bandage-wrapped forearms, worn over cargo trousers slung with mismatched belt pouches and holster straps || @scav
 - a fitted maroon combat tunic with layered pauldron guards over each shoulder, cinched at the waist by a wide dark sash over cropped trousers || @neosamurai
 - a quilted grey duty jumpsuit with articulated knee braces, an olive sash slung across one shoulder and a leather pauldron buckled over it || @neogothic
 - a short-sleeved orange-and-white uniform shirt worn under a dark tactical vest, a unit patch stitched to the shoulder || mil
-- a white mechanic's coverall with red trim at the cuffs and collar, sleeves rolled past the elbow under a matching soft cap
 - a fitted flight suit with crimson piping and a raised segmented shoulder guard, high collar sealed to the throat || @gundam
 - a soaked black assault suit cinched under a slim chest harness, fabric clinging dark and heavy || mil
 - a cropped red flight jacket, sleeves shoved up over a stripped-down underlayer, patched insignia worn soft with scavenged wear || @scav
-- a weathered orange flight jumpsuit with patched cargo sleeves, worn under a trailing grey scarf || civ
 - plated crimson body armor with a glowing chest core and an articulated ridged spine || @gundam
-- a weathered dark-green field jacket, collar turned up, patched high on one shoulder || mil
-- a scuffed flight suit unzipped low at the collar, a crash harness cinched tight across the chest || mil
-- a bulky fleece-collared field jacket gathered high at the throat, cuffs frayed at the wrist || civ
 - a segmented mechanical wing unit fanned wide from one shoulder, primaries tipped in bone-white feathers
-- a threadbare mustard-yellow work coverall patched at both knees, a canvas tool satchel cinched to one hip || civ
-- a weathered tan leather jacket rolled to the elbow, layered over a thick wrapped scarf || civ
 - a cropped sleeveless hoodie worn over a bare midriff, a low-slung utility belt studded with cybernetic modules, and thigh-high leg wraps || @cyberpunk
-- a sun-faded orange work jumpsuit worn under a heavy grey scarf, cuffed sleeves over grease-stained gloves, a multi-pouch tool belt cinched at the waist || civ
-- a hip-length tan leather jacket worn open over a high-collared dark bodyglove, a drop-leg holster rig strapped down one thigh || civ
 - a matte grey optical-camouflage suit, the light bending across it in faint rippling distortion wherever it catches an edge
-- a long olive field coat over a black rollneck, a shoulder holster rig showing at the open front || civ
-- a cheap dark suit with the tie pulled loose, a thin wire running from one ear down inside the collar || civ
+- => Cheap suits
 - a sealed matte-black diving suit with its hood pushed back and the weight belt still buckled at the waist
 - a boxy pale-blue police duty uniform with a black waist rig and a division patch at the shoulder, sleeves rolled to the elbow || mil
-- a white-and-olive labor pilot's suit with a padded collar, buckled chest harness and a stencilled unit number at the thigh || mil
-- grease-blackened overalls stripped to the waist and knotted there over a sweat-damp undershirt, a heavy tool belt slung at the hips || civ
-- a bulky riot-control suit of segmented off-white armor over a dark uniform, a numbered plate across the chest || mil
-- a heavy olive winter greatcoat over a service uniform, the fur collar turned up and gloves stuffed in one pocket || mil
 - a high-visibility site vest over a plaid work shirt and heavy canvas trousers, a loose chinstrap swinging at the throat || civ
-- a rumpled brown suit under an open plastic raincoat, both hems dripping || civ
 
 ## Outfit (she) +
 
@@ -1870,81 +1808,269 @@ bullet there changes no portrait or token.
   saturated color, so "glowing seam lines" picks it up instead of fighting it.
 -->
 
-- x2 a flight suit tailored close through the bust, waist and hips, the front zip run down past the sternum
 - a cinched belted jumpsuit unzipped well below the collarbone, the belt hauled tight at the waist || civ
 - a cropped utility jacket over a short high-waisted work skirt and sheer dark tights, a band of bare midriff between them || civ
 - a deep wrap-front tunic belted at the waist over close-cut trousers, the crossed neckline cut low || civ
-- a sleeveless coverall unzipped to the navel and knotted off at the waist over a cropped tank, arms and midriff bare || civ
 - a long knitted cardigan over practical fatigues, sleeves pushed up || civ
-- a tailored corporate blouse open two buttons at the throat over a narrow skirt slit high at the thigh, immaculate against the grime || civ
-- a close-fitting pilot undersuit worn without its outer shell, unzipped to the sternum and clinging to every line of the figure
-- a dress uniform tailored close to the figure, fitted jacket over a short straight skirt, bare legs above polished knee boots || mil
-- a combat uniform taken in through the waist, sleeves pushed up, a plate carrier cinched tight over it || mil
-- a fitted armored bodyglove under a partial plate harness, the plates leaving the midriff and one shoulder bare
-- x2 a white-and-grey armored hardsuit of scuffed fitted plates over a black bodyglove, glowing seam lines tracing the limbs
-- a black tactical jacket with piped trim over a close grey bodyglove and armored thigh-high boots, a hand's width of bare thigh above them
-- a black military jacket with dull gold trim, worn open over a low-cut dark bodysuit and chipped white armor plates || mil
-- a white field jacket thrown open over a black bodyglove cut deep at the chest and traced with faint glowing conduit lines
-- a sleeveless flight harness of buckled straps over a black bodysuit unzipped low between them, a single lit indicator strip down the chest, arms and shoulders bare
-- a close-cut pilot bodyglove in white and grey, lit seams tracing the waist and hips, partial shoulder plating and nothing over the bare midriff
-- a sleek fitted flight suit, dark through the torso with silver-white segmented plating at the hips and thighs, thin glowing circuit piping tracing the shoulders and the chest seam, the front zip run down low
+- => Corporate skirt suits
 - a short light civilian dress patterned with small dark polka dots, thin straps at the shoulders, over dark thigh-high stockings, incongruous against the grime || civ
-- a weathered field jacket stencilled with a unit number and a small hazard warning patch, hanging open over a cropped top and bare midriff || mil
-- a tan tactical vest hanging open over a torn cropped tank, one arm wrapped in bandaging, worn cargo trousers slung low at the hips || civ
-- an oversized open shirt sliding off one shoulder, draped loosely over a dark cropped tank || civ
-- a sleeveless black tactical bodysuit with an exposed back framed by a cybernetic support harness, thin glowing circuit lines running along the spine and shoulder blades
-- a black cropped tank top with a barcode tattoo and a stencilled unit number on the bare upper arm, a dark red jacket hanging off both shoulders and marked with a small hazard triangle patch
-- a fitted crop top with tactical harness straps crossing the bare back, over close-cut white tactical trousers with accent straps and a pistol holstered at the thigh || civ
+- => Open jackets over crop tops
 - a graffiti-tagged cropped t-shirt and cut-off shorts, midriff and legs bare || civ
 - an asymmetric black coat-dress with a high collar, wire and cable detail threading down the front, ribbon straps and a beaded choker at the throat || civ
-- a black hooded jacket trimmed in dull gold and draped loosely off both shoulders, over segmented pale grey-white plating at the hips and thighs and fitted leggings traced with a thin glowing line down the shin
-- an open black jacket with a stiff collar over a fitted grey-white bodysuit, thin glowing stripes running down the sleeves and legs and tracing the seam at {possessive} bare midriff, segmented gloves and thigh-high boots
-- an open white jacket over a fitted dark bodysuit marked with a small angular chevron at the chest, thigh-high leggings traced with glowing curved stripes, gloves and boots trimmed in dull orange
 - a black sleeveless harness top with rust-red trim piping and buckled shoulder straps, a lit strip running down the center of the chest, long weathered grey-white bracers past the elbow with their plating cracked at the shoulder seams
-- a high-collared tactical pilot suit with padded shoulder and knee armor, glowing cable detail running the length of one sleeve || mil
-- a fitted grey-white bodysuit traced with a thin glowing circuit line, one oversized pauldron stencilled with a small insignia, segmented armor plating down the legs || mil
 - a black strapless bodice leaving the shoulders and arms bare, a draped pale scarf-cowl wound loose at the throat and wide gold cuffs clasped on both forearms || civ
-- a black formal dress uniform, high standing collar and rank pips above a ribbon rack at the breast, white dress gloves, a long dark pleated skirt gathered under a wide sash at the waist || mil
-- a white double-breasted officer's tunic with a high open collar and armored shoulder boards, belted at the waist over a short flared skirt, a long dark cape hanging from the shoulders, garter straps at the thigh above white boots || mil
-- a cropped olive bomber jacket over a slim chest rig and a fitted tee, a band of bare midriff above olive cargo trousers slung with pouches || civ
 - a dark work shirt with the sleeves rolled to the elbow under a strapped harness rig, a radio pouch at the chest, baggy olive cargo trousers, tactical gloves and armored shin guards over heavy boots || civ
-- an elaborate floral kimono layered over a plain white underrobe, sleeves trailing long past the fingertips || civ notac dressy
-- white shrine robes with a red hakama skirt, a cord-tied over-sash crossing the chest || civ notac dressy
-- a black jacket studded with spikes at the collar and shoulders, a small enamel pin at the breast, over a cropped top and a low-slung belt hung with metal loops || civ
 - a worn hooded jacket patched with faded characters at the sleeve, torn and taped at the seams || civ
-- an olive tank top over cargo trousers, a pair of fingerless gloves and worn lace-up boots || civ
-- an oversized cropped black jacket with dull gold trim, worn open over a graphic crop top and a low-slung utility belt || civ
 - a cropped black graphic hoodie with a small patch at the sleeve, over dark track trousers striped down the leg || civ
 - a black leather corset-coat with a high spiked collar, a short pleated underskirt and thigh-high tactical boots || civ
-- an oversized black tactical jacket, unzipped over a cropped top baring the midriff, small mismatched patches on one sleeve and a segmented armored panel at one shoulder
-- a sleek black-and-white armored bodysuit with an oversized geometric pauldron on one shoulder, a lit status display set into the chest plate and thin glowing seams tracing the joints, a bare midriff panel at the waist
-- a fitted black leather bodysuit with a high popped collar, rain-slicked and traced with faint glowing seam lines at the wrists
-- a mustard-yellow flight suit with padded shoulder patches and a wide belted utility harness, sleeves rolled to reveal a lighter underlayer, a weathered grey scarf knotted loosely at the throat
 - a glossy black bodysuit with a short pleated skirt panel at the hip, one arm sheathed in an articulated mechanical gauntlet running to the shoulder, over knee-high boots
-- a cropped olive tank top with a patch pocket at the chest, twin red armbands worn above the elbow
-- a lacquered single pauldron over a fitted dark robe with an embroidered high collar, tasseled cords hanging from the shoulder, a wide sash cinched at the waist || civ notac dressy
-- a fitted halter-neck tank top with a high choker collar, one bare shoulder crossed by a thin strap || civ
-- a cropped bomber-style jacket zipped only at the chest over a fitted sports top and briefs, midriff and legs bare, wrists wrapped in tape || civ
-- a fitted red-and-white segmented plate armor suit cut low across the chest, articulated joints at the shoulders and knees
-- a sleek black tactical bodysuit with segmented dark red armor plating across one shoulder and arm, fingerless gloves and knee-high boots || civ
 - a tattered black cloak like torn wings draped from the shoulders over a wrapped cropped top, buckled utility straps cinched at the waist and one armored bracer laced to the forearm || civ
 - a fitted dark leather bodice cut low at the chest over a long dark wrap skirt, faint red markings tracing down one bared arm || civ
-- a partial lacquered pauldron and vambrace worn over a cropped underlayer baring the midriff, small red tassels trailing from the shoulder plate || civ notac dressy
-- a white-and-black lacquered armor harness baring the midriff, fitted white trousers tucked into patterned boots || civ notac dressy
-- a sleeveless dark lamellar armor bodice with a red cord sash, plate segments hanging low over dark leggings, {possessive} shoulders left bare || civ notac dressy
-- a dark kimono patterned with pale plum blossoms, a crimson underlayer glimpsed at the collar and wide sleeves || civ notac dressy
 - an ornate white and blue segmented armor jacket laced tight over a corseted front, finished with gauntlet-cuffed gloves || dressy
 - a gold-braided long coat worn open over a laced corset top, cinched with a wide buckled sash and paired with striped thigh-high stockings || dressy
 - a fitted leather corset baring the midriff under a long gold-buttoned coat trailing to the knee || civ dressy
-- a skin-tight charcoal bodysuit with a cropped halter back and thigh-high boots, wrist straps cinched over fingerless gloves
 - an off-shoulder pale gown with a black strap harness crossing the bodice || dressy
 - a form-fitting flight suit plated at the collar and bust, seams sealed against a mounted harness || @gundam
 - a backless halter gown with straps crisscrossed bare down the spine to the waist || dressy
-- a skintight tactical bodysuit plated at one shoulder, every panel line glowing hairline-thin || @cyberpunk
-- a tailored pinstripe blazer cinched over a short pencil skirt, collar snapped high at the throat || civ @corporate
-- a skintight bio-mechanical bodysuit fused with plating at the shoulders and spine, seams glowing hairline-thin || @cyberpunk
-- a hip-length tan leather jacket over a high-cut dark combat leotard and thigh-high stockings, a drop-leg holster strapped down one bare thigh || civ
+- => Glowing-seam bodysuits (cyberpunk) || @cyberpunk
 - a pale-blue police uniform blouse with the sleeves rolled, tucked into a straight duty skirt above a black belt rig || mil
+
+## Flight suits
+
+- a fitted flight suit with the top half unzipped and knotted at the waist
+- a tan and beige flight suit with rust-red accents, padded shoulder and knee armor and utility straps at the thighs || mil
+- a fitted maroon-red flight suit with a cream chest yoke and shoulder rank patches, a rolled tan poncho-cloak bundled loosely at the waist, a bandolier of pouches slung crosswise over the chest, white gloves, and knee-high brown boots wrapped in pale canvas leggings || mil
+- a fitted tactical flight suit with a high collar, buckled straps, small unit patches and an armband || mil
+- a weathered mustard-yellow flight suit with a shoulder star patch and a small unit patch at the chest, a pale scarf knotted loose at the throat || mil
+- an olive tactical jumpsuit under a cropped chest harness loaded with hip pouches, fingerless gloves and low tactical boots || mil
+- a navy flight jumpsuit under a cropped tactical vest loaded with chest pouches, a sidearm holstered at the hip || mil
+- a weathered orange flight jumpsuit with patched cargo sleeves, worn under a trailing grey scarf || civ
+- a scuffed flight suit unzipped low at the collar, a crash harness cinched tight across the chest || mil
+- a white-and-olive labor pilot's suit with a padded collar, buckled chest harness and a stencilled unit number at the thigh || mil
+
+## Flight suits (she) +
+
+- x2 a flight suit tailored close through the bust, waist and hips, the front zip run down past the sternum
+- a close-fitting pilot undersuit worn without its outer shell, unzipped to the sternum and clinging to every line of the figure
+- a sleek fitted flight suit, dark through the torso with silver-white segmented plating at the hips and thighs, thin glowing circuit piping tracing the shoulders and the chest seam, the front zip run down low
+- a high-collared tactical pilot suit with padded shoulder and knee armor, glowing cable detail running the length of one sleeve || mil
+- a mustard-yellow flight suit with padded shoulder patches and a wide belted utility harness, sleeves rolled to reveal a lighter underlayer, a weathered grey scarf knotted loosely at the throat
+
+## Combat uniforms and plate carriers
+
+- a modern combat uniform in faded broken-pattern camouflage, padded combat shirt with the sleeves pushed to the elbow, knee-padded trousers || mil
+- a modular plate carrier loaded with magazine pouches over a padded combat shirt, MOLLE straps cinched flat || mil
+- a composite plate harness over a dark undersuit, magazine pouches racked across the front and a small status indicator lit at the collar || mil
+- a dust-caked arid-pattern combat uniform under a slim chest rig, a shemagh loose at the neck || mil
+- a low-profile plate carrier over a sweat-stained combat shirt, tags visible at the collar || mil
+- a hooded recon softshell in broken-pattern camouflage, hood down, face paint half worn off || mil
+- a multicam combat uniform under a modular plate carrier, magazine pouches ranked across the chest, knee-padded trousers and fingerless tactical gloves || mil
+- weathered olive-green camouflage tactical gear, a plate carrier vest worn over a long-sleeve field jacket, camo trousers, fingerless tactical gloves and scuffed combat boots || mil
+
+## Combat uniforms and plate carriers (she) +
+
+- a combat uniform taken in through the waist, sleeves pushed up, a plate carrier cinched tight over it || mil
+
+## Field jackets
+
+- a worn olive field jacket with the collar up over a ribbed dark turtleneck and a slim chest rig, fingerless tactical gloves || mil
+- a weathered black field jacket stencilled with a unit number and a small hazard patch, worn over a coarse knit jumper || mil
+- a black military utility jacket stencilled with a unit number and a hazard triangle patch, hanging open over a plain olive tank top || mil
+- an olive field jacket with the sleeves pushed back over a close black bodysuit, a chest rig of magazine pouches, armored knee and shin guards above heavy trainers
+- a mottled camouflage jacket worn open over a plain dark tee stencilled with a bold unit number, cargo trousers and fingerless tactical gloves || mil
+- a weathered dark-green field jacket, collar turned up, patched high on one shoulder || mil
+- a bulky fleece-collared field jacket gathered high at the throat, cuffs frayed at the wrist || civ
+
+## Field jackets (she) +
+
+- a weathered field jacket stencilled with a unit number and a small hazard warning patch, hanging open over a cropped top and bare midriff || mil
+
+## Open jackets over plated or glowing bodysuits
+
+- a black tactical jacket, unzipped and open, its interior lining faintly glowing, over a fitted dark bodysuit with light plating at the shoulders, forearms and shins
+- a segmented armored bodysuit under an open hooded jacket, a long scarf wound at the throat and trailing loose behind
+
+## Open jackets over plated or glowing bodysuits (she) +
+
+- a black tactical jacket with piped trim over a close grey bodyglove and armored thigh-high boots, a hand's width of bare thigh above them
+- a black military jacket with dull gold trim, worn open over a low-cut dark bodysuit and chipped white armor plates || mil
+- a white field jacket thrown open over a black bodyglove cut deep at the chest and traced with faint glowing conduit lines
+- a black hooded jacket trimmed in dull gold and draped loosely off both shoulders, over segmented pale grey-white plating at the hips and thighs and fitted leggings traced with a thin glowing line down the shin
+- an open black jacket with a stiff collar over a fitted grey-white bodysuit, thin glowing stripes running down the sleeves and legs and tracing the seam at {possessive} bare midriff, segmented gloves and thigh-high boots
+- an open white jacket over a fitted dark bodysuit marked with a small angular chevron at the chest, thigh-high leggings traced with glowing curved stripes, gloves and boots trimmed in dull orange
+
+## Glowing-seam bodysuits
+
+- a black tactical bodysuit with sharp angular trim and a high collar piece lit with small accent glows, a barcode marking inked at the collarbone
+
+## Glowing-seam bodysuits (she) +
+
+- a sleeveless flight harness of buckled straps over a black bodysuit unzipped low between them, a single lit indicator strip down the chest, arms and shoulders bare
+- a close-cut pilot bodyglove in white and grey, lit seams tracing the waist and hips, partial shoulder plating and nothing over the bare midriff
+- a sleeveless black tactical bodysuit with an exposed back framed by a cybernetic support harness, thin glowing circuit lines running along the spine and shoulder blades
+- a fitted grey-white bodysuit traced with a thin glowing circuit line, one oversized pauldron stencilled with a small insignia, segmented armor plating down the legs || mil
+- a sleek black-and-white armored bodysuit with an oversized geometric pauldron on one shoulder, a lit status display set into the chest plate and thin glowing seams tracing the joints, a bare midriff panel at the waist
+- a fitted black leather bodysuit with a high popped collar, rain-slicked and traced with faint glowing seam lines at the wrists
+
+## Glowing-seam bodysuits (cyberpunk)
+
+- a skintight tactical bodysuit plated at one shoulder, every panel line glowing hairline-thin
+- a skintight bio-mechanical bodysuit fused with plating at the shoulders and spine, seams glowing hairline-thin
+
+## Unlit tactical bodysuits
+
+- a form-fitting armored bodysuit of segmented black plating, neural-interface cabling running from a plug at the collar
+- a fitted black tactical bodysuit with buckled strap detailing at the shoulder and ribbed panel seams || civ
+- a sealed high-collared armored bodysuit with heavy pauldron-style shoulder plating and integrated sensor housings at each shoulder
+
+## Unlit tactical bodysuits (she) +
+
+- a fitted armored bodyglove under a partial plate harness, the plates leaving the midriff and one shoulder bare
+- a sleek black tactical bodysuit with segmented dark red armor plating across one shoulder and arm, fingerless gloves and knee-high boots || civ
+- a skin-tight charcoal bodysuit with a cropped halter back and thigh-high boots, wrist straps cinched over fingerless gloves
+
+## Hardsuits and segmented armor
+
+- scuffed hardshell carapace armor over a sealed undersuit, repainted in patches, helmet clipped at the belt || mil
+- an EVA-rated hardsuit with the helmet seals open and the gauntlets stowed
+- a sealed hardshell combat suit with segmented plating at the shoulders, chest and shins over a close dark bodyglove || mil
+- a sealed rescue hardsuit of segmented panels with armored boots and a hard equipment pack riding high on the shoulders || civ
+- a battered set of heavy segmented plate armor, scorched and scarred at the shoulders and forearms, in dull combat red || mil
+- a segmented white technical armor shell with dark reinforced wrapping at the thighs, scorched and battle-worn || mil
+- a segmented composite tactical armor suit with actuated knee joints and a compact backpack module, worn over an olive combat shirt || mil
+- a sleek angular powered armor suit with an oversized intake-vented backpack module, warning stencils and exposed cabling trailing from the shoulder || mil
+- heavy segmented composite armor with a large stencilled unit number across the shoulder plate, status lights lit along the collar || mil
+- a bulky riot-control suit of segmented off-white armor over a dark uniform, a numbered plate across the chest || mil
+
+## Hardsuits and segmented armor (she) +
+
+- x2 a white-and-grey armored hardsuit of scuffed fitted plates over a black bodyglove, glowing seam lines tracing the limbs
+- a fitted red-and-white segmented plate armor suit cut low across the chest, articulated joints at the shoulders and knees
+
+## Caped armor suits
+
+- a sealed grey tactical suit with layered armor pads at the shoulders and knees, a chest rig of ranked pouches and a long split-tailed shroud coat hanging to the ankles
+- a dark armored combat suit under a loaded chest rig, a long asymmetric white half-cape hanging from one shoulder to the ankle
+- a sleek black powered tactical exo-suit with segmented plating at the knees and shoulders, a long dark half-cape trailing from one shoulder || mil
+- a fitted dark tactical bodysuit segmented with rust-orange trim plating at the joints and collar, a long weathered rust-colored cape trailing from one shoulder
+
+## Plain traditional robes
+
+- a dark travel-worn robe with a crimson underlayer at the collar and sleeves, belted over wide hakama-style trousers || civ notac
+- layered white pilgrim's robes gone travel-stained at the hem, a coarse rope belt cinched at the waist || civ notac
+- a weathered haori-style jacket over a high-collared undershirt, sleeves bound back with cord || civ notac
+- a tattered dark robe hanging open at the chest, its hems torn and trailing loose || civ notac
+- a dark robe with a pale patterned collar, red fingerless gloves laced to the wrist || civ notac
+- a dark patterned robe with a bright orange underlining, a string of prayer beads wound at one wrist || civ notac
+
+## Kimonos and fine robes
+
+- dark samurai robes with a long crimson cloak trailing from the shoulders, one leg bared and banded with tattooed markings || civ notac dressy
+- a dark robe traced with gold embroidered trim, a purple sash knotted at the waist and small tassels hanging loose || civ notac dressy
+- a dark kimono cinched with a wide white sash tied in a full bow at the back || civ notac dressy
+
+## Kimonos and fine robes (she) +
+
+- an elaborate floral kimono layered over a plain white underrobe, sleeves trailing long past the fingertips || civ notac dressy
+- white shrine robes with a red hakama skirt, a cord-tied over-sash crossing the chest || civ notac dressy
+- a dark kimono patterned with pale plum blossoms, a crimson underlayer glimpsed at the collar and wide sleeves || civ notac dressy
+
+## Lacquered samurai armor
+
+- segmented lacquered armor plates over a dark underrobe, a torn banner cord trailing from one shoulder
+- segmented dark armor pauldrons over a hooded travel robe, striped forearm wraps and small ornamental tassels at the shoulder
+- segmented crimson-lacquered armor plates over a floral-patterned quilted robe, tasseled cords trailing from one shoulder and a wrapped bundle slung across the back || civ notac dressy
+- full lacquered samurai armor in dark green and black with segmented shoulder pauldrons over a trailing hakama-style skirt, ornamental tassels at the waist || civ notac dressy
+
+## Lacquered samurai armor (she) +
+
+- a lacquered single pauldron over a fitted dark robe with an embroidered high collar, tasseled cords hanging from the shoulder, a wide sash cinched at the waist || civ notac dressy
+- a partial lacquered pauldron and vambrace worn over a cropped underlayer baring the midriff, small red tassels trailing from the shoulder plate || civ notac dressy
+- a white-and-black lacquered armor harness baring the midriff, fitted white trousers tucked into patterned boots || civ notac dressy
+- a sleeveless dark lamellar armor bodice with a red cord sash, plate segments hanging low over dark leggings, {possessive} shoulders left bare || civ notac dressy
+
+## Work coveralls
+
+- layered grey work coveralls patched at both knees || civ
+- a white mechanic's coverall with red trim at the cuffs and collar, sleeves rolled past the elbow under a matching soft cap
+- a threadbare mustard-yellow work coverall patched at both knees, a canvas tool satchel cinched to one hip || civ
+- a sun-faded orange work jumpsuit worn under a heavy grey scarf, cuffed sleeves over grease-stained gloves, a multi-pouch tool belt cinched at the waist || civ
+- grease-blackened overalls stripped to the waist and knotted there over a sweat-damp undershirt, a heavy tool belt slung at the hips || civ
+
+## Work coveralls (she) +
+
+- a sleeveless coverall unzipped to the navel and knotted off at the waist over a cropped tank, arms and midriff bare || civ
+
+## Dress uniforms
+
+- a formal service uniform, sharp high collar and rank tabs, a slim data-tab clipped at the breast || mil
+- a black formal dress uniform with a high standing collar and small rank pips, a double row of buttons, dull red piping at the shoulder boards, a ribbon rack at the breast and white dress gloves || mil
+
+## Dress uniforms (she) +
+
+- a dress uniform tailored close to the figure, fitted jacket over a short straight skirt, bare legs above polished knee boots || mil
+- a black formal dress uniform, high standing collar and rank pips above a ribbon rack at the breast, white dress gloves, a long dark pleated skirt gathered under a wide sash at the waist || mil
+- a white double-breasted officer's tunic with a high open collar and armored shoulder boards, belted at the waist over a short flared skirt, a long dark cape hanging from the shoulders, garter straps at the thigh above white boots || mil
+
+## Long coats over fatigues
+
+- a long weatherproof coat over practical fatigues
+- an armored softshell greatcoat over slim uniform trousers and composite-soled boots || mil
+- a dark olive-grey tactical coat over practical field gear, collar up and sleeves pushed back, no insignia or unit markings anywhere on the kit
+- a long olive field coat over a black rollneck, a shoulder holster rig showing at the open front || civ
+- a heavy olive winter greatcoat over a service uniform, the fur collar turned up and gloves stuffed in one pocket || mil
+
+## Leather jackets
+
+- a battered leather jacket gone soft with years of wear || civ
+- a weathered leather jacket with a segmented armor plate at one shoulder, worn open over a dark top || civ
+- a weathered tan leather jacket rolled to the elbow, layered over a thick wrapped scarf || civ
+- a hip-length tan leather jacket worn open over a high-collared dark bodyglove, a drop-leg holster rig strapped down one thigh || civ
+
+## Leather jackets (she) +
+
+- a hip-length tan leather jacket over a high-cut dark combat leotard and thigh-high stockings, a drop-leg holster strapped down one bare thigh || civ
+
+## Tank tops
+
+- a sleeveless thermal top, arms bare, forearms wrapped in worn tape || civ
+
+## Tank tops (she) +
+
+- a tan tactical vest hanging open over a torn cropped tank, one arm wrapped in bandaging, worn cargo trousers slung low at the hips || civ
+- a fitted crop top with tactical harness straps crossing the bare back, over close-cut white tactical trousers with accent straps and a pistol holstered at the thigh || civ
+- an olive tank top over cargo trousers, a pair of fingerless gloves and worn lace-up boots || civ
+- a cropped olive tank top with a patch pocket at the chest, twin red armbands worn above the elbow
+- a fitted halter-neck tank top with a high choker collar, one bare shoulder crossed by a thin strap || civ
+
+## Bomber and flight jackets
+
+- an olive bomber jacket over a black bodysuit and plate carrier, grey cargo trousers and a drop-leg holster rig strapped down one thigh
+- a heavy insulated flight jacket over a hooded pullover, cargo trousers and strapped knee pads
+- a white flight jacket with a stencilled red-and-black shoulder patch marking a service unit || mil
+
+## Bomber and flight jackets (she) +
+
+- a cropped olive bomber jacket over a slim chest rig and a fitted tee, a band of bare midriff above olive cargo trousers slung with pouches || civ
+- a cropped bomber-style jacket zipped only at the chest over a fitted sports top and briefs, midriff and legs bare, wrists wrapped in tape || civ
+
+## Open jackets over crop tops
+
+- an oversized open shirt sliding off one shoulder, draped loosely over a dark cropped tank || civ
+- a black cropped tank top with a barcode tattoo and a stencilled unit number on the bare upper arm, a dark red jacket hanging off both shoulders and marked with a small hazard triangle patch
+- a black jacket studded with spikes at the collar and shoulders, a small enamel pin at the breast, over a cropped top and a low-slung belt hung with metal loops || civ
+- an oversized cropped black jacket with dull gold trim, worn open over a graphic crop top and a low-slung utility belt || civ
+- an oversized black tactical jacket, unzipped over a cropped top baring the midriff, small mismatched patches on one sleeve and a segmented armored panel at one shoulder
+
+## Cheap suits
+
+- a cheap dark suit with the tie pulled loose, a thin wire running from one ear down inside the collar || civ
+- a rumpled brown suit under an open plastic raincoat, both hems dripping || civ
+
+## Corporate skirt suits
+
+- a tailored corporate blouse open two buttons at the throat over a narrow skirt slit high at the thigh, immaculate against the grime || civ
+- a tailored pinstripe blazer cinched over a short pencil skirt, collar snapped high at the throat || civ @corporate
 
 ## Weapon
 
