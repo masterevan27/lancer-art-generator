@@ -1,5 +1,9 @@
 # Full-body Expressions Implementation Plan
 
+**Status:** Implemented and reviewed on 2026-09-12 in `de1d440` and `6f3801d`.
+This is a historical implementation record; see [the usage guide](../../generate-expressions.md)
+for current behavior. Later token-source and expressive-pose experiments are not default behavior in this plan.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Generate head-to-toe expression sprites by default, including from cropped portraits.
