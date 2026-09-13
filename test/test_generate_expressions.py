@@ -191,6 +191,24 @@ class TestTablesAndPrompts(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Missing smiles"):
                 expressions.load_expression_tables(path)
 
+    def test_malformed_group_target_reports_file_and_reference_before_rendering(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            image = root / "Hero.png"
+            image.write_bytes(b"not rendered")
+            tables = root / "broken-expressions.md"
+            tables.write_text("## joy\n\n- => !!!\n", encoding="utf-8")
+            error = io.StringIO()
+            with contextlib.redirect_stderr(error):
+                code = expressions.main([
+                    "--image", str(image), "--tables", str(tables),
+                ])
+
+            self.assertEqual(code, 2)
+            self.assertIn(str(tables), error.getvalue())
+            self.assertIn("=> !!!", error.getvalue())
+            self.assertIn("group reference", error.getvalue())
+
     def test_prompt_is_anchored_to_appearance_but_not_demeanor_or_gear(self):
         prompt = expressions.assemble_prompt("joyful open smile", {
             "Hair": "cropped curls", "Hair colour": "silver",

@@ -1,7 +1,8 @@
 # Character expressions: SillyTavern expression sprites from one portrait
 
 **Date:** 2026-09-12
-**Status:** approved in discussion, awaiting review of this document
+**Status:** implemented; retained as design history. Current usage is documented
+in `docs/generate-expressions.md` and the GUI `README.md`.
 **Repositories:** `lancer-art-generator` (the script, the workflow, the tables
 file), `lancer-npc-import-gui` (the NPC-page panel, the SillyTavern import, the
 Expressions kind on the Tables tab)

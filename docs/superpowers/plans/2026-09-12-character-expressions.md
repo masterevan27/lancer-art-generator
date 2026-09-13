@@ -1,5 +1,9 @@
 # Character Expressions Implementation Plan
 
+> **Status:** Implemented. This unchecked task list is retained as implementation
+> history; current usage is documented in `docs/generate-expressions.md` and the
+> GUI `README.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Generate expression sprites from portraits, manage them on NPC sheets, and explicitly import them into SillyTavern.

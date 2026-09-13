@@ -127,7 +127,12 @@ def load_expression_tables(path):
             target = npc_gen.reference_target(bullet)
             if target is None:
                 continue
-            target_label = sanitize_label(target)
+            try:
+                target_label = sanitize_label(target)
+            except ValueError as exc:
+                raise ValueError(
+                    "%s: group reference %r has an invalid target: %s"
+                    % (path, bullet, exc)) from exc
             members = tables.get(target_label)
             if not members:
                 raise ValueError(
