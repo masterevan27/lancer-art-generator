@@ -223,8 +223,16 @@ class TestTablesAndPrompts(unittest.TestCase):
         for text in ("permanent scowl", "rifle", "scanner", "hangar",
                      "arms crossed"):
             self.assertNotIn(text, prompt)
-        self.assertIn("same character", prompt.lower())
-        self.assertIn("front-facing bust", prompt.lower())
+        lowered = prompt.lower()
+        for text in ("same character", "face", "hair", "outfit", "colours",
+                     "accessories", "art style", "front-facing", "standing",
+                     "full-body", "entire head", "hands", "both feet",
+                     "margin", "no cropping or text", "unseen clothing",
+                     "legs", "small body language"):
+            with self.subTest(text=text):
+                self.assertIn(text, lowered)
+        self.assertNotIn("camera framing and pose", lowered)
+        self.assertNotIn("front-facing bust", lowered)
 
     def test_image_mode_prompt_has_no_trait_anchor_section(self):
         prompt = expressions.assemble_prompt("angry narrowed eyes")
@@ -294,6 +302,44 @@ class TestPlanning(unittest.TestCase):
         self.assertEqual(len(plans), 1)
         self.assertEqual(plans[0].destination.name, "battle_focus.webp")
         self.assertEqual(plans[0].prompt, "saved full custom prompt")
+
+    def test_file_redo_adapts_only_the_generated_legacy_prompt_preamble(self):
+        legacy = (
+            "Keep the same character, face, hairstyle, outfit, colours, art "
+            "style, camera framing and pose. Change only the facial expression "
+            "and small body language. Front-facing bust, no text.")
+        suffix = (
+            " Appearance anchors: Hair: cropped curls; Outfit: red flight "
+            "suit. Expression: cold focused determination")
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            for name in ("legacy.webp", "current.webp", "authored.webp"):
+                (out / name).write_bytes(b"old")
+            sidecar = {
+                "legacy.webp": {"prompt": legacy + suffix},
+                "current.webp": {
+                    "prompt": expressions.IDENTITY_PREAMBLE + suffix},
+                "authored.webp": {
+                    "prompt": "Keep this custom camera framing exactly."},
+            }
+            prompts = {}
+            for name in sidecar:
+                plans, _ = expressions.make_plans(
+                    out, self.args(file=name), {}, {}, None, sidecar)
+                prompts[name] = plans[0].prompt
+
+        self.assertEqual(prompts["legacy.webp"],
+                         expressions.IDENTITY_PREAMBLE + suffix)
+        self.assertNotIn("camera framing and pose", prompts["legacy.webp"])
+        self.assertNotIn("Front-facing bust", prompts["legacy.webp"])
+        self.assertIn("Hair: cropped curls", prompts["legacy.webp"])
+        self.assertIn("cold focused determination", prompts["legacy.webp"])
+        self.assertEqual(prompts["current.webp"],
+                         expressions.IDENTITY_PREAMBLE + suffix)
+        self.assertEqual(prompts["current.webp"].count(
+            expressions.IDENTITY_PREAMBLE), 1)
+        self.assertEqual(prompts["authored.webp"],
+                         "Keep this custom camera framing exactly.")
 
     def test_selected_pool_is_validated_before_any_plan_is_returned(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -453,6 +499,17 @@ class TestGraph(unittest.TestCase):
         self.assertEqual((sampler["inputs"]["seed"], sampler["inputs"]["steps"]),
                          (9, 7))
         self.assertEqual(save["inputs"]["quality"], 81)
+
+    def test_graph_samples_a_tall_full_body_canvas_from_original_conditioning(self):
+        graph = self.build()
+        load_id, _ = only(graph, "LoadImage")
+        _, sampler = only(graph, "KSampler")
+        latent = graph[sampler["inputs"]["latent_image"][0]]
+        positive = graph[sampler["inputs"]["positive"][0]]
+        self.assertEqual(latent["class_type"], "EmptySD3LatentImage")
+        self.assertEqual(latent["inputs"], {
+            "width": 768, "height": 1344, "batch_size": 1})
+        self.assertEqual(positive["inputs"]["image1"], [load_id, 0])
 
     def test_background_removal_is_default_and_can_be_bypassed(self):
         transparent = self.build()

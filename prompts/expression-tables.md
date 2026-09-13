@@ -1,9 +1,10 @@
 # Expression sprite prompt tables
 
-Each `## label` pool describes a front-facing bust expression for that
-SillyTavern label. `xN` sets relative roll weight. Keep the emotion's name in
-every bullet so the model instruction and the filename cannot disagree.
-Comment a bullet as `<!-- - ... -->` to disable it without deleting it.
+Each `## label` pool describes an expression and small body-language cue for
+the front-facing full-body character requested by the generator. `xN` sets
+relative roll weight. Keep the emotion's name in every bullet so the model
+instruction and the filename cannot disagree. Comment a bullet as
+`<!-- - ... -->` to disable it without deleting it.
 
 ## admiration
 

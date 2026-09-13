@@ -26,9 +26,9 @@
   },
   "7": {"class_type": "VAELoader", "inputs": {"vae_name": "qwen_image_vae.safetensors"}},
   "8": {
-    "class_type": "VAEEncode",
-    "_meta": {"title": "source latent preserves framing"},
-    "inputs": {"pixels": ["1", 0], "vae": ["7", 0]}
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {"title": "tall full-body output canvas"},
+    "inputs": {"width": 768, "height": 1344, "batch_size": 1}
   },
   "9": {
     "class_type": "TextEncodeQwenImageEditPlus",

@@ -33,10 +33,18 @@ DEFAULT_LABELS = (
     "realization", "relief", "remorse", "sadness", "surprise",
 )
 ANCHOR_TRAITS = ("Hair", "Hair colour", "Feature", "Outfit", "Headgear")
-IDENTITY_PREAMBLE = (
+LEGACY_IDENTITY_PREAMBLE = (
     "Keep the same character, face, hairstyle, outfit, colours, art style, "
     "camera framing and pose. Change only the facial expression and small body "
     "language. Front-facing bust, no text."
+)
+IDENTITY_PREAMBLE = (
+    "Keep the same character, face, hair, outfit, colours, accessories and art "
+    "style. Create one front-facing standing full-body character. Show the "
+    "entire head, hands and both feet with margin around them; no cropping or "
+    "text. Coherently extend any unseen clothing and legs to match the "
+    "reference. Do not preserve the source camera framing or pose. Change the "
+    "facial expression and small body language to convey the requested emotion."
 )
 SPRITE_RE = re.compile(
     r"^([a-z0-9_]+)(?:-(\d+)|\.([A-Za-z0-9_.-]+))?\.webp$")
@@ -234,7 +242,10 @@ def _expression_prompt(label, seed, tables, custom, describe, traits,
             expression = rng.choice(members)
         return assemble_prompt(expression, traits)
     if saved and saved.get("prompt"):
-        return saved["prompt"]
+        prompt = saved["prompt"]
+        if prompt.startswith(LEGACY_IDENTITY_PREAMBLE):
+            return IDENTITY_PREAMBLE + prompt[len(LEGACY_IDENTITY_PREAMBLE):]
+        return prompt
     raise ValueError(
         "no prompt for expression '%s' (add its table, --custom text, or "
         "--describe text)" % label)

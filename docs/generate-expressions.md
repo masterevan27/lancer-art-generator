@@ -84,13 +84,19 @@ it does not silently expand to all default labels.
 
 ## Prompts and identity
 
-Every instruction fixes the character, face, hairstyle, outfit, colours, art
-style, framing and pose, then asks only for a facial expression and small body
-language. NPC mode adds the recorded Hair, Hair colour, Feature, Outfit and
-Headgear as identity anchors. Demeanor, weapons, gear, backdrop and stance are
-deliberately excluded because they can conflict with the requested emotion or
-alter the composition. Image mode has no manifest traits and uses the fixed
-identity instruction plus the selected expression.
+Every instruction asks for one front-facing, standing, full-body character on
+a 768×1344 canvas, with the entire head, both hands and both feet visible with
+margin. It preserves the character's face, hair, outfit, colours, accessories
+and art style, but does not preserve the source crop, camera framing or pose.
+When the reference is cropped, Qwen must invent unseen clothing and legs that
+coherently match the visible design. The requested emotion may change the
+facial expression and small body language.
+
+NPC mode adds the recorded Hair, Hair colour, Feature, Outfit and Headgear as
+identity anchors. Demeanor, weapons, gear, backdrop and stance are deliberately
+excluded because they can conflict with the requested emotion or alter the
+composition. Image mode has no manifest traits and uses the fixed identity
+instruction plus the selected expression.
 
 ## Variants, replace and redo safety
 
@@ -105,8 +111,15 @@ free `<label>-N.webp`. Existing dot variants such as
   and metadata remain byte-for-byte intact; later labels still run.
 - `--file NAME.webp` overwrites exactly one existing classified basename and
   rejects multi-sprite options. A custom sprite with no current table reuses
-  its saved full prompt from `expressions.json`; a supplied `--describe` or a
-  current table produces a fresh prompt instead.
+  its saved full prompt from `expressions.json`. If that prompt begins with the
+  exact pre-full-body generated preamble, redo replaces only that preamble with
+  the current framing instruction and preserves its appearance anchors and
+  custom expression. Unrecognized saved prompts remain verbatim. A supplied
+  `--describe` or a current table produces a fresh instruction instead.
+
+Existing sprite images and metadata are not migrated or regenerated
+automatically. Use exact-file Redo or label Replace when you want an existing
+sprite rendered with the current full-body framing.
 
 Both sprite files and `expressions/expressions.json` are installed through
 sibling temporary files and atomic renames. The sidecar records label, full
@@ -128,9 +141,11 @@ sidecar. Rendering failures are reported and do not stop remaining sprites.
 Exit status is 0 for success, 1 when any render fails, and 2 for invalid usage
 or input.
 
-Treat a successful render as a candidate, not identity proof. A live Qwen/RMBG
-smoke render produced a transparent 1024×1024 RGBA WebP, but lost the source
-portrait's spectacles. Inspect sprites before importing them and use an
-exact-file redo when a face, accessory, or other identity detail is wrong.
+Treat a successful render as a candidate, not identity proof. Inspect the
+entire head and both feet for cropping, and verify the face, hair, outfit,
+colours and accessories against the source before importing. Cropped source
+portraits necessarily make the model invent unseen clothing and legs; use an
+exact-file redo or `--describe` with a fresh instruction when those details or
+the character identity are wrong.
 
 Run `python generate-expressions.py --help` for the complete option list.
