@@ -331,6 +331,10 @@ def _expression_prompt(label, seed, tables, custom, describe, traits,
                        saved=None, style_prompt=""):
     if describe:
         return assemble_prompt(describe, traits, style_prompt)
+    if saved and saved.get("prompt"):
+        prompt = saved["prompt"]
+        adapted = _adapt_generated_prompt(prompt, style_prompt)
+        return prompt if adapted is None else adapted
     if custom.get(label):
         return assemble_prompt(custom[label], traits, style_prompt)
     pool = tables.get(label) or []
@@ -346,10 +350,6 @@ def _expression_prompt(label, seed, tables, custom, describe, traits,
                     % (label, target))
             expression = rng.choice(members)
         return assemble_prompt(expression, traits, style_prompt)
-    if saved and saved.get("prompt"):
-        prompt = saved["prompt"]
-        adapted = _adapt_generated_prompt(prompt, style_prompt)
-        return prompt if adapted is None else adapted
     raise ValueError(
         "no prompt for expression '%s' (add its table, --custom text, or "
         "--describe text)" % label)

@@ -637,6 +637,38 @@ class TestPlanning(unittest.TestCase):
         self.assertEqual(plans[0].destination.name, "battle_focus.webp")
         self.assertEqual(plans[0].prompt, "saved full custom prompt")
 
+    def test_file_redo_prefers_saved_authored_prompt_over_builtin_table(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            (out / "joy.webp").write_bytes(b"old")
+            saved = "authored joy prompt with a one-handed celebratory pose"
+            sidecar = {"joy.webp": {"label": "joy", "prompt": saved,
+                                      "seed": 1}}
+            plans, _ = expressions.make_plans(
+                out, self.args(file="joy.webp"),
+                {"joy": ["stock joyful smile with both arms lowered"]}, {},
+                None, sidecar)
+
+        self.assertEqual(plans[0].prompt, saved)
+        self.assertNotIn("stock joyful smile", plans[0].prompt)
+
+    def test_file_redo_describe_overrides_saved_builtin_prompt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            (out / "joy.webp").write_bytes(b"old")
+            sidecar = {"joy.webp": {
+                "label": "joy", "prompt": "saved authored joy prompt",
+                "seed": 1}}
+            plans, _ = expressions.make_plans(
+                out, self.args(file="joy.webp", describe=(
+                    "quiet joy while kneeling with one hand raised")),
+                {"joy": ["stock joyful smile"]}, {}, None, sidecar)
+
+        self.assertIn("quiet joy while kneeling with one hand raised",
+                      plans[0].prompt)
+        self.assertNotIn("saved authored joy prompt", plans[0].prompt)
+        self.assertNotIn("stock joyful smile", plans[0].prompt)
+
     def test_file_redo_adapts_recognized_prompts_and_replaces_source_style(self):
         legacy = (
             "Keep the same character, face, hairstyle, outfit, colours, art "
