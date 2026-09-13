@@ -2048,7 +2048,7 @@ bullet there changes no portrait or token.
 
 ## Bomber and flight jackets
 
-- an olive bomber jacket over a black bodysuit and plate carrier, grey cargo trousers and a drop-leg holster rig strapped down one thigh
+- an olive bomber jacket over a black bodysuit and plate carrier, grey cargo trousers and a drop-leg holster rig strapped down one thigh || mil
 - a heavy insulated flight jacket over a hooded pullover, cargo trousers and strapped knee pads
 - a white flight jacket with a stencilled red-and-black shoulder patch marking a service unit || mil
 
