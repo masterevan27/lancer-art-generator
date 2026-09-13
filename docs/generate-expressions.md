@@ -76,6 +76,12 @@ SillyTavern does not discover arbitrary label names from files. Add every
 custom label to the Character Expressions extension's custom-expression list
 before expecting it to select that sprite.
 
+The companion Import GUI sends the NPC's configured manifest and expression
+tables as explicit `--manifest` and `--tables` arguments. This keeps a
+relocated manifest or tables file consistent between its Expressions editor and
+the render job. A GUI request with only custom chips sends only those customs;
+it does not silently expand to all default labels.
+
 ## Prompts and identity
 
 Every instruction fixes the character, face, hairstyle, outfit, colours, art
@@ -121,5 +127,10 @@ probe ComfyUI, upload the source, create the output folder, or change the
 sidecar. Rendering failures are reported and do not stop remaining sprites.
 Exit status is 0 for success, 1 when any render fails, and 2 for invalid usage
 or input.
+
+Treat a successful render as a candidate, not identity proof. A live Qwen/RMBG
+smoke render produced a transparent 1024×1024 RGBA WebP, but lost the source
+portrait's spectacles. Inspect sprites before importing them and use an
+exact-file redo when a face, accessory, or other identity detail is wrong.
 
 Run `python generate-expressions.py --help` for the complete option list.
