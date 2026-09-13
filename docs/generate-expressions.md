@@ -142,15 +142,16 @@ free `<label>-N.webp`. Existing dot variants such as
   rendered and held before anything old is deleted. If it fails, old images
   and metadata remain byte-for-byte intact; later labels still run.
 - `--file NAME.webp` overwrites exactly one existing classified basename and
-  rejects multi-sprite options. A custom sprite with no current table reuses
-  its saved full prompt from `expressions.json`. If that prompt begins with a
-  recognized legacy bust or prior full-body generated preamble, redo replaces
-  obsolete framing and pose wording while preserving its appearance anchors
-  and custom expression. It also replaces the old source-style block with the
-  newly selected source's style without accumulating duplicate guidance on
-  repeated Redo. Unrecognized authored saved prompts remain verbatim. A
-  supplied `--describe` or a current table produces a fresh instruction
-  instead.
+  rejects multi-sprite options. A supplied `--describe` takes priority and
+  produces a fresh instruction. Otherwise, every exact-file Redo reuses its
+  saved full prompt from `expressions.json`, even when the label has a current
+  table. If that prompt begins with a recognized legacy bust or prior full-body
+  generated preamble, redo replaces obsolete framing and pose wording while
+  preserving its appearance anchors and custom expression. It also replaces
+  the old source-style block with the newly selected source's style without
+  accumulating duplicate guidance on repeated Redo. Unrecognized authored
+  saved prompts remain verbatim. Custom text or a current table supplies a
+  fresh instruction only when no saved prompt exists.
 
 Existing sprite images and metadata are not migrated or regenerated
 automatically. Use exact-file Redo or label Replace when you want an existing
