@@ -1,6 +1,8 @@
 # Texturing the reconstruction: the reference image's own colours on the mesh
 
-> **Status:** designed 2026-09-05, not yet implemented. §2 is evidence gathered
+> **Status:** designed 2026-09-05; since implemented as `generate-3d.py`'s
+> `texture` stage (`blender/texture_npc.py`), so read this as the design
+> record, not a work order. §2 is evidence gathered
 > on this machine on 2026-09-05 against the live ComfyUI on `127.0.0.1:8000`
 > and against a real catalogue reconstruction (Jules Sokolova); it is separated
 > from intent on purpose. §4.2 is the one assumption the evidence does *not*

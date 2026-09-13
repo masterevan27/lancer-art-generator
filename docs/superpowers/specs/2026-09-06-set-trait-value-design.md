@@ -1,7 +1,8 @@
 # Setting a trait to a chosen value on an already-rolled NPC
 
 Date: 2026-09-06
-Status: approved, not yet implemented
+Status: approved; implemented 2026-09-06 (`80e3d83`, merged in `235b3a2`) —
+read this as the design record, not a work order
 Companion spec: `lancer-npc-import-gui` →
 `docs/superpowers/specs/2026-09-06-set-trait-value-picker-design.md`
 

@@ -1,6 +1,6 @@
 # generate-npc.py — random NPCs, portrait + token
 
-A companion script, not a mode of [`generate-art.py`](README.md). That script
+A companion script, not a mode of [`generate-art.py`](generate-art.md). That script
 renders an *authored* corpus: every prompt it runs was written by hand into a
 markdown file, and its whole selection model — `--filter`, `--resume`, the
 manifest, the output tree — is keyed to that file's headings. A random NPC has
@@ -24,23 +24,25 @@ python generate-npc.py
 Rolls one human NPC — pilots, mechanics, dock hands, corpo liaisons — out of
 `prompts/npc-generator-tables.md`, composes a matched portrait and token
 prompt in the campaign's house style, and writes a self-contained folder under
-the Foundry Lancer token root:
+a fresh numbered run folder, nested under a category folder for the rolled
+Role:
 
 ```
-<root>/NPCs/Nadia Okonkwo/Nadia Okonkwo Portrait.png   1024×1024, opaque
-<root>/NPCs/Nadia Okonkwo/Nadia Okonkwo Token.png      1024×1280, transparent
-<root>/NPCs/Nadia Okonkwo/Nadia Okonkwo.md             the rolled dossier
+<root>/run1/Soldiers/Nadia Okonkwo/Nadia Okonkwo Portrait.png   1024×1024, opaque
+<root>/run1/Soldiers/Nadia Okonkwo/Nadia Okonkwo Token.png      1024×1280, transparent
+<root>/run1/Soldiers/Nadia Okonkwo/Nadia Okonkwo.md             the rolled dossier
 ```
 
 Both images come from the same roll, so they depict the same person. The portrait
 keeps its blurred backdrop and skips background removal; only the token goes
 through RMBG. That is why the two can't share a single `--post` chain.
 
-`<root>` defaults to the live Foundry data tree —
-`…\FoundryVTT-Node-13.351\data\Data\Images\LancerFoundryTokens` — which is the
-doubled `data\Data` path Foundry actually reads at runtime, not the AppData copy.
-If that path doesn't exist the script falls back to the hub's own
-`Assets/LancerFoundryTokens/`. `--out` overrides both.
+`<root>` defaults to `LancerNPCs/` under ComfyUI's output folder
+(`COMFYUI_OUTPUT_DIR`, else `output/` beside the script), *not* the Foundry
+token tree, so a batch can be looked over before any of it is kept. Each
+invocation takes the next unused `runN` folder, so successive batches never
+collide; moving a keeper into Foundry is a manual step. `--out` replaces the
+whole `<root>/runN` prefix and is used as-is, with no `runN` folder inserted.
 
 The dossier records the callsign, every rolled trait, the seed, and both prompts
 verbatim, so an NPC you like can be re-rolled or hand-edited later.
@@ -1169,12 +1171,12 @@ weights.
 | `--tables PATH` | A different tables file. |
 | `--no-portrait` / `--no-token` | Generate only one of the two. |
 | `--keep-raw-token` | Also save the token's opaque pre-RMBG render. |
-| `--out PATH` | Token root to write NPC folders into. |
+| `--out PATH` | Root to write NPC folders into, used as-is. Default: the next unused `runN` folder under `LancerNPCs/` in ComfyUI's output folder. |
 | `--overwrite` | Reuse an existing folder of that name instead of suffixing it `(2)`. |
-| `--workflow` / `--rmbg` | Swap the generation or background-removal workflow. Same defaults as [`generate-art.py`](README.md#options). `--workflow` covers every NPC a gender-specific workflow doesn't claim. |
+| `--workflow` / `--rmbg` | Swap the generation or background-removal workflow. Same defaults as [`generate-art.py`](generate-art.md#options). `--workflow` covers every NPC a gender-specific workflow doesn't claim. |
 | `--workflow-woman PATH` | Generation workflow for NPCs who read as women. Defaults to `Lancer_Scene_Workflow_for_girls_v1.json`; pass the same path as `--workflow` to put the whole run through one workflow. |
-| `--steps` / `--cfg` / `--sampler` / `--scheduler` / `--set` | Same generation overrides as [`generate-art.py`](README.md#options). |
-| `--server` / `--timeout` | Same as [`generate-art.py`](README.md#options). |
+| `--steps` / `--cfg` / `--sampler` / `--scheduler` / `--set` | Same generation overrides as [`generate-art.py`](generate-art.md#options). |
+| `--server` / `--timeout` | Same as [`generate-art.py`](generate-art.md#options). |
 | `--dry-run` | Roll, print the NPCs and their prompts, queue nothing. |
 | `--trait-odds [N]` | Print each bullet's chance of being rolled as JSON and exit. See [What a bullet's real odds are](#what-a-bullets-real-odds-are). |
 
@@ -1285,7 +1287,8 @@ python generate-npc.py --dry-run --count 8 --seed 2300 --set-trait Faction="Unio
 **The same crew twice, to compare the two workflows.** A pinned seed and pinned
 pronouns make the roll identical, so the only variable left is which workflow
 rendered it. Point `--workflow-woman` at the men's file for the second run and
-give it an `--out` of its own, or the second run suffixes every folder `(2)`:
+give it an `--out` of its own so the pair is easy to find (without one it just
+lands in the next `runN` folder):
 
 ```
 python generate-npc.py --count 4 --seed 2200 --pronouns she
