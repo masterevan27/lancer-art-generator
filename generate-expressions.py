@@ -122,6 +122,23 @@ def load_expression_tables(path):
         except ValueError:
             continue
         tables.setdefault(label, []).extend(bullets)
+    for heading, bullets in tables.items():
+        for bullet in dict.fromkeys(bullets):
+            target = npc_gen.reference_target(bullet)
+            if target is None:
+                continue
+            target_label = sanitize_label(target)
+            members = tables.get(target_label)
+            if not members:
+                raise ValueError(
+                    "%s: group reference %r names missing or empty '## %s'"
+                    % (path, bullet, target))
+            nested = next((member for member in members
+                           if npc_gen.reference_target(member) is not None), None)
+            if nested is not None:
+                raise ValueError(
+                    "%s: group '## %s' contains group reference %r; groups "
+                    "are one level only" % (path, target, nested))
     return tables
 
 
@@ -200,7 +217,17 @@ def _expression_prompt(label, seed, tables, custom, describe, traits,
         return assemble_prompt(custom[label], traits)
     pool = tables.get(label) or []
     if pool:
-        return assemble_prompt(random.Random(seed).choice(pool), traits)
+        rng = random.Random(seed)
+        expression = rng.choice(pool)
+        target = npc_gen.reference_target(expression)
+        if target is not None:
+            members = tables.get(sanitize_label(target)) or []
+            if not members:
+                raise ValueError(
+                    "expression '%s' references missing group '%s'"
+                    % (label, target))
+            expression = rng.choice(members)
+        return assemble_prompt(expression, traits)
     if saved and saved.get("prompt"):
         return saved["prompt"]
     raise ValueError(

@@ -13,6 +13,8 @@ from test.workflow_schema import expected_inputs, object_info, server_is_up
 REPO = Path(__file__).resolve().parent.parent
 WORKFLOW = REPO / "workflows" / "api" / "Util_Expression_QwenEdit_RMBG_v1.json"
 TABLE_FIXTURE = Path(__file__).resolve().parent / "fixtures" / "expression-tables.md"
+GROUP_TABLE_FIXTURE = (Path(__file__).resolve().parent / "fixtures" /
+                       "expression-groups.md")
 LIVE_TABLES = REPO / "prompts" / "expression-tables.md"
 expressions = load_expressions()
 
@@ -158,6 +160,36 @@ class TestTablesAndPrompts(unittest.TestCase):
             "joyful eyes crinkled with delight"])
         self.assertEqual(tables["anger"], ["angry clenched jaw"])
         self.assertNotIn("disabled", " ".join(tables["joy"]))
+
+    def test_group_references_roll_weighted_members_without_raw_markers(self):
+        tables = expressions.load_expression_tables(GROUP_TABLE_FIXTURE)
+        self.assertEqual(tables["joyful_smiles"], [
+            "joyful smile with raised cheeks",
+            "joyful smile with raised cheeks",
+            "joyful smile with raised cheeks",
+            "joyful bright eyes",
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            args = SimpleNamespace(
+                count=1, seed=0, replace=False, file=None,
+                keep_background=False, describe=None)
+            first, _ = expressions.make_plans(
+                Path(tmp), args, tables, {}, (("joy",), False))
+            args.seed = 1
+            second, _ = expressions.make_plans(
+                Path(tmp), args, tables, {}, (("joy",), False))
+        self.assertIn("Expression: joyful bright eyes", first[0].prompt)
+        self.assertIn(
+            "Expression: joyful smile with raised cheeks", second[0].prompt)
+        self.assertNotIn("=>", first[0].prompt + second[0].prompt)
+        self.assertNotIn("disabled", " ".join(tables["joyful_smiles"]))
+
+    def test_missing_group_target_is_rejected_while_loading_tables(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "broken.md"
+            path.write_text("## joy\n\n- => Missing smiles\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Missing smiles"):
+                expressions.load_expression_tables(path)
 
     def test_prompt_is_anchored_to_appearance_but_not_demeanor_or_gear(self):
         prompt = expressions.assemble_prompt("joyful open smile", {
