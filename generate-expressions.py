@@ -46,6 +46,13 @@ IDENTITY_PREAMBLE = (
     "reference. Do not preserve the source camera framing or pose. Change the "
     "facial expression and small body language to convey the requested emotion."
 )
+STYLE_MATCH_INSTRUCTION = (
+    "Faithfully reproduce the reference's rendering medium, linework, "
+    "brushwork, texture and grain, shading, colour palette, contrast, detail "
+    "level and stylized proportions. Render newly invented full-body areas in "
+    "that same reference style."
+)
+ORIGINAL_STYLE_LABEL = "Original portrait style: "
 SPRITE_RE = re.compile(
     r"^([a-z0-9_]+)(?:-(\d+)|\.([A-Za-z0-9_.-]+))?\.webp$")
 
@@ -76,6 +83,7 @@ class Source:
     name: str
     traits: dict
     mode: str
+    style_prompt: str = ""
 
 
 @dataclass(frozen=True)
@@ -205,9 +213,40 @@ def classified_sprites(output_dir):
     return groups
 
 
-def assemble_prompt(expression, traits=None):
+def extract_portrait_style(portrait_prompt):
+    """Return only style clauses in a recognized stored portrait template."""
+    if not isinstance(portrait_prompt, str) or not portrait_prompt.strip():
+        return ""
+    opening = re.match(
+        r"\A(?:A|An) [^.!?]*\bcharacter portrait of [^.!?]*?, "
+        r"(rendered in [^.!?]+[.!?])",
+        portrait_prompt)
+    if opening is None:
+        return ""
+    clauses = [opening.group(1)]
+    closing = re.search(
+        r"\batmospheric sci-fi character portrait, "
+        r"(painterly brushwork [^.!?]+[.!?])\s*\Z",
+        portrait_prompt)
+    if closing is not None:
+        clauses.append(closing.group(1))
+    return " ".join(clauses)
+
+
+def _append_style_guidance(prompt, style_prompt=""):
+    if STYLE_MATCH_INSTRUCTION not in prompt:
+        prompt += " " + STYLE_MATCH_INSTRUCTION
+    if (isinstance(style_prompt, str) and style_prompt.strip()
+            and ORIGINAL_STYLE_LABEL not in prompt):
+        prompt += " " + ORIGINAL_STYLE_LABEL + style_prompt.strip()
+    return prompt
+
+
+def assemble_prompt(expression, traits=None, style_prompt=""):
     """Build one edit instruction, using only identity-safe appearance traits."""
-    parts = [IDENTITY_PREAMBLE]
+    parts = [IDENTITY_PREAMBLE, STYLE_MATCH_INSTRUCTION]
+    if isinstance(style_prompt, str) and style_prompt.strip():
+        parts.append(ORIGINAL_STYLE_LABEL + style_prompt.strip())
     anchors = ["%s: %s" % (name, traits[name]) for name in ANCHOR_TRAITS
                if traits and traits.get(name)]
     if anchors:
@@ -223,11 +262,11 @@ def _seed_at(base_seed, index):
 
 
 def _expression_prompt(label, seed, tables, custom, describe, traits,
-                       saved=None):
+                       saved=None, style_prompt=""):
     if describe:
-        return assemble_prompt(describe, traits)
+        return assemble_prompt(describe, traits, style_prompt)
     if custom.get(label):
-        return assemble_prompt(custom[label], traits)
+        return assemble_prompt(custom[label], traits, style_prompt)
     pool = tables.get(label) or []
     if pool:
         rng = random.Random(seed)
@@ -240,12 +279,14 @@ def _expression_prompt(label, seed, tables, custom, describe, traits,
                     "expression '%s' references missing group '%s'"
                     % (label, target))
             expression = rng.choice(members)
-        return assemble_prompt(expression, traits)
+        return assemble_prompt(expression, traits, style_prompt)
     if saved and saved.get("prompt"):
         prompt = saved["prompt"]
         if prompt.startswith(LEGACY_IDENTITY_PREAMBLE):
-            return IDENTITY_PREAMBLE + prompt[len(LEGACY_IDENTITY_PREAMBLE):]
-        return prompt
+            prompt = IDENTITY_PREAMBLE + prompt[len(LEGACY_IDENTITY_PREAMBLE):]
+        elif not prompt.startswith(IDENTITY_PREAMBLE):
+            return prompt
+        return _append_style_guidance(prompt, style_prompt)
     raise ValueError(
         "no prompt for expression '%s' (add its table, --custom text, or "
         "--describe text)" % label)
@@ -268,7 +309,7 @@ def _numeric_variants(label, paths):
 
 
 def make_plans(output_dir, args, tables, traits, selection, sidecar=None,
-               custom=None):
+               custom=None, style_prompt=""):
     """Plan filenames, prompts and seeds without changing the filesystem."""
     output_dir = Path(output_dir)
     sidecar = sidecar or {}
@@ -283,7 +324,7 @@ def make_plans(output_dir, args, tables, traits, selection, sidecar=None,
         seed = _seed_at(args.seed, 0)
         prompt = _expression_prompt(
             label, seed, tables, custom, args.describe, traits,
-            sidecar.get(args.file))
+            sidecar.get(args.file), style_prompt)
         return ([SpritePlan(destination, label, prompt, seed,
                             args.keep_background)], [])
 
@@ -306,7 +347,8 @@ def make_plans(output_dir, args, tables, traits, selection, sidecar=None,
         for count_index in range(args.count):
             seed = _seed_at(args.seed, sequence)
             prompt = _expression_prompt(
-                label, seed, tables, custom, args.describe, traits)
+                label, seed, tables, custom, args.describe, traits,
+                style_prompt=style_prompt)
             if args.replace:
                 variant = count_index
             else:
@@ -662,7 +704,8 @@ def resolve_sources(args):
         if not portrait.is_file():
             raise ValueError("portrait not found: %s" % portrait)
         jobs.append(Source(portrait, folder / "expressions", name,
-                           entry["traits"], "npc"))
+                           entry["traits"], "npc",
+                           extract_portrait_style(entry.get("portraitPrompt"))))
     return jobs
 
 
@@ -680,7 +723,7 @@ def main(argv=None):
             sidecar = load_sidecar(sidecar_path)
             plans, skipped = make_plans(
                 source.output_dir, args, tables, source.traits, selection,
-                sidecar, custom)
+                sidecar, custom, source.style_prompt)
             prepared.append((source, sidecar_path, plans, skipped))
     except ValueError as exc:
         print("error: %s" % exc, file=sys.stderr)

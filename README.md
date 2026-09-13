@@ -111,10 +111,15 @@ python generate-3d.py --filter Sokolova
 
 ### `generate-expressions.py`
 
-Makes transparent static WebP expression sprites from a generated NPC's
-portrait or any supplied character image. It supports all 28 SillyTavern
-default labels, weighted prompt tables, custom expressions, safe add/replace
-variants and exact-file redo.
+Makes transparent 768×1344 full-body WebP expression sprites from a generated
+NPC's portrait or any supplied character image. It supports all 28
+SillyTavern default labels, weighted prompt tables, custom expressions, safe
+add/replace variants and exact-file redo. Each edit asks Qwen to match style
+from the reference image; recognized stored NPC portrait prompts also
+contribute their original style wording without carrying over the old
+expression, pose, backdrop or square framing. Style matching is not
+guaranteed, and existing sprites use the new framing and guidance only after
+Redo or Replace.
 
 ```powershell
 python generate-expressions.py --id npc-jules-sokolova-40213 --dry-run

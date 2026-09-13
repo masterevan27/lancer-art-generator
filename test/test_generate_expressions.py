@@ -136,6 +136,63 @@ class TestArgumentsAndSources(unittest.TestCase):
         self.assertEqual(jobs[0].image, alpha / "Alpha Portrait.png")
         self.assertEqual(jobs[0].output_dir, alpha / "expressions")
 
+    def test_npc_source_extracts_only_saved_portrait_style_clauses(self):
+        original = (
+            "A half-body character portrait of a pilot, rendered in a loose "
+            "charcoal illustration style with rough crosshatching, soft side "
+            "lighting. Her face carries a permanent scowl. She sits in a "
+            "cockpit. Shallow depth of field, square framing, high detail, "
+            "atmospheric sci-fi character portrait, painterly brushwork with "
+            "violet grain in every shadow.")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            folder = root / "Pilot"
+            folder.mkdir()
+            (folder / "Pilot Portrait.png").write_bytes(b"portrait")
+            manifest = root / "manifest.json"
+            manifest.write_text(json.dumps({str(folder): {
+                "id": "pilot-1", "name": "Pilot", "traits": {
+                    "Hair": "silver crop", "Demeanor": "permanent scowl",
+                    "Stance": "arms crossed", "Backdrop": "cockpit",
+                },
+                "portraitPrompt": original,
+                "tokenPrompt": "rendered in an unrelated glossy token style.",
+            }}), encoding="utf-8")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                code = expressions.main([
+                    "--manifest", str(manifest), "--id", "pilot-1",
+                    "--tables", str(TABLE_FIXTURE), "-e", "joy",
+                    "--seed", "1", "--dry-run",
+                ])
+
+        rendered = output.getvalue()
+        self.assertEqual(code, 0)
+        self.assertIn(
+            "rendered in a loose charcoal illustration style with rough "
+            "crosshatching, soft side lighting.", rendered)
+        self.assertIn(
+            "painterly brushwork with violet grain in every shadow.", rendered)
+        self.assertIn("silver crop", rendered)
+        self.assertIn("Expression: joyful", rendered)
+        for excluded in ("permanent scowl", "She sits in a cockpit",
+                         "square framing", "Shallow depth of field",
+                         "arms crossed", "unrelated glossy token style"):
+            with self.subTest(excluded=excluded):
+                self.assertNotIn(excluded, rendered)
+
+    def test_missing_non_string_and_unrecognized_portrait_styles_fall_back(self):
+        prompts = (
+            None,
+            ["not", "a", "string"],
+            "A portrait whose backdrop mentions painterly brushwork in a mural.",
+            "Rendered in anime style, but not from the generator template.",
+        )
+        for portrait_prompt in prompts:
+            with self.subTest(portrait_prompt=portrait_prompt):
+                self.assertEqual(
+                    expressions.extract_portrait_style(portrait_prompt), "")
+
     def test_file_rejects_multi_sprite_options_and_missing_classified_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             image = Path(tmp) / "p.png"
@@ -238,6 +295,14 @@ class TestTablesAndPrompts(unittest.TestCase):
         prompt = expressions.assemble_prompt("angry narrowed eyes")
         self.assertEqual(prompt.count("angry narrowed eyes"), 1)
         self.assertNotIn("Appearance anchors", prompt)
+        for text in ("rendering medium", "linework", "brushwork",
+                     "texture and grain", "shading", "colour palette",
+                     "contrast", "detail level", "stylized proportions",
+                     "newly invented full-body areas"):
+            with self.subTest(text=text):
+                self.assertIn(text, prompt)
+        self.assertNotIn("painterly", prompt.lower())
+        self.assertNotIn("halftone", prompt.lower())
 
     def test_live_tables_cover_every_default_with_distinct_weighted_options(self):
         tables = expressions.load_expression_tables(LIVE_TABLES)
@@ -328,18 +393,59 @@ class TestPlanning(unittest.TestCase):
                     out, self.args(file=name), {}, {}, None, sidecar)
                 prompts[name] = plans[0].prompt
 
-        self.assertEqual(prompts["legacy.webp"],
-                         expressions.IDENTITY_PREAMBLE + suffix)
+        upgraded = (expressions.IDENTITY_PREAMBLE + suffix + " " +
+                    expressions.STYLE_MATCH_INSTRUCTION)
+        self.assertEqual(prompts["legacy.webp"], upgraded)
         self.assertNotIn("camera framing and pose", prompts["legacy.webp"])
         self.assertNotIn("Front-facing bust", prompts["legacy.webp"])
         self.assertIn("Hair: cropped curls", prompts["legacy.webp"])
         self.assertIn("cold focused determination", prompts["legacy.webp"])
-        self.assertEqual(prompts["current.webp"],
-                         expressions.IDENTITY_PREAMBLE + suffix)
+        self.assertEqual(prompts["current.webp"], upgraded)
         self.assertEqual(prompts["current.webp"].count(
             expressions.IDENTITY_PREAMBLE), 1)
         self.assertEqual(prompts["authored.webp"],
                          "Keep this custom camera framing exactly.")
+
+    def test_style_context_reaches_custom_describe_and_generated_file_redo(self):
+        style = "rendered in ink with rough hatching. painterly brushwork."
+        traits = {"Hair": "silver crop"}
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            custom, _ = expressions.make_plans(
+                out, self.args(), {}, traits, (("battle",), False),
+                custom={"battle": "cold determination"}, style_prompt=style)
+            described, _ = expressions.make_plans(
+                out, self.args(describe="quiet wonder"), {}, traits,
+                (("joy",), False), style_prompt=style)
+            (out / "battle.webp").write_bytes(b"old")
+            saved_prompt = (
+                expressions.IDENTITY_PREAMBLE +
+                " Appearance anchors: Hair: silver crop. "
+                "Expression: cold determination")
+            redone, _ = expressions.make_plans(
+                out, self.args(file="battle.webp"), {}, traits, None,
+                {"battle.webp": {"prompt": saved_prompt}},
+                style_prompt=style)
+
+        for prompt, expression in (
+                (custom[0].prompt, "cold determination"),
+                (described[0].prompt, "quiet wonder"),
+                (redone[0].prompt, "cold determination")):
+            with self.subTest(expression=expression):
+                self.assertIn("Original portrait style: " + style, prompt)
+                self.assertIn("silver crop", prompt)
+                self.assertIn(expression, prompt)
+        self.assertEqual(redone[0].prompt.count("Original portrait style:"), 1)
+
+        already_styled = redone[0].prompt
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            (out / "battle.webp").write_bytes(b"old")
+            plans, _ = expressions.make_plans(
+                out, self.args(file="battle.webp"), {}, traits, None,
+                {"battle.webp": {"prompt": already_styled}},
+                style_prompt=style)
+        self.assertEqual(plans[0].prompt.count("Original portrait style:"), 1)
 
     def test_selected_pool_is_validated_before_any_plan_is_returned(self):
         with tempfile.TemporaryDirectory() as tmp:

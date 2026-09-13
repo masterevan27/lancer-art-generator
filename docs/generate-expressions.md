@@ -1,8 +1,9 @@
 # Expression sprites
 
-`generate-expressions.py` turns one original portrait into static WebP sprites
-for SillyTavern's Character Expressions extension. It can read a generated NPC
-from `.generated-npcs.json`, or work directly from any PNG, JPEG or WebP.
+`generate-expressions.py` turns one original portrait into tall, full-body
+static WebP sprites for SillyTavern's Character Expressions extension. It can
+read a generated NPC from `.generated-npcs.json`, or work directly from any
+PNG, JPEG or WebP.
 
 Every sprite is a separate Qwen image edit of the original portrait. The
 script never chains one generated expression into another, which prevents a
@@ -92,11 +93,24 @@ When the reference is cropped, Qwen must invent unseen clothing and legs that
 coherently match the visible design. The requested emotion may change the
 facial expression and small body language.
 
+The common edit instruction asks Qwen to reproduce the reference's rendering
+medium, linework, brushwork, texture or grain, shading, colour palette,
+contrast, detail level and stylized proportions. Newly invented full-body
+areas must use that same style. Arbitrary image mode derives these qualities
+from the supplied pixels; it does not add painterly, anime, photorealistic,
+halftone or other house-style keywords.
+
 NPC mode adds the recorded Hair, Hair colour, Feature, Outfit and Headgear as
 identity anchors. Demeanor, weapons, gear, backdrop and stance are deliberately
 excluded because they can conflict with the requested emotion or alter the
-composition. Image mode has no manifest traits and uses the fixed identity
-instruction plus the selected expression.
+composition. When a stored `portraitPrompt` has the recognized NPC generator
+shape, the expression prompt also preserves its exact opening `rendered in …`
+style clause and final painterly-brushwork clause, labelled as the original
+portrait style. It never reads `tokenPrompt` or rebuilds style from the current
+generator template. Older manifests with no recognized string prompt fall
+back to matching the portrait pixels alone. Image mode has no manifest traits
+or textual NPC style and uses the fixed identity instruction plus the selected
+expression.
 
 ## Variants, replace and redo safety
 
@@ -114,8 +128,11 @@ free `<label>-N.webp`. Existing dot variants such as
   its saved full prompt from `expressions.json`. If that prompt begins with the
   exact pre-full-body generated preamble, redo replaces only that preamble with
   the current framing instruction and preserves its appearance anchors and
-  custom expression. Unrecognized saved prompts remain verbatim. A supplied
-  `--describe` or a current table produces a fresh instruction instead.
+  custom expression. Recognized generated prompts also gain the current
+  reference-style guidance and the NPC's extracted original style without
+  duplicating an existing style block. Unrecognized saved prompts remain
+  verbatim. A supplied `--describe` or a current table produces a fresh
+  instruction instead.
 
 Existing sprite images and metadata are not migrated or regenerated
 automatically. Use exact-file Redo or label Replace when you want an existing
@@ -146,6 +163,9 @@ entire head and both feet for cropping, and verify the face, hair, outfit,
 colours and accessories against the source before importing. Cropped source
 portraits necessarily make the model invent unseen clothing and legs; use an
 exact-file redo or `--describe` with a fresh instruction when those details or
-the character identity are wrong.
+the character identity are wrong. Text and image conditioning improve style
+continuity but cannot guarantee a perfect match. Existing sprites do not opt
+in automatically; Redo or Replace them to use the current framing and style
+guidance.
 
 Run `python generate-expressions.py --help` for the complete option list.
