@@ -1,11 +1,11 @@
 # Expression sprites
 
-`generate-expressions.py` turns one original portrait into tall, full-body
-static WebP sprites for SillyTavern's Character Expressions extension. It can
-read a generated NPC from `.generated-npcs.json`, or work directly from any
-PNG, JPEG or WebP.
+`generate-expressions.py` turns one original NPC token or portrait into tall,
+full-body static WebP sprites for SillyTavern's Character Expressions
+extension. It can read a generated NPC from `.generated-npcs.json`, or work
+directly from any PNG, JPEG or WebP.
 
-Every sprite is a separate Qwen image edit of the original portrait. The
+Every sprite is a separate Qwen image edit of the selected original image. The
 script never chains one generated expression into another, which prevents a
 poor result from changing the identity of every later sprite.
 
@@ -32,6 +32,9 @@ python generate-expressions.py --id npc-jules-sokolova-40213 --dry-run
 # Generate all missing defaults for every NPC matching a name/category/path.
 python generate-expressions.py --filter Sokolova
 
+# Explicitly use the portrait instead of the default token-first selection.
+python generate-expressions.py --id npc-jules-sokolova-40213 --source portrait
+
 # Add two new joy variants to an NPC.
 python generate-expressions.py --id npc-jules-sokolova-40213 -e joy --count 2
 
@@ -53,6 +56,16 @@ NPC selection accepts repeatable `--id`, plus `--manifest`, `--filter`,
 uses `--image`; `--out` defaults to `<image stem>-expressions/` beside the
 source, and `--name` supplies its display name. Exactly one source mode is
 required.
+
+NPC mode uses the manifest's recorded `token` or `portrait` filename. With no
+`--source`, it chooses an existing token first and falls back to the portrait
+only when that token is missing. `--source token` and `--source portrait` are
+strict: an explicitly selected missing image is an error. Historical manifest
+entries without a filename field use `<safe name> Token.png` or `<safe name>
+Portrait.png` for compatibility. Manifest image paths must remain inside the
+real NPC folder, including through symlinks or junctions. `--source` is not
+accepted with `--image`; an arbitrary image remains exactly the supplied input
+and is not constrained to an NPC folder.
 
 ## Labels and prompt tables
 
@@ -85,13 +98,16 @@ it does not silently expand to all default labels.
 
 ## Prompts and identity
 
-Every instruction asks for one front-facing, standing, full-body character on
-a 768×1344 canvas, with the entire head, both hands and both feet visible with
-margin. It preserves the character's face, hair, outfit, colours, accessories
-and art style, but does not preserve the source crop, camera framing or pose.
-When the reference is cropped, Qwen must invent unseen clothing and legs that
-coherently match the visible design. The requested emotion may change the
-facial expression and small body language.
+Every instruction asks for one full-body character on a 768×1344 canvas, with
+the entire head, both hands and both feet visible with margin. The expression
+table supplies an emotion-specific stance, shoulders, arms and hand gesture;
+custom expressions receive general emotion-to-body-language guidance without
+being forced into a default label's pose. The face remains readable. The edit
+preserves the character's face, hair, outfit, colours, accessories and art
+style, but does not preserve the source crop, camera framing or pose. When the
+reference is cropped, Qwen must invent unseen clothing and legs that coherently
+match the visible design. Explicit pose instructions in `--describe` or custom
+prompt text remain part of the expression instruction.
 
 The common edit instruction asks Qwen to reproduce the reference's rendering
 medium, linework, brushwork, texture or grain, shading, colour palette,
@@ -103,14 +119,16 @@ halftone or other house-style keywords.
 NPC mode adds the recorded Hair, Hair colour, Feature, Outfit and Headgear as
 identity anchors. Demeanor, weapons, gear, backdrop and stance are deliberately
 excluded because they can conflict with the requested emotion or alter the
-composition. When a stored `portraitPrompt` has the recognized NPC generator
-shape, the expression prompt also preserves its exact opening `rendered in …`
-style clause and final painterly-brushwork clause, labelled as the original
-portrait style. It never reads `tokenPrompt` or rebuilds style from the current
-generator template. Older manifests with no recognized string prompt fall
-back to matching the portrait pixels alone. Image mode has no manifest traits
-or textual NPC style and uses the fixed identity instruction plus the selected
-expression.
+composition. The generator reads only the selected source's saved prompt:
+`tokenPrompt` for a token and `portraitPrompt` for a portrait. When that prompt
+has a recognized NPC-generator shape, the expression prompt preserves its
+exact opening `rendered in …` style clause and final painterly-brushwork clause,
+while excluding the old demeanor, pose, backdrop and framing tags between
+them. It never substitutes the unselected source's prompt or rebuilds style
+from today's generator template. Older manifests with no recognized string
+prompt fall back to matching the selected source pixels alone. Image mode has
+no manifest traits or textual NPC style and uses the fixed identity instruction
+plus the selected expression.
 
 ## Variants, replace and redo safety
 
@@ -125,14 +143,14 @@ free `<label>-N.webp`. Existing dot variants such as
   and metadata remain byte-for-byte intact; later labels still run.
 - `--file NAME.webp` overwrites exactly one existing classified basename and
   rejects multi-sprite options. A custom sprite with no current table reuses
-  its saved full prompt from `expressions.json`. If that prompt begins with the
-  exact pre-full-body generated preamble, redo replaces only that preamble with
-  the current framing instruction and preserves its appearance anchors and
-  custom expression. Recognized generated prompts also gain the current
-  reference-style guidance and the NPC's extracted original style without
-  duplicating an existing style block. Unrecognized saved prompts remain
-  verbatim. A supplied `--describe` or a current table produces a fresh
-  instruction instead.
+  its saved full prompt from `expressions.json`. If that prompt begins with a
+  recognized legacy bust or prior full-body generated preamble, redo replaces
+  obsolete framing and pose wording while preserving its appearance anchors
+  and custom expression. It also replaces the old source-style block with the
+  newly selected source's style without accumulating duplicate guidance on
+  repeated Redo. Unrecognized authored saved prompts remain verbatim. A
+  supplied `--describe` or a current table produces a fresh instruction
+  instead.
 
 Existing sprite images and metadata are not migrated or regenerated
 automatically. Use exact-file Redo or label Replace when you want an existing
@@ -140,9 +158,11 @@ sprite rendered with the current full-body framing.
 
 Both sprite files and `expressions/expressions.json` are installed through
 sibling temporary files and atomic renames. The sidecar records label, full
-prompt, seed, background mode, source path and source modification time in Unix
-milliseconds, plus generation time. The GUI uses that source timestamp to mark
-sprites made from an older portrait.
+prompt, seed, background mode, actual source kind (`token`, `portrait`, or
+`image`), absolute source path and source modification time in Unix
+milliseconds, plus generation time. Legacy records without `source.kind`
+remain readable. The GUI uses the kind and source timestamp to mark sprites
+made from an older selected image.
 
 ## Rendering and quality
 

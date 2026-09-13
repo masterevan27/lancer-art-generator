@@ -112,17 +112,23 @@ python generate-3d.py --filter Sokolova
 ### `generate-expressions.py`
 
 Makes transparent 768×1344 full-body WebP expression sprites from a generated
-NPC's portrait or any supplied character image. It supports all 28
+NPC's token or portrait, or any supplied character image. NPC mode uses an
+existing token first and falls back to its portrait; `--source token` and
+`--source portrait` make that choice strict. It supports all 28
 SillyTavern default labels, weighted prompt tables, custom expressions, safe
 add/replace variants and exact-file redo. Each edit asks Qwen to match style
-from the reference image; recognized stored NPC portrait prompts also
-contribute their original style wording without carrying over the old
-expression, pose, backdrop or square framing. Style matching is not
-guaranteed, and existing sprites use the new framing and guidance only after
-Redo or Replace.
+from the chosen reference image; recognized stored NPC token or portrait
+prompts contribute only that source's original style wording without carrying
+over the old expression, pose, backdrop or framing. Default expressions add
+matching full-body stance and gesture cues while keeping the head, hands and
+feet within the canvas. Sidecar metadata records the actual source kind, path
+and timestamp. Style matching is not guaranteed, and existing sprites are
+never regenerated automatically: Redo or Replace opts them into current
+framing, pose and source-style guidance.
 
 ```powershell
 python generate-expressions.py --id npc-jules-sokolova-40213 --dry-run
+python generate-expressions.py --id npc-jules-sokolova-40213 --source portrait -e joy
 python generate-expressions.py --id npc-jules-sokolova-40213 -e joy,anger
 python generate-expressions.py --image portrait.png --custom "battle focus=cold determination"
 ```

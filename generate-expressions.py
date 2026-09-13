@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate transparent SillyTavern expression sprites from one portrait.
+"""Generate transparent SillyTavern expression sprites from one source image.
 
 The source can be an NPC recorded in .generated-npcs.json or any image on
 disk. Each sprite is an independent Qwen image edit of that original source;
@@ -38,7 +38,7 @@ LEGACY_IDENTITY_PREAMBLE = (
     "camera framing and pose. Change only the facial expression and small body "
     "language. Front-facing bust, no text."
 )
-IDENTITY_PREAMBLE = (
+PRIOR_FULL_BODY_IDENTITY_PREAMBLE = (
     "Keep the same character, face, hair, outfit, colours, accessories and art "
     "style. Create one front-facing standing full-body character. Show the "
     "entire head, hands and both feet with margin around them; no cropping or "
@@ -46,13 +46,23 @@ IDENTITY_PREAMBLE = (
     "reference. Do not preserve the source camera framing or pose. Change the "
     "facial expression and small body language to convey the requested emotion."
 )
+IDENTITY_PREAMBLE = (
+    "Keep the same character, face, hair, outfit, colours, accessories and art "
+    "style. Create one full-body character with a natural, emotion-specific "
+    "stance. Let the shoulders, arms and hand gestures clearly support the "
+    "requested emotion while keeping the face readable. Show the entire head, "
+    "both hands and both feet with margin around them; no cropping or text. "
+    "Coherently extend any unseen clothing and legs to match the reference. Do "
+    "not preserve the source camera framing or pose."
+)
 STYLE_MATCH_INSTRUCTION = (
     "Faithfully reproduce the reference's rendering medium, linework, "
     "brushwork, texture and grain, shading, colour palette, contrast, detail "
     "level and stylized proportions. Render newly invented full-body areas in "
     "that same reference style."
 )
-ORIGINAL_STYLE_LABEL = "Original portrait style: "
+ORIGINAL_STYLE_LABEL = "Original source style: "
+LEGACY_STYLE_LABEL = "Original portrait style: "
 SPRITE_RE = re.compile(
     r"^([a-z0-9_]+)(?:-(\d+)|\.([A-Za-z0-9_.-]+))?\.webp$")
 
@@ -84,6 +94,7 @@ class Source:
     traits: dict
     mode: str
     style_prompt: str = ""
+    source_kind: str = "image"
 
 
 @dataclass(frozen=True)
@@ -233,6 +244,32 @@ def extract_portrait_style(portrait_prompt):
     return " ".join(clauses)
 
 
+def extract_token_style(token_prompt):
+    """Return only style clauses in a recognized stored token template."""
+    if not isinstance(token_prompt, str) or not token_prompt.strip():
+        return ""
+    opening = re.match(
+        r"\AA full-body character illustration of [^.!?]*?, "
+        r"(rendered in [^.!?]+[.!?])",
+        token_prompt)
+    if opening is None:
+        return ""
+    clauses = [opening.group(1)]
+    closing = re.search(
+        r"\bisolated character illustration, clean silhouette, "
+        r"(painterly brushwork [^.!?]+[.!?])\s*\Z",
+        token_prompt)
+    if closing is not None:
+        clauses.append(closing.group(1))
+    return " ".join(clauses)
+
+
+def extract_source_style(source_kind, prompt):
+    if source_kind == "token":
+        return extract_token_style(prompt)
+    return extract_portrait_style(prompt)
+
+
 def _append_style_guidance(prompt, style_prompt=""):
     if STYLE_MATCH_INSTRUCTION not in prompt:
         prompt += " " + STYLE_MATCH_INSTRUCTION
@@ -240,6 +277,35 @@ def _append_style_guidance(prompt, style_prompt=""):
             and ORIGINAL_STYLE_LABEL not in prompt):
         prompt += " " + ORIGINAL_STYLE_LABEL + style_prompt.strip()
     return prompt
+
+
+def _strip_saved_style_block(prompt):
+    """Remove generated source-style text while retaining authored anchors."""
+    for label in (ORIGINAL_STYLE_LABEL, LEGACY_STYLE_LABEL):
+        while label in prompt:
+            start = prompt.index(label)
+            boundaries = [prompt.find(marker, start) for marker in (
+                " Appearance anchors:", " Expression:")]
+            boundaries = [position for position in boundaries if position >= 0]
+            end = min(boundaries) if boundaries else len(prompt)
+            prompt = (prompt[:start].rstrip() + prompt[end:]).strip()
+    return prompt
+
+
+def _adapt_generated_prompt(prompt, style_prompt=""):
+    preambles = (LEGACY_IDENTITY_PREAMBLE,
+                 PRIOR_FULL_BODY_IDENTITY_PREAMBLE,
+                 IDENTITY_PREAMBLE)
+    old = next((preamble for preamble in preambles
+                if prompt.startswith(preamble)), None)
+    if old is None:
+        return None
+    remainder = prompt[len(old):]
+    remainder = remainder.replace(" " + STYLE_MATCH_INSTRUCTION, "")
+    remainder = remainder.replace(STYLE_MATCH_INSTRUCTION, "")
+    remainder = _strip_saved_style_block(remainder).strip()
+    adapted = IDENTITY_PREAMBLE + ((" " + remainder) if remainder else "")
+    return _append_style_guidance(adapted, style_prompt)
 
 
 def assemble_prompt(expression, traits=None, style_prompt=""):
@@ -282,11 +348,8 @@ def _expression_prompt(label, seed, tables, custom, describe, traits,
         return assemble_prompt(expression, traits, style_prompt)
     if saved and saved.get("prompt"):
         prompt = saved["prompt"]
-        if prompt.startswith(LEGACY_IDENTITY_PREAMBLE):
-            prompt = IDENTITY_PREAMBLE + prompt[len(LEGACY_IDENTITY_PREAMBLE):]
-        elif not prompt.startswith(IDENTITY_PREAMBLE):
-            return prompt
-        return _append_style_guidance(prompt, style_prompt)
+        adapted = _adapt_generated_prompt(prompt, style_prompt)
+        return prompt if adapted is None else adapted
     raise ValueError(
         "no prompt for expression '%s' (add its table, --custom text, or "
         "--describe text)" % label)
@@ -399,7 +462,7 @@ def _stage_bytes(destination, data):
 
 
 def execute_plans(plans, render_one, sidecar_path, source, dry_run=False,
-                  output=None, error=None):
+                  output=None, error=None, source_kind="image"):
     """Render all plans, containing failures and atomically installing output."""
     output = output or sys.stdout
     error = error or sys.stderr
@@ -415,6 +478,7 @@ def execute_plans(plans, render_one, sidecar_path, source, dry_run=False,
     metadata = load_sidecar(sidecar_path)
     source = Path(source)
     source_info = {
+        "kind": source_kind,
         "path": str(source.resolve()),
         "mtime": source.stat().st_mtime_ns / 1_000_000,
     }
@@ -584,13 +648,14 @@ def _flag_present(argv, names):
 def parse_args(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     parser = argparse.ArgumentParser(
-        description="Generate SillyTavern expression sprites from one portrait.")
+        description="Generate SillyTavern expression sprites from one source image.")
     source = parser.add_argument_group("source (choose exactly one mode)")
     source.add_argument("--image", type=Path)
     source.add_argument("--out", type=Path)
     source.add_argument("--name")
     source.add_argument("--manifest", type=Path, default=npc_gen.DEFAULT_MANIFEST)
     source.add_argument("--id", action="append", default=[])
+    source.add_argument("--source", choices=("token", "portrait"), default=None)
     source.add_argument("--filter", metavar="REGEX")
     source.add_argument("--exclude", metavar="REGEX")
     source.add_argument("--limit", type=int, metavar="N")
@@ -625,6 +690,8 @@ def parse_args(argv=None):
                      "(--id/--manifest/--filter/--exclude/--limit)")
     if args.image and not args.image.is_file():
         parser.error("--image not found: %s" % args.image)
+    if args.image and args.source is not None:
+        parser.error("--source is only valid with an NPC selector")
     if args.out and not args.image:
         parser.error("--out is only valid with --image")
     if args.name and not args.image:
@@ -685,13 +752,42 @@ def _select_entries(manifest, args):
     return pairs[:args.limit] if args.limit else pairs
 
 
+def _manifest_source_image(folder, entry, name, kind):
+    """Resolve one manifest image, rejecting paths outside its NPC folder."""
+    folder = Path(folder)
+    if kind in entry:
+        filename = entry[kind]
+        if filename is None:
+            return None
+        if not isinstance(filename, str) or not filename.strip():
+            raise ValueError("unsafe %s filename in manifest: %r" %
+                             (kind, filename))
+    else:
+        filename = "%s %s.png" % (npc_gen._safe(name), kind.title())
+
+    supplied = Path(filename)
+    if ".." in supplied.parts:
+        raise ValueError("unsafe %s filename outside NPC folder: %s" %
+                         (kind, filename))
+    real_folder = folder.resolve()
+    candidate = supplied if supplied.is_absolute() else folder / supplied
+    resolved = candidate.resolve()
+    try:
+        resolved.relative_to(real_folder)
+    except ValueError as exc:
+        raise ValueError("unsafe %s filename outside NPC folder: %s" %
+                         (kind, filename)) from exc
+    return resolved if resolved.is_file() else None
+
+
 def resolve_sources(args):
-    """Resolve and validate all selected original portraits before queueing."""
+    """Resolve and validate all selected original source images before queueing."""
     if args.image:
         image = args.image.resolve()
         output = (args.out.resolve() if args.out else
                   image.parent / (image.stem + "-expressions"))
-        return [Source(image, output, args.name or image.stem, {}, "image")]
+        return [Source(image, output, args.name or image.stem, {}, "image",
+                       source_kind="image")]
 
     if not args.manifest.is_file():
         raise ValueError("manifest not found: %s" % args.manifest)
@@ -700,12 +796,24 @@ def resolve_sources(args):
         name = entry.get("name")
         if not name:
             raise ValueError("manifest entry at %s has no name" % folder)
-        portrait = folder / ("%s Portrait.png" % npc_gen._safe(name))
-        if not portrait.is_file():
-            raise ValueError("portrait not found: %s" % portrait)
-        jobs.append(Source(portrait, folder / "expressions", name,
-                           entry["traits"], "npc",
-                           extract_portrait_style(entry.get("portraitPrompt"))))
+        kinds = (args.source,) if args.source else ("token", "portrait")
+        selected = None
+        for kind in kinds:
+            image = _manifest_source_image(folder, entry, name, kind)
+            if image is not None:
+                selected = (kind, image)
+                break
+        if selected is None:
+            if args.source:
+                expected = entry.get(args.source) or "%s %s.png" % (
+                    npc_gen._safe(name), args.source.title())
+                raise ValueError("%s source not found: %s" %
+                                 (args.source, Path(folder) / expected))
+            raise ValueError("no token or portrait source found for %s" % name)
+        kind, image = selected
+        jobs.append(Source(
+            image, Path(folder) / "expressions", name, entry["traits"], "npc",
+            extract_source_style(kind, entry.get(kind + "Prompt")), kind))
     return jobs
 
 
@@ -742,7 +850,8 @@ def main(argv=None):
                 print("skip: %s (already has %d files)" % (label, count),
                       flush=True)
             skipped_count += len(skipped)
-            execute_plans(plans, None, sidecar_path, source.image, dry_run=True)
+            execute_plans(plans, None, sidecar_path, source.image, dry_run=True,
+                          source_kind=source.source_kind)
         print("done: 0 written, %d skipped, 0 failed" % skipped_count, flush=True)
         return 0
 
@@ -774,7 +883,7 @@ def main(argv=None):
             plans,
             lambda plan, ref=image_ref, source_slug=slug: render_sprite(
                 comfy, ref, args, plan, source_slug),
-            sidecar_path, source.image)
+            sidecar_path, source.image, source_kind=source.source_kind)
         total_written += result.written
         total_failed += result.failed
     print("done: %d written, %d skipped, %d failed" %

@@ -91,6 +91,177 @@ class TestArgumentsAndSources(unittest.TestCase):
         self.assertEqual(len(jobs), 1)
         self.assertEqual(jobs[0].name, "Hero")
         self.assertEqual(jobs[0].output_dir, image.parent / "Hero-expressions")
+        self.assertEqual(jobs[0].source_kind, "image")
+
+    def test_source_accepts_only_npc_token_or_portrait(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            image = Path(tmp) / "Hero.png"
+            image.write_bytes(b"png")
+            with contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaisesRegex(SystemExit, "2"):
+                    expressions.parse_args([
+                        "--image", str(image), "--source", "token"])
+                with self.assertRaisesRegex(SystemExit, "2"):
+                    expressions.parse_args([
+                        "--manifest", str(Path(tmp) / "manifest.json"),
+                        "--source", "bust"])
+
+    def test_default_source_is_token_first_then_portrait(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            folder = root / "Pilot"
+            folder.mkdir()
+            token = folder / "custom-token.png"
+            portrait = folder / "custom-portrait.png"
+            token.write_bytes(b"token")
+            portrait.write_bytes(b"portrait")
+            manifest = root / "manifest.json"
+            entry = {
+                "id": "pilot-1", "name": "Pilot", "traits": {},
+                "token": token.name, "portrait": portrait.name,
+            }
+            manifest.write_text(json.dumps({str(folder): entry}),
+                                encoding="utf-8")
+
+            default_args = expressions.parse_args([
+                "--manifest", str(manifest), "--id", "pilot-1"])
+            default_job = expressions.resolve_sources(default_args)[0]
+            portrait_args = expressions.parse_args([
+                "--manifest", str(manifest), "--id", "pilot-1",
+                "--source", "portrait"])
+            portrait_job = expressions.resolve_sources(portrait_args)[0]
+
+            token.unlink()
+            fallback_job = expressions.resolve_sources(default_args)[0]
+
+        self.assertEqual((default_job.image, default_job.source_kind),
+                         (token, "token"))
+        self.assertEqual((portrait_job.image, portrait_job.source_kind),
+                         (portrait, "portrait"))
+        self.assertEqual((fallback_job.image, fallback_job.source_kind),
+                         (portrait, "portrait"))
+
+    def test_absent_manifest_filenames_use_canonical_compatibility_names(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            folder = root / "Pilot"
+            folder.mkdir()
+            canonical = folder / "Pilot Token.png"
+            canonical.write_bytes(b"token")
+            manifest = root / "manifest.json"
+            manifest.write_text(json.dumps({str(folder): {
+                "id": "pilot-1", "name": "Pilot", "traits": {},
+            }}), encoding="utf-8")
+            args = expressions.parse_args([
+                "--manifest", str(manifest), "--id", "pilot-1"])
+            job = expressions.resolve_sources(args)[0]
+
+        self.assertEqual(job.image, canonical)
+        self.assertEqual(job.source_kind, "token")
+
+    def test_explicit_unavailable_source_fails_without_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            folder = root / "Pilot"
+            folder.mkdir()
+            (folder / "Pilot Portrait.png").write_bytes(b"portrait")
+            manifest = root / "manifest.json"
+            manifest.write_text(json.dumps({str(folder): {
+                "id": "pilot-1", "name": "Pilot", "traits": {},
+            }}), encoding="utf-8")
+            args = expressions.parse_args([
+                "--manifest", str(manifest), "--id", "pilot-1",
+                "--source", "token"])
+            with self.assertRaisesRegex(ValueError, "token.*not found"):
+                expressions.resolve_sources(args)
+
+            (folder / "Pilot Portrait.png").unlink()
+            (folder / "Pilot Token.png").write_bytes(b"token")
+            args = expressions.parse_args([
+                "--manifest", str(manifest), "--id", "pilot-1",
+                "--source", "portrait"])
+            with self.assertRaisesRegex(ValueError, "portrait.*not found"):
+                expressions.resolve_sources(args)
+
+    def test_null_manifest_source_is_unavailable_not_an_unsafe_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            folder = root / "Pilot"
+            folder.mkdir()
+            portrait = folder / "custom-portrait.png"
+            portrait.write_bytes(b"portrait")
+            manifest = root / "manifest.json"
+            entry = {
+                "id": "pilot-1", "name": "Pilot", "traits": {},
+                "token": None, "portrait": portrait.name,
+            }
+            manifest.write_text(json.dumps({str(folder): entry}),
+                                encoding="utf-8")
+
+            default_args = expressions.parse_args([
+                "--manifest", str(manifest), "--id", "pilot-1"])
+            fallback = expressions.resolve_sources(default_args)[0]
+            token_args = expressions.parse_args([
+                "--manifest", str(manifest), "--id", "pilot-1",
+                "--source", "token"])
+            with self.assertRaisesRegex(ValueError, "token.*not found"):
+                expressions.resolve_sources(token_args)
+
+            token = folder / "custom-token.png"
+            token.write_bytes(b"token")
+            entry.update({"token": token.name, "portrait": None})
+            manifest.write_text(json.dumps({str(folder): entry}),
+                                encoding="utf-8")
+            token_only = expressions.resolve_sources(default_args)[0]
+            portrait_args = expressions.parse_args([
+                "--manifest", str(manifest), "--id", "pilot-1",
+                "--source", "portrait"])
+            with self.assertRaisesRegex(ValueError, "portrait.*not found"):
+                expressions.resolve_sources(portrait_args)
+
+        self.assertEqual((fallback.image, fallback.source_kind),
+                         (portrait, "portrait"))
+        self.assertEqual((token_only.image, token_only.source_kind),
+                         (token, "token"))
+
+    def test_manifest_source_paths_must_stay_inside_the_real_npc_folder(self):
+        unsafe_values = ("../outside.png",)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            folder = root / "Pilot"
+            folder.mkdir()
+            outside = root / "outside.png"
+            outside.write_bytes(b"outside")
+            unsafe_values += (str(outside.resolve()),)
+            link = folder / "linked.png"
+            try:
+                link.symlink_to(outside)
+            except OSError:
+                link = None
+            manifest = root / "manifest.json"
+
+            for value in unsafe_values + ((link.name,) if link else ()):
+                with self.subTest(value=value):
+                    manifest.write_text(json.dumps({str(folder): {
+                        "id": "pilot-1", "name": "Pilot", "traits": {},
+                        "token": value,
+                        "portrait": "Pilot Portrait.png",
+                    }}), encoding="utf-8")
+                    (folder / "Pilot Portrait.png").write_bytes(b"portrait")
+                    args = expressions.parse_args([
+                        "--manifest", str(manifest), "--id", "pilot-1"])
+                    with self.assertRaisesRegex(ValueError, "unsafe token"):
+                        expressions.resolve_sources(args)
+
+    def test_image_mode_input_is_not_constrained_to_an_npc_folder(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            image = root / "elsewhere" / "Hero.png"
+            image.parent.mkdir()
+            image.write_bytes(b"png")
+            args = expressions.parse_args(["--image", str(image)])
+            self.assertEqual(expressions.resolve_sources(args)[0].image,
+                             image.resolve())
 
     def test_attached_short_expression_value_is_an_explicit_selection(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -193,6 +364,81 @@ class TestArgumentsAndSources(unittest.TestCase):
                 self.assertEqual(
                     expressions.extract_portrait_style(portrait_prompt), "")
 
+    def test_token_source_uses_only_the_saved_token_style_clauses(self):
+        original = (
+            "A full-body character illustration of a pilot, rendered in a "
+            "bold ink illustration style with dry brush texture. They are "
+            "facing the viewer with arms crossed. Behind them the background "
+            "is white. Full-length wide shot, centered composition, dramatic "
+            "lighting, high detail, isolated character illustration, clean "
+            "silhouette, painterly brushwork with copper grain in every "
+            "shadow.")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            folder = root / "Pilot"
+            folder.mkdir()
+            (folder / "Pilot Token.png").write_bytes(b"token")
+            (folder / "Pilot Portrait.png").write_bytes(b"portrait")
+            manifest = root / "manifest.json"
+            manifest.write_text(json.dumps({str(folder): {
+                "id": "pilot-1", "name": "Pilot", "traits": {},
+                "tokenPrompt": original,
+                "portraitPrompt": "A half-body character portrait of a pilot, "
+                                  "rendered in an unrelated oil style.",
+            }}), encoding="utf-8")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                code = expressions.main([
+                    "--manifest", str(manifest), "--id", "pilot-1",
+                    "--tables", str(TABLE_FIXTURE), "-e", "joy",
+                    "--seed", "1", "--dry-run",
+                ])
+
+        rendered = output.getvalue()
+        self.assertEqual(code, 0)
+        self.assertIn("bold ink illustration style with dry brush texture",
+                      rendered)
+        self.assertIn("painterly brushwork with copper grain", rendered)
+        for excluded in ("arms crossed", "background is white",
+                         "Full-length wide shot", "centered composition",
+                         "unrelated oil style"):
+            with self.subTest(excluded=excluded):
+                self.assertNotIn(excluded, rendered)
+
+    def test_main_records_the_actual_fallback_source_kind(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            folder = root / "Pilot"
+            folder.mkdir()
+            (folder / "Pilot Portrait.png").write_bytes(b"portrait")
+            manifest = root / "manifest.json"
+            manifest.write_text(json.dumps({str(folder): {
+                "id": "pilot-1", "name": "Pilot", "traits": {},
+            }}), encoding="utf-8")
+            originals = (expressions.art.find_server,
+                         expressions.upload_image,
+                         expressions.render_sprite)
+            expressions.art.find_server = lambda _server: object()
+            expressions.upload_image = lambda _comfy, _path: "uploaded"
+            expressions.render_sprite = (
+                lambda _comfy, _ref, _args, _plan, _slug: b"webp")
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    code = expressions.main([
+                        "--manifest", str(manifest), "--id", "pilot-1",
+                        "--tables", str(TABLE_FIXTURE), "-e", "joy",
+                    ])
+            finally:
+                (expressions.art.find_server,
+                 expressions.upload_image,
+                 expressions.render_sprite) = originals
+            metadata = json.loads(
+                (folder / "expressions" / "expressions.json").read_text(
+                    encoding="utf-8"))
+
+        self.assertEqual(code, 0)
+        self.assertEqual(metadata["joy.webp"]["source"]["kind"], "portrait")
+
     def test_file_rejects_multi_sprite_options_and_missing_classified_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             image = Path(tmp) / "p.png"
@@ -282,12 +528,14 @@ class TestTablesAndPrompts(unittest.TestCase):
             self.assertNotIn(text, prompt)
         lowered = prompt.lower()
         for text in ("same character", "face", "hair", "outfit", "colours",
-                     "accessories", "art style", "front-facing", "standing",
+                     "accessories", "art style", "natural",
                      "full-body", "entire head", "hands", "both feet",
                      "margin", "no cropping or text", "unseen clothing",
-                     "legs", "small body language"):
+                     "legs", "stance", "shoulders", "arms", "hand gestures"):
             with self.subTest(text=text):
                 self.assertIn(text, lowered)
+        self.assertNotIn("standing", lowered)
+        self.assertNotIn("small body language", lowered)
         self.assertNotIn("camera framing and pose", lowered)
         self.assertNotIn("front-facing bust", lowered)
 
@@ -303,6 +551,27 @@ class TestTablesAndPrompts(unittest.TestCase):
                 self.assertIn(text, prompt)
         self.assertNotIn("painterly", prompt.lower())
         self.assertNotIn("halftone", prompt.lower())
+
+    def test_default_expressions_supply_distinct_emotion_specific_body_language(self):
+        tables = expressions.load_expression_tables(LIVE_TABLES)
+        for label in expressions.DEFAULT_LABELS:
+            with self.subTest(label=label, requirement="pose cue"):
+                self.assertTrue(all("; " in bullet for bullet in tables[label]))
+        expected = {
+            "joy": "open welcoming arms",
+            "pride": "lifted chin and confident posture",
+            "sadness": "lowered shoulders and loosely clasped hands",
+            "fear": "guarded hands and a recoiling weight shift",
+        }
+        for label, pose in expected.items():
+            with self.subTest(label=label):
+                self.assertTrue(all(pose in bullet for bullet in tables[label]))
+
+    def test_describe_keeps_explicit_custom_pose_instructions(self):
+        prompt = expressions.assemble_prompt(
+            "quiet wonder while kneeling, left hand reaching toward the light")
+        self.assertIn("while kneeling", prompt)
+        self.assertIn("left hand reaching toward the light", prompt)
 
     def test_live_tables_cover_every_default_with_distinct_weighted_options(self):
         tables = expressions.load_expression_tables(LIVE_TABLES)
@@ -368,7 +637,7 @@ class TestPlanning(unittest.TestCase):
         self.assertEqual(plans[0].destination.name, "battle_focus.webp")
         self.assertEqual(plans[0].prompt, "saved full custom prompt")
 
-    def test_file_redo_adapts_only_the_generated_legacy_prompt_preamble(self):
+    def test_file_redo_adapts_recognized_prompts_and_replaces_source_style(self):
         legacy = (
             "Keep the same character, face, hairstyle, outfit, colours, art "
             "style, camera framing and pose. Change only the facial expression "
@@ -383,24 +652,30 @@ class TestPlanning(unittest.TestCase):
             sidecar = {
                 "legacy.webp": {"prompt": legacy + suffix},
                 "current.webp": {
-                    "prompt": expressions.IDENTITY_PREAMBLE + suffix},
+                    "prompt": expressions.PRIOR_FULL_BODY_IDENTITY_PREAMBLE +
+                              " " + expressions.STYLE_MATCH_INSTRUCTION +
+                              " Original portrait style: rendered in old oil."
+                              + suffix},
                 "authored.webp": {
                     "prompt": "Keep this custom camera framing exactly."},
             }
             prompts = {}
             for name in sidecar:
                 plans, _ = expressions.make_plans(
-                    out, self.args(file=name), {}, {}, None, sidecar)
+                    out, self.args(file=name), {}, {}, None, sidecar,
+                    style_prompt="rendered in new ink.")
                 prompts[name] = plans[0].prompt
 
         upgraded = (expressions.IDENTITY_PREAMBLE + suffix + " " +
-                    expressions.STYLE_MATCH_INSTRUCTION)
+                    expressions.STYLE_MATCH_INSTRUCTION + " " +
+                    "Original source style: rendered in new ink.")
         self.assertEqual(prompts["legacy.webp"], upgraded)
         self.assertNotIn("camera framing and pose", prompts["legacy.webp"])
         self.assertNotIn("Front-facing bust", prompts["legacy.webp"])
         self.assertIn("Hair: cropped curls", prompts["legacy.webp"])
         self.assertIn("cold focused determination", prompts["legacy.webp"])
         self.assertEqual(prompts["current.webp"], upgraded)
+        self.assertNotIn("old oil", prompts["current.webp"])
         self.assertEqual(prompts["current.webp"].count(
             expressions.IDENTITY_PREAMBLE), 1)
         self.assertEqual(prompts["authored.webp"],
@@ -432,10 +707,10 @@ class TestPlanning(unittest.TestCase):
                 (described[0].prompt, "quiet wonder"),
                 (redone[0].prompt, "cold determination")):
             with self.subTest(expression=expression):
-                self.assertIn("Original portrait style: " + style, prompt)
+                self.assertIn("Original source style: " + style, prompt)
                 self.assertIn("silver crop", prompt)
                 self.assertIn(expression, prompt)
-        self.assertEqual(redone[0].prompt.count("Original portrait style:"), 1)
+        self.assertEqual(redone[0].prompt.count("Original source style:"), 1)
 
         already_styled = redone[0].prompt
         with tempfile.TemporaryDirectory() as tmp:
@@ -445,7 +720,7 @@ class TestPlanning(unittest.TestCase):
                 out, self.args(file="battle.webp"), {}, traits, None,
                 {"battle.webp": {"prompt": already_styled}},
                 style_prompt=style)
-        self.assertEqual(plans[0].prompt.count("Original portrait style:"), 1)
+        self.assertEqual(plans[0].prompt.count("Original source style:"), 1)
 
     def test_selected_pool_is_validated_before_any_plan_is_returned(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -507,8 +782,29 @@ class TestPersistence(unittest.TestCase):
         self.assertEqual(set(metadata), {"joy.webp", "joy-1.webp", "anger.webp"})
         self.assertEqual(set(metadata["joy.webp"]), {
             "label", "prompt", "seed", "keepBackground", "source", "when"})
-        self.assertEqual(set(metadata["joy.webp"]["source"]), {"path", "mtime"})
+        self.assertEqual(set(metadata["joy.webp"]["source"]),
+                         {"kind", "path", "mtime"})
+        self.assertEqual(metadata["joy.webp"]["source"]["kind"], "image")
+        self.assertEqual(metadata["joy.webp"]["source"]["path"],
+                         str(self.source.resolve()))
+        self.assertEqual(metadata["joy.webp"]["source"]["mtime"],
+                         self.source.stat().st_mtime_ns / 1_000_000)
         self.assertEqual(result.written, 2)
+
+    def test_explicit_actual_source_kind_is_saved_and_legacy_records_survive(self):
+        legacy_source = {"path": "C:/legacy/portrait.png", "mtime": 10}
+        self.old_meta["anger.webp"]["source"] = legacy_source
+        self.sidecar_path.write_text(json.dumps(self.old_meta, sort_keys=True),
+                                     encoding="utf-8")
+        plans = self.plans(replace=False)
+        result = expressions.execute_plans(
+            plans, lambda _plan: b"new", self.sidecar_path, self.source,
+            source_kind="token")
+        metadata = json.loads(self.sidecar_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(result.written, 2)
+        self.assertEqual(metadata["joy-2.webp"]["source"]["kind"], "token")
+        self.assertEqual(metadata["anger.webp"]["source"], legacy_source)
 
     def test_later_success_is_the_first_destructive_point_after_a_failure(self):
         attempts = 0
