@@ -1,6 +1,8 @@
 # NPC 3D pipeline: turning a generated NPC into a rigged, printable model
 
-> **Status:** designed 2026-09-04, not yet implemented. Every capability claim
+> **Status:** designed 2026-09-04; since implemented as `generate-3d.py`
+> (usage in `docs/generate-3d.md`), so read this as the design record, not a
+> work order. Every capability claim
 > in §2 was measured on this machine during a feasibility probe on 2026-09-04,
 > not estimated — the probe queued real jobs against the live ComfyUI on
 > `127.0.0.1:8000` and inspected the results in Blender 5.2.1 LTS. §7.1 is the

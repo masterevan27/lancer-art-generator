@@ -1,6 +1,7 @@
 # Trait roll odds: what a bullet's real chance of being rolled is
 
-> **Status:** design 2026-09-04. Companion spec: `lancer-npc-import-gui`'s
+> **Status:** design 2026-09-04; shipped as `--trait-odds` (`3e68698`).
+> Companion spec: `lancer-npc-import-gui`'s
 > `2026-09-04-trait-roll-odds-display-design.md` covers the GUI half.
 > **This spec ships first** — the GUI's percentage cell reads the JSON this
 > one defines, and has nothing to display until it exists.

@@ -2,9 +2,11 @@
 
 A ComfyUI-driven batch art pipeline for a *Lancer* TTRPG campaign, extracted
 from the [Lancer-TTRPG-GM-Hub](https://github.com/masterevan27/Lancer-TTRPG-GM-Hub)
-campaign repository into its own standalone tool. Two entry points —
-`generate-art.py` and `generate-npc.py` — turn prompt-table markdown into
-batches of ComfyUI renders in the campaign's house style.
+campaign repository into its own standalone tool. Three entry points —
+`generate-art.py`, `generate-npc.py` and `generate-spaceship.py` — turn
+prompt-table markdown into batches of ComfyUI renders in the campaign's house
+style, and two more take those renders further: `generate-3d.py` into a
+printable figure, `animate-portrait.py` into a looping animation.
 
 **This repository is a sibling clone of `Lancer-TTRPG-GM-Hub`, not a
 submodule.** It has no dependency on the Hub at runtime or in its git history;
@@ -202,8 +204,10 @@ python -m test.theme_visibility --tables test/fixtures/tables-themed.md
 
 That prints, per theme and per gated table, how much content the theme has and
 how often a rolled NPC of that theme actually got one of its bullets rather
-than a neutral one. Run it while tagging to watch a theme come up. It reports
-zeroes today, which is the correct pre-tagging baseline.
+than a neutral one, and marks with `!` each table whose tagged bullets lose
+more often than the `THEME_SHARE` target. Run it while tagging to watch a
+theme come up; most themes carry only a handful of tagged bullets so far, so
+the live tables still report a good many `(untagged)` cells and `!` marks.
 
 Prompt length is measured too, against Krea 2's 512-token ceiling — a prompt
 that runs long silently loses its tail, which is where the palette and the

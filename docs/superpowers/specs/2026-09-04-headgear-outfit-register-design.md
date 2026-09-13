@@ -1,6 +1,7 @@
 # Headgear and outfit register: keeping hard tech off a kimono
 
-> **Status:** design, 2026-09-04, for branch `headgear-outfit-register`.
+> **Status:** design, 2026-09-04, for branch `headgear-outfit-register`,
+> since merged to `main` (`a5b0b67`).
 > A direct follow-on to the [role/dress-register
 > spec](2026-09-04-role-dress-register-design.md), which added a register axis
 > to Outfit and Faction. This adds the missing half: the axis never reached

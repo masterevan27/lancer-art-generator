@@ -1,7 +1,8 @@
 # Table groups: one slot for a family of near-duplicate bullets
 
 **Date:** 2026-09-12
-**Status:** approved in discussion, awaiting review of this document
+**Status:** approved; implemented and merged to `main` in both repositories
+(`94fb2d0` here) — read this as the design record, not a work order
 **Repositories:** `lancer-art-generator` (the mechanism, the tables file, the
 skill), `lancer-npc-import-gui` (the Tables tab and everything that reads the
 same file)

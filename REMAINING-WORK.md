@@ -1,5 +1,11 @@
 # Remaining work — spaceships
 
+> **Status, 2026-09-12: complete and merged.** All eight tasks below are implemented —
+> ART's `ultracode-spaceships` merged to `main` in `f7752ac`, the GUI's `ultracode-features` in
+> `2d02d57` — and both are pushed. The one item still open is the wide-token framing problem
+> (Task 1's **Still open** note, and `docs/spaceship-render-notes.md`). Everything else in this
+> file, including the banner below, is the historical task list, not instructions to follow.
+
 > **⚠️ Superseded by two step-by-step implementation plans. Work those, not this file.**
 >
 > - [`docs/superpowers/plans/2026-09-07-spaceship-generator-completion.md`](docs/superpowers/plans/2026-09-07-spaceship-generator-completion.md) — ART, tasks 1–4 below
@@ -26,7 +32,7 @@ Task list for picking this up. The plan and the reasoning are in
 [`docs/superpowers/plans/2026-09-07-spaceships-and-trait-fixes.md`](docs/superpowers/plans/2026-09-07-spaceships-and-trait-fixes.md);
 **read that first**, then the two implementation plans above.
 
-**Repos and branches** (nothing is on `main`, nothing is pushed):
+**Repos and branches** (as they stood before the merge — both are now on `main`):
 
 - **ART** `G:\GIT-REPOS\lancer-art-generator`, branch `ultracode-spaceships`
 - **GUI** `G:\GIT-REPOS\lancer-npc-import-gui`, branch `ultracode-features`
