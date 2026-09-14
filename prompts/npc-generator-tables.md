@@ -1931,7 +1931,7 @@ bullet there changes no portrait or token.
 - {Subject} {wear} a scarred horned helm, twin curling horns sweeping back above a narrow slit visor. || helmet @grimdark
 - {Subject} {wear} a scarred half-helmet fused to a sealed respirator mask, a bulky comms module clamped over one ear with a lens glowing faintly at its center, a thin antenna trailing up from the crown. || hardtech helmet
 - {Subject} {wear} a wide woven sedge hat over a masked face lit with two glowing eye-lenses. || crown @neosamurai
-- {Subject} {wear} a stiff peaked officer's cap crested with a winged skull badge, a tasseled band circling the brim. || crown
+- {Subject} {wear} a stiff peaked officer's cap crested with a winged skull badge, a tasseled band circling the brim. || crown mil
 - {Subject} {wear} a tall gilded ceremonial helmet with a spiked finial and dangling ear guards, its crest catching the light. || helmet
 - {Subject} {wear} a crystalline crown of interlocking translucent spires. || crown @neogothic
 - {Subject} {wear} a sleek segmented flight helmet, its visor lit from within by scrolling telemetry and a slim horizontal display strip across the brow. || hardtech helmet @gundam

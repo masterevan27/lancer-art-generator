@@ -27,10 +27,11 @@ class TestTheOfficersCap(unittest.TestCase):
         cls.rolls = [gen.roll_npc(LIVE, random.Random(seed))
                      for seed in range(3000)]
 
-    def test_the_cap_is_flagged_mil(self):
+    def test_every_officers_cap_is_flagged_mil(self):
         caps = [b for b in bullets_for(LIVE, "Headgear") if CAP in b]
-        self.assertEqual(len(caps), 1, "the officer's cap bullet was reworded")
-        self.assertIn("mil", gen.split_flags(caps[0])[1])
+        self.assertTrue(caps, "no officer's cap bullet left - reworded?")
+        for cap in caps:
+            self.assertIn("mil", gen.split_flags(cap)[1], cap)
 
     def test_the_cap_is_reachable_by_the_military(self):
         """Without this the assertion below passes on nothing."""
