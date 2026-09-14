@@ -1269,6 +1269,17 @@ def migrate_traits(traits):
 # seen. Raise it for a stronger house style, lower it for more variety.
 THEME_SHARE = 0.6
 
+# Themed tables whose theme share is taken AFTER their drop filters rather
+# than before. Every Headgear filter only removes bullets - 'hardtech' under a
+# 'notac' Outfit, 'updo', 'covered', the role lock, the civ/mil split - and a
+# duplicated pool loses exactly the bullets the plain one would, so moving the
+# share last changes proportions and nothing else. It has to move because the
+# 'hardtech' drop takes some ninety untagged bullets and no themed ones: a
+# grimdark NPC in grimdark's own 'notac' robes drew from a pool 0.83 themed
+# against a 0.60 target. Weapon must NOT join - apply_theme_share()'s
+# docstring says why - and Outfit's drift is measured and within bounds.
+LATE_SHARE_TABLES = ("Headgear",)
+
 # Generation workflows chosen by gender rather than by flag, keyed the same way
 # GENDER_TRAITS is: women render through their own checkpoint stack, and any
 # gender not named here falls through to --workflow. Only the two text-to-image
@@ -2355,9 +2366,11 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # actually visible rather than merely available. Applied first, so the
         # civ/mil and policy filters below narrow within the theme rather than
         # across it - which is what lets a soldier be neosamurai in uniform.
+        #
+        # Headgear takes its share at the END instead - see LATE_SHARE_TABLES.
         if name in THEMED_TABLES:
             options = filter_by_theme(options, theme, name)
-            if theme_share:
+            if theme_share and name not in LATE_SHARE_TABLES:
                 options = apply_theme_share(options, theme, name)
 
         # The Age/Build pairing runs both ways. When the Build was forced
@@ -2601,6 +2614,11 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # own 'hardtech' flag rather than on 'mil' - see filter_by_hardtech().
         if name == "Headgear" and outfit_notac:
             options = filter_by_hardtech(options, outfit_notac)
+
+        # The theme share for a LATE_SHARE_TABLES table, sized against the
+        # pool its drop filters left rather than the one they started from.
+        if theme_share and name in LATE_SHARE_TABLES:
+            options = apply_theme_share(options, theme, name)
 
         # Last, after every gate, so the weighting can only ever repeat what
         # the rules already allowed. Skipped with the theme share on the union
@@ -4213,7 +4231,8 @@ def reroll_trait(tables, npc, name, rng):
     if name in THEMED_TABLES:
         theme = npc.get("Theme", "-")
         options = filter_by_theme(options, theme, name)
-        options = apply_theme_share(options, theme, name)
+        if name not in LATE_SHARE_TABLES:
+            options = apply_theme_share(options, theme, name)
 
     # 'figure' against the recorded 'young' flag - the one flag the manifest
     # already stores separately, for this same reason.
@@ -4363,6 +4382,10 @@ def reroll_trait(tables, npc, name, rng):
             uncovered = [x for x in options
                          if "covered" not in split_flags(x)[1]]
             options = uncovered or options  # never filter the pool to nothing
+
+    # See LATE_SHARE_TABLES: sized after the drop filters above, as in roll_npc().
+    if name in LATE_SHARE_TABLES:
+        options = apply_theme_share(options, npc.get("Theme", "-"), name)
 
     value = split_flags(rng.choice(options))[0]
 

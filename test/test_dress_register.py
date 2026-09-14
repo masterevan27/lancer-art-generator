@@ -184,19 +184,28 @@ class TestTheLiveTables(unittest.TestCase):
     def test_every_dressy_outfit_is_still_reachable_by_someone(self):
         """A flag that bars a bullet from everyone is a typo, not a gate.
 
-        Every live 'dressy' Outfit is also 'civ', so it is already barred from
-        every mil Role; if it were ALSO barred from every civilian one it would
-        be dead content nothing could roll.
+        A 'dressy' bullet is dropped for a 'plain' Role, and a 'civ' or 'mil'
+        one for the other side of that split. This used to assert that no
+        'dressy' bullet was 'mil', on the belief that the two together bar
+        everyone - but no mil Role is 'plain', so a gold-epauletted officer's
+        jacket is 'mil dressy' and perfectly rollable. What matters is that
+        some live Role clears both gates, so that is what is checked.
         """
+        roles = [gen.split_flags(b) for b in bullets_for(LIVE, "Role")]
         for bullet in bullets_for(LIVE, "Outfit"):
             flags = gen.split_flags(bullet)[1]
             if "dressy" not in flags:
                 continue
-            self.assertNotIn(
-                "mil", flags,
-                "a 'dressy' bullet flagged 'mil' is reachable by no one: a mil "
-                "Role is never plain-gated but this bullet is dropped for "
-                "civilians, and vice versa: %r" % bullet)
+            reachers = [
+                text for text, role_flags in roles
+                if gen.dress_policy_for(gen.ROLE_CATEGORIES.get(text)) != "plain"
+                and not ("mil" in flags and "mil" not in role_flags)
+                and not ("civ" in flags and "mil" in role_flags)]
+            self.assertTrue(
+                reachers,
+                "no live Role can roll this 'dressy' Outfit - every Role is "
+                "either 'plain' or on the wrong side of its civ/mil flag: %r"
+                % bullet)
 
     def test_no_ragged_outfit_was_swept_up_by_the_flag(self):
         """'dressy' is not 'notac'. A dockworker in ragged cloth bindings or a

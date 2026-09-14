@@ -3016,30 +3016,30 @@ bullet there changes no portrait or token.
 - a stubby grenade launcher slung across the chest above a bandolier of fat cased rounds || mil weapon
 - a flare pistol tucked into a chest pouch, its casing scuffed orange || weapon simple
 - a pump-action shotgun raised muzzle-up beside {possessive} head in one gloved hand || hands gun weapon
-- a lance-cannon battle rifle with folding foregrips and ceramic cooling fins, held in both hands with a slight upward muzzle tilt || hands gun mil weapon @lancer
-- a gravitic marksman rifle wrapped in matte armor plates and a mirrored top optic, two-handed on a stabilized rest || hands gun weapon @lancer
-- a triangulated dual-feed long rifle with snake-cased cartridges clipped to a compact chest rig || hands gun weapon @lancer
-- an anti-armor coil rifle with violet induction glow and a thumb-wheel fire selector, carried at low ready || hands gun weapon @lancer
-- a compact rail-lance carbine with a detachable monopod and blue-lit aiming ghost across the barrel || hands gun mil weapon @lancer
-- a collapsible plasma-assisted hunting rifle with a telescoping stock and dust-streaked matte barrel || hands gun weapon @lancer
+- a lance-cannon battle rifle with folding foregrips and ceramic cooling fins, held in both hands with a slight upward muzzle tilt || hands gun mil weapon @gundam
+- a gravitic marksman rifle wrapped in matte armor plates and a mirrored top optic, two-handed on a stabilized rest || hands gun weapon @gundam
+- a triangulated dual-feed long rifle with snake-cased cartridges clipped to a compact chest rig || hands gun weapon @gundam
+- an anti-armor coil rifle with violet induction glow and a thumb-wheel fire selector, carried at low ready || hands gun weapon @gundam
+- a compact rail-lance carbine with a detachable monopod and blue-lit aiming ghost across the barrel || hands gun mil weapon @gundam
+- a collapsible plasma-assisted hunting rifle with a telescoping stock and dust-streaked matte barrel || hands gun weapon @gundam
 - a chrome smartcarbine with retractable holographic stock and a noise-canceling muzzle shroud || hands gun mil weapon @cyberpunk
 - a modular pulse rifle built around a vertical foregrip and modular cybernetic fire-module || hands gun mil weapon @cyberpunk
 - a mag-ramp repeater with stacked tungsten magazines and vented barrel rings, shoulders settled into two-handed stance || hands gun weapon @cyberpunk
 - a ghost-scope sniper rifle with adaptive thermal lens and neural recoil dampener || hands gun weapon @cyberpunk
 - a twin-stack rail sniper platform with shoulder brace and AR tether cable hanging from the optic || hands gun weapon @cyberpunk
 - a microburst scattergun with ceramic barrel sleeve and integrated flash-dampening grid, held muzzle-forward || hands gun weapon @cyberpunk
-- a data-tethered coil rifle wrapped in white-gold insulation, one hand braced to its power coupler || hands gun mil weapon @ghostinshell
-- a ghost-network acoustic rifle with a ghostly sensor sphere hovering over the muzzle || hands gun weapon @ghostinshell
-- a vibro-rifle folded like a fan, its emitter teeth unfolding as it locks into a two-handed ready || hands gun weapon @ghostinshell
-- an electro-net launcher with side cartridges and flickering green targeting lens at the muzzle || hands gun weapon @ghostinshell
-- a covert electromagnetic carbine with gyrostabilized frame and matte black heat shield || hands gun weapon @ghostinshell
-- a kinetic smart-rifle that tags targets with floating HUD readouts on its translucent frame || hands gun weapon @ghostinshell
-- a weathered spacefaring hunting rifle with curved chrome receiver and worn recoil absorber pad || hands gun weapon @cowboybebop
-- a twin-barreled trench rifle with interchangeable choke vents and scarred wood grips, slung across {possessive} chest || hands gun weapon @cowboybebop
-- a solar-hardened blaster carbine with folding tubular stock and sun-etched engraving along the fore-end || hands gun weapon @cowboybebop
-- a long-range bounty rifle with taped drum magazine and thumb-operable gas-recovery valve || hands gun weapon @cowboybebop
-- a heavy rail repeater with side ammo drum, chrome barrel, and a targeting microdrone dangling from its shroud || hands gun mil weapon @cowboybebop
-- a shotgun-carbine hybrid with a ribbed drum mag, curved top rail, and weathered red trim || hands gun weapon @cowboybebop
+- a data-tethered coil rifle wrapped in white-gold insulation, one hand braced to its power coupler || hands gun mil weapon @cyberpunk
+- a ghost-network acoustic rifle with a ghostly sensor sphere hovering over the muzzle || hands gun weapon @cyberpunk
+- a vibro-rifle folded like a fan, its emitter teeth unfolding as it locks into a two-handed ready || hands gun weapon @cyberpunk
+- an electro-net launcher with side cartridges and flickering green targeting lens at the muzzle || hands gun weapon @cyberpunk
+- a covert electromagnetic carbine with gyrostabilized frame and matte black heat shield || hands gun weapon @cyberpunk
+- a kinetic smart-rifle that tags targets with floating HUD readouts on its translucent frame || hands gun weapon @cyberpunk
+- a weathered spacefaring hunting rifle with curved chrome receiver and worn recoil absorber pad || hands gun weapon @scav
+- a twin-barreled trench rifle with interchangeable choke vents and scarred wood grips, slung across {possessive} chest || hands gun weapon @scav
+- a solar-hardened blaster carbine with folding tubular stock and sun-etched engraving along the fore-end || hands gun weapon @scav
+- a long-range bounty rifle with taped drum magazine and thumb-operable gas-recovery valve || hands gun weapon @scav
+- a heavy rail repeater with side ammo drum, chrome barrel, and a targeting microdrone dangling from its shroud || hands gun mil weapon @scav
+- a shotgun-carbine hybrid with a ribbed drum mag, curved top rail, and weathered red trim || hands gun weapon @scav
 - a magnetic harpoon rifle with a coiled cable reel and reinforced bipod, held at a hunting-ready two-handed grip || hands gun weapon
 - a compact photon shotgun disguised as a press camera rig, barrel ports blooming as it charges || hands gun weapon
 - a wicked curved scythe with a chained counterweight || hands weapon blade
