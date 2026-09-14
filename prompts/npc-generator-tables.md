@@ -195,6 +195,13 @@ because a table runs from its heading to the next `##` heading:
   default coveralls. The two disagree on seven of the thirteen `notac`
   bullets in the base table. Flag finery, not tradition.
 
+  **Outfit** and **Backdrop** bullets may also carry `|| lab`, marking
+  laboratory wear or a laboratory. It is a _preference_ rather than a gate:
+  `ROLE_PREFERENCES` in the script weights `lab` bullets up to a share of a
+  `Scientists` Role's pool, so a scientist usually wears the lab coat while
+  anyone else can still roll one. On Backdrop `lab` is additionally an
+  occupation gate (see below), so only scientists reach the lab itself.
+
   Three more flags, plus one on Outfit, are read by `apply_weapon_policy()`
   rather than by the civ/mil split above — see the comments on the Weapon
   and Outfit tables themselves for the full detail: `weapon` (an actual
@@ -2326,7 +2333,7 @@ bullet there changes no portrait or token.
 - a baggy rust-red padded jacket with the hood bunched thick around the neck and a strap running down the back || civ
 - a long hooded rain slicker hanging below the knee over heavy rubber boots || civ
 - a navy work shirt with the sleeves rolled, a climbing harness buckled over grey cargo trousers and strapped knee pads || civ
-- a rumpled white lab coat hanging open over a charcoal shirt and dark tie, a photo ID badge clipped at the breast pocket || civ
+- a rumpled white lab coat hanging open over a charcoal shirt and dark tie, a photo ID badge clipped at the breast pocket || civ lab
 - => Formal wear
 - a fitted black bodysuit with gold filigree trim, a spiked shoulder guard, and a tattered floor-length cape || notac dressy
 - a loose white blouse-dress cinched at the waist by a laced leather corset harness, sleeves rolled to the elbow || notac dressy
@@ -2420,7 +2427,7 @@ bullet there changes no portrait or token.
 - a pale-blue police uniform blouse with the sleeves rolled, tucked into a straight duty skirt above a black belt rig || mil
 - a cropped black jacket over a low-cut corseted bodice, a long black skirt slit high to the thigh and draped with fine gold chainwork || civ dressy
 - a floor-length black column dress with sharp padded shoulders and long fitted sleeves, slit up the back of one leg || civ dressy
-- a long white high-collared lab coat cut with dark side panels, slit high up one leg over dark leggings, an ID badge clipped at the hip || civ
+- a long white high-collared lab coat cut with dark side panels, slit high up one leg over dark leggings, an ID badge clipped at the hip || civ lab
 - a cropped olive armored vest bulked out with padded pouch plates over a black crop top, pouched bands strapped round both upper arms and fingerless armored gloves
 - a cropped military-style jacket with a segmented armored vambrace banded down one forearm and a unit patch at the shoulder, worn open over a white blouse and a black pleated skirt cinched by a wide belt || @neosamurai
 - a white pressure suit with silver ring joints at the elbows and knees, a small flag patch at the chest and a compact oxygen pack strapped to the back
@@ -3377,7 +3384,7 @@ bullet there changes no portrait or token.
   The rest of the flag vocabulary is OCCUPATION GATES - 'cockpit', 'ownmech',
   'mechwork', 'mechyard', 'warzone', 'frontline', 'vacuum', 'swordwork',
   'deskwork', 'ceremony', 'inspection', 'salvage', 'clergy', 'medic',
-  'barkeep' - each defined in BACKDROP_ROLES in generate-npc.py against the
+  'barkeep', 'lab' - each defined in BACKDROP_ROLES in generate-npc.py against the
   Role categories (or the exact Role bullets) allowed to roll it. A flagged
   scene is unreachable from every other Role, with no fallback: this is a hard
   filter, the same shape as Gear's 'admin' lock and unlike every preference
@@ -3826,7 +3833,7 @@ bullet there changes no portrait or token.
 - => Distant war machines in battle
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a tiered tiled-roof palace beside an arched bridge, flowering trees and lantern reflections crowding the still canal. || weather @neosamurai
 - => Alien gardens
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a spotless white spacecraft laboratory with paired workbenches, glossy dark flooring and a curved skylight opening onto stars. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a spotless white spacecraft laboratory with paired workbenches, glossy dark flooring and a curved skylight opening onto stars. || lab
 - A character portrait || {Subject} {is_are} sitting beside a companion at a tiny outdoor table, both turned toward an enormous mushroom cloud rising over the distant plain. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a circular landing dais surrounded by broken stone, a narrow beacon rising toward a hovering ship beneath an immense planetary limb. || weather
 - A character portrait || {Subject} {is_are} walking along a narrow railed landing gantry with a round flight helmet tucked beneath one arm, terraces and distant spacecraft opening behind {object}. || nogear weather

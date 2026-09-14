@@ -787,8 +787,34 @@ ROLE_CATEGORIES = {
     "a station syndicate clerk": "Civilians",
     "a neon-market cartographer": "Civilians",
     "a municipal recycler foreman": "Laborers",
+    "a systems biologist": "Scientists",
+    "a lab-bench plasma physicist": "Scientists",
+    "a xenobiology researcher": "Scientists",
+    "a computational materials chemist": "Scientists",
+    "a weapons effects analyst": "Scientists",
+    "a forensic bioinformatics analyst": "Scientists",
+    "a quantum mechanics adjunct": "Scientists",
+    "an exobiology field scientist": "Scientists",
+    "a neurointerface cognitive engineer": "Scientists",
+    "a null-space theoretician": "Scientists",
+    "a gravitic diagnostics physicist": "Scientists",
 }
 UNCATEGORIZED_ROLE = "Other"
+
+# A flag a category's Roles are drawn TOWARD, and how hard, per table. A
+# preference rather than a gate: apply_role_preference() duplicates the
+# flagged bullets until they hold that share of the pool, the way
+# apply_theme_share() does for a theme, and drops nothing - so a scientist
+# usually wears the lab coat, and a bar owner who rolls one still may.
+#
+# The shares differ because the content does. Outfit has a lab coat in each
+# gender's pool; Backdrop has one laboratory, and a quarter of scientists
+# already stand in the same room. Raise the Backdrop share as lab scenes are
+# authored. 'lab' on Backdrop is also a BACKDROP_ROLES gate - that half is the
+# rule, this is the weighting on top of it.
+ROLE_PREFERENCES = {
+    "Scientists": ("lab", {"Outfit": 0.4, "Backdrop": 0.25}),
+}
 
 # The Weapon-roll policy each ROLE_CATEGORIES bucket gets, layered on top of
 # the mil/civ split - see apply_weapon_policy().
@@ -996,7 +1022,7 @@ BACKDROP_ROLES = {
     # already the roles this admits. It is Laborers and Technicians that the
     # bucket list drops, and only them.
     "deskwork": ("Pilots", "Soldiers", "Officials", "Support", "Criminals",
-                 "Civilians"),
+                 "Civilians", "Scientists"),
     # The subject presides - a ceremonial ramp, a throne, a rally ground.
     "ceremony": ("Pilots", "Soldiers", "Officials", "Criminals"),
     # Auditing someone else's work: badge out, folio closed, placard against a
@@ -1012,6 +1038,8 @@ BACKDROP_ROLES = {
     "medic": ("a field medic",),
     # Behind the counter, or across the booth table from a contact.
     "barkeep": ("a bar owner and information broker",),
+    # A laboratory. Scientists are also drawn toward it - see ROLE_PREFERENCES.
+    "lab": ("Scientists",),
 }
 
 # Trait names that have changed, old -> new. --regen-manifest rebuilds an NPC
@@ -1872,6 +1900,27 @@ def apply_theme_share(options, theme, name, share=THEME_SHARE):
     return tagged * max(1, n) + neutral
 
 
+def apply_role_preference(options, category, name):
+    """Weight a category's preferred bullets up to their share of the pool.
+
+    Reads ROLE_PREFERENCES. The same arithmetic as apply_theme_share(), and
+    the same guarantee: duplication only adds entries, so nothing is dropped
+    and every bullet stays reachable. Untouched - same list, same order - for
+    a category with no preference, a table it does not name, or a pool with
+    nothing to balance.
+    """
+    flag, shares = ROLE_PREFERENCES.get(category, (None, {}))
+    share = shares.get(name)
+    if not share:
+        return options
+    preferred = [x for x in options if flag in flags_for(name, x)]
+    rest = [x for x in options if flag not in flags_for(name, x)]
+    if not preferred or not rest:
+        return options
+    n = math.ceil(share * len(rest) / ((1 - share) * len(preferred)))
+    return preferred * max(1, n) + rest
+
+
 def apply_weapon_policy(options, category, mil, unarmed=False, role=None):
     """Bias or filter the Weapon roll to fit the NPC's Role.
 
@@ -2440,6 +2489,13 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # own 'hardtech' flag rather than on 'mil' - see filter_by_hardtech().
         if name == "Headgear" and outfit_notac:
             options = filter_by_hardtech(options, outfit_notac)
+
+        # Last, after every gate, so the weighting can only ever repeat what
+        # the rules already allowed. Skipped with the theme share on the union
+        # pass, for the same reason: the draw site weights each side itself.
+        if theme_share:
+            options = apply_role_preference(
+                options, ROLE_CATEGORIES.get(npc.get("Role")), name)
         return options
 
     for name in REQUIRED_TABLES:
@@ -2507,6 +2563,8 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
                 kept = [b for b in survivors if b in member_set]
                 if name in THEMED_TABLES:
                     kept = apply_theme_share(kept, theme, name)
+                kept = apply_role_preference(
+                    kept, ROLE_CATEGORIES.get(npc.get("Role")), name)
                 pools[target] = kept
             # `parent` is the parent list alone through the whole chain, share
             # included: byte-for-byte what this table did before groups
