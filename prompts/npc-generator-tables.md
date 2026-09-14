@@ -2103,6 +2103,17 @@ bullet there changes no portrait or token.
 - a cybernetic field engineer
 - a mech-frame maintenance technician
 - a prototype reactor engineer
+- a systems biologist
+- a lab-bench plasma physicist
+- a xenobiology researcher
+- a computational materials chemist
+- a weapons effects analyst
+- a forensic bioinformatics analyst
+- a quantum mechanics adjunct
+- an exobiology field scientist
+- a neurointerface cognitive engineer
+- a null-space theoretician
+- a gravitic diagnostics physicist
 - a frontier magistrate
 - a corporate compliance auditor
 - a station syndicate clerk
