@@ -2509,6 +2509,10 @@ bullet there changes no portrait or token.
 - an embroidered pale ceremonial dress with a long split skirt and an ornate red cape edged in gold || civ dressy notac
 - a sleeveless floral sundress with a short gathered skirt and dark lace-up ankle boots || civ
 - a long white lab coat with a high dark-trimmed collar, unbuttoned deep past the bust over a fitted dark bodysuit and parted below the belt over white thigh-high boots, an ID badge clipped at the hip and black gloves at the wrists || lab
+<!-- - a long white lab coat with a high dark-trimmed collar, open in a deep plunging V over a low-cut charcoal bodysuit, cinched tightly at the waist with long split coat tails over white thigh-high boots || lab -->
+- a long white lab coat with a high dark-trimmed collar, open in a deep plunging V over a low-cut charcoal bodysuit, cinched tightly at the waist with long split coat tails over white thigh-high boots, an ID badge clipped at the hip || lab
+- a sleek black high-neck tactical bodysuit with a teardrop chest cutout, structured padded shoulders and fitted armored sleeves, sharply contoured through the waist with large angular cutouts exposing the hips and sides, high-cut thong-style hip straps over skin-tight black leggings, and fitted black tactical gloves at the wrists || mil
+- a form-fitting black tactical bodysuit with a high collar and a distinctive circular keyhole cutout at the chest. The suit features dramatic side cutouts at the waist and hips with thin strappy details connecting the front and back panels || mil
 
 ## Formal wear
 

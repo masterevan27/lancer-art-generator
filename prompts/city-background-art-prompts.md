@@ -15,7 +15,7 @@ prompt text.
 
 They follow the same three composition rules the animated Lancer backgrounds
 do, because those are about the job rather than the style: nobody in the frame,
-the middle of the composition left quiet for a chat panel to sit over, and the
+visual interest distributed naturally across the full composition, and the
 moving elements chosen up front so the Wan pass has something to move that the
 picture already contains.
 

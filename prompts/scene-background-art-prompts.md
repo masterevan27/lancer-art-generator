@@ -36,8 +36,8 @@ The source image is a soft, heavily saturated all-blue night scene with bright g
 
 The starting point for `animate-portrait.py --background` when you don't have a
 background of your own yet. Composed for that job rather than as a standalone
-piece: a wide, deep frontier landing yard with the interest pushed to the edges
-and the horizon, a quiet middle where a chat panel will sit, and smoke, cloud,
+piece: a wide, deep frontier landing yard with visual interest distributed across
+the full composition, and smoke, cloud,
 dust and running lights scattered through it so the Wan pass has something to
 move. Nobody is in the frame on purpose — a background this will sit behind
 already has a portrait in front of it.
@@ -98,8 +98,8 @@ lands.
 
 The sections below are more of the same job — alternates for the same slot,
 each composed for `--background` rather than as standalone pieces. They follow
-the same three rules the dropship yard does: nobody in the frame, the middle of
-the composition left quiet for a chat panel, and every moving element chosen
+the same three rules the dropship yard does: nobody in the frame, visual interest
+distributed across the full composition, and every moving element chosen
 from what a bullet in the `## Background Animation` table actually names, so
 `--roll` has something to move that the picture already contains.
 
@@ -407,7 +407,7 @@ CFG 1.0, 8 steps, Euler, Simple scheduler, no negative prompt. Generate at
 A forward operating base seen from inside the wire after dark, searchlights
 working the ground beyond the berm. Composed for the searchlights bullet:
 several towers, several beams, low cloud for them to catch, dust in the air, and
-the compound floor left open in the middle for the chat panel.
+clear working routes across the compound floor and detail throughout the scene.
 
 > A wide, cinematic establishing shot of a forward operating base at night,
 > viewed from ground level inside the compound looking out toward the perimeter.

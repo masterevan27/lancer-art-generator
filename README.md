@@ -149,6 +149,11 @@ never rolls, written to move hair, clothing and backdrop while the figure
 holds still. Needs a running ComfyUI with the Wan 2.2 I2V models. See
 [docs/animate-portrait.md](docs/animate-portrait.md).
 
+For editable procedural scenes, full-frame backgrounds, and reference-based
+gridless top-down maps, see [Dynamic backgrounds and battlemaps](docs/dynamic-backgrounds.md)
+and `generate-background.py`. Its scene catalogue supports reproducible previews,
+per-trait locks and batch rendering, with metadata saved beside each image.
+
 `--background` points the same machinery at a scene instead of a face:
 widescreen, a motion prompt that moves smoke and cloud and lights rather
 than a mouth, and `--roll` reading the `## Background Animation` table in
