@@ -31,7 +31,8 @@ table whose value is drawn second, from the `## Name` table. Ten near-identical
 black dresses in a `## Black dresses` table then weigh what one distinct jacket
 weighs, and the specific dress is chosen inside the group. A reference takes an
 `xN ` weight like any bullet and may carry `@theme` tags (`- => Black dresses
-(gundam) || @gundam`), which make the whole group a themed one; it carries no
+(gundam) || @gundam`), which make the whole group a themed one - except in
+`## Backdrop`, whose note explains why a tag there is not read; it carries no
 other flags, since `civ`, `mil`, `notac` and `dressy` belong on the members. A
 group may have `(she)` and `(she) +` variants like any table, and a reference
 placed in `## Outfit (she) +` makes the group women-only. One level only: a
@@ -2869,19 +2870,26 @@ bullet there changes no portrait or token.
   Entries that led with the environment rendered the subject standing on a deck
   no matter how many "weightless" qualifiers were bolted on.
 
-  Thirty-three of these are zero-gravity, against 353 weighted entries in all,
-  so about one portrait in eleven comes up weightless. Two readers counting
-  this by hand got 31 and 36, so it is worth saying where the line is: the
-  thirty-three are the scenes where the SUBJECT is weightless, which includes
-  the seven sealed-EVA vacuum ones and the one half-body bullet whose scene is
-  a zero-gravity cargo lock, and excludes a scene that merely mentions a
-  floating city. That figure is far below
-  the "about a quarter" this note used to claim: the count was written when the
-  table was a fraction of its present size and the standing entries carried an
-  x3 weight, and the table outgrew it rather than the weighting changing. Add a
-  weight to the zero-gravity bullets, not to the standing ones, if you want the
-  mix back - there are 300-odd of the latter now and re-weighting them all is a
-  much larger edit than it was.
+  Most of the zero-gravity scenes now live in two groups, `## Freefall dives
+  toward the viewer` and `## Floating weightless aboard ship`, one slot each;
+  the sealed-EVA vacuum ones stay here because they carry a gate (see below).
+  Put an `xN` on either reference, not on the members, if weightless portraits
+  should come up more often.
+
+  GROUPS. Families of near-duplicate scenes - rooftop ledges over a night city,
+  shuttles on a landing apron, rings in the sky - are moved into group tables
+  after the last bullet here (from `## Freefall dives toward the viewer` to
+  just before `## Weather`), each entered by one `- => Name` reference, so a
+  family of seven rolls as often as one distinct scene. Members keep the full
+  `shot || scene || flags` shape. Three kinds of bullet stay ungrouped here:
+  - Occupation-gated scenes (`medic`, `deskwork`, `cockpit` and the rest). The
+    gate already keeps them to their Roles, and grouping them would cut a
+    medic's chance of a medic scene to one slot.
+  - Theme-tagged scenes. A reference's `@theme` tag is not read in this
+    table: Backdrop's flags live in the third segment and `=> Name || @theme`
+    has only two, so a themed Backdrop group would roll for every theme. Keep
+    tagged scenes as plain bullets, or tag the members of a neutral group.
+  - The x3 half-body staples at the top, which are weighted to be common.
 
   The exterior/vacuum entries dress the subject in a sealed EVA pressure suit
   and helmet over whatever Outfit was rolled, so a corporate blouse in hard
@@ -2898,14 +2906,11 @@ bullet there changes no portrait or token.
 - x3 A half-body character portrait || Behind {object}, softly blurred well out of focus, is an operations room wall of tactical displays.
 - x3 A half-body character portrait || Behind {object}, softly blurred well out of focus, is the open bay door of a dropship, a pale sky beyond. || weather
 - x3 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a bar interior, out-of-focus figures at the tables behind.
-- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} diving directly toward the viewer through a dim ship corridor in freefall, {possessive} body stretched into dramatic foreshortening, one arm reaching forward toward the viewer with open fingers and the other bent up near {possessive} head gripping an unseen handhold above the frame, legs trailing behind {object} in motion, faint streaks of motion blur emphasising {possessive} speed, the corridor's lit panels and hazard striping rushing past. Dramatic foreshortened composition.
-- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} weightless in freefall, {possessive} body tilted no more than about 30 to 40 degrees off vertical and stretched toward the viewer in strong foreshortening, one gloved hand thrust out at the camera and {possessive} legs trailing loose behind {object}, hair and tether lines floating free, having just pushed off a bulkhead out of frame - behind {object} a darkened docking bay, its running lights streaking past. Dramatic foreshortened composition.
-- A close, low-angle character portrait || {Subject} {is_are} floating weightless in a narrow access tube, one arm braced against the wall above {possessive} head and knees drawn up, {possessive} body turned a mild 20 to 30 degrees off vertical with nothing underfoot, small debris and loose tools hanging motionless in the air alongside {object}, dim panel lighting receding down the tube behind.
-- A dynamic, gently canted-angle character portrait || {Subject} {is_are} weightless in freefall, body tilted no more than about 30 to 40 degrees off vertical across the frame with one hand reaching out and {possessive} legs drifting loose behind {object}, hair lifted free - around {object} the netted crates of an unlit cargo hold hang untethered in the air, a single work lamp raking across {object} from one side.
+- => Freefall dives toward the viewer
+- => Floating weightless aboard ship
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} gliding along the exterior hull of a ship in a low zero-gravity recline, {possessive} back arched and body tilted no more than about 30 to 40 degrees off vertical across the frame, one gloved hand reaching up and back to grip an angular strut above {possessive} head while the other extends down to brace against a rail beneath {object}, legs drawn up and bent, head tilted back inside a sealed EVA helmet, visor down, gazing up and to the side, a full pressure suit worn close over {possessive} kit - behind {object} the dark hull curves away into the void, faint teal atmospheric light bleeding in from one side and streaks of motion-blurred light trailing past in the starfield. Dramatic rim lighting along {possessive} silhouette. || vacuum
 - A dynamic, gently canted-angle character portrait || {Subject} {is_are} drifting weightless just outside an open airlock in a sealed EVA pressure suit and helmet, visor down, worn over {possessive} kit, body turned in a shallow roll no more than about 30 to 40 degrees off vertical with one gloved hand still on the hatch coaming and {possessive} legs floating free, tether line coiling loose behind {object} - beyond {object} the ship's plating falls away into the void and the lit limb of a planet curves across the background. Dramatic rim lighting along {possessive} silhouette. || vacuum
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} braced weightless between two struts of an orbital gantry, {possessive} body tilted no more than about 30 to 40 degrees off vertical and slowly rotating, one gloved hand overhead on a spar and one boot hooked under a rail, a sealed EVA pressure suit and helmet, visor down, worn over {possessive} kit - behind {object} the scaffold recedes into the dark and the starfield streaks past in faint motion-blurred lines. Dramatic rim lighting along {possessive} silhouette. || vacuum
-- A close, low-angle character portrait || {Subject} {is_are} floating weightless inside a pressurised observation blister, one palm flat against the curved glass above {possessive} head and {possessive} body turned a mild 20 to 30 degrees off vertical, legs drawn up and bent, hair lifted free - beyond the glass the ship's hull curves away and the starfield turns slowly past. Rim lighting along {possessive} silhouette.
 - A dynamic character portrait || {Subject} {is_are} caught in a three-quarter turn, raising a compact sidearm and firing directly toward the viewer, muzzle flash bursting from the barrel and a spent shell casing ejecting mid-air - behind {object} a dim industrial interior of dark metal panelling, faintly lit and kept soft and out of focus so {subject} {is_are} clearly the subject. Even key lighting on {possessive} face and weapon, with a dramatic but restrained rim light thrown by the muzzle flash. || nogear frontline
 - A dynamic, three-quarter rear-view character portrait || {Subject} {is_are} seen from behind on a rooftop ledge, glancing back over one shoulder and drawing a single-edged blade that glows faintly along its cutting edge, a second blade sheathed crosswise against {possessive} back - behind {object} a dim industrial cityscape stretches away, muted grey-olive towers dotted with sparse lit windows beneath a hazy dusk sky, and the hulking silhouette of something vast and serpentine looms low on the horizon as a dark rust-toned shape. Twin warning beacons glow dull amber at the edges of the frame. || nogear weather frontline
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} weightless in freefall down a dim ship corridor, {possessive} body angled hard toward the viewer in strong foreshortening, one arm extended down and out gripping a raised sidearm with the muzzle tracking past the frame, the other hand bent back near {possessive} own head bracing against an unseen handhold, legs trailing loose behind {object}, faint motion blur streaking the corridor's lit panels and hazard striping as they rush past. Dramatic foreshortened composition. || nogear frontline
@@ -2917,12 +2922,12 @@ bullet there changes no portrait or token.
 - A dynamic, low-angle character portrait || {Subject} {is_are} braced low on one knee behind a belt-fed light machine gun, sighting down it toward the viewer with the ammo belt trailing to a drum magazine, gear-laden webbing crossing {possessive} chest - beside {object}, out of focus, the watchful shape of a large working dog crouches low in the frame, and behind them both a pale washed-out sky stretches away. || nogear weather frontline
 - A dynamic, low-angle character portrait || {Subject} {is_are} advancing down a cramped service corridor, a rifle raised and sighted toward the viewer, red emergency strip-lighting striping the walls and ceiling around {object} and dark stains marking the deck underfoot - ahead down the passage, two more silhouetted figures stand caught in a bright wash of light and drifting haze. Hard red-tinted side lighting rakes across {possessive} face and the weapon. || nogear frontline
 - x3 A half-body character portrait || Behind {object}, out of focus, is a muted frontier backdrop of dusty rockcrete structures and faint industrial haze, a dim atmospheric glow low on the horizon. Dramatic side lighting casts hard shadow across half {possessive} face. || weather
-- A three-quarter character portrait || {Subject} {is_are} leaning intently over a cluttered workbench, hunched forward and studying something closely, both hands down on a mechanical keyboard - to one side a large monitor glows with dense terminal code, casting light across {possessive} face, and behind {object} a cluttered workshop of stacked machinery, tangled cabling and scattered papers recedes into soft focus under dim overhead light. Warm light on {possessive} face against the cooler background. || nogear
-- A character portrait || {Subject} {is_are} leaning back against the flank of a long, low speeder bike parked at a fuel stop, ankles crossed and weight settled easy against the fuselage, a cigarette held forgotten near {possessive} mouth, gazing out at the fading light - behind {object} a hazy golden dusk skyline of distant spires rises beyond a scatter of old fuel pumps and hand-lettered signage crowding the foreground out of focus. || nogear weather
+- => Hunched at terminals
+- => Posing with parked bikes
 - A character portrait || {Subject} {is_are} sitting in profile, leaning back against the bent knee of a massive crouched military mech - the machine is boxy and heavily industrial, thick armored plating stencilled with unit markings, a single lit optic sensor and antenna protrusions rising from its head, its bulk looming just behind {possessive} shoulder. Behind them a rundown industrial refinery at dusk: tangled scaffolding, pipes and a tall numbered tower silhouetted against a low sun. Warm light rakes across {possessive} face and the mech's armor. || weather mechyard
 - A dramatic low-angle character portrait || {Subject} {is_are} leaning back against the massive bent knee of a towering mech, looking down at the viewer, the shot angled steeply upward to emphasise the scale of both - the mech's leg fills the foreground in fine panel-line and rivet detail, a weapon barrel running off the top of the frame, a crescent moon faint through cloud above and a distant skyline low on the horizon. || weather mechyard
 - A character portrait || {Subject} {is_are} sitting in the round hatch of an open viewport, one leg drawn up and hooked over the rim and the other hanging free outside it, {possessive} weight braced back against the frame in unhurried repose, gazing out past the opening. Tucked into the corner of frame below {object}, the domed head and lit photoreceptor of a small utility droid peeks into view. Beyond the hatch a pair of pale suns hang low over a sun-bleached horizon. || weather
-- A character portrait seen from behind || {Subject} {is_are} leaning on a rooftop balcony railing high above a dense city street, glancing back over one shoulder at the viewer - below {object} the street is packed with stacked signage glowing through humid haze, the crowds and wet pavement dissolving into loose, almost impressionistic brushwork. A rooftop awning and railing frame the high vantage point. || weather
+- => Glancing back from a rooftop railing
 - A character portrait || {Subject} {is_are} standing in a bombed-out doorway between two weathered concrete walls, framed by scattered bullet holes, faded warning signs and pinned notices - behind {object} a ruined cityscape stretches away into smoke and dust, a massive mech silhouette looming among the broken buildings and a huge low sun bathing the scene. In the foreground the blurred silhouettes of two seated figures frame the bottom corners, well out of focus. || weather
 - A close-up character portrait || {Subject} {is_are} framed tight against a dense city street at night, tangled overhead wires crossing a hazy sky behind {object} and stacked signage glowing softly out of focus, the light grading cool across {possessive} face. || weather
 - x3 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a frontier rail platform in ochre haze, an incoming transit's headlamps glaring through the dust and tangled overhead wire. || weather
@@ -2931,16 +2936,14 @@ bullet there changes no portrait or token.
 - x3 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a snowbound crash site, a downed transport burning against a wall of white peaks. || weather
 - x3 A half-body character portrait || Behind {object}, out of focus, an immense flying superstructure eclipses the low sun over a sprawl of sun-baked rooftops, its long shadow stretching through the haze. || weather
 - A character portrait || {Subject} {is_are} standing on a windswept ridge, a weapon lowered and faintly smoking at {possessive} side, looking out over a mist-filled valley - behind {object} a vast ring of wreckage hangs frozen in the air above a plunging waterfall, a pair of transports drifting past far below. || nogear weather frontline
-- A character portrait || {Subject} {is_are} sitting cross-legged on a rooftop ledge, eyes closed in quiet stillness, a sheathed blade laid flat across {possessive} lap - behind {object} a dense night skyline glows through drifting haze, thin trails of aircraft light threading between the towers. || nogear weather
-- A dynamic character portrait || {Subject} {is_are} walking straight toward the viewer down a rain-slicked neon-lit street at night, flanked on either side by a pair of hulking bipedal war-mechs looming half into frame, their optics burning dull red in the murk, signage bleeding into smeared reflections on the wet pavement behind them all. || weather
+- => Sitting on a rooftop ledge above the city
+- => Beneath towering war machines
 - A dynamic, low-angle character portrait || {Subject} {is_are} crouched low in a wide balanced stance atop a hovering skateboard ridden like a surfboard, knees bent and weight low, one arm flung out wide for balance and the other pointing off past the frame, a twin-thruster pack strapped across {possessive} back glowing faintly at the vents, hair and jacket sleeves whipped back by the wind - behind {object} a dense neon-lit cyberpunk skyline rises through drifting haze, towering signage in tangled scripts and corporate logos glowing through the mist, other riders on hoverbikes cutting past in the middle distance. || nogear weather
 - A dramatic low-angle character portrait || {Subject} {is_are} crouched low behind an abandoned vehicle on a rain-slicked city street at night, weapon raised and sighting up at a colossal insectoid war-machine that fills the skyline ahead, its hull studded with glowing sensor clusters and thin segmented limbs trailing into the smoke-hazed street below, twin beams lancing down from its underside through the drifting mist - behind {object} a burning wreck casts long orange light across the wet pavement. || nogear weather frontline
 - A character portrait || {Subject} {is_are} standing just inside the shattered nave of a ruined cathedral, dust hanging thick in broad shafts of light falling through the broken vaulting overhead, gazing up at an ancient gold-plated war-machine crouched motionless among the rubble ahead - a pair of cloaked, hooded companions stand just ahead of {object}, silhouetted small against its bulk. || weather
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} caught mid-kick in heavy powered armor, driving a braced boot into the armored hull of a massive segmented war-machine at close quarters, {possessive} sidearm still gripped and firing point-blank in the other hand, sparks and debris bursting from the impact - behind {object} a shattered cityscape unfurls in smoke and falling rubble, distant explosions blooming against a pale hazy sky. || nogear weather frontline
-- A character portrait || {Subject} {is_are} standing amid drifting embers and rubble, watching a hulking quadrupedal war-mech stride past close behind {object}, an oversized cannon swinging loose from one of its forelimbs, a small armed flyer banking low overhead - beyond them a bombed-out industrial skyline fades into a bruised violet dusk, fire guttering low among the wreckage. || weather
 - x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a windswept plain of tall pale grass, a small stilted wayside shrine strung with paper streamers and a spear driven upright nearby trailing a strip of red cloth, a faint rainbow arcing through the haze beyond. || weather
-- x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-slick shrine courtyard at dusk, stone steps climbing to wooden eaves hung with a glowing paper lantern, pale fox-shaped shapes moving low through the mist. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is the fog-wrapped wreck of a fallen war-mech looming over a rain-soaked shrine courtyard, its broken frame threaded with strung paper talismans. || weather
+- => Misty shrine ruins
 - x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a sunlit ruin of towering stone archways and a broken aqueduct climbing a green mountainside, ivy and wind-bent trees reclaiming the old stonework. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a colossal robotic figure half-risen from a canal, only its ornate head, shoulders and clawed hands breaking the water, gold filigree tracing its dark plating; beyond it domed shrines and slender gold-latticed spires ring a plaza where two hooded robed figures pause at the water's edge beneath a hazy dusk sky, a dull red sun hanging low beside a darker second disc. || weather
 - A three-quarter rear-view character portrait || {Subject} {is_are} standing in a mech's calibration bay, gazing up at a towering white-armored war-machine looming just ahead, one hand raised holding a slim holographic data-slate glowing with dense diagnostic readouts, {possessive} other hand braced at {possessive} hip - thick power cabling and chain hoists hang down around the mech's bulk, a wall-mounted display beside {object} scrolling systems-check telemetry, cool blue interior lighting washing the bay. || nogear mechwork
@@ -2948,102 +2951,78 @@ bullet there changes no portrait or token.
 - A dramatic low-angle character portrait || {Subject} {is_are} standing amid drifting embers on a scorched battlefield in heavy rain, {possessive} back to the viewer, a long rifle gripped and lowered at {possessive} side - ahead of {object} churned mud and shattered rock fade into grey mist streaked with falling ash. || nogear weather frontline
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a floor-to-ceiling window wall overlooking a dense neon high-rise skyline at night, faint status readouts glowing at the edge of the frame.
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a graffiti-tagged alley lit by tube neon signage bleeding red and teal through drifting mist.
-- A character portrait || {Subject} {is_are} standing beside a parked muscle car on a dark cyberpunk street at night, one hand braced on the doorframe, glancing up at the looming high-rises ahead - behind {object} the car's tail-lights glow red against the wet pavement. || weather
-- A character portrait || {Subject} {is_are} standing at a rooftop railing in the rain, glancing back over one shoulder, a pair of aircraft streaking low across the skyline behind {object} - below {object} a dense neon high-rise district stretches away into the haze. || weather
-- A close character portrait || {Subject} {is_are} seated inside a parked vehicle's cockpit in heavy rain, one hand braced on the wheel, neon shopfronts smearing color across the fogged, rain-streaked windshield ahead. || weather
-- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} weightless in freefall, twisting hard to slip between a crossing lattice of taut laser tripwires, {possessive} body bent and one arm flung wide for balance while the other reaches ahead, loose debris and shattered fragments drifting alongside {object} - the beams cut bright green lines through the dark around {object}, faint structural wreckage receding into the black beyond.
-- A character portrait || {Subject} {is_are} standing before the hull of a beached derelict starship, reaching up to touch a faint glowing panel set into its plating - behind {object} the ship's saucer-like silhouette looms against a field of stars.
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a wall of humming, dust-caked monitors and tangled cable runs, their pale glow the only light in the room.
+- => Posing with parked cars
+- => Vehicle seats at night
+- => Walking toward colossal wrecks
+- => Walls of monitors
 - A dynamic character portrait || {Subject} {is_are} crouched low and reaching forward through the wreckage of a gutted server room, heavy clawed gauntlets braced against a fallen strut - behind {object} shattered windows let pale light leak through drifting dust and hanging cable. || nogear frontline
 - A character portrait || {Subject} {is_are} perched on the raised knee-joint of a crouched companion mech in heavy night rain, one hand braced against its plating - behind {object} a neon-lit high-rise district fades into the downpour. || weather ownmech
-- A character portrait || {Subject} {is_are} standing beside a parked muscle car on a pastel-lit street at dusk, one hand resting on the open door - behind {object} a tangle of towering cyberpunk architecture rises hazy into the fading light. || weather
-- A character portrait || {Subject} {is_are} sitting cross-legged on a rooftop ledge at night, hands braced behind {object} - beyond {object} a massive ringed planet hangs low over a grid-lit synthwave skyline lined with palm trees.
-- A character portrait || {Subject} {is_are} sitting on the hood of a parked muscle car beneath an enormous full moon, hands braced back against the metal - small dark shapes wheel through the night air above the rain-slick street around {object}. || weather
-- A character portrait || {Subject} {is_are} seated low in a rain-slicked alley, jacket half-shrugged off one shoulder and cable straps trailing loose across {possessive} lap, gazing up past the camera - behind {object} neon signage in unfamiliar characters glows through the mist, a server rack blinking against the wall. || weather
-- A character portrait || {Subject} {is_are} seated in a crowded night transit car, one hand raised holding a drink, oversized headphones clamped over {possessive} ears - behind {object} out-of-focus passengers sway with the motion and neon signage glows through the window beyond.
+- => Slumped in rain-slick alleys
+- => Riding night transit
 - A close character portrait || {Subject} {is_are} standing motionless before the lowered head of a colossal war-machine, its single optic burning close overhead, sparks showering down as welding light flares behind {possessive} shoulder - a steel catwalk and dim industrial scaffolding recede into the haze around {object}. || mechwork
-- A close character portrait || {Subject} {is_are} reclined still in a diagnostic rig, head tipped back and eyes closed, a crown of cabling radiating out from {possessive} temples to banks of softly blinking readouts on either side of {object}.
+- => Diagnostic chairs and rigs
 - A dramatic low-angle character portrait || {Subject} {is_are} braced against the wind with one hand raised to shield {possessive} face, tribal markings streaking {possessive} cheek - beyond {object} a huge moon hangs low over a besieged orbital structure, beam weapons lancing down through drifting smoke. || weather
-- A character portrait || {Subject} {is_are} sitting cross-legged atop the hull of a parked armored vehicle, segmented mechanical prosthetic arms resting in {possessive} lap - behind {object} a dense neon-lit night skyline glows above a heavy cannon barrel angled into frame.
+- => Sitting on idle machines
 - A character portrait seen from behind || {Subject} {is_are} standing in silhouette against a huge glowing sun rising behind a ring of ruined structural arches, hair and coat trailing in the wind - a shattered cityscape stretches out to either side of {object} beneath the glow. || weather
 - A dynamic character portrait || {Subject} {is_are} drifting limp and weightless above the planet's curve, arms trailing loose and a line of cabling reeling out behind {object}, shattered debris and a distant damaged vessel tumbling nearby, {possessive} suit scorched and torn across the chest. || vacuum
 - A character portrait || {Subject} {is_are} standing before the looming bulk of a black companion war-machine, its twin shoulder cannons rising to either side and its optics burning faint red overhead - behind {object} a hazy night skyline glows low against the dark. || ownmech
 - A close character portrait || {Subject} {is_are} framed tight in a cracked flight helmet, a thin readout glowing at the brow, half {possessive} face lit by a bright detonation tearing through a field of tumbling rock and debris just beyond {possessive} shoulder. || cockpit
-- A close character portrait || {Subject} {is_are} reclined loose in a vehicle's seat, one arm slung back over the headrest and a knee drawn up, glancing out through a rain-streaked window - neon signage smears past in the dark beyond {object}. || weather
 - A dynamic character portrait || {Subject} {is_are} walking straight toward the viewer down a narrow overgrown alley, a heavy pack slung on {possessive} back - ivy and reclaimed neon signage crowd the walls to either side of {object}, an old arcade cabinet half-buried in creepers behind.
 - A close character portrait || {Subject} {is_are} crouched low in a wrecked, fire-lit room, banks of dead monitors stacked behind {object} and a fire smoldering in the wreckage beyond.
 - A close character portrait || {Subject} {is_are} tipped back in a mech cockpit seat, {possessive} gaze lifted past the camera - dense banks of glowing readouts and a night skyline crowd the canopy around {object}. || cockpit
 - A character portrait || {Subject} {is_are} reclined deep in a low chair, legs crossed and stretched long, a hand of cards held loosely - mechanical prosthetic arm plating catches the light, and a heavy weapon rests propped against the chair beside {object}, screens of dense readouts glowing at {possessive} back.
-- A dramatic character portrait seen from behind || {Subject} {is_are} standing still in the rain, gazing up at a towering battle-scarred war-machine looming just ahead, its single core glowing steady in its chest - a dense city skyline rises hazy through the downpour behind {object}. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cramped hacker's den lit green by a wall of humming CRT monitors, rain streaking a window at the far end. || weather
-- A character portrait seen from behind || {Subject} {is_are} sitting on a rooftop bar's counter ledge, glancing back over one shoulder - a dense rain-soaked high-rise district glows through the downpour beyond {object}, potted plants crowding the rail. || weather
 - A close character portrait || {Subject} {is_are} leaning back into a mech cockpit seat, rain-damp hair swept across {possessive} face, one gloved hand braced on the console - beyond the canopy a night skyline glows through the rain. || weather cockpit
 - A character portrait || {Subject} {is_are} sitting perched on a heap of mangled wreckage, one hand raised to {possessive} collar - a sun-bleached desert stretches out behind {object}, distant explosions blooming pale against the sky. || weather
-- A character portrait || {Subject} {is_are} gripping an overhead handhold inside a moving vehicle, one arm raised and braced, glancing up and to the side - a night skyline streaks past the window behind {object}.
 - A dramatic low-angle character portrait || {Subject} {is_are} crouched on a narrow icy ledge high above the city, a pistol held ready in one hand, glancing back over {possessive} shoulder - a dense high-rise skyline drops away into the night far below {object}. || nogear weather frontline
 - A character portrait || {Subject} {is_are} seated in a shuttle's passenger cabin, poring over a thick bound technical manual balanced on one knee, a travel bag propped against the seat, a richly robed diplomatic passenger seated close beside {object} - beyond the windows a scatter of escort ships hangs against the stars.
 - A close, low-angle character portrait || {Subject} {is_are} reclined deep in a mech cockpit's padded seat, sealed head to toe in scuffed dark pressure armor, one gloved hand fallen slack across {possessive} lap, a dense asteroid field drifting past the canopy overhead - beside {object} a second pilot leans in close, watching the field pass. || cockpit
 - A three-quarter character portrait || {Subject} {is_are} seated at a terminal, working a hovering holographic display with one hand, a hulking rust-streaked companion mech looming close behind {possessive} shoulder, its optics glowing faintly in the low light - around {object} banks of server racks glow in the dark. || nogear ownmech
-- A dynamic character portrait || {Subject} {is_are} leaning low over the handlebars of a weathered vintage motorcycle, cutting fast across a sunbaked salt flat, {possessive} scarf and hair streaming back in the wind - behind {object} a chain of distant mesas breaks the horizon under a darkening sky. || weather
+- => Riding bikes at speed
 - A character portrait || {Subject} {is_are} half-turned against open space, a tattered scarf-cloak streaming out weightless behind {object}, hair drifting loose in the void - beyond {object} a churning red nebula glows low around a dark dwarf star.
 - A dramatic low-angle character portrait || {Subject} {is_are} crouched low on a rain-slick rooftop ledge, bracing a long rifle sighted down into the streets below, weight settled low over one knee - beneath {object} a dense neon-lit cityscape glows through the downpour. || nogear weather frontline
 - A character portrait || {Subject} {is_are} standing braced with both hands flat on a lit control console, framed against a floor-to-ceiling viewport of a rain-swept neon high-rise skyline beyond. || nogear weather
-- A dramatic low-angle character portrait || {Subject} {is_are} standing framed close against the camera, hair and jacket lifted by displaced air, glancing back over {possessive} shoulder as a colossal armored war-machine looms directly overhead - the shot angled steeply upward to emphasise its scale against the neon high-rise skyline beyond. || weather
 - A dynamic, close character portrait || {Subject} {is_are} raising a compact pistol close to the camera, fine circuitry glowing faintly along {possessive} fingertips and knuckles - behind {object} a pair of masked companions stand watch at a railing overlooking a dense rain-slicked neon cityscape. || nogear weather frontline
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} tumbling backward through open air in cracked powered armor, twin beams of light searing across {possessive} torso and shattering plating away in jagged fragments, hair whipped wild by the fall - far below {object} a dark cityscape glows red beneath the drifting debris. || weather frontline
 - A character portrait || {Subject} {is_are} reclined loose in a cockpit's crash seat, one hand reaching lazily out into the glow, banks of console screens and readouts ringing {object} on every side. || cockpit
 - A character portrait || {Subject} {is_are} standing at a rooftop ledge, a data-slate held loose in one hand and a sidearm holstered at {possessive} hip, a dark fabric wrap pulled up over the lower face - beyond {object} a dense neon-lit skyline glows red through the night haze. || weather frontline
 - A dynamic character portrait || {Subject} {is_are} walking straight toward the viewer down a dim industrial hangar bay, a flight helmet carried loose under one arm, a hulking quadrupedal war-machine striding through drifting steam close behind {object}, overhead lights raking down through the haze. || nogear cockpit
-- A character portrait || {Subject} {is_are} standing squared to the viewer, a long white coat draped over {possessive} shoulders, an immense capital ship descending directly behind {object}, its hull lit sharply against a burning red city glow far below, drifting haze softening the skyline. || weather
+- => Beneath ships hovering overhead
 - A close character portrait || {Subject} {is_are} standing perfectly still as an oversized mechanical hand reaches into frame to project a thin beam of light directly into {possessive} eye, a small stamped code marked at {possessive} cheekbone, the moment held in tense stillness.
 - A character portrait seen from behind || {Subject} {is_are} standing atop a rooftop ledge high above a sprawling neon-red cityscape at night, a sidearm held loose and low in one hand, gazing down at the grid of light far below. || nogear weather frontline
 - A character portrait || {Subject} {is_are} standing beside a towering crimson war-machine, its cockpit visor glowing pale blue in the dark, {possessive} fitted suit catching the light - around them the dim outline of a nighttime hangar recedes into shadow. || ownmech
 - A character portrait seen from behind || {Subject} {is_are} standing at a viewport beside a hulking white powered-armor companion, one hand raised flat against the glass, a stencilled unit number marking {possessive} shoulder - beyond the glass a sunlit planet curves away below, city lights scattered across its night side. || ownmech
-- A character portrait || {Subject} {is_are} standing in three-quarter profile, a towering red-and-white war-machine looming just behind {possessive} shoulder, its single optic lit - down the street behind {object} red paper lanterns and shopfront signage glow through the night haze. || weather
 - A character portrait || {Subject} {is_are} standing with both cybernetic prosthetic hands raised and pressed together in prayer, forearms segmented and scarred with use, a ring of glowing script arcing overhead like a halo - behind {object} a congregation of hooded, bowed worshippers recedes into a dim golden haze, their faces indistinct. || clergy
 - A character portrait || {Subject} {is_are} seated in the open cockpit of a parked attack craft on a rocky ridge at night, flight helmet secured and visor down, a stitched unit patch at the shoulder of {possessive} flight jacket, gazing off past the frame - behind {object} a huge banded planet glows low over the ridge, faint stars scattered through the dark. || weather cockpit
 - A character portrait || {Subject} {is_are} standing with a spent cigarette held loosely at the corner of {possessive} mouth, a pair of heavy mechanical support struts trailing cabling rising to either side of {possessive} head - behind {object}, out of focus, a dense hazy cityscape glows faintly through drifting mist.
-- A half-body character portrait || Behind {object}, out of focus, is a towering sci-fi skyline beneath a colossal glowing ring-shaped structure hanging in the night sky, freighters and cruisers drifting past its light, the streets below slick with rain and threaded with cool running-lights. || weather
-- A character portrait || {Subject} {is_are} seated astride a parked matte-black superbike on a railed overlook, one boot braced against the ground, glancing back over {possessive} shoulder - behind {object} a tiered river city of lantern-lit pagodas and waterfalls spreads below towering spired structures at dusk. || weather
+- => Rings in the sky
 - A character portrait seen from behind || {Subject} {is_are} standing at the foot of a towering dormant war-machine in a cluttered maintenance bay, a ladder propped against its leg and a flight helmet held loose in one hand at {possessive} side, dim standby lighting glowing from vents across its hull - a weathered poster and status monitors line the walls to either side, steam venting low across the floor. || nogear cockpit
 - A character portrait seen from behind || {Subject} {is_are} standing at a rocky overlook, a long tattered cloak snapping loose in the wind behind {object}, gazing out over a hazy desert city ringed by tall spires - overhead a massive banded planet with a debris ring dominates the sky, smaller moons scattered around it, the whole scene washed in the deep orange of a dying sun. || weather
 - A dynamic character portrait || {Subject} {is_are} standing on the broken rocky surface of an airless moon, a pistol gripped and lowered at {possessive} side, glancing back over one shoulder - behind {object} a searing beam of weapons fire lances low across the horizon, kicking up a spray of debris where it grazes the ground. || nogear frontline
 - A character portrait || {Subject} {is_are} reclined loosely in a cockpit seat, one leg - a segmented cybernetic prosthetic - propped up against the console, {possessive} head tipped back and gaze drifting past the canopy - beyond {object} a dense starfield stretches away into the dark, banks of status readouts glowing at the edges of the frame. || cockpit
 - A dynamic character portrait || {Subject} {is_are} standing amid drifting debris and fire on a cratered surface, glancing sharply toward the viewer, one heavy geometric shoulder plate catching the light - behind {object} explosions bloom low across the ground and a bright streak burns across the black sky above. || frontline
-- A character portrait seen from behind || {Subject} {is_are} standing at the edge of a high rooftop with both arms flung wide, an oversized jacket printed with bold graphic linework across the back - below and behind {object} a dense neon high-rise skyline stretches away into the haze, a single towering spire glowing at the center of the frame. || weather
+- => Standing at a rooftop edge
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} punching forward through the air in heavy powered armor plating, {possessive} lead arm driven out toward the viewer in a braced clawed gauntlet and the trailing arm cocked back, {possessive} legs trailing behind in motion, hair whipped back - behind {object} bright beams of weapons fire streak past low across a debris-strewn battlefield. || weather frontline
 - A character portrait || {Subject} {is_are} reclined deep in a battered gaming chair, arms crossed and half-lidded, a translucent visor band glowing faintly across {possessive} brow and cabling trailing from a jack at {possessive} temple - around {object} a bank of terminal displays glows with dense scrolling data, a burned-down cigarette smoldering in a nearby ashtray. || nogear
 - A character portrait || {Subject} {is_are} standing with {possessive} bare mechanical hands folded low in front, fully articulated at every joint - behind {object} a hulking twin-turreted combat vehicle looms close, its optics glowing steady in the dark, a pair of moons rising in the night sky beyond. || weather
 - A character portrait || {Subject} {is_are} reclined in the driver's seat of a battered open-top vehicle, both hands laced behind {possessive} head, elbows out, gazing off past the frame - behind {object} a ruined cityscape rises in ivy-choked towers under a hazy morning sun, birds scattering across the empty street ahead. || weather
-- A character portrait seen from behind || {Subject} {is_are} walking away down a narrow alley, one arm a fully articulated mechanical prosthetic at {possessive} side - behind {object} a rain-slicked passage recedes into drifting fog, hazy signage bleeding color low across the wet stone. || weather
-- A character portrait || {Subject} {is_are} sitting cross-legged atop the hull of a parked aircraft at night, {possessive} fully articulated prosthetic hands resting loose on {possessive} knees, gazing up past the frame - behind {object} banks of cloud drift past a star-scattered sky, the aircraft's markings faintly lit along its flank. || weather
+- => Walking wet streets at night
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-slicked stairway alley lined with paper lanterns and a tiny bar counter, a hazy city skyline glimpsed below through the wet stone steps. || weather
-- A character portrait || {Subject} {is_are} sitting slouched against a graffiti-tagged wall in a rain-slicked neon alley, one boot planted and the other leg drawn up, {possessive} head tipped back and eyes half-lidded, loose change and a dropped data-chit scattered on the wet pavement beside {object} - behind {object} tangled cable runs and stacked neon signage in unfamiliar characters glow through the drifting mist. || weather
 - A close-up character portrait || {Subject} {is_are} framed tight in profile, raising a segmented mechanical hand close to {possessive} own face, fingers half-curled - behind {object}, out of focus, a dense cyberpunk high-rise district glows through drifting haze.
-- A character portrait || {Subject} {is_are} standing in profile beside the towering head of a war-machine looming just behind {possessive} shoulder, gazing out across a hazy industrial skyline as a beam weapon fires from a distant flying craft overhead, faded unit markings stencilled across the machine's scarred plating. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-slicked elevated transit line threading between towering neon-lit high-rises, billboards glowing in unfamiliar characters. || weather
-- A character portrait || {Subject} {is_are} seated inside a transit car at night, gazing out through the window at a dense neon high-rise skyline sliding past, faint circuitry tracing along {possessive} jaw and throat - the glass behind {object} streaks with drifting rain and passing light. || weather
-- A character portrait || {Subject} {is_are} seated at a bank of monitors glowing violet and cyan, both hands on the keyboard and dense telemetry scrolling across the screens ahead, thick cable runs hanging tangled from the ceiling around {object}. || nogear
+- => Elevated trains between towers
 - A character portrait || {Subject} {is_are} standing on a raised gantry platform beside the crouched bulk of a towering war-machine filling a dim maintenance bay, its single optic sensor lit and a heavy cannon barrel angled down past {object}, faded unit markings stencilled across its scarred armor plating, stacked crates and hazard placards cluttering the shadowed bay floor below. || mechwork
-- A character portrait || {Subject} {is_are} sitting atop the broad missile-pod shoulder of an idle war-machine, a cigarette smoking forgotten in one hand, looking out over a muddy grey wasteland toward a distant radio mast, the machine's hull marked with a faded heraldic shield insignia and streaked with rain. || nogear weather
 - A character portrait || {Subject} {is_are} walking down a wide ceremonial ramp through falling snow, a combat helmet held loosely in one hand at {possessive} side, faction banners snapping either side and hooded onlookers lining the way, the hulking silhouette of a towering war-machine looming backlit behind {object} in the drifting snow and haze. || weather ceremony
 - A character portrait || {Subject} {is_are} standing in profile, a colossal crow-like beast looming close behind {possessive} shoulder, its single eye burning with a saturated glow in the gloom - beyond {object} a ruined stone courtyard fades into rubble and haze. || weather
 - A close character portrait || {Subject} {is_are} seen in profile close beside the angular head of {possessive} companion mech, its optics burning twin points in the dark, a stencilled shoulder patch marking {possessive} flight jacket - beyond them a hazy blue-lit hangar recedes into the dark. || cockpit
 - A dynamic character portrait || {Subject} {is_are} walking straight toward the viewer down a dim shipboard corridor, a pistol held low and loose in one hand, a second armed companion keeping pace just behind {possessive} shoulder - pipework and hazard striping line the walls to either side, receding into a hazy blue light. || nogear frontline
 - A character portrait seen from behind || {Subject} {is_are} standing atop a snow-dusted rooftop unit, hair streaming in the wind, a sheathed blade held loose at {possessive} side, a small cat perched watchful nearby - below {object} a dense neon-lit high-rise cityscape glows through drifting snow. || nogear weather swordwork
-- A dramatic low-angle character portrait || {Subject} {is_are} standing at street level as a canyon of soaring high-rises rises sheer on every side, towering signage in unfamiliar characters glowing through drifting rain overhead. || weather
-- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} weightless in freefall, both arms flung wide overhead and twin long braids drifting loose in the air, {possessive} body arched back in strong foreshortening - beyond {object} the dark hull of a starship interior glints with scattered debris and drifting light.
+- => Standing in neon street canyons
 - A dynamic, low-angle character portrait || {Subject} {is_are} leaning far out over the drop, one hand locked around a strut and {possessive} body braced forward, gazing straight down through a vast light-streaked shaft at a glittering neon cityscape far below.
 - A character portrait || {Subject} {is_are} sitting perched on the folded knee of a crouched companion mech, one hand resting easy against its armored plating as its head looms close alongside {object}, twin optics glowing steady - beyond {object} a dense city skyline spreads out below in the fading dusk light. || weather ownmech
-- A dynamic character portrait seen from behind || {Subject} {is_are} balanced on the tip of a rooftop antenna mast high above the city, one leg braced and bent, a long coat billowing wide in the wind - far below {object} a dense high-rise skyline glitters with countless warning lights through the downpour. || weather
-- A character portrait || {Subject} {is_are} sitting perched on a rooftop ledge, one leg drawn up and a lit cigarette held near {possessive} mouth, gazing out over a vast river-split cityscape glowing under a deep orange sunset. || nogear weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a plant-filled loft apartment with a domed window overlooking a rain-streaked neon high-rise skyline, candlelight and string lights glowing warm across cluttered bookshelves. || weather
 - A half-body character portrait || Behind {object}, out of focus, is a fog-bound harbor skyline of towering high-rises, an elevated highway curving low over dark water and a blocky industrial platform lit from beneath. || weather
 - A dynamic, low-angle character portrait || {Subject} {is_are} crouched low on a rain-slicked rooftop platform, one hand gripping a glowing energy blade planted point-down and weight braced forward, ready to spring - behind {object} a dense neon-lit cyberpunk skyline rises through drifting haze, a colossal holographic face glowing between the towers and small hovercraft drifting past in the middle distance. || nogear weather frontline
-- A character portrait || {Subject} {is_are} gazing up through a viewport in quiet wonder, tubing and cabling trailing from {possessive} suit collar to a bulky comms headset clamped over the ears - beyond the glass a planet's cloud-swirled surface curves away below and a scatter of distant moons hangs in the black.
-- A character portrait || {Subject} {is_are} reclined against the fairing of a parked speeder bike, one arm draped along the windscreen and chin propped in {possessive} hand - behind {object} a neon-lit street glows in smeared bursts of color through the haze. || weather
+- => Gazing out of viewports
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-slicked old-town street lined with lantern-lit shopfronts and parked bicycles, a cherry blossom tree overhanging the road and a distant illuminated tower glowing hazy through the mist. || weather
-- A character portrait || {Subject} {is_are} standing in heavy rain at the center of a narrow street, flanked on both sides by towering high-rises plastered with glowing neon signage in unfamiliar characters. || weather
 - A character portrait || {Subject} {is_are} standing in profile amid a cherry blossom grove at dusk, petals drifting thick through the air around {object} - the trees glow warm pink and gold in the fading light. || weather
 - A character portrait || {Subject} {is_are} standing in heavy rain, glancing back over one shoulder from beneath a wide straw hat, a lit lantern raised in one hand - behind {object} a rain-streaked cityscape of weathered high-rises and faded signage fades into the downpour. || nogear weather
 - A dynamic, silhouetted character portrait || {Subject} {is_are} caught mid-swing on a rocky bluff, driving a blade down in a decisive two-handed arc as sparks scatter from the strike, {possessive} cloak and sash ribbons whipped by the motion - behind {object} a massive sun burns low behind hazy mountains and a still lake below. || nogear weather swordwork
@@ -3054,7 +3033,6 @@ bullet there changes no portrait or token.
 - A character portrait || {Subject} {is_are} standing wide-legged with twin blades held loose at {possessive} sides - behind {object} a massive torii gate frames a huge glowing moon low on the horizon, rocky windswept terrain falling away into mist, hung paper talismans stirring to either side. || nogear weather swordwork
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a fog-wrapped hillside town of wooden gatehouses and lit braziers, a sprawling tiered castle rising misty on the ridge above. || weather
 - A character portrait || {Subject} {is_are} sitting on a wet rocky shoreline in heavy rain, one elbow propped on a knee - behind {object} a flat grey expanse of water fades into mist. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a mist-shrouded ruin lit by a single stone lantern, a pale spectral face hovering faint in the gloom. || weather
 - A dynamic character portrait || {Subject} {is_are} gripping a drawn blade low in both hands, {possessive} robe torn open at the chest and trailing loose in the wind, thick mist coiling around {possessive} legs - behind {object} a total eclipse burns a thin ring of light around a blacked-out sun, its glow diffusing through the haze. || nogear weather swordwork
 - A character portrait || {Subject} {is_are} sitting cross-legged beneath a towering maple in full red autumn leaf, fallen petals scattering across the ground around {object} - beyond {object} a weathered shrine's timber eaves rise beside the tree and pale mountains fade into a clear sky. || weather
 - A character portrait || {Subject} {is_are} standing in profile with a cigarette held loosely between {possessive} lips, gripping two sheathed blades low at {possessive} hip - behind {object} the fogged silhouette of a ruined industrial structure looms half-lost in the mist. || nogear weather swordwork
@@ -3072,22 +3050,18 @@ bullet there changes no portrait or token.
 - A character portrait || {Subject} {is_are} leaning over a scaffold rail with a wrench in hand, tightening bolts on a towering mobile suit's sensor head looming close behind {object}, cable conduits and gantry struts crowding the frame. || nogear mechwork @gundam
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a mobile-suit production gantry, war machines suspended in scaffolding beneath hazard-striped catwalks and a safety banner. || mechyard @gundam
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a sprawling tomato patch, heavy fruit-laden vines climbing staked rows under open sky. || weather
-- A character portrait || {Subject} {is_are} hunched at a cluttered desk of humming terminal equipment and tangled cable runs, glancing up sharply at a shadow in the doorway - fluorescent light bars glinting off server racks and taped-up notices behind {object}.
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dim institutional corridor, flickering fluorescent tubes above a scuffed door and a lone waste bin.
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a weathered stilt-built river town, houseboats moored along a plank dock beneath sagging corrugated roofs. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a stone arch bridge spanning a slow river, glass towers rising beyond a green, overgrown embankment. || weather
 - A wide character portrait || Behind {object}, softly blurred well out of focus, is a towering white combat walker suspended in a service gantry, ground crew in coveralls swarming its limbs across a hazard-striped deck. || mechyard
 - A wide character portrait || Behind {object}, softly blurred well out of focus, is a pair of heavy gunships banking hard through a bank of storm cloud, cannon pods and missile racks bristling from their articulated weapon arms. || weather
 - A wide character portrait || {Subject} {is_are} wading ashore from a beached inflatable boat, rifle held low and ready, boots crunching over dockside rubble - gantry cranes and floodlights glowing through rain and fog behind {object}. || nogear weather frontline
-- A wide character portrait || {Subject} {is_are} standing at the tail of a parked sports car atop a sunlit overlook, weight shifted onto one hip, a distant glass tower rising past scattered clouds. || weather
-- A half-body character portrait || {Subject} {is_are} sitting hunched over a slim laptop at a train tray-table, hood drawn up against the compartment lights, rain streaking neon signage that smears past the window in long coloured lines.
 - A close character portrait || {Subject} {is_are} sitting atop a mound of stripped combat-frame wreckage, boots planted on a skeletal actuator arm, scavenged machine parts sprawling into darkness under a pair of close, cratered moons. || weather salvage @scav
 - A wide character portrait || {Subject} {is_are} standing at a rain-slicked overlook rail with a great cat settled at heel, watching a glowing ring-gate span a sea of cloud toward a floating district of lantern-lit pagoda towers. || weather @neosamurai
 - A wide character portrait || {Subject} {is_are} striding forward with one hand looped through a great cat's harness at {possessive} side, cloak snapping back-lit by a churning vortex of light framed between two rune-carved standing stones - across a windswept, fog-slicked stone concourse. || weather
-- A wide character portrait || {Subject} {is_are} standing motionless on a barren lunar plain, a blue Earth and a river of stars filling the black sky above the jagged horizon.
+- => Cratered moons under the stars
 - A wide character portrait || {Subject} {is_are} standing motionless in the rain beneath a vast hovering vessel, its underside ringed in light, a dense skyline glowing behind {object}. || weather @gundam
 - A wide character portrait || {Subject} {is_are} sitting cross-legged on a sunlit wooden engawa with a sketchbook and iced tea set at {possessive} side, a mossy stream and stone-set waterfall running just beyond the rail.
-- A wide character portrait || {Subject} {is_are} standing at the ledge of a rain-slick rooftop, {possessive} weight braced on one heel as a neon-veined skyline spreads out far below. || weather
 - A wide character portrait || {Subject} {is_are} walking a moss-swallowed street between crumbling towers, cabling and lit windows overhead, exhaust haze drifting between the ruined blocks. || weather @scav
 - A close character portrait || {Subject} {is_are} reclined in a battered cockpit chair, boots up on the console, {possessive} scarf loose across one shoulder as star-flecked space and a lit console glow beyond the canopy. || cockpit
 - A wide character portrait || {Subject} {is_are} kneeling in silence before a towering glowing gate, hands folded in {possessive} lap as stone lanterns burn on either side and embers drift up through the dark shrine hall. || @neosamurai
@@ -3105,13 +3079,12 @@ bullet there changes no portrait or token.
 - A wide character portrait || {Subject} {is_are} glancing back over {possessive} shoulder atop a rain-slicked rooftop, blade drawn at {possessive} side - a dense skyline of stacked signage and towers glowing beyond. || nogear weather frontline @cyberpunk
 - x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a canal-side street in an old quarter, laundry strung between concrete tenements above brown water and stacked signage climbing the walls in unfamiliar scripts. || weather
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} falling backwards off the parapet of a tower block, arms spread wide and {possessive} coat snapping open, the grid of streets and rooftops laid out far below - {possessive} outline already shimmering and refracting as optical camouflage takes hold, bending the light behind {object}. Dramatic foreshortened composition. || nogear weather frontline
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dim diagnostic bay, a reclined chair beneath a hooded scanner and thick cable looms dropping from the ceiling to a wall of dark racked hardware.
 - A character portrait || {Subject} {is_are} standing ankle-deep in the flooded arcade of an abandoned shopping street, still water mirroring the dead signage overhead, a shaft of grey daylight falling through a collapsed section of roof far ahead. || weather
 - A close character portrait || {Subject} {is_are} seated in the dark of a parked surveillance van, a bank of monitors washing {possessive} face in pale grey light, cable looms underfoot and cold cups crowding the console. || deskwork
 - A half-body character portrait || Behind {object}, out of focus, is the wrecked hall of a natural history museum, a shattered tree-of-life mural across the far wall and the slumped bulk of a disabled multi-legged combat walker among the fallen masonry. || warzone
 - x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a maintenance hangar, a boxy industrial work-mech kneeling in its cradle with gantry crews along its arms and arc-welding flare stuttering off the walls. || mechyard
 - A character portrait || {Subject} {is_are} standing on a seawall above a vast reclaimed-land project, dredgers and gantry cranes ranked across flat grey water behind {object} and a typhoon sky stacking up dark on the horizon. || weather
-- A character portrait || {Subject} {is_are} leaning at the counter of a late-night noodle stall beneath a highway overpass, steam rolling off the pass and rain sheeting off the awning's edge into the road behind {object}. || weather
+- => Street food counters
 - x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-lashed construction site at night, pile drivers and floodlit scaffolding rising around the shell of a half-built tower. || weather
 - A character portrait || {Subject} {is_are} standing on an iced-over bridge deck in falling snow, an armored vehicle slewed across the roadway behind {object} and the grey shape of an airship hanging low over a silent skyline. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cramped divisional office of stacked case files and dead desk plants, a fan turning slowly above a wall of pinned notices.
@@ -3170,26 +3143,9 @@ bullet there changes no portrait or token.
 - A character portrait || {Subject} {is_are} leaning back against the back-bar shelves with a handset trapped between {possessive} shoulder and ear, writing a name on the inside of {possessive} own wrist - stacked bottles and a strip of warm tube light glow behind {object}, the room dark beyond. || nogear barkeep
 - A character portrait || {Subject} {is_are} sitting on a stool at the closed end of the counter under a half-drawn shutter, thumbing a stack of chits and marking one - the room stands dark behind {object} but for a single lamp and the shutter's slatted light laid across the floor. || nogear barkeep
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is the bar's back office, a wall of unlabelled keys on hooks beside a battered safe and a rack of pigeonholes stuffed with folded notes. || barkeep
-- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} coasting head-on toward the viewer down the central shaft of a colony spoke, arms tucked close and {possessive} body tilted no more than about 30 to 40 degrees off vertical, hair fanned loose around {possessive} face - the shaft's ladder rungs and stencilled level numbers streak away behind {object}. Dramatic foreshortened composition.
-- A character portrait || {Subject} {is_are} floating in a darkened observation blister with {possessive} legs drawn up and drifting, one hand steadying against a console rail, a scatter of pens and a loose clipboard hanging motionless in the air around {object} - the room's readouts glow dim across {possessive} face.
-- A character portrait || {Subject} {is_are} hanging weightless in a station galley with one boot hooked under a table rail, a drink bulb held loose and {possessive} body turned a mild 20 to 30 degrees off vertical, crumbs and a spoon suspended nearby - stowage netting and taped-up duty notices line the bulkhead behind {object}.
-- A character portrait || {Subject} {is_are} braced weightless in a launch tube with both hands on the guide rails, {possessive} body angled a mild 20 to 30 degrees off vertical and {possessive} hair lifted free, gazing away down the tube past the frame - ranked catapult lights recede behind {object} into the dark.
-- A dynamic character portrait || {Subject} {is_are} turning weightless in the air of a zero-gravity gymnasium ring, one arm sweeping wide and the other tucked close, {possessive} body tilted no more than about 30 to 40 degrees off vertical - behind {object} the inner wall of a colony cylinder climbs away, its terraced farmland hanging overhead through the haze.
-- A character portrait || {Subject} {is_are} drifting weightless down a corridor left dark by a power loss, one hand trailing along the wall rail and emergency chemlights glowing green at intervals past {object}, loose paperwork turning slowly in the air around {possessive} shoulders.
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a zero-gravity cargo lock, netted pallets hanging untethered in the air beneath a rank of amber warning strobes.
 - A character portrait || {Subject} {is_are} clamped by one boot to the spine of a drydocked warship in a sealed EVA pressure suit and helmet, visor down, a torque tool floating tethered at {possessive} hip, looking back along the hull - beyond {object} the ship's bare ribs recede into the scaffold and a work light glares white off the plating. Dramatic rim lighting along {possessive} silhouette. || vacuum
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} pushing off toward the viewer through a debris field in a sealed EVA pressure suit and helmet, visor down, one gauntlet thrust out at the camera and {possessive} tether whipping loose behind {object}, {possessive} body tilted no more than about 30 to 40 degrees off vertical - shattered panel fragments turn slowly past {object} against the starfield. || vacuum
 - A character portrait || {Subject} {is_are} standing magnet-soled on the outer hull of a colony cylinder in a sealed EVA pressure suit and helmet, visor down, one gauntlet raised against the glare and a survey slate clipped at {possessive} thigh - the cylinder's vast painted flank curves away behind {object} toward a distant mirror panel burning white. || vacuum
-- A character portrait || {Subject} {is_are} curled loose in a bunk niche's sleep sack with one arm floated free of the netting and {possessive} hair fanned around {possessive} face, {possessive} body turned a mild 20 to 30 degrees off vertical - stowed kit and a taped-up photograph line the niche wall behind {object}.
-- A dynamic character portrait || {Subject} {is_are} twisting weightless to catch a thrown wrench, {possessive} body rotating a mild 20 to 30 degrees off vertical with one hand snapping shut on it and the other flung back as counterweight - a workshop's tool boards and a drift of loose swarf hang motionless behind {object}. || nogear
-- A close, low-angle character portrait || {Subject} {is_are} hanging inverted with {possessive} boots hooked through an overhead rail and {possessive} head lowest in frame, both hands working at an opened panel above {possessive} face and {possessive} hair falling the wrong way - conduit runs recede past {object} in dim standby light.
-- A character portrait || {Subject} {is_are} floating with {possessive} legs drawn up and {possessive} palms cupped around a wobbling sphere of water held in the air before {possessive} face, {possessive} body tilted no more than about 30 to 40 degrees off vertical - a survey bay's racked sample cases and a drifting pen hang behind {object}. || nogear
-- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} diving toward the viewer through the open ribs of a colony under construction in freefall, {possessive} body stretched into strong foreshortening with both arms swept back along {possessive} sides and {possessive} legs trailing, girders and taped bundles of cable streaking past to either side. Dramatic foreshortened composition.
-- A character portrait || {Subject} {is_are} turning slowly weightless inside the gutted interior of a derelict, {possessive} body tilted no more than about 30 to 40 degrees off vertical and one hand fending off a drifting sheet of torn panelling - frozen condensation glitters in the air around {object} wherever {possessive} lamp beam catches it.
-- A dynamic, gently canted-angle character portrait || {Subject} {is_are} pushing off hard from a hatch coaming with both feet, {possessive} body already tilted no more than about 30 to 40 degrees off vertical and {possessive} arms folding tight to {possessive} chest, a document wallet tumbling free of {possessive} grip behind {object} - numbered lockers fall away past {possessive} shoulder.
-- A close character portrait || {Subject} {is_are} floating close to the camera with {possessive} eyes shut and {possessive} hair spread wide around {possessive} head, one hand raised loose beside {possessive} face and {possessive} body turned a mild 20 to 30 degrees off vertical - behind {object} a dark compartment recedes with a single amber standby lamp burning.
-- A dynamic character portrait || {Subject} {is_are} weightless and reaching overhead to catch a stanchion mid-tumble, {possessive} body arched and tilted no more than about 30 to 40 degrees off vertical with {possessive} free arm swept across {possessive} chest - warning strobes wash the corridor around {object} amber and a hatch stands cycling open behind.
-- A character portrait || {Subject} {is_are} sitting weightless with {possessive} legs crossed and drifting slightly apart, hands resting loose in {possessive} lap and {possessive} body turned a mild 20 to 30 degrees off vertical, hair lifted free - behind {object} a long observation ring curves away, its windows full of slow-turning stars.
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} riding a manoeuvring pack away from the camera and looking back over one shoulder in a sealed EVA pressure suit and helmet, visor down, {possessive} body tilted no more than about 30 to 40 degrees off vertical with thruster plumes feathering white at {possessive} hips - behind {object} a half-built station truss recedes into the dark. Dramatic rim lighting along {possessive} silhouette. || vacuum
 - A character portrait || {Subject} {is_are} floating tethered beside a shattered solar array in a sealed EVA pressure suit and helmet, visor down, one gauntlet steadying a torn frame member and {possessive} legs drifting loose - behind {object} the array's broken wing trails away in glittering fragments and a planet's terminator cuts a bright line across the dark. Dramatic rim lighting along {possessive} silhouette. || vacuum
 - A character portrait || {Subject} {is_are} leaning in over a shoulder-height plot table with both fists planted either side of a lit tactical overlay, calling something off past the frame - ranked operator stations glow blue behind {object} in the dim of a flag bridge. || nogear deskwork
@@ -3212,338 +3168,678 @@ bullet there changes no portrait or token.
 - A character portrait seen from behind || {Subject} {is_are} standing at the edge of a bridge viewport, looking out at a vast slab-sided capital ship gliding past above a sea of cloud, its engine bank blazing and a screen of escort fighters streaking alongside - a pale moon hangs in the black above the curve of the planet beyond {object}.
 - A character portrait || {Subject} {is_are} reclined across a battered red sofa set out in the rain, legs stretched long and one hand propping a clear umbrella over {possessive} shoulder - behind {object} a rain-streaked alley of glowing shop signage and ribbed tower pipework dissolves into haze, steam venting from a rooftop stack. || nogear weather
 - A half-body character portrait || Behind {object}, out of focus, the bright curve of a planet falls away beneath a dense starfield, a small ringed world hanging luminous in the dark.
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-dark rooftop overlooking a sprawling night city, tiers of elevated rail viaducts strung with dull red warning lamps threading between the towers and a lone aircraft hanging in the haze above. || weather
-- A half-body character portrait || Behind {object}, out of focus, a rain-drenched canyon of stacked towers strung with sagging cables recedes into blue haze, the crumbling wall at {possessive} shoulder overgrown with dripping vines. || weather
+- => Night rooftops of masts and tanks
+- => Neon tower canyons
 - A dramatic low-angle character portrait || {Subject} {is_are} reaching up to lay one hand flat against the vast armored fingers of a companion war-machine lowering its hand toward {object}, embers drifting through the dark around them both. || nogear ownmech
-- A half-body character portrait || Behind {object}, out of focus, a neon-lit city intersection has broken into a riot, cars burning in the road beneath columns of black smoke and crowds scattering across the crosswalks between muzzle flashes. || weather
-- A half-body character portrait || Behind {object}, out of focus, a narrow tarp-roofed market alley has turned into a firefight, an armored personnel carrier grinding forward between the stalls with headlights blazing as soldiers trade fire from the balconies above. || weather
+- => Street riots and panics
 - A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} lunging forward into a thrown haymaker, one armored fist driven straight at the viewer and the other arm flung back wide, weight dropped deep over the front knee - behind {object} an armored transport's headlights blaze through the rain of a neon-lit alley, a soldier with a raised rifle half-lost in the glare. || weather frontline
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a fog-choked canyon of neon-signed high-rises, a four-rotor surveillance drone hanging low in the air overhead with its twin optics burning in the gloom. || weather
 - A dynamic character portrait || {Subject} {is_are} sprinting straight toward the viewer down a crowded market street, arms pumping and mouth open mid-shout, a panicked crowd running at {possessive} back - behind {object} a fireball blooms out of a tower block, sagging power lines and lit shop signage framing the street. || weather
 - A dramatic low-angle character portrait || {Subject} {is_are} dropping to the street on a fast-rope, one gloved fist locked around the line and boots swinging down, the open hold of a hovering dropship looming overhead - neon signage glows through the fog across the facades behind {object}. || nogear weather frontline
 - A dramatic low-angle character portrait || {Subject} {is_are} standing braced and firing a rifle one-handed up at the underbelly of a gunship hovering low overhead, muzzle flash flaring - a ragged street crew fires alongside {object}, cable-strung towers crowding the night sky behind. || nogear weather frontline
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a wall of stacked CRT monitors and rack decks, every screen showing the same burning streets and the largest cracked clean through.
-- A character portrait seen from behind || {Subject} {is_are} seated in a leather lounge chair before a floor-to-ceiling window, looking down on a riot burning through the streets far below, police lights and a gunship's searchlight cutting through the smoke - a potted palm and a lit candle on a side table stand beside {object}.
+- => Watching the city burn
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dark marble-walled penthouse office, a lit backbar of bottles glowing against the stone and a rain-streaked night skyline through the glass beyond.
-- A character portrait seen from behind || {Subject} {is_are} standing at a floor-to-ceiling window, watching fires and black smoke roll through the city far below, a spired skyline lit beyond and rain streaking the glass.
 - A dynamic character portrait || {Subject} {is_are} charging low toward the viewer down a neon-lit back street, fists clenched and teeth bared, masked gunmen opening fire from the doorways behind {object}. || weather frontline
 - A character portrait seen from behind || {Subject} {is_are} standing in a trash-strewn neon alley with one arm locked straight out, a pistol sighted on a line of masked gunmen advancing out of the smoke ahead, a small fire burning in the gutter. || nogear weather frontline
 - A dynamic, low-angle character portrait || {Subject} {is_are} caught mid high-kick in a rain-slick back alley at night, one leg driven straight up into a charging attacker's chest and a pistol held out in the other hand - behind {object} more armed thugs advance past a burning wreck, lit shop signage stacked up both walls of the narrow street. || nogear weather frontline
 - A character portrait seen from behind || {Subject} {is_are} hunched over an improvised surveillance station on a steel desk in a derelict warehouse, stacked monitors tracking a city map marked with spreading red zones, a radio set and a swan-neck lamp at {possessive} elbow and cabling spilling off the desk edge - rusted drums and a lone brazier glow in the dark beyond {object}. || nogear deskwork
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a night-time rooftop of rusted water tanks and lattice radio masts, smokestacks trailing plumes across a lit tower-block skyline. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an industrial rooftop of antenna masts and pipework at night, a fireball blooming over the distant tower blocks. || weather
-- A dynamic character portrait seen from behind || {Subject} {is_are} leaning a massive fat-wheeled superbike through traffic on a rain-flooded city highway at night, the rear wheel throwing a sheet of spray as it slips between tail-lit cars - glass towers and lit billboards line the road ahead into the drizzle. || nogear weather
-- A dynamic, low-angle character portrait || {Subject} {is_are} hunched forward over the bars of a heavy fat-wheeled superbike tearing down a rain-slick elevated expressway at night, spray fanning off the tyres and the headlamp burning - behind {object} smoke-hazed towers and burning rooftops rise beyond the overpass, lit billboards smeared by speed. || nogear weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cavernous flooded service tunnel of stained concrete and tangled pipework, sparks raining from a broken ceiling fixture onto black standing water.
-- A character portrait || {Subject} {is_are} walking through driving rain across a wet city street at night, other cloaked pedestrians passing beneath the streetlamps - behind {object} an elevated highway curves between the towers and a column of smoke rises from a burning high-rise. || weather
+- => Ruined corridors and halls
 - A low-angle character portrait || {Subject} {is_are} stepping out between a pair of heavy riveted steel doors swung open onto a grimy service corridor, a cold strip light burning in the passage behind {object} and rust-streaked pipes climbing the concrete walls to either side.
 - A half-body character portrait || {Subject} {is_are} standing at the foot of a gaunt white-plated humanoid frame locked upright in its service cradle, a large stencilled unit number across its shoulder plating and bundled cabling hanging from the gantry around it - the dim hangar recedes into dark steel behind {object}. || mechyard
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a mud-churned drilling camp under a rain-heavy sky, a lattice derrick and crawler crane rising over rows of low field tents in the drizzle. || weather
-- A close character portrait || {Subject} {is_are} huddled with a handful of field technicians under a dim canvas tent, faces lit from below by the glowing slates in the others' hands, rain-dark tarpaulin sagging behind {object}.
-- A low-angle character portrait || {Subject} {is_are} standing at the crumbling lip of a freshly dug excavation pit at night, floodlights glaring through drifting haze - behind {object} a drilling tower and sagging canvas field tents loom over a scattered line of survey crew. || weather
-- A dramatic low-angle character portrait || {Subject} {is_are} climbing down a sagging rope ladder into a vertical rock shaft, one hand locked on a rung and a headlamp beam cutting through the dust - far overhead the shaft's jagged mouth opens onto pale daylight, a second climber silhouetted against it.
-- A low-angle character portrait seen from behind || {Subject} {is_are} standing among a line of harnessed survey crew on the floor of a vast cavern, floodlights stabbing up into the dark toward the colossal buried silhouette of something ancient and machine-shaped overhead.
+- => Dig sites and survey camps
 - A character portrait || {Subject} {is_are} seated behind a broad holographic workstation, translucent display panes glowing up across {possessive} hands, articulated robotic arms folded at either side - dark server racks blink in rows behind {object}. || deskwork
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-lashed night plaza packed with a frightened crowd, faces turned up toward something vast overhead. || weather
-- A wide character portrait || {Subject} {is_are} walking toward the open side hatch of a matte-black armored dropship parked on a rain-slicked rooftop landing pad, a boarding step set below the door and helmeted troopers seated in the dim bay beyond it - past the hull a burning city skyline smokes under a grey overcast. || weather
-- A wide character portrait || {Subject} {is_are} standing at the rail of a rain-soaked rooftop landing pad, watching a heavy black dropship descend on four burning thrusters out of a storm-dark sky - beyond it the towers of a city burn, black smoke columns climbing from their crowns. || weather
-- A character portrait || {Subject} {is_are} sitting slumped on the bench of a dim dropship troop bay, forearms resting on {possessive} knees, a pair of faceless armored troopers seated close on either side with bulky rifles across their laps - glowing strip-lights run along the bulkhead behind them.
-- A dramatic low-angle character portrait || {Subject} {is_are} walking straight toward the viewer out of a long, brightly lit hangar passage, a pair of heavily armored faceless troopers keeping step at either shoulder, one carrying a bulky rifle across its chest - massive blast doors stand open around them, warning lights glowing low at their base.
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an empty suit of crimson humanoid powered armor hanging upright in a cable-strung launch gantry, steam venting from the clamps around it in a cavernous dark bay.
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a riveted steel bulkhead door stencilled with a deck number, a keypad lock lit beside it in a cold blue corridor.
-- A character portrait || {Subject} {is_are} sitting on the edge of a padded exam table in a cramped clinic bay, forearms resting on {possessive} knees, a ceiling rig of folded robotic surgical arms hanging behind {object} and a glowing vitals readout floating at shoulder height beside the table.
+- => Rooftop dropship pads
+- => Escorted by faceless troopers
+- => Machines in service cradles
+- => Shipboard corridors
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a translucent holographic display hanging in a dim lab, a flayed anatomical figure and ranks of glowing data nodes mapped across its surface.
 - A character portrait || {Subject} {is_are} sitting back in a heavy padded restraint chair bolted to the deck of a steel holding room, both forearms laid flat along its armrests - a figure stands watching from the open doorway behind {object}, half lost in shadow.
 - A close character portrait || {Subject} {is_are} slouched sideways in a cramped cockpit seat, one leg hooked up over the console and an arm slung across the knee, a sullen look turned on the viewer - scuffed instrument panels and dim readouts crowd the canopy frame around {object}. || cockpit
 - A character portrait || {Subject} {is_are} sitting with knees drawn up on a grassy rise, beyond {object} a winding path leads toward slender colony towers and a distant smoking mountain. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a barren ridged planetary landscape beneath a huge turbulent sun low above the horizon. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a deep industrial street canyon crossed by pipes and narrow bridges between tiered tower walls. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cramped service passage lined with exposed overhead pipes, wall racks and small illuminated access panels. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a bulky freighter hovering above needle-like city towers, its bank of engine nozzles shining through the haze. || weather
-- A character portrait || {Subject} {is_are} sitting with {possessive} back turned slightly toward the viewer on a high city overlook, dense towers and scattered illuminated signs receding toward a hazy sunset. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cluster of tall slab towers capped by sharply slanted pale roof fins above a mist-filled city. || weather
+- => Industrial tower canyons
+- => Warships over cities
+- => Finned slab towers
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a battered twin-pod shuttle banking through a shadowed industrial ravine, its scraped panels catching the light. || weather
-- A character portrait || {Subject} {is_are} standing on a rocky ridge looking toward a broad transport hovering low overhead, a distant moon above the forested valley. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a compact crew cabin with an unmade bunk, inset windows, storage lockers and exposed ceiling conduits. ||
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a tall covered industrial alley framed by heavy cross-bracing and dim lamps, scattered refuse along the lower walls. ||
 - A character portrait || {Subject} {is_are} standing alongside an armored utility rover while another crew member sits on its upper hull, a dusty mountain plain stretching behind them. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a vast tiered city traffic complex beneath a passing swept-wing aircraft, circular infrastructure rings rising among the buildings. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dense city boulevard with parked cars and a broad oval shuttle passing between the upper floors. || weather
-- A character portrait || {Subject} {is_are} standing beneath the broad engine nacelle of a parked transport inside a cavernous hangar, compact service craft arrayed nearby. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a clean shipboard conference room with a long recessed central table, angular chairs and an illuminated ceiling panel. ||
-- A character portrait || {Subject} {is_are} standing among a loose line of travelers beneath the low hull of a departing transport, another cargo craft looming over the open landing field. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a long angular ship corridor with slanted wall consoles and repeated luminous ceiling recesses. ||
+- => Flying traffic boulevards
+- => Standing by landed shuttles
+- => Shipboard briefing rooms
+- => Walking out to waiting craft
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a glossy high-ceilinged transit passage leading toward a brilliant circular portal, light reflecting along the floor. ||
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a pale sprawling city seen from a rocky overlook beneath a crescent moon and low bands of cloud. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a compact cargo craft resting on a lit landing pad, exposed tubing and packed machinery covering its rounded hull. || weather
+- => Spaceport aprons
 - A character portrait || {Subject} {is_are} standing inside a curved observation gallery among several other onlookers, a planet and distant streaks of spacecraft fire filling the panoramic window. ||
-- A character portrait || {Subject} {is_are} standing among a line of robed visitors before a colossal circular inset structure, its polished dark center framed by densely carved stone. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a broad rain-dark spaceport apron crowded with low cargo ships, service equipment and scattered pedestrian traffic. || weather
-- A character portrait || {Subject} {is_are} standing on a sandy landing field beside a low rounded shuttle, flat-topped desert cliffs beyond it. || weather
+- => Monumental ring gateways
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a tiered glass-fronted residence extending over dark coastal water, warm interior lights showing through the stacked terraces. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cylindrical maintenance tunnel ribbed with repeated metal rings, conduits and small monitors lining its full length. ||
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a broad fortified city beneath a star-filled sky and drifting bands of auroral light. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a flooded coastal city beneath an immense curling storm cloud, rough waves surging between the remaining towers. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cavernous ruined machine hall beneath a circular vault, lightning illuminating broken walkways and piled wreckage. ||
+- => Storm-lashed coasts
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a pale angular coastal facility built into a wooded cliff, broad terraces projecting over breaking surf. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a city of slender curving towers and elevated transit tracks, a streamlined train passing beneath a low sun. || weather
-- A character portrait || {Subject} {is_are} leaning forward over an open equipment panel with one arm braced, sparks spilling from the machinery beneath {possessive} working hand. || nogear
-- A character portrait || {Subject} {is_are} sitting atop a battered rounded machine hull among scattered snow patches, distant peaks beneath a full moon. || weather
-- A character portrait || {Subject} {is_are} sitting sideways in the open threshold of a spacecraft compartment, a broad planet filling the view beyond the hull. ||
+- => Repairing electronics
 - A character portrait || {Subject} {is_are} leaning toward the viewer with one hand reaching across a bank of illuminated controls, dense cockpit equipment surrounding {object}. || cockpit
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cavernous server hall with repeated illuminated rack columns, suspended cables and shallow reflections on the floor. ||
 - A character portrait || {Subject} {is_are} leaning sideways across a low seat in a dim industrial room, tall gridded windows casting broken light through the haze. ||
-- A character portrait || {Subject} {is_are} leaning against the curved nose of a parked shuttle on a wet landing apron, distant floodlights and gantries reflected in puddles. || weather
 - A character portrait || {Subject} {is_are} standing side-on at a wide electronic console, one hand extended over its controls and layered city lights visible through the window. || deskwork
-- A character portrait || {Subject} {is_are} turning to glance back over one bare shoulder beside a rooftop railing, a full moon above the bright city beyond. || weather
-- A character portrait || {Subject} {is_are} sitting back in a vehicle seat with one arm extended toward the controls, a dense night skyline visible through the side window. ||
-- A character portrait || {Subject} {is_are} reclining with {possessive} head tipped back across a broad translucent lit platform, hanging cables and deep machinery shadows surrounding {object}. ||
-- A character portrait || {Subject} {is_are} standing close beside a bulky round-bodied robot in a narrow city passage, the machine extending one long jointed arm above {object}. ||
+- => Beside utility robots
 - A character portrait || {Subject} {is_are} sitting in a cramped flight chair and looking down at the controls, a broad curved forward viewport opening onto stars. || cockpit
-- A character portrait || {Subject} {is_are} standing beside a squat round-bodied robot in a crowded illuminated street, thick cables trailing beneath the machine. || weather
-- A character portrait || {Subject} {is_are} looking upward from the foot of a metal service stair at a towering yellow utility robot leaning over the railing. ||
-- A character portrait || {Subject} {is_are} standing with {possessive} back to the viewer in a towering city canyon, bright signs climbing both walls above {object}. || weather
-- A character portrait || {Subject} {is_are} sitting sideways on an unmade bunk with one knee drawn up, a compact monitor and stacked wall equipment crowding the cabin. ||
-- A character portrait || {Subject} {is_are} sitting on the edge of a bunk with one knee raised and an arm resting loosely across it, illuminated towers filling the nearby window. ||
-- A character portrait || {Subject} {is_are} reclining along a low couch with one arm thrown over its back, wide windows framing the crowded night city. ||
-- A character portrait || {Subject} {is_are} leaning forward with both hands resting above the knees toward a wall-mounted vending display in a narrow illuminated street. || weather
-- A character portrait || {Subject} {is_are} sitting on a stool outside a brightly lit food kiosk, one hand raised near {possessive} face and the counter window glowing behind {object}. || weather
+- => Sitting on a bunk
+- => Apartment windows over the night city
+- => Vending machines and street terminals
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a compact listening room lined with large speaker cabinets, framed panels and narrow overhead light strips. ||
 - A character portrait || {Subject} {is_are} standing between tall banks of electronic equipment in a cramped room, an open window showing signs across the street. ||
-- A character portrait || {Subject} {is_are} standing side-on and reaching toward a wall-mounted public terminal in a narrow city alley. || weather
-- A character portrait || {Subject} {is_are} sitting at a wooden counter with legs crossed, warm pendant lamps above and city signs beyond the window. ||
-- A character portrait || {Subject} {is_are} sitting with legs crossed on a slatted station bench, one arm extended along its back beneath circular wall windows. ||
-- A character portrait || {Subject} {is_are} sitting curled into a transit seat with one forearm resting across a raised knee, tall city buildings passing beyond the window. ||
-- A character portrait || {Subject} {is_are} crouching in the entrance hall of an abandoned transit station, ruined escalators climbing toward a broken glazed roof. ||
-- A character portrait || {Subject} {is_are} sitting sideways on a deep window ledge with knees drawn up, a shaded bedside lamp beside {object} and illuminated towers beyond. ||
+- => Diner and bar counters
+- => Waiting at stations and shelters
+- => Abandoned transit stations
 - A character portrait || {Subject} {is_are} sitting bent forward in a glass-walled maintenance chamber, loops of cable descending around {object}. ||
 - A character portrait || {Subject} {is_are} standing outside a brightly lit shop window filled with closely spaced display shelves, deep city shadows beside the doorway. || weather
 - A character portrait || {Subject} {is_are} standing face-to-face with a tall pale armored mech in its maintenance bay, lit support structures enclosing the machine. || mechyard
 - A character portrait || {Subject} {is_are} standing beneath the spread shoulder assemblies of a looming dark mech in a cool-lit hangar. || mechyard
-- A character portrait || {Subject} {is_are} turning to look back from a city rooftop, densely packed lit windows and signs spreading into the haze. || weather
-- A character portrait || {Subject} {is_are} waiting beneath a glass-roofed roadside shelter, a backlit advertisement and wet illuminated pavement behind {object}. || weather
 - A character portrait || {Subject} {is_are} standing at an angled shipboard control desk and turning toward a broad forward window, luminous clouds and stars visible outside. || deskwork
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dense city of evenly spaced illuminated avenues viewed from above, a huge low sun at the skyline. || weather
 - A character portrait || {Subject} {is_are} sitting cross-legged on the polished floor of a vast open-sided hall, a carved dragon mural across one wall and distant industrial towers beyond the balcony. ||
-- A character portrait || {Subject} {is_are} sitting on a high rooftop edge with one knee raised and hair streaming to one side, the city falling away below. || weather
-- A character portrait || {Subject} {is_are} sitting sideways on a high ledge with one knee tucked up, an open jacket hanging loose against a wall of bright city signage. || weather
 - A character portrait || {Subject} {is_are} sitting with one knee raised beneath a star-filled sky, a brilliant cloud-covered planetary horizon beyond {object}. ||
 - A character portrait || {Subject} {is_are} standing close to a pale humanoid mech with one palm resting on its broad chest plate, the surrounding hangar struts receding into shadow. || ownmech
 - A character portrait || {Subject} {is_are} leaning forward over a narrow illuminated keyboard in a dim equipment room, dense hanging cables close around the workstation. || deskwork
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a squat heavily armored machine with a rotary cannon standing amid dry grass and scattered ruins. || weather
-- A character portrait || {Subject} {is_are} sitting on the broad nose of a parked vehicle beneath the night sky, illuminated towers beyond the landing area. || weather
+- => Lone war machines on open ground
 - A character portrait || {Subject} {is_are} sitting on the sloped plating of a large armored machine with legs hanging loose, a windswept plain beyond it. || ownmech weather
 - A character portrait || {Subject} {is_are} leaning over a sloping equipment console with one mechanical hand extended toward the viewer, dense overhead cable looms filling the room. || deskwork
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a wide hovering transport beyond a rain-streaked window, its engine lights diffused by pale cloud. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a compact dark lounge with long padded benches, low tables and repeated triangular light emblems overhead. ||
+- => Starship lounges
 - A character portrait || {Subject} {is_are} sitting on a low barrier at a covered roadside fuel station, a broad lit canopy and shuttered service bays behind {object}. ||
 - A character portrait || {Subject} {is_are} sitting on an upper-level balcony railing with one leg folded inward, an open atrium of shops and layered walkways below. ||
-- A character portrait || {Subject} {is_are} sitting behind a vehicle steering wheel with one hand resting on its rim, illuminated buildings visible through the side window. ||
-- A character portrait || {Subject} {is_are} sitting on a high stool at a bright diner counter with legs crossed, broad windows and reflected sign light behind {object}. ||
-- A character portrait || {Subject} {is_are} sitting on a narrow transit bench inside a glass-sided shelter, glowing route panels framing the city behind {object}. ||
-- A character portrait || {Subject} {is_are} hunching over a cluttered repair bench, one hand extended among dismantled instruments and stacked test equipment. || nogear
-- A character portrait || {Subject} {is_are} standing at a rooftop railing with one hand lifted near the jaw, a vast illuminated city and a bulky parked machine behind {object}. || weather
-- A character portrait || {Subject} {is_are} leaning forward across a round diner table with both palms resting on its edge, empty upholstered booths stretching behind {object}. ||
-- A character portrait || {Subject} {is_are} sitting upright on a battered transit bench beneath a broken glazed roof, abandoned escalators rising behind {object}. ||
-- A character portrait || {Subject} {is_are} resting one hip against a stair railing on a city rooftop, low banks of lights outlining the broad landing pad nearby. || weather
-- A character portrait || {Subject} {is_are} sitting astride a broad red motorcycle in a cluttered garage, instrument panels and parked cars behind {object}. ||
-- A character portrait || {Subject} {is_are} sitting on the edge of a low bunk with one elbow on a knee and a hand against the cheek, dim monitors and a shaded lamp lighting the room. ||
-- A character portrait || {Subject} {is_are} sitting on a long upholstered transit bench beneath parallel light strips, other passengers distant along the corridor. ||
 - A character portrait || {Subject} {is_are} standing beside a stairway between densely stacked city storefronts, large glowing sign panels jutting above the landing. || weather
 - A character portrait || {Subject} {is_are} standing beside a dark urban canal, illuminated bridges and densely packed windows reflecting in the water. || weather
-- A character portrait || {Subject} {is_are} sitting beside a wide train window with one forearm resting on the sill, city lights stretching outside. ||
-- A character portrait || {Subject} {is_are} kneeling beside a stack of open electronic equipment cases on a cabin floor, one hand reaching toward a control panel. || nogear
 - A character portrait || {Subject} {is_are} sitting at a cramped desk between tall bookcases, an open book in {possessive} hands and a small monitor glowing nearby. || nogear
-- A character portrait || {Subject} {is_are} sitting on a bench beside a tall illuminated vending machine in a narrow wet street, dark doorways receding into the distance. || weather
 - A character portrait || {Subject} {is_are} sitting with one knee raised on a locker-room bench, an elbow resting on the knee, metal locker doors lining the narrow room. ||
-- A character portrait || {Subject} {is_are} leaning forward over a bar with both palms on the counter, shelves of bottles and a rain-streaked city window behind {object}. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an elevated transit platform with a sleek train approaching between illuminated tower blocks. || weather
-- A character portrait || {Subject} {is_are} sitting with legs spread on a worn apartment floor, a small game board between {possessive} knees and a wall of city windows behind. ||
-- A character portrait || {Subject} {is_are} sitting sideways on a rooftop ledge with knees drawn up, laundry lines and a cylindrical water tank silhouetted against apartment towers. || weather
-- A character portrait || {Subject} {is_are} sitting sideways at a narrow noodle counter with chopsticks lifted over a steaming bowl, stacked dishes and hanging menu boards behind {object}. || nogear
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a flower-shop window crowded with luminous blossoms, the city dropping away beyond the glass. ||
-- A character portrait || {Subject} {is_are} leaning back against a broad station pillar, ankles loosely crossed, illuminated tracks and windows receding behind {object}. ||
 - A character portrait || {Subject} {is_are} leaning against a kitchenette counter beside an open refrigerator, its interior light spilling over {possessive} legs. ||
-- A character portrait || {Subject} {is_are} sitting at the edge of a sofa facing a panoramic apartment window, a low flying craft crossing above the distant skyline. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-dark spaceport apron with a squat transport beside service towers and scattered ground crews. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a compact circular flight cabin with two empty seats, wraparound instrument panels and broad luminous windows. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a deep avenue of battered tower blocks, vertical luminous signs and wet paving converging into haze. || weather
+- => Empty cockpits and flight decks
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dense low settlement enclosed by colossal dark pylons beneath a heavy storm front. || weather
 - A character portrait || {Subject} {is_are} walking toward the viewer along a crowded high-rise street, a low vehicle passing behind {object} beneath an orange dusk sky. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a warm-lit starship bridge with a raised central command chair and a broad window framing a planet. ||
+- => Empty starship bridges
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a tapered launch tower perched above a river gorge, lit vertical panels between projecting landing platforms. || weather
-- A character portrait || {Subject} {is_are} reclining weightless within a compact spacecraft workstation, knees bent and one hand resting near a screen as loose hoses loop around {object}. ||
-- A character portrait || {Subject} {is_are} sitting curled beside a circular observation window, one hand extended toward a perched pet while a curved orbital structure hangs beyond the glass. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a towering narrow machine with a glowing circular core rising through heavy smoke over a rocky plain. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a broad cloud sea with a dark planet looming low above the glowing horizon. || weather
-- A character portrait || {Subject} {is_are} walking across rippled dunes toward the tilted wreck of a colossal spacecraft, its broken spine silhouetted against smoke and sunset. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rocky alien shore beneath a vast ringed planet, shallow water reflecting the pale sky. || weather
+- => Alien vistas under giant planets
 - A character portrait || {Subject} {is_are} sitting at a compact computer desk before a wall-height window, a dark shoreline and luminous dusk horizon beyond the glass. ||
 - A character portrait || {Subject} {is_are} walking along a wet exposed causeway toward a curved spaceport tower, moored vessels hanging above storm-driven water. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a damaged industrial corridor open to firelit space through a torn overhead hull, reflections trembling along the deck. ||
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a domed colony hub surrounded by circular landing pads and dense machinery against a dark planetary horizon. ||
-- A character portrait || {Subject} {is_are} standing on a snowy precipice above the clouds, a smooth gold-trimmed vessel hovering level with {possessive} head. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a pale shuttle resting on an isolated ice floe among dark open-water channels. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a monumental gilded oval gateway on a circular mountainside platform, a line of figures dwarfed beneath its rim. || weather
+- => Shuttles landed in the wild
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a vertical shipyard where long vessels hang between illuminated towers at different heights. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a barren cratered plain beneath falling meteor fragments and a streaked starfield. ||
-- A character portrait || {Subject} {is_are} standing on a wet rooftop facing a huge low sun, unfinished antenna towers and glowing signage scattered below. || weather
-- A character portrait || {Subject} {is_are} walking along a mossy path toward a colossal crescent-shaped gateway rising from a forest sanctuary. || weather
-- A character portrait || {Subject} {is_are} walking with a scattered line of travelers toward a landed cylindrical transport on a snowfield beneath an eclipsed sun. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rounded metal shuttle settled in open grassland among grazing animals. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a broad industrial landing yard crowded with low shuttles, gantries and service roads. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a ruined machine corridor with hanging conduits and electrical arcs bridging the broken ceiling. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an enormous curling wave dwarfing coastal spires, a tiny craft skimming its face beneath a pale planet. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a lavish circular starship salon with illuminated floor rings and a panoramic planetary window. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a canyon between immense tiered industrial towers, bridges and transport lanes crossing at many heights. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a freestanding apartment block clad in exposed pipes, its stacked balcony windows glowing over a wet street. || weather
 - A character portrait || {Subject} {is_are} walking in a sealed EVA pressure suit and closed helmet across a dark landing field, a handheld lamp illuminating the dust before {object} beneath two moons. || nogear vacuum
-- A character portrait || {Subject} {is_are} standing beneath the raised tail and circular engine of an angular shuttle, its landing struts planted before a pale tower. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an abandoned multi-level interior garden, mossy walkways over dark water beneath ribbed metal balconies. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a transport hangar with a squat shuttle resting under service gantries, its lowered rear ramp lit from within. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a compact spacecraft lounge with facing bench seats, overhead conduit and a circular dark hatch at the far end. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a two-storey glazed habitat lounge with recessed seats, indoor trees and exposed ceiling beams. ||
+- => Overgrown abandoned interiors
+- => Shuttle hangars
+- => Habitat atriums
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a crowded club with illuminated rectangular frames suspended over a reflective dance floor. ||
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a narrow neighborhood electronics shop, boxed components and display screens crowding the windows beneath exposed wall piping. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a crowded station market corridor with waist-high electronics stalls beneath a dense ceiling of pipes. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is towering industrial pylons with blocky colored upper housings rising above a harbor. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an elevated traffic lane running between enormous towers with glowing inset billboards. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a vast illuminated circular portal mounted above a tiered platform, luminous particles suspended inside its rim. ||
+- => Night markets
+- => Industrial harbors and refineries
 - A character portrait || {Subject} {is_are} sitting in a raised central command chair, crew stations flanking {object} and a broad planetary window filling the bridge behind. || deskwork
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a huge horizontal conduit crossing between weathered industrial towers over a haze-filled drop. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a thick circular observation port framing a damaged battleship venting fire over a planet. ||
-- A character portrait || {Subject} {is_are} walking among travelers toward enormous spherical spacecraft crowded inside an ornate terminal. ||
+- => Observation windows onto space
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a monumental tower with a glowing arched opening above clouds, narrow platforms projecting from its sides. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a neglected coastal settlement threaded with grass and scrap, a low vessel crossing above the sea at dusk. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a hovering ring-shaped craft casting a vertical beam between tall city pylons. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rocky cavern opening filled by a curling luminous vortex. ||
 - A character portrait || {Subject} {is_are} standing at a narrow balcony rail overlooking a dense canyon of stacked wooden-fronted shops and distant metal towers. || weather
-- A character portrait || {Subject} {is_are} standing in the shadow of a colossal suspended industrial structure, further hanging masses fading into mist beyond {object}. || weather
+- => Dwarfed by colossal structures
 - A character portrait || {Subject} {is_are} walking in a sealed EVA pressure suit and closed helmet between frost-coated habitat walls, a low bridge spanning the route beneath a huge planetary crescent. || vacuum
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a massive stacked waterside factory with offset platforms jutting above a working harbor. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a compact container cafe with a service hatch, potted plants and a palm tree beside its awning. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a darkened bridge with an empty command chair, low instrument lights and a wide starfield window. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cylindrical habitat atrium with planted terraces and narrow walkways stacked beneath a circular skylight. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an immaculate white observation room with recessed side consoles and a sculpted doorway framing a planet. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an immense vertical industrial trench with glowing open bays and narrow bridges crossing between dark walls. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cylindrical spacecraft wreck half-buried in a cratered plain beneath a hard starfield. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a bright passenger lounge with curved booths, round tables and luminous recessed ceiling panels. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an alien coastline under a fractured burning planet, molten channels running between dark coastal ruins. || weather
+- => Shattered worlds on fire
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a tall machinery bay with cylindrical modules suspended from cranes above striped service lanes. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rounded shuttle parked on an icy apron, frost-covered towers beyond its lowered landing gear. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a tower of stacked circular balconies wrapped in glowing cylindrical advertisement panels. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a long arched service tunnel of riveted panels, its ribbed vault lined with alternating small lamps. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a crowded night market hall with luminous signs above its stalls and colored floor markings between pedestrians. ||
-- A character portrait || {Subject} {is_are} standing on a cliff-edge terrace facing immense floating circular gardens above the clouds. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a broad wraparound cockpit canopy with curved transparent readouts suspended above the instrument panel. ||
-- A character portrait || {Subject} {is_are} standing on a rocky overlook above a desert city, a colossal paired-ring structure hovering in the sunset beyond. || weather
-- A character portrait || {Subject} {is_are} leaning over an open console with a compact repair tool in hand, exposed leads and sparks visible while a colleague braces the panel beside {object}. || nogear
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a crowded shipboard lounge where low tables and glowing wall screens sit beneath heavy exposed ceiling pipes. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a skyline of narrow dark towers with projecting pale rectangular fins near their tops. || weather
-- A character portrait || {Subject} {is_are} standing on a forested ridge facing a monumental circular gateway set into the mountainside, its inner edge glowing through the mist. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an alien river valley dotted with strange plants and jagged mesas beneath enormous pale planets. || weather
+- => Floating cities
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a vast cavern of industrial shrines dominated by a colossal skull-shaped structure with glowing eye sockets. || @grimdark
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a needle-like tower rising from a dark blue frozen plain beneath a low planet. || weather
 - A character portrait || {Subject} {is_are} walking through a gold-trimmed observation salon, other passengers gathered before a great oval window framing orbital rings. ||
 - A character portrait || {Subject} {is_are} sitting at a flight station with one hand on the controls and the other near a transparent display, the canopy fractured into bright splinters behind {object}. || cockpit
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a muddy battlefield where two distant war machines exchange beams across churned earth. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a churned battlefield where two distant war machines exchange fire through low smoke and scattered burning wreckage. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a broad barren valley with the silhouette of a heavy war machine standing against the low sun. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a lone heavy war machine silhouetted against a pale sunset above a barren rolling plain. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dim shipboard briefing room with several crew gathered around a broad illuminated table. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dim spacecraft briefing room with crew clustered around a central table, ribbed bulkheads and recessed workstations. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a black-rock shoreline lashed by surf, needlelike industrial towers rising through storm haze across the bay. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a curved spacecraft windscreen framing a distant spired citadel across an ice plain, dark instrument panels below the glass. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a spired city under a blazing sunset, broad wedge-shaped cruisers hanging above its silhouetted towers. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dense city lost in cloud, the pointed armored bow of a vast cruiser passing over the towers. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a chain of blocky industrial platforms lifted above thick fog, bridges and crane arms connecting their illuminated decks. || weather
+- => Distant war machines in battle
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a tiered tiled-roof palace beside an arched bridge, flowering trees and lantern reflections crowding the still canal. || weather @neosamurai
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a lush ravine of broad alien flowers and orange-leaved trees, narrow waterfalls dropping into a misty pool. || weather
+- => Alien gardens
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a spotless white spacecraft laboratory with paired workbenches, glossy dark flooring and a curved skylight opening onto stars. ||
 - A character portrait || {Subject} {is_are} sitting beside a companion at a tiny outdoor table, both turned toward an enormous mushroom cloud rising over the distant plain. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a circular landing dais surrounded by broken stone, a narrow beacon rising toward a hovering ship beneath an immense planetary limb. || weather
 - A character portrait || {Subject} {is_are} walking along a narrow railed landing gantry with a round flight helmet tucked beneath one arm, terraces and distant spacecraft opening behind {object}. || nogear weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a city of slender floating stone towers, garden terraces and glass domes suspended over a river. || weather
 - A character portrait || {Subject} {is_are} standing beside a companion beneath a colossal rectangular stone arch, a sheer drop and a sea of cloud stretching beyond the ruined threshold. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a lantern-lit canal winding between tiered palace roofs and flowering trees, a turbulent sky reflected in the water. || weather @neosamurai
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a tan-padded command chair flanked by boxy armrest consoles, a wide observation window opening onto a planet and nearby ships. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a battered industrial spacecraft suspended in a cavernous repair hall, floodlights picking out gantries, service carts and drifting steam. ||
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a columned sanctuary inset deep inside the mouth of a sheer cliff, a dark conifer forest climbing the slopes below. || weather
 - A character portrait || {Subject} {is_are} climbing a broad stone stair toward a spherical habitat with round illuminated windows, suited companions ahead amid barren ridges. ||
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a towering patchwork war machine parked amid ruined apartment blocks, groups of people gathering beneath its massive legs. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is rows of broad armored shuttles parked nose-to-tail across a smoky industrial apron. || weather
 - A character portrait || {Subject} {is_are} sitting at a curved flight console beside a second crew member, hands resting on the controls beneath an arched window filled by an alien moon. || cockpit
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a white-armored war machine standing in a dark service cradle among gantries and hanging cables. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a blocky missile-equipped war machine crossing a treeless ridge beneath a heavy grey sky. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a muddy vehicle track winding through blasted scrub, a distant tank and the silhouette of a war machine barely visible through dust. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a line of heavy war machines advancing across a smoke-filled ridge, streaks of weapons fire crossing the haze. || weather
-- A character portrait || {Subject} {is_are} standing on an elevated industrial walkway overlooking a city consumed by distant fires, smoke rising around an illuminated communications spire. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a vast circular platform suspended over a dense city, a bright column connecting its underside to the urban grid below. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an immense fiery ring rising over a fractured city and molten chasms, a distant spacecraft silhouetted against its center. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a compact spacecraft lounge with a central pedestal console, wraparound screens and recessed strip lights tracing the ceiling. ||
-- A character portrait || {Subject} {is_are} kneeling beside a shallow pool with one hand extended toward a glowing alien flower, crystalline growths and ruined arches beneath a vast moon. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a long ribbed spacecraft hangar with a reflective deck and a compact shuttle suspended beneath rows of angular ceiling panels. ||
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rocky observation site crowded with monitors, an enormous whale-like organism drifting through the star-filled sky above. ||
-- A character portrait || {Subject} {is_are} standing alone before a colossal dark tower scored with illuminated vertical channels and circular ports, a pale moon rising above low fog. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an abandoned cylindrical station corridor, vines spilling from tiered walkways beneath a broken glazed roof. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an angular refinery bristling with smokestacks, parallel pipelines crossing the foreground beneath dirty storm clouds. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a monumental circular canopy carried by a row of impossibly tall columns above a winding road through rocky hills. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a broad wooded valley disappearing into golden mist, the rings of an enormous planet curving across the dawn sky. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a narrow riveted observation corridor with a counter beneath tall windows, a cat perched beside equipment overlooking a neon city. ||
 - A character portrait || {Subject} {is_are} bracing at a damaged flight station as sparks shower from overhead panels, other crew ducking around the central command chair. || cockpit
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rocky alien grove with towering jellyfish-like growths, translucent caps trailing luminous tendrils above tangled roots. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a bare cratered moon plain beneath a broad red-streaked nebula and dense stars. ||
-- A character portrait || {Subject} {is_are} standing with two companions at the edge of a floodlit hangar, the low faceted nose of a parked shuttle ahead. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a garden city built across the top and underside of a hovering platform, waterfalls spilling from its hanging terraces into cloud. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a deep industrial launch shaft with layered gantries, a spacecraft suspended beside a tall curtain of light. ||
-- A character portrait || {Subject} {is_are} standing beneath a landed shuttle in a multilevel city dock, tall support struts framing stacked walkways and service signs. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a city of slender white towers and looping elevated roads beneath a huge ringed planet at sunset. || weather
 - A character portrait || {Subject} {is_are} leaning forward over a wall of analog flight controls, one hand adjusting a switch beneath a wide window framing the planet below. || cockpit
 - A character portrait || {Subject} {is_are} standing in a vast open observation arch between heavy consoles, a ringed planet filling the sky beyond the pale landscape. ||
 - A character portrait || {Subject} {is_are} leaning both hands on the edge of a luminous navigation table, crew gathered around the chart beneath a broad planetary observation window. || deskwork
-- A character portrait || {Subject} {is_are} standing on a rocky rise with distant companions below, a massive blunt-bowed spacecraft hovering low through fog. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a coastal city below tall levitating platforms, slender spires projecting both upward and down through the clouds. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a colossal upright stone ring covered in forests and towers, its open center framing cloud and distant farmland. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a surf-filled inlet between dark rock pinnacles, glowing waterfalls spilling from clustered cliffside towers under a low sun. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a crowded neon market street with overhead cables, layered signs and food counters reflected in wet paving. || weather
+- => Cliffside cities with waterfalls
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cavernous derelict shipyard crossed by skeletal beams, battered spacecraft lying beneath broken skylights. ||
-- A character portrait || {Subject} {is_are} standing at a cliff edge above a sea of cloud, the glowing engine bank of a vast dark ship looming overhead at sunset. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a deserted shore with an empty deck chair, immense burning planetary debris hanging over a ruined coastal city. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a streamlined elevated train curving between slender retrofuturistic towers, a broad sun low behind the skyline. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a broad boulevard between rounded luminous towers, sleek hovering vehicles threading between the upper stories. || weather
-- A character portrait || {Subject} {is_are} walking along a cracked roadway through a barren salt plain toward a colossal broken fin-shaped structure leaning out of the haze. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a moonlit mountain valley with jagged snowy peaks and a bright winding river beneath dense stars. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a misty jungle stream bordered by mossy ruins, several armored figures and a tall companion machine crossing a fallen trunk. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a landed shuttle on a polished hangar deck, sunlight falling through high open bays onto encroaching greenery. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dense alien garden with oversized orange rosettes, branching ferns and tiny glowing flowers under a bright sky. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a crowded covered night bazaar with hanging lanterns and tightly packed stalls, an enormous moon visible through the open roof. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a moss-covered concrete city built across a river gorge, waterfalls dropping past bridges and stacked apartment walls. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a domed cliffside city connected by high arched bridges, waterfalls descending through the rock beneath its balconies. || weather
-- A character portrait || {Subject} {is_are} walking alone along a wet alley beneath hanging luminous signs, overhead cables disappearing into dense haze. || weather
-- A character portrait || {Subject} {is_are} standing at a rocky landing ledge beside a weathered round-nosed shuttle, a ladder and dock equipment framed by sea cliffs. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a panoramic flight deck with banks of dark consoles, broad windows showing calm blue water and low distant land. ||
-- A character portrait || {Subject} {is_are} walking with scattered companions toward an immense luminous ring set into a dark mountainside, worn steps cutting through the grassy slope. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dark hovering sphere surrounded by concentric incandescent rings above a circular landing basin in barren terrain. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an angular spacecraft observation alcove with bright window borders, a nebula and distant planet visible beyond. ||
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cavern settlement with warm-lit rooms and narrow balconies suspended against immense rock walls, mist filling the passage below. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a domed pavilion with a glowing arched entrance reflected in a thawing pool, snowfields beneath a ringed planet. || weather
-- A character portrait || {Subject} {is_are} walking toward a tall hovering tower above a ruined city square, scattered small craft circling through storm clouds. || weather
 - A character portrait || {Subject} {is_are} standing on a narrow bridge through a dark conifer gorge, a spherical hovering probe with clustered sensor lights looming above. || weather
-- A character portrait || {Subject} {is_are} walking beneath a towering spherical lander raised on articulated legs, steam and floodlights spilling across its landing apron. || weather
-- A character portrait || {Subject} {is_are} walking beside a mounted companion across a rocky plain beneath a colossal ring spanning the sky. ||
-- A character portrait || {Subject} {is_are} walking with a companion toward an immense wheeled rover, headlamps reflected in the wet landing ground beneath a pale moon. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a battered shuttle lifting above a wet industrial apron, a fireball and dense smoke erupting behind its hull. || weather
-- A character portrait || {Subject} {is_are} standing with two companions on a rocky plain beneath a weathered flying saucer, dust hanging beneath its broad circular hull. || weather
 - A character portrait || {Subject} {is_are} standing beside a pack animal inside a deep rocky cavern, a shaft of sunlight falling through an opening far overhead. ||
-- A character portrait || {Subject} {is_are} walking with a group beside a huge cylindrical spacecraft mounted on a many-wheeled transporter, a crescent moon above the frozen road. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a tall cylindrical landing tower bearing illuminated vertical lettering, ground lights and small vehicles glowing through night fog. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a low circular landing building reflected in still water, tall glass towers rising behind it beneath broken clouds. || weather
+
+## Freefall dives toward the viewer
+
+- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} diving directly toward the viewer through a dim ship corridor in freefall, {possessive} body stretched into dramatic foreshortening, one arm reaching forward toward the viewer with open fingers and the other bent up near {possessive} head gripping an unseen handhold above the frame, legs trailing behind {object} in motion, faint streaks of motion blur emphasising {possessive} speed, the corridor's lit panels and hazard striping rushing past. Dramatic foreshortened composition.
+- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} weightless in freefall, {possessive} body tilted no more than about 30 to 40 degrees off vertical and stretched toward the viewer in strong foreshortening, one gloved hand thrust out at the camera and {possessive} legs trailing loose behind {object}, hair and tether lines floating free, having just pushed off a bulkhead out of frame - behind {object} a darkened docking bay, its running lights streaking past. Dramatic foreshortened composition.
+- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} weightless in freefall, twisting hard to slip between a crossing lattice of taut laser tripwires, {possessive} body bent and one arm flung wide for balance while the other reaches ahead, loose debris and shattered fragments drifting alongside {object} - the beams cut bright green lines through the dark around {object}, faint structural wreckage receding into the black beyond.
+- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} weightless in freefall, both arms flung wide overhead and twin long braids drifting loose in the air, {possessive} body arched back in strong foreshortening - beyond {object} the dark hull of a starship interior glints with scattered debris and drifting light.
+- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} coasting head-on toward the viewer down the central shaft of a colony spoke, arms tucked close and {possessive} body tilted no more than about 30 to 40 degrees off vertical, hair fanned loose around {possessive} face - the shaft's ladder rungs and stencilled level numbers streak away behind {object}. Dramatic foreshortened composition.
+- A dynamic character portrait || {Subject} {is_are} turning weightless in the air of a zero-gravity gymnasium ring, one arm sweeping wide and the other tucked close, {possessive} body tilted no more than about 30 to 40 degrees off vertical - behind {object} the inner wall of a colony cylinder climbs away, its terraced farmland hanging overhead through the haze.
+- A dynamic, dramatically foreshortened character portrait || {Subject} {is_are} diving toward the viewer through the open ribs of a colony under construction in freefall, {possessive} body stretched into strong foreshortening with both arms swept back along {possessive} sides and {possessive} legs trailing, girders and taped bundles of cable streaking past to either side. Dramatic foreshortened composition.
+- A dynamic, gently canted-angle character portrait || {Subject} {is_are} pushing off hard from a hatch coaming with both feet, {possessive} body already tilted no more than about 30 to 40 degrees off vertical and {possessive} arms folding tight to {possessive} chest, a document wallet tumbling free of {possessive} grip behind {object} - numbered lockers fall away past {possessive} shoulder.
+- A dynamic character portrait || {Subject} {is_are} weightless and reaching overhead to catch a stanchion mid-tumble, {possessive} body arched and tilted no more than about 30 to 40 degrees off vertical with {possessive} free arm swept across {possessive} chest - warning strobes wash the corridor around {object} amber and a hatch stands cycling open behind.
+
+## Floating weightless aboard ship
+
+- A close, low-angle character portrait || {Subject} {is_are} floating weightless in a narrow access tube, one arm braced against the wall above {possessive} head and knees drawn up, {possessive} body turned a mild 20 to 30 degrees off vertical with nothing underfoot, small debris and loose tools hanging motionless in the air alongside {object}, dim panel lighting receding down the tube behind.
+- A dynamic, gently canted-angle character portrait || {Subject} {is_are} weightless in freefall, body tilted no more than about 30 to 40 degrees off vertical across the frame with one hand reaching out and {possessive} legs drifting loose behind {object}, hair lifted free - around {object} the netted crates of an unlit cargo hold hang untethered in the air, a single work lamp raking across {object} from one side.
+- A close, low-angle character portrait || {Subject} {is_are} floating weightless inside a pressurised observation blister, one palm flat against the curved glass above {possessive} head and {possessive} body turned a mild 20 to 30 degrees off vertical, legs drawn up and bent, hair lifted free - beyond the glass the ship's hull curves away and the starfield turns slowly past. Rim lighting along {possessive} silhouette.
+- A character portrait || {Subject} {is_are} floating in a darkened observation blister with {possessive} legs drawn up and drifting, one hand steadying against a console rail, a scatter of pens and a loose clipboard hanging motionless in the air around {object} - the room's readouts glow dim across {possessive} face.
+- A character portrait || {Subject} {is_are} hanging weightless in a station galley with one boot hooked under a table rail, a drink bulb held loose and {possessive} body turned a mild 20 to 30 degrees off vertical, crumbs and a spoon suspended nearby - stowage netting and taped-up duty notices line the bulkhead behind {object}.
+- A character portrait || {Subject} {is_are} braced weightless in a launch tube with both hands on the guide rails, {possessive} body angled a mild 20 to 30 degrees off vertical and {possessive} hair lifted free, gazing away down the tube past the frame - ranked catapult lights recede behind {object} into the dark.
+- A character portrait || {Subject} {is_are} drifting weightless down a corridor left dark by a power loss, one hand trailing along the wall rail and emergency chemlights glowing green at intervals past {object}, loose paperwork turning slowly in the air around {possessive} shoulders.
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a zero-gravity cargo lock, netted pallets hanging untethered in the air beneath a rank of amber warning strobes.
+- A character portrait || {Subject} {is_are} curled loose in a bunk niche's sleep sack with one arm floated free of the netting and {possessive} hair fanned around {possessive} face, {possessive} body turned a mild 20 to 30 degrees off vertical - stowed kit and a taped-up photograph line the niche wall behind {object}.
+- A dynamic character portrait || {Subject} {is_are} twisting weightless to catch a thrown wrench, {possessive} body rotating a mild 20 to 30 degrees off vertical with one hand snapping shut on it and the other flung back as counterweight - a workshop's tool boards and a drift of loose swarf hang motionless behind {object}. || nogear
+- A close, low-angle character portrait || {Subject} {is_are} hanging inverted with {possessive} boots hooked through an overhead rail and {possessive} head lowest in frame, both hands working at an opened panel above {possessive} face and {possessive} hair falling the wrong way - conduit runs recede past {object} in dim standby light.
+- A character portrait || {Subject} {is_are} floating with {possessive} legs drawn up and {possessive} palms cupped around a wobbling sphere of water held in the air before {possessive} face, {possessive} body tilted no more than about 30 to 40 degrees off vertical - a survey bay's racked sample cases and a drifting pen hang behind {object}. || nogear
+- A character portrait || {Subject} {is_are} turning slowly weightless inside the gutted interior of a derelict, {possessive} body tilted no more than about 30 to 40 degrees off vertical and one hand fending off a drifting sheet of torn panelling - frozen condensation glitters in the air around {object} wherever {possessive} lamp beam catches it.
+- A close character portrait || {Subject} {is_are} floating close to the camera with {possessive} eyes shut and {possessive} hair spread wide around {possessive} head, one hand raised loose beside {possessive} face and {possessive} body turned a mild 20 to 30 degrees off vertical - behind {object} a dark compartment recedes with a single amber standby lamp burning.
+- A character portrait || {Subject} {is_are} sitting weightless with {possessive} legs crossed and drifting slightly apart, hands resting loose in {possessive} lap and {possessive} body turned a mild 20 to 30 degrees off vertical, hair lifted free - behind {object} a long observation ring curves away, its windows full of slow-turning stars.
+- A character portrait || {Subject} {is_are} reclining weightless within a compact spacecraft workstation, knees bent and one hand resting near a screen as loose hoses loop around {object}. ||
+
+## Glancing back from a rooftop railing
+
+- A character portrait seen from behind || {Subject} {is_are} leaning on a rooftop balcony railing high above a dense city street, glancing back over one shoulder at the viewer - below {object} the street is packed with stacked signage glowing through humid haze, the crowds and wet pavement dissolving into loose, almost impressionistic brushwork. A rooftop awning and railing frame the high vantage point. || weather
+- A character portrait || {Subject} {is_are} standing at a rooftop railing in the rain, glancing back over one shoulder, a pair of aircraft streaking low across the skyline behind {object} - below {object} a dense neon high-rise district stretches away into the haze. || weather
+- A character portrait seen from behind || {Subject} {is_are} sitting on a rooftop bar's counter ledge, glancing back over one shoulder - a dense rain-soaked high-rise district glows through the downpour beyond {object}, potted plants crowding the rail. || weather
+- A character portrait || {Subject} {is_are} turning to glance back over one bare shoulder beside a rooftop railing, a full moon above the bright city beyond. || weather
+- A character portrait || {Subject} {is_are} turning to look back from a city rooftop, densely packed lit windows and signs spreading into the haze. || weather
+- A character portrait || {Subject} {is_are} standing at a rooftop railing with one hand lifted near the jaw, a vast illuminated city and a bulky parked machine behind {object}. || weather
+- A character portrait || {Subject} {is_are} resting one hip against a stair railing on a city rooftop, low banks of lights outlining the broad landing pad nearby. || weather
+
+## Sitting on a rooftop ledge above the city
+
+- A character portrait || {Subject} {is_are} sitting cross-legged on a rooftop ledge, eyes closed in quiet stillness, a sheathed blade laid flat across {possessive} lap - behind {object} a dense night skyline glows through drifting haze, thin trails of aircraft light threading between the towers. || nogear weather
+- A character portrait || {Subject} {is_are} sitting cross-legged on a rooftop ledge at night, hands braced behind {object} - beyond {object} a massive ringed planet hangs low over a grid-lit synthwave skyline lined with palm trees.
+- A character portrait || {Subject} {is_are} sitting perched on a rooftop ledge, one leg drawn up and a lit cigarette held near {possessive} mouth, gazing out over a vast river-split cityscape glowing under a deep orange sunset. || nogear weather
+- A character portrait || {Subject} {is_are} sitting with {possessive} back turned slightly toward the viewer on a high city overlook, dense towers and scattered illuminated signs receding toward a hazy sunset. || weather
+- A character portrait || {Subject} {is_are} sitting on a high rooftop edge with one knee raised and hair streaming to one side, the city falling away below. || weather
+- A character portrait || {Subject} {is_are} sitting sideways on a high ledge with one knee tucked up, an open jacket hanging loose against a wall of bright city signage. || weather
+- A character portrait || {Subject} {is_are} sitting sideways on a rooftop ledge with knees drawn up, laundry lines and a cylindrical water tank silhouetted against apartment towers. || weather
+
+## Standing at a rooftop edge
+
+- A character portrait seen from behind || {Subject} {is_are} standing at the edge of a high rooftop with both arms flung wide, an oversized jacket printed with bold graphic linework across the back - below and behind {object} a dense neon high-rise skyline stretches away into the haze, a single towering spire glowing at the center of the frame. || weather
+- A dynamic character portrait seen from behind || {Subject} {is_are} balanced on the tip of a rooftop antenna mast high above the city, one leg braced and bent, a long coat billowing wide in the wind - far below {object} a dense high-rise skyline glitters with countless warning lights through the downpour. || weather
+- A wide character portrait || {Subject} {is_are} standing at the ledge of a rain-slick rooftop, {possessive} weight braced on one heel as a neon-veined skyline spreads out far below. || weather
+- A character portrait || {Subject} {is_are} standing on a wet rooftop facing a huge low sun, unfinished antenna towers and glowing signage scattered below. || weather
+
+## Night rooftops of masts and tanks
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-dark rooftop overlooking a sprawling night city, tiers of elevated rail viaducts strung with dull red warning lamps threading between the towers and a lone aircraft hanging in the haze above. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a night-time rooftop of rusted water tanks and lattice radio masts, smokestacks trailing plumes across a lit tower-block skyline. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an industrial rooftop of antenna masts and pipework at night, a fireball blooming over the distant tower blocks. || weather
+
+## Posing with parked cars
+
+- A character portrait || {Subject} {is_are} standing beside a parked muscle car on a dark cyberpunk street at night, one hand braced on the doorframe, glancing up at the looming high-rises ahead - behind {object} the car's tail-lights glow red against the wet pavement. || weather
+- A character portrait || {Subject} {is_are} standing beside a parked muscle car on a pastel-lit street at dusk, one hand resting on the open door - behind {object} a tangle of towering cyberpunk architecture rises hazy into the fading light. || weather
+- A character portrait || {Subject} {is_are} sitting on the hood of a parked muscle car beneath an enormous full moon, hands braced back against the metal - small dark shapes wheel through the night air above the rain-slick street around {object}. || weather
+- A wide character portrait || {Subject} {is_are} standing at the tail of a parked sports car atop a sunlit overlook, weight shifted onto one hip, a distant glass tower rising past scattered clouds. || weather
+- A character portrait || {Subject} {is_are} sitting on the broad nose of a parked vehicle beneath the night sky, illuminated towers beyond the landing area. || weather
+
+## Posing with parked bikes
+
+- A character portrait || {Subject} {is_are} leaning back against the flank of a long, low speeder bike parked at a fuel stop, ankles crossed and weight settled easy against the fuselage, a cigarette held forgotten near {possessive} mouth, gazing out at the fading light - behind {object} a hazy golden dusk skyline of distant spires rises beyond a scatter of old fuel pumps and hand-lettered signage crowding the foreground out of focus. || nogear weather
+- A character portrait || {Subject} {is_are} seated astride a parked matte-black superbike on a railed overlook, one boot braced against the ground, glancing back over {possessive} shoulder - behind {object} a tiered river city of lantern-lit pagodas and waterfalls spreads below towering spired structures at dusk. || weather
+- A character portrait || {Subject} {is_are} reclined against the fairing of a parked speeder bike, one arm draped along the windscreen and chin propped in {possessive} hand - behind {object} a neon-lit street glows in smeared bursts of color through the haze. || weather
+- A character portrait || {Subject} {is_are} sitting astride a broad red motorcycle in a cluttered garage, instrument panels and parked cars behind {object}. ||
+
+## Riding bikes at speed
+
+- A dynamic character portrait || {Subject} {is_are} leaning low over the handlebars of a weathered vintage motorcycle, cutting fast across a sunbaked salt flat, {possessive} scarf and hair streaming back in the wind - behind {object} a chain of distant mesas breaks the horizon under a darkening sky. || weather
+- A dynamic character portrait seen from behind || {Subject} {is_are} leaning a massive fat-wheeled superbike through traffic on a rain-flooded city highway at night, the rear wheel throwing a sheet of spray as it slips between tail-lit cars - glass towers and lit billboards line the road ahead into the drizzle. || nogear weather
+- A dynamic, low-angle character portrait || {Subject} {is_are} hunched forward over the bars of a heavy fat-wheeled superbike tearing down a rain-slick elevated expressway at night, spray fanning off the tyres and the headlamp burning - behind {object} smoke-hazed towers and burning rooftops rise beyond the overpass, lit billboards smeared by speed. || nogear weather
+
+## Vehicle seats at night
+
+- A close character portrait || {Subject} {is_are} seated inside a parked vehicle's cockpit in heavy rain, one hand braced on the wheel, neon shopfronts smearing color across the fogged, rain-streaked windshield ahead. || weather
+- A close character portrait || {Subject} {is_are} reclined loose in a vehicle's seat, one arm slung back over the headrest and a knee drawn up, glancing out through a rain-streaked window - neon signage smears past in the dark beyond {object}. || weather
+- A character portrait || {Subject} {is_are} gripping an overhead handhold inside a moving vehicle, one arm raised and braced, glancing up and to the side - a night skyline streaks past the window behind {object}.
+- A character portrait || {Subject} {is_are} sitting back in a vehicle seat with one arm extended toward the controls, a dense night skyline visible through the side window. ||
+- A character portrait || {Subject} {is_are} sitting behind a vehicle steering wheel with one hand resting on its rim, illuminated buildings visible through the side window. ||
+
+## Riding night transit
+
+- A character portrait || {Subject} {is_are} seated in a crowded night transit car, one hand raised holding a drink, oversized headphones clamped over {possessive} ears - behind {object} out-of-focus passengers sway with the motion and neon signage glows through the window beyond.
+- A character portrait || {Subject} {is_are} seated inside a transit car at night, gazing out through the window at a dense neon high-rise skyline sliding past, faint circuitry tracing along {possessive} jaw and throat - the glass behind {object} streaks with drifting rain and passing light. || weather
+- A half-body character portrait || {Subject} {is_are} sitting hunched over a slim laptop at a train tray-table, hood drawn up against the compartment lights, rain streaking neon signage that smears past the window in long coloured lines.
+- A character portrait || {Subject} {is_are} sitting curled into a transit seat with one forearm resting across a raised knee, tall city buildings passing beyond the window. ||
+- A character portrait || {Subject} {is_are} sitting beside a wide train window with one forearm resting on the sill, city lights stretching outside. ||
+
+## Waiting at stations and shelters
+
+- A character portrait || {Subject} {is_are} sitting with legs crossed on a slatted station bench, one arm extended along its back beneath circular wall windows. ||
+- A character portrait || {Subject} {is_are} waiting beneath a glass-roofed roadside shelter, a backlit advertisement and wet illuminated pavement behind {object}. || weather
+- A character portrait || {Subject} {is_are} sitting on a narrow transit bench inside a glass-sided shelter, glowing route panels framing the city behind {object}. ||
+- A character portrait || {Subject} {is_are} sitting on a long upholstered transit bench beneath parallel light strips, other passengers distant along the corridor. ||
+- A character portrait || {Subject} {is_are} leaning back against a broad station pillar, ankles loosely crossed, illuminated tracks and windows receding behind {object}. ||
+
+## Abandoned transit stations
+
+- A character portrait || {Subject} {is_are} crouching in the entrance hall of an abandoned transit station, ruined escalators climbing toward a broken glazed roof. ||
+- A character portrait || {Subject} {is_are} sitting upright on a battered transit bench beneath a broken glazed roof, abandoned escalators rising behind {object}. ||
+
+## Standing in neon street canyons
+
+- A dramatic low-angle character portrait || {Subject} {is_are} standing at street level as a canyon of soaring high-rises rises sheer on every side, towering signage in unfamiliar characters glowing through drifting rain overhead. || weather
+- A character portrait || {Subject} {is_are} standing in heavy rain at the center of a narrow street, flanked on both sides by towering high-rises plastered with glowing neon signage in unfamiliar characters. || weather
+- A character portrait || {Subject} {is_are} standing with {possessive} back to the viewer in a towering city canyon, bright signs climbing both walls above {object}. || weather
+
+## Walking wet streets at night
+
+- A character portrait seen from behind || {Subject} {is_are} walking away down a narrow alley, one arm a fully articulated mechanical prosthetic at {possessive} side - behind {object} a rain-slicked passage recedes into drifting fog, hazy signage bleeding color low across the wet stone. || weather
+- A character portrait || {Subject} {is_are} walking through driving rain across a wet city street at night, other cloaked pedestrians passing beneath the streetlamps - behind {object} an elevated highway curves between the towers and a column of smoke rises from a burning high-rise. || weather
+- A character portrait || {Subject} {is_are} walking alone along a wet alley beneath hanging luminous signs, overhead cables disappearing into dense haze. || weather
+
+## Neon tower canyons
+
+- A half-body character portrait || Behind {object}, out of focus, a rain-drenched canyon of stacked towers strung with sagging cables recedes into blue haze, the crumbling wall at {possessive} shoulder overgrown with dripping vines. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a fog-choked canyon of neon-signed high-rises, a four-rotor surveillance drone hanging low in the air overhead with its twin optics burning in the gloom. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a deep avenue of battered tower blocks, vertical luminous signs and wet paving converging into haze. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a freestanding apartment block clad in exposed pipes, its stacked balcony windows glowing over a wet street. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a tower of stacked circular balconies wrapped in glowing cylindrical advertisement panels. || weather
+
+## Industrial tower canyons
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a deep industrial street canyon crossed by pipes and narrow bridges between tiered tower walls. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a canyon between immense tiered industrial towers, bridges and transport lanes crossing at many heights. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a huge horizontal conduit crossing between weathered industrial towers over a haze-filled drop. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an immense vertical industrial trench with glowing open bays and narrow bridges crossing between dark walls. ||
+
+## Elevated trains between towers
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-slicked elevated transit line threading between towering neon-lit high-rises, billboards glowing in unfamiliar characters. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a city of slender curving towers and elevated transit tracks, a streamlined train passing beneath a low sun. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an elevated transit platform with a sleek train approaching between illuminated tower blocks. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a streamlined elevated train curving between slender retrofuturistic towers, a broad sun low behind the skyline. || weather
+
+## Flying traffic boulevards
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a vast tiered city traffic complex beneath a passing swept-wing aircraft, circular infrastructure rings rising among the buildings. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dense city boulevard with parked cars and a broad oval shuttle passing between the upper floors. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an elevated traffic lane running between enormous towers with glowing inset billboards. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a broad boulevard between rounded luminous towers, sleek hovering vehicles threading between the upper stories. || weather
+
+## Vending machines and street terminals
+
+- A character portrait || {Subject} {is_are} leaning forward with both hands resting above the knees toward a wall-mounted vending display in a narrow illuminated street. || weather
+- A character portrait || {Subject} {is_are} standing side-on and reaching toward a wall-mounted public terminal in a narrow city alley. || weather
+- A character portrait || {Subject} {is_are} sitting on a bench beside a tall illuminated vending machine in a narrow wet street, dark doorways receding into the distance. || weather
+
+## Street food counters
+
+- A character portrait || {Subject} {is_are} leaning at the counter of a late-night noodle stall beneath a highway overpass, steam rolling off the pass and rain sheeting off the awning's edge into the road behind {object}. || weather
+- A character portrait || {Subject} {is_are} sitting on a stool outside a brightly lit food kiosk, one hand raised near {possessive} face and the counter window glowing behind {object}. || weather
+- A character portrait || {Subject} {is_are} sitting sideways at a narrow noodle counter with chopsticks lifted over a steaming bowl, stacked dishes and hanging menu boards behind {object}. || nogear
+
+## Diner and bar counters
+
+- A character portrait || {Subject} {is_are} sitting at a wooden counter with legs crossed, warm pendant lamps above and city signs beyond the window. ||
+- A character portrait || {Subject} {is_are} sitting on a high stool at a bright diner counter with legs crossed, broad windows and reflected sign light behind {object}. ||
+- A character portrait || {Subject} {is_are} leaning forward across a round diner table with both palms resting on its edge, empty upholstered booths stretching behind {object}. ||
+- A character portrait || {Subject} {is_are} leaning forward over a bar with both palms on the counter, shelves of bottles and a rain-streaked city window behind {object}. ||
+
+## Night markets
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a crowded station market corridor with waist-high electronics stalls beneath a dense ceiling of pipes. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a crowded night market hall with luminous signs above its stalls and colored floor markings between pedestrians. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a crowded neon market street with overhead cables, layered signs and food counters reflected in wet paving. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a crowded covered night bazaar with hanging lanterns and tightly packed stalls, an enormous moon visible through the open roof. || weather
+
+## Slumped in rain-slick alleys
+
+- A character portrait || {Subject} {is_are} seated low in a rain-slicked alley, jacket half-shrugged off one shoulder and cable straps trailing loose across {possessive} lap, gazing up past the camera - behind {object} neon signage in unfamiliar characters glows through the mist, a server rack blinking against the wall. || weather
+- A character portrait || {Subject} {is_are} sitting slouched against a graffiti-tagged wall in a rain-slicked neon alley, one boot planted and the other leg drawn up, {possessive} head tipped back and eyes half-lidded, loose change and a dropped data-chit scattered on the wet pavement beside {object} - behind {object} tangled cable runs and stacked neon signage in unfamiliar characters glow through the drifting mist. || weather
+
+## Sitting on a bunk
+
+- A character portrait || {Subject} {is_are} sitting sideways on an unmade bunk with one knee drawn up, a compact monitor and stacked wall equipment crowding the cabin. ||
+- A character portrait || {Subject} {is_are} sitting on the edge of a bunk with one knee raised and an arm resting loosely across it, illuminated towers filling the nearby window. ||
+- A character portrait || {Subject} {is_are} sitting on the edge of a low bunk with one elbow on a knee and a hand against the cheek, dim monitors and a shaded lamp lighting the room. ||
+
+## Apartment windows over the night city
+
+- A character portrait || {Subject} {is_are} reclining along a low couch with one arm thrown over its back, wide windows framing the crowded night city. ||
+- A character portrait || {Subject} {is_are} sitting sideways on a deep window ledge with knees drawn up, a shaded bedside lamp beside {object} and illuminated towers beyond. ||
+- A character portrait || {Subject} {is_are} sitting with legs spread on a worn apartment floor, a small game board between {possessive} knees and a wall of city windows behind. ||
+- A character portrait || {Subject} {is_are} sitting at the edge of a sofa facing a panoramic apartment window, a low flying craft crossing above the distant skyline. ||
+
+## Watching the city burn
+
+- A character portrait seen from behind || {Subject} {is_are} seated in a leather lounge chair before a floor-to-ceiling window, looking down on a riot burning through the streets far below, police lights and a gunship's searchlight cutting through the smoke - a potted palm and a lit candle on a side table stand beside {object}.
+- A character portrait seen from behind || {Subject} {is_are} standing at a floor-to-ceiling window, watching fires and black smoke roll through the city far below, a spired skyline lit beyond and rain streaking the glass.
+- A character portrait || {Subject} {is_are} standing on an elevated industrial walkway overlooking a city consumed by distant fires, smoke rising around an illuminated communications spire. || weather
+
+## Street riots and panics
+
+- A half-body character portrait || Behind {object}, out of focus, a neon-lit city intersection has broken into a riot, cars burning in the road beneath columns of black smoke and crowds scattering across the crosswalks between muzzle flashes. || weather
+- A half-body character portrait || Behind {object}, out of focus, a narrow tarp-roofed market alley has turned into a firefight, an armored personnel carrier grinding forward between the stalls with headlights blazing as soldiers trade fire from the balconies above. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-lashed night plaza packed with a frightened crowd, faces turned up toward something vast overhead. || weather
+
+## Walls of monitors
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a wall of humming, dust-caked monitors and tangled cable runs, their pale glow the only light in the room.
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cramped hacker's den lit green by a wall of humming CRT monitors, rain streaking a window at the far end. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a wall of stacked CRT monitors and rack decks, every screen showing the same burning streets and the largest cracked clean through.
+
+## Hunched at terminals
+
+- A three-quarter character portrait || {Subject} {is_are} leaning intently over a cluttered workbench, hunched forward and studying something closely, both hands down on a mechanical keyboard - to one side a large monitor glows with dense terminal code, casting light across {possessive} face, and behind {object} a cluttered workshop of stacked machinery, tangled cabling and scattered papers recedes into soft focus under dim overhead light. Warm light on {possessive} face against the cooler background. || nogear
+- A character portrait || {Subject} {is_are} seated at a bank of monitors glowing violet and cyan, both hands on the keyboard and dense telemetry scrolling across the screens ahead, thick cable runs hanging tangled from the ceiling around {object}. || nogear
+- A character portrait || {Subject} {is_are} hunched at a cluttered desk of humming terminal equipment and tangled cable runs, glancing up sharply at a shadow in the doorway - fluorescent light bars glinting off server racks and taped-up notices behind {object}.
+
+## Repairing electronics
+
+- A character portrait || {Subject} {is_are} leaning forward over an open equipment panel with one arm braced, sparks spilling from the machinery beneath {possessive} working hand. || nogear
+- A character portrait || {Subject} {is_are} hunching over a cluttered repair bench, one hand extended among dismantled instruments and stacked test equipment. || nogear
+- A character portrait || {Subject} {is_are} kneeling beside a stack of open electronic equipment cases on a cabin floor, one hand reaching toward a control panel. || nogear
+- A character portrait || {Subject} {is_are} leaning over an open console with a compact repair tool in hand, exposed leads and sparks visible while a colleague braces the panel beside {object}. || nogear
+
+## Diagnostic chairs and rigs
+
+- A close character portrait || {Subject} {is_are} reclined still in a diagnostic rig, head tipped back and eyes closed, a crown of cabling radiating out from {possessive} temples to banks of softly blinking readouts on either side of {object}.
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dim diagnostic bay, a reclined chair beneath a hooded scanner and thick cable looms dropping from the ceiling to a wall of dark racked hardware.
+- A character portrait || {Subject} {is_are} sitting on the edge of a padded exam table in a cramped clinic bay, forearms resting on {possessive} knees, a ceiling rig of folded robotic surgical arms hanging behind {object} and a glowing vitals readout floating at shoulder height beside the table.
+- A character portrait || {Subject} {is_are} reclining with {possessive} head tipped back across a broad translucent lit platform, hanging cables and deep machinery shadows surrounding {object}. ||
+
+## Beneath towering war machines
+
+- A dynamic character portrait || {Subject} {is_are} walking straight toward the viewer down a rain-slicked neon-lit street at night, flanked on either side by a pair of hulking bipedal war-mechs looming half into frame, their optics burning dull red in the murk, signage bleeding into smeared reflections on the wet pavement behind them all. || weather
+- A character portrait || {Subject} {is_are} standing amid drifting embers and rubble, watching a hulking quadrupedal war-mech stride past close behind {object}, an oversized cannon swinging loose from one of its forelimbs, a small armed flyer banking low overhead - beyond them a bombed-out industrial skyline fades into a bruised violet dusk, fire guttering low among the wreckage. || weather
+- A dramatic character portrait seen from behind || {Subject} {is_are} standing still in the rain, gazing up at a towering battle-scarred war-machine looming just ahead, its single core glowing steady in its chest - a dense city skyline rises hazy through the downpour behind {object}. || weather
+- A dramatic low-angle character portrait || {Subject} {is_are} standing framed close against the camera, hair and jacket lifted by displaced air, glancing back over {possessive} shoulder as a colossal armored war-machine looms directly overhead - the shot angled steeply upward to emphasise its scale against the neon high-rise skyline beyond. || weather
+- A character portrait || {Subject} {is_are} standing in three-quarter profile, a towering red-and-white war-machine looming just behind {possessive} shoulder, its single optic lit - down the street behind {object} red paper lanterns and shopfront signage glow through the night haze. || weather
+- A character portrait || {Subject} {is_are} standing in profile beside the towering head of a war-machine looming just behind {possessive} shoulder, gazing out across a hazy industrial skyline as a beam weapon fires from a distant flying craft overhead, faded unit markings stencilled across the machine's scarred plating. || weather
+
+## Sitting on idle machines
+
+- A character portrait || {Subject} {is_are} sitting cross-legged atop the hull of a parked armored vehicle, segmented mechanical prosthetic arms resting in {possessive} lap - behind {object} a dense neon-lit night skyline glows above a heavy cannon barrel angled into frame.
+- A character portrait || {Subject} {is_are} sitting cross-legged atop the hull of a parked aircraft at night, {possessive} fully articulated prosthetic hands resting loose on {possessive} knees, gazing up past the frame - behind {object} banks of cloud drift past a star-scattered sky, the aircraft's markings faintly lit along its flank. || weather
+- A character portrait || {Subject} {is_are} sitting atop the broad missile-pod shoulder of an idle war-machine, a cigarette smoking forgotten in one hand, looking out over a muddy grey wasteland toward a distant radio mast, the machine's hull marked with a faded heraldic shield insignia and streaked with rain. || nogear weather
+- A character portrait || {Subject} {is_are} sitting atop a battered rounded machine hull among scattered snow patches, distant peaks beneath a full moon. || weather
+
+## Beside utility robots
+
+- A character portrait || {Subject} {is_are} standing close beside a bulky round-bodied robot in a narrow city passage, the machine extending one long jointed arm above {object}. ||
+- A character portrait || {Subject} {is_are} standing beside a squat round-bodied robot in a crowded illuminated street, thick cables trailing beneath the machine. || weather
+- A character portrait || {Subject} {is_are} looking upward from the foot of a metal service stair at a towering yellow utility robot leaning over the railing. ||
+
+## Machines in service cradles
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an empty suit of crimson humanoid powered armor hanging upright in a cable-strung launch gantry, steam venting from the clamps around it in a cavernous dark bay.
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a white-armored war machine standing in a dark service cradle among gantries and hanging cables. ||
+
+## Distant war machines in battle
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a muddy battlefield where two distant war machines exchange beams across churned earth. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a churned battlefield where two distant war machines exchange fire through low smoke and scattered burning wreckage. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a muddy vehicle track winding through blasted scrub, a distant tank and the silhouette of a war machine barely visible through dust. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a line of heavy war machines advancing across a smoke-filled ridge, streaks of weapons fire crossing the haze. || weather
+
+## Lone war machines on open ground
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a squat heavily armored machine with a rotary cannon standing amid dry grass and scattered ruins. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a towering narrow machine with a glowing circular core rising through heavy smoke over a rocky plain. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a broad barren valley with the silhouette of a heavy war machine standing against the low sun. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a lone heavy war machine silhouetted against a pale sunset above a barren rolling plain. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a blocky missile-equipped war machine crossing a treeless ridge beneath a heavy grey sky. || weather
+
+## Escorted by faceless troopers
+
+- A character portrait || {Subject} {is_are} sitting slumped on the bench of a dim dropship troop bay, forearms resting on {possessive} knees, a pair of faceless armored troopers seated close on either side with bulky rifles across their laps - glowing strip-lights run along the bulkhead behind them.
+- A dramatic low-angle character portrait || {Subject} {is_are} walking straight toward the viewer out of a long, brightly lit hangar passage, a pair of heavily armored faceless troopers keeping step at either shoulder, one carrying a bulky rifle across its chest - massive blast doors stand open around them, warning lights glowing low at their base.
+
+## Rooftop dropship pads
+
+- A wide character portrait || {Subject} {is_are} walking toward the open side hatch of a matte-black armored dropship parked on a rain-slicked rooftop landing pad, a boarding step set below the door and helmeted troopers seated in the dim bay beyond it - past the hull a burning city skyline smokes under a grey overcast. || weather
+- A wide character portrait || {Subject} {is_are} standing at the rail of a rain-soaked rooftop landing pad, watching a heavy black dropship descend on four burning thrusters out of a storm-dark sky - beyond it the towers of a city burn, black smoke columns climbing from their crowns. || weather
+
+## Misty shrine ruins
+
+- x2 A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-slick shrine courtyard at dusk, stone steps climbing to wooden eaves hung with a glowing paper lantern, pale fox-shaped shapes moving low through the mist. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is the fog-wrapped wreck of a fallen war-mech looming over a rain-soaked shrine courtyard, its broken frame threaded with strung paper talismans. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a mist-shrouded ruin lit by a single stone lantern, a pale spectral face hovering faint in the gloom. || weather
+
+## Gazing out of viewports
+
+- A character portrait || {Subject} {is_are} gazing up through a viewport in quiet wonder, tubing and cabling trailing from {possessive} suit collar to a bulky comms headset clamped over the ears - beyond the glass a planet's cloud-swirled surface curves away below and a scatter of distant moons hangs in the black.
+- A character portrait || {Subject} {is_are} sitting sideways in the open threshold of a spacecraft compartment, a broad planet filling the view beyond the hull. ||
+- A character portrait || {Subject} {is_are} sitting curled beside a circular observation window, one hand extended toward a perched pet while a curved orbital structure hangs beyond the glass. ||
+
+## Observation windows onto space
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a thick circular observation port framing a damaged battleship venting fire over a planet. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an immaculate white observation room with recessed side consoles and a sculpted doorway framing a planet. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an angular spacecraft observation alcove with bright window borders, a nebula and distant planet visible beyond. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a circular spacecraft viewing window above banks of analog controls, planets and streaks of light filling the starfield beyond. ||
+
+## Empty cockpits and flight decks
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a compact circular flight cabin with two empty seats, wraparound instrument panels and broad luminous windows. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a broad wraparound cockpit canopy with curved transparent readouts suspended above the instrument panel. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a curved spacecraft windscreen framing a distant spired citadel across an ice plain, dark instrument panels below the glass. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a panoramic flight deck with banks of dark consoles, broad windows showing calm blue water and low distant land. ||
+
+## Empty starship bridges
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a warm-lit starship bridge with a raised central command chair and a broad window framing a planet. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a darkened bridge with an empty command chair, low instrument lights and a wide starfield window. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a tan-padded command chair flanked by boxy armrest consoles, a wide observation window opening onto a planet and nearby ships. ||
+
+## Starship lounges
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a compact dark lounge with long padded benches, low tables and repeated triangular light emblems overhead. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a lavish circular starship salon with illuminated floor rings and a panoramic planetary window. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a compact spacecraft lounge with facing bench seats, overhead conduit and a circular dark hatch at the far end. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a bright passenger lounge with curved booths, round tables and luminous recessed ceiling panels. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a crowded shipboard lounge where low tables and glowing wall screens sit beneath heavy exposed ceiling pipes. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a compact spacecraft lounge with a central pedestal console, wraparound screens and recessed strip lights tracing the ceiling. ||
+
+## Shipboard briefing rooms
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a clean shipboard conference room with a long recessed central table, angular chairs and an illuminated ceiling panel. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dim shipboard briefing room with several crew gathered around a broad illuminated table. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dim spacecraft briefing room with crew clustered around a central table, ribbed bulkheads and recessed workstations. ||
+
+## Shipboard corridors
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a riveted steel bulkhead door stencilled with a deck number, a keypad lock lit beside it in a cold blue corridor.
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cramped service passage lined with exposed overhead pipes, wall racks and small illuminated access panels. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a long angular ship corridor with slanted wall consoles and repeated luminous ceiling recesses. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cylindrical maintenance tunnel ribbed with repeated metal rings, conduits and small monitors lining its full length. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a long arched service tunnel of riveted panels, its ribbed vault lined with alternating small lamps. ||
+
+## Ruined corridors and halls
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cavernous flooded service tunnel of stained concrete and tangled pipework, sparks raining from a broken ceiling fixture onto black standing water.
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cavernous ruined machine hall beneath a circular vault, lightning illuminating broken walkways and piled wreckage. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a damaged industrial corridor open to firelit space through a torn overhead hull, reflections trembling along the deck. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a ruined machine corridor with hanging conduits and electrical arcs bridging the broken ceiling. ||
+
+## Overgrown abandoned interiors
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an abandoned multi-level interior garden, mossy walkways over dark water beneath ribbed metal balconies. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an abandoned cylindrical station corridor, vines spilling from tiered walkways beneath a broken glazed roof. ||
+
+## Habitat atriums
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a two-storey glazed habitat lounge with recessed seats, indoor trees and exposed ceiling beams. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cylindrical habitat atrium with planted terraces and narrow walkways stacked beneath a circular skylight. ||
+
+## Spaceport aprons
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a compact cargo craft resting on a lit landing pad, exposed tubing and packed machinery covering its rounded hull. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a broad rain-dark spaceport apron crowded with low cargo ships, service equipment and scattered pedestrian traffic. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rain-dark spaceport apron with a squat transport beside service towers and scattered ground crews. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a broad industrial landing yard crowded with low shuttles, gantries and service roads. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is rows of broad armored shuttles parked nose-to-tail across a smoky industrial apron. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a battered shuttle lifting above a wet industrial apron, a fireball and dense smoke erupting behind its hull. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a heavy freighter hovering over a wheeled industrial loader, exhaust vapor falling around their blocky silhouettes at dusk. || weather
+
+## Shuttles landed in the wild
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a pale shuttle resting on an isolated ice floe among dark open-water channels. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rounded metal shuttle settled in open grassland among grazing animals. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rounded shuttle parked on an icy apron, frost-covered towers beyond its lowered landing gear. || weather
+
+## Shuttle hangars
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a transport hangar with a squat shuttle resting under service gantries, its lowered rear ramp lit from within. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a battered industrial spacecraft suspended in a cavernous repair hall, floodlights picking out gantries, service carts and drifting steam. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a long ribbed spacecraft hangar with a reflective deck and a compact shuttle suspended beneath rows of angular ceiling panels. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a landed shuttle on a polished hangar deck, sunlight falling through high open bays onto encroaching greenery. ||
+
+## Standing by landed shuttles
+
+- A character portrait || {Subject} {is_are} standing beneath the broad engine nacelle of a parked transport inside a cavernous hangar, compact service craft arrayed nearby. ||
+- A character portrait || {Subject} {is_are} standing on a sandy landing field beside a low rounded shuttle, flat-topped desert cliffs beyond it. || weather
+- A character portrait || {Subject} {is_are} leaning against the curved nose of a parked shuttle on a wet landing apron, distant floodlights and gantries reflected in puddles. || weather
+- A character portrait || {Subject} {is_are} standing beneath the raised tail and circular engine of an angular shuttle, its landing struts planted before a pale tower. || weather
+- A character portrait || {Subject} {is_are} standing with two companions at the edge of a floodlit hangar, the low faceted nose of a parked shuttle ahead. ||
+- A character portrait || {Subject} {is_are} standing beneath a landed shuttle in a multilevel city dock, tall support struts framing stacked walkways and service signs. || weather
+- A character portrait || {Subject} {is_are} standing at a rocky landing ledge beside a weathered round-nosed shuttle, a ladder and dock equipment framed by sea cliffs. || weather
+
+## Walking out to waiting craft
+
+- A character portrait || {Subject} {is_are} standing among a loose line of travelers beneath the low hull of a departing transport, another cargo craft looming over the open landing field. || weather
+- A character portrait || {Subject} {is_are} walking with a scattered line of travelers toward a landed cylindrical transport on a snowfield beneath an eclipsed sun. || weather
+- A character portrait || {Subject} {is_are} walking among travelers toward enormous spherical spacecraft crowded inside an ornate terminal. ||
+- A character portrait || {Subject} {is_are} walking beneath a towering spherical lander raised on articulated legs, steam and floodlights spilling across its landing apron. || weather
+- A character portrait || {Subject} {is_are} walking with a companion toward an immense wheeled rover, headlamps reflected in the wet landing ground beneath a pale moon. || weather
+- A character portrait || {Subject} {is_are} walking with a group beside a huge cylindrical spacecraft mounted on a many-wheeled transporter, a crescent moon above the frozen road. || weather
+- A character portrait || {Subject} {is_are} walking with three companions toward a dark landed shuttle in a mist-filled mountain basin, distant floodlights shining through the vapor. || weather
+
+## Beneath ships hovering overhead
+
+- A character portrait || {Subject} {is_are} standing squared to the viewer, a long white coat draped over {possessive} shoulders, an immense capital ship descending directly behind {object}, its hull lit sharply against a burning red city glow far below, drifting haze softening the skyline. || weather
+- A character portrait || {Subject} {is_are} standing on a rocky ridge looking toward a broad transport hovering low overhead, a distant moon above the forested valley. || weather
+- A character portrait || {Subject} {is_are} standing on a snowy precipice above the clouds, a smooth gold-trimmed vessel hovering level with {possessive} head. || weather
+- A character portrait || {Subject} {is_are} standing on a rocky rise with distant companions below, a massive blunt-bowed spacecraft hovering low through fog. || weather
+- A character portrait || {Subject} {is_are} standing at a cliff edge above a sea of cloud, the glowing engine bank of a vast dark ship looming overhead at sunset. || weather
+- A character portrait || {Subject} {is_are} standing with two companions on a rocky plain beneath a weathered flying saucer, dust hanging beneath its broad circular hull. || weather
+- A character portrait || {Subject} {is_are} walking with a companion beneath a bulbous hovering spacecraft, clustered hull lights shining through a rocky mountain pass at night. || weather
+
+## Warships over cities
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a bulky freighter hovering above needle-like city towers, its bank of engine nozzles shining through the haze. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a spired city under a blazing sunset, broad wedge-shaped cruisers hanging above its silhouetted towers. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dense city lost in cloud, the pointed armored bow of a vast cruiser passing over the towers. || weather
+
+## Finned slab towers
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cluster of tall slab towers capped by sharply slanted pale roof fins above a mist-filled city. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a skyline of narrow dark towers with projecting pale rectangular fins near their tops. || weather
+
+## Floating cities
+
+- A character portrait || {Subject} {is_are} standing on a cliff-edge terrace facing immense floating circular gardens above the clouds. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a city of slender floating stone towers, garden terraces and glass domes suspended over a river. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a vast circular platform suspended over a dense city, a bright column connecting its underside to the urban grid below. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a garden city built across the top and underside of a hovering platform, waterfalls spilling from its hanging terraces into cloud. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a coastal city below tall levitating platforms, slender spires projecting both upward and down through the clouds. || weather
+
+## Cliffside cities with waterfalls
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a surf-filled inlet between dark rock pinnacles, glowing waterfalls spilling from clustered cliffside towers under a low sun. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a moss-covered concrete city built across a river gorge, waterfalls dropping past bridges and stacked apartment walls. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a domed cliffside city connected by high arched bridges, waterfalls descending through the rock beneath its balconies. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cavern settlement with warm-lit rooms and narrow balconies suspended against immense rock walls, mist filling the passage below. || weather
+
+## Storm-lashed coasts
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a flooded coastal city beneath an immense curling storm cloud, rough waves surging between the remaining towers. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an enormous curling wave dwarfing coastal spires, a tiny craft skimming its face beneath a pale planet. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a black-rock shoreline lashed by surf, needlelike industrial towers rising through storm haze across the bay. || weather
+
+## Industrial harbors and refineries
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is towering industrial pylons with blocky colored upper housings rising above a harbor. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a massive stacked waterside factory with offset platforms jutting above a working harbor. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a chain of blocky industrial platforms lifted above thick fog, bridges and crane arms connecting their illuminated decks. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an angular refinery bristling with smokestacks, parallel pipelines crossing the foreground beneath dirty storm clouds. || weather
+
+## Monumental ring gateways
+
+- A character portrait || {Subject} {is_are} standing among a line of robed visitors before a colossal circular inset structure, its polished dark center framed by densely carved stone. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a monumental gilded oval gateway on a circular mountainside platform, a line of figures dwarfed beneath its rim. || weather
+- A character portrait || {Subject} {is_are} walking along a mossy path toward a colossal crescent-shaped gateway rising from a forest sanctuary. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a vast illuminated circular portal mounted above a tiered platform, luminous particles suspended inside its rim. ||
+- A character portrait || {Subject} {is_are} standing on a forested ridge facing a monumental circular gateway set into the mountainside, its inner edge glowing through the mist. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a colossal upright stone ring covered in forests and towers, its open center framing cloud and distant farmland. || weather
+- A character portrait || {Subject} {is_are} walking with scattered companions toward an immense luminous ring set into a dark mountainside, worn steps cutting through the grassy slope. || weather
+
+## Rings in the sky
+
+- A half-body character portrait || Behind {object}, out of focus, is a towering sci-fi skyline beneath a colossal glowing ring-shaped structure hanging in the night sky, freighters and cruisers drifting past its light, the streets below slick with rain and threaded with cool running-lights. || weather
+- A character portrait || {Subject} {is_are} standing on a rocky overlook above a desert city, a colossal paired-ring structure hovering in the sunset beyond. || weather
+- A character portrait || {Subject} {is_are} walking beside a mounted companion across a rocky plain beneath a colossal ring spanning the sky. ||
+
+## Alien vistas under giant planets
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a broad cloud sea with a dark planet looming low above the glowing horizon. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rocky alien shore beneath a vast ringed planet, shallow water reflecting the pale sky. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an alien river valley dotted with strange plants and jagged mesas beneath enormous pale planets. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a broad wooded valley disappearing into golden mist, the rings of an enormous planet curving across the dawn sky. || weather
+
+## Cratered moons under the stars
+
+- A wide character portrait || {Subject} {is_are} standing motionless on a barren lunar plain, a blue Earth and a river of stars filling the black sky above the jagged horizon.
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a barren cratered plain beneath falling meteor fragments and a streaked starfield. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cylindrical spacecraft wreck half-buried in a cratered plain beneath a hard starfield. ||
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a bare cratered moon plain beneath a broad red-streaked nebula and dense stars. ||
+
+## Shattered worlds on fire
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an alien coastline under a fractured burning planet, molten channels running between dark coastal ruins. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an immense fiery ring rising over a fractured city and molten chasms, a distant spacecraft silhouetted against its center. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a deserted shore with an empty deck chair, immense burning planetary debris hanging over a ruined coastal city. || weather
+
+## Alien gardens
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a lush ravine of broad alien flowers and orange-leaved trees, narrow waterfalls dropping into a misty pool. || weather
+- A character portrait || {Subject} {is_are} kneeling beside a shallow pool with one hand extended toward a glowing alien flower, crystalline growths and ruined arches beneath a vast moon. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a rocky alien grove with towering jellyfish-like growths, translucent caps trailing luminous tendrils above tangled roots. || weather
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a dense alien garden with oversized orange rosettes, branching ferns and tiny glowing flowers under a bright sky. || weather
+
+## Walking toward colossal wrecks
+
+- A character portrait || {Subject} {is_are} standing before the hull of a beached derelict starship, reaching up to touch a faint glowing panel set into its plating - behind {object} the ship's saucer-like silhouette looms against a field of stars.
+- A character portrait || {Subject} {is_are} walking across rippled dunes toward the tilted wreck of a colossal spacecraft, its broken spine silhouetted against smoke and sunset. || weather
+- A character portrait || {Subject} {is_are} walking along a cracked roadway through a barren salt plain toward a colossal broken fin-shaped structure leaning out of the haze. || weather
+
+## Dwarfed by colossal structures
+
+- A character portrait || {Subject} {is_are} standing in the shadow of a colossal suspended industrial structure, further hanging masses fading into mist beyond {object}. || weather
+- A character portrait || {Subject} {is_are} standing alone before a colossal dark tower scored with illuminated vertical channels and circular ports, a pale moon rising above low fog. || weather
+- A character portrait || {Subject} {is_are} walking toward a tall hovering tower above a ruined city square, scattered small craft circling through storm clouds. || weather
 - A character portrait || {Subject} {is_are} walking through a deserted city passage beside an immense tilted architectural slab, the towers ahead reflected in rainwater. || weather
 - A character portrait || {Subject} {is_are} standing at the foot of a tall narrow monument between two equestrian statues, lightning-bright clouds behind its pointed crown. || weather
-- A character portrait || {Subject} {is_are} walking with three companions toward a dark landed shuttle in a mist-filled mountain basin, distant floodlights shining through the vapor. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a circular spacecraft viewing window above banks of analog controls, planets and streaks of light filling the starfield beyond. ||
-- A character portrait || {Subject} {is_are} walking with a companion beneath a bulbous hovering spacecraft, clustered hull lights shining through a rocky mountain pass at night. || weather
+
+## Dig sites and survey camps
+
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a mud-churned drilling camp under a rain-heavy sky, a lattice derrick and crawler crane rising over rows of low field tents in the drizzle. || weather
+- A close character portrait || {Subject} {is_are} huddled with a handful of field technicians under a dim canvas tent, faces lit from below by the glowing slates in the others' hands, rain-dark tarpaulin sagging behind {object}.
+- A low-angle character portrait || {Subject} {is_are} standing at the crumbling lip of a freshly dug excavation pit at night, floodlights glaring through drifting haze - behind {object} a drilling tower and sagging canvas field tents loom over a scattered line of survey crew. || weather
+- A dramatic low-angle character portrait || {Subject} {is_are} climbing down a sagging rope ladder into a vertical rock shaft, one hand locked on a rung and a headlamp beam cutting through the dust - far overhead the shaft's jagged mouth opens onto pale daylight, a second climber silhouetted against it.
+- A low-angle character portrait seen from behind || {Subject} {is_are} standing among a line of harnessed survey crew on the floor of a vast cavern, floodlights stabbing up into the dark toward the colossal buried silhouette of something ancient and machine-shaped overhead.
 
 ## Weather
 
