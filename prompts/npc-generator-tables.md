@@ -110,7 +110,7 @@ because a table runs from its heading to the next `##` heading:
   cockpit, only the bar owner rolls the scene behind their own counter. Each
   one is defined in `BACKDROP_ROLES` in `generate-npc.py`, against either the
   Role categories that may roll it or an exact Role bullet. This is a hard
-  exclusion, like `## Gear`'s `admin` lock and unlike every preference filter
+  exclusion, like the `admin` and `outlaw` role locks and unlike every preference filter
   in the file: it never falls back to the whole pool, because falling back
   would hand the scene to the Role it was kept from. An unflagged bullet is
   neutral and reachable by everyone, which is what some 157 of these are —
@@ -164,7 +164,10 @@ because a table runs from its heading to the next `##` heading:
   entries stay this way, the same as a build or gear item with no flag at
   all. The flag lives in Faction's third segment and Outfit's second, since
   the two tables carry different numbers of prose segments — see the Faction
-  item above. **Gear** and **Weapon** bullets may also carry `|| mil`, marking
+  item above. **Headgear** bullets may carry `|| mil` in the same sense, for the
+  few that are part of an issued uniform — a peaked officer's cap — and the
+  split drops them for a civilian Role the same way. **Gear** and **Weapon**
+  bullets may also carry `|| mil`, marking
   the item as military-issue — equipment on a Gear entry, an actual issued
   weapon on a Weapon entry, since every bullet in that table already reads
   as one.
@@ -305,10 +308,11 @@ because a table runs from its heading to the next `##` heading:
   preference — nothing is dropped _for_ it — and it exists for the same
   reason `none` does on Weapon: a filter needs to be able to name the empty
   bullet without matching on its prose. Exactly one bullet should carry it.
-- A **Gear** bullet may carry a **role lock**, of which `admin` is so far the
-  only one. It confines that bullet to the occupations named against the flag
-  in `ROLE_LOCKS` in `generate-npc.py` — `admin` is a colonial administrator's
-  and no one else's — and it is the one hard filter in this file. Every other
+- A **Gear** or **Headgear** bullet may carry a **role lock**: `admin` on
+  Gear, `outlaw` on Headgear. It confines that bullet to the occupations named
+  against the flag in `ROLE_LOCKS` in `generate-npc.py` — `admin` is a colonial
+  administrator's and no one else's, `outlaw` belongs to the pirates, smugglers
+  and other criminal Roles — and it is the one hard filter in this file. Every other
   flag here is a preference that hands the whole pool back rather than leave
   the roll with nothing; a lock never yields, since yielding would hand the
   item to the very Role it was kept from. Use it only where the object is an
@@ -1702,7 +1706,7 @@ bullet there changes no portrait or token.
 - {Subject} {wear} a tactical cap with a small circular unit emblem, dark sunglasses beneath it. || hardtech crown
 - {Subject} {wear} a night-vision helmet with the quad tubes flipped up clear of {possessive} eyes. || hardtech helmet
 - {Subject} {wear} a sleek black mechanical headset piece mounted flush against one ear. || hardtech
-- {Subject} {wear} a stiff peaked officer's cap, the brim polished and a small insignia set at the crown. || crown
+- {Subject} {wear} a stiff peaked officer's cap, the brim polished and a small insignia set at the crown. || crown mil
 - {Subject} {wear} a hooded shroud drawn up over a full-face helmet, its visor tinted dark and a breather mask sealed across the lower face. || hardtech helmet
 - {Subject} {wear} a deep hood drawn up, a pair of goggles clipped across the brow of it.
 - {Subject} {wear} a flat-brimmed ball cap with a small stitched patch at the front. || crown
@@ -1751,7 +1755,7 @@ bullet there changes no portrait or token.
 - {Subject} {wear} a wide straw hat over a patterned cloth headband tied at the brow. || crown
 - {Subject} {wear} a horned kabuto-style helmet with a riveted neck guard and cheek plates framing {possessive} face. || helmet
 - {Subject} {wear} a gilt-trimmed tricorn hat pinned with a skull-and-crossbones badge and a curling plume. || crown
-- {Subject} {wear} a black tricorn hat trimmed in lace, a small skull-and-crossbones pinned above a red ribbon bow. || crown
+- {Subject} {wear} a black tricorn hat trimmed in lace, a small skull-and-crossbones pinned above a red ribbon bow. || crown outlaw
 - {Subject} {wear} a red bandana knotted at the brow, ends trailing into windblown hair.
 - {Subject} {wear} a pair of oversized over-ear headphones with a boom mic curling toward {possessive} cheek. || hardtech
 - {Subject} {wear} a matte combat helmet cinched down over a full rebreather mask, hoses looping to a chest-mounted filter. || hardtech helmet
@@ -2575,7 +2579,8 @@ bullet there changes no portrait or token.
   Keep authoring them: the ratio of ordinary objects to issued equipment here
   is most of what makes a rolled crowd feel lived-in.
 
-  '|| admin' is a ROLE LOCK, and the only one so far. A locked bullet is
+  '|| admin' is a ROLE LOCK, and the only one on this table ('outlaw' is its
+  Headgear counterpart). A locked bullet is
   reachable by the occupations named against that flag in ROLE_LOCKS in
   generate-npc.py and by no others - 'admin' is a colonial administrator's
   and nobody else's. It is the one hard filter on this table: unlike 'notac',

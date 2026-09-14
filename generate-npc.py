@@ -191,6 +191,9 @@ TRAIT_DEPENDENTS = {
     # not one of the eleven REROLLABLE_TRAITS, so this edge costs no
     # one-click button its cascade; test_every_one_click_trait_closes_to_
     # itself() is what would fail if that ever changed.
+    #
+    # Headgear also reads Role now - the 'outlaw' lock and the 'mil' split -
+    # but needs no edge here: the new Outfit already pulls it into the cascade.
     "Role": ("Faction", "Outfit", "Weapon", "Backdrop"),
 
     # All three read Outfit's 'notac'. Weapon and Gear lose their
@@ -861,12 +864,18 @@ CIVILIAN_UNARMED_COPIES = 3
 # bullet is reworded - test_role_lock.py checks every name here is still in
 # the live Role table, and that every lock flag in the tables is defined here.
 #
-# Gear only. Weapon has its own Role machinery in apply_weapon_policy(), and
-# what a person wears is already handled three other ways; if a lock is ever
-# wanted on another table, widen filter_by_role_lock()'s call site rather than
-# adding a second mapping.
+# Gear and Headgear. Weapon has its own Role machinery in apply_weapon_policy(),
+# and the rest of what a person wears is handled three other ways; Headgear
+# joined because a skull-and-crossbones tricorn is as much an emblem as a cane
+# of office. If a lock is wanted on a third table, widen filter_by_role_lock()'s
+# call sites rather than adding a second mapping. Headgear's pool is sixty-odd
+# bullets deep, so the margin argument above holds there too.
 ROLE_LOCKS = {
     "admin": ("a colonial administrator",),
+    # A pirate's colours worn openly, which on anyone else reads as costume.
+    # Exactly the Criminals bucket, which test_role_lock.py holds.
+    "outlaw": ("a smuggler", "a pirate", "a dockside black-market broker",
+               "a data-rat courier", "a data pirate", "an undercity fixer"),
 }
 
 # Roles whose own text says they work for nobody, and which therefore may only
@@ -1660,7 +1669,8 @@ def filter_by_dress(options, policy):
 
 
 def filter_by_role_lock(options, role):
-    """Gear bullets locked to an occupation, dropped for every other Role.
+    """Gear or Headgear bullets locked to an occupation, dropped for every
+    other Role.
 
     A bullet carrying a flag named in ROLE_LOCKS is that job's and nobody
     else's - a colonial administrator's lacquered cane of office reads as
@@ -1759,12 +1769,12 @@ def filter_by_hardtech(options, outfit_notac):
     kimono under a sealed flight helmet.
 
     Deliberately NOT keyed on 'mil'. That flag means "an actual issued
-    uniform" on the two tables that carry it, Headgear is not in
-    filter_by_mil(), and putting 'mil' on headgear bullets would invite
-    someone to wire it in and quietly change what a civilian may wear. It is
-    also the wrong word for a third of the set: a cybernetic ear implant, a
-    mechanical diagnostic rig and a pair of retro-industrial headphones are
-    none of them military and all three fight a kimono.
+    uniform", and Headgear does carry it - through filter_by_mil(), on the few
+    bullets that are part of one, such as a peaked officer's cap - but it is the
+    wrong word for most of this set: a cybernetic ear implant, a mechanical
+    diagnostic rig and a pair of retro-industrial headphones are none of them
+    military and all three fight a kimono. Flagging those 'mil' would take
+    them off every civilian, which is a different rule from this one.
     """
     if not outfit_notac:
         return options
@@ -2264,9 +2274,11 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # Role-driven bias instead, from apply_weapon_policy() below; Gear is
         # filtered elsewhere in this same loop, just not by Role - by the
         # Weapon roll's 'hands' flag, by 'notac', and by a 'nogear' Backdrop.
-        # Role precedes all three in REQUIRED_TABLES, so role_mil is already
+        # Headgear joins the split for the handful of bullets that are part of
+        # a uniform - a peaked officer's cap is dress, not equipment. Role
+        # precedes all of these in REQUIRED_TABLES, so role_mil is already
         # known.
-        if name in ("Faction", "Outfit"):
+        if name in ("Faction", "Outfit", "Headgear"):
             options = filter_by_mil(options, role_mil, name)
 
         # A Role whose own words say it works for nobody keeps only the
@@ -2291,7 +2303,9 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # when they would empty it, and running them first could only mean a
         # locked bullet survived that fallback. Role precedes Gear in
         # REQUIRED_TABLES, so npc["Role"] is already the value this NPC keeps.
-        if name == "Gear":
+        # Headgear takes the same lock, for the same reason and in the same
+        # place: before the 'updo', 'covered' and 'notac' yields below.
+        if name in ("Gear", "Headgear"):
             options = filter_by_role_lock(options, npc["Role"])
 
         # A scene that asserts an occupation, kept off everyone who does not
@@ -4058,6 +4072,18 @@ def reroll_trait(tables, npc, name, rng):
     # None means the entry predates the key, which is not the same as False:
     # it is "nobody knows", and the honest answer to that is today's
     # unrestricted behaviour plus a warning, not a fabricated 'plain'.
+    # The role lock, against the stored Role - which keeps its text, so this
+    # rebuilds exactly. First, before any of the yields below can hand back a
+    # pool that still holds a locked bullet.
+    if name == "Headgear":
+        options = filter_by_role_lock(options, npc["Role"])
+        # And the civ/mil split, which needs the Role's 'mil' flag. The stored
+        # Role is stripped, so it is read back off the live Role table.
+        role_flags = next((split_flags(b)[1]
+                           for b in variant_table(tables, "Role", subject)
+                           if split_flags(b)[0] == npc["Role"]), ())
+        options = filter_by_mil(options, "mil" in role_flags, name)
+
     if name == "Headgear":
         register = npc.get("_outfit_notac")
         if register is None:

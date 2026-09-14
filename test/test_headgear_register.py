@@ -143,13 +143,17 @@ class TestTheLiveTable(unittest.TestCase):
                        "sealed tactical helmet", "respirator mask"):
             self.assertIn(wanted, hardtech)
 
-    def test_no_headgear_bullet_carries_civ_or_mil(self):
-        """Headgear is not in filter_by_mil(), so those flags would be inert
-        and misleading. The spec rejects them by name."""
+    def test_mil_is_not_the_hardtech_register(self):
+        """Headgear is in filter_by_mil() now, for the few uniform pieces - a
+        peaked officer's cap - and test_headgear_mil.py covers that. What must
+        not happen is 'mil' standing in for 'hardtech': it would take a
+        headset off every civilian rather than off a kimono. 'civ' stays
+        unused - no hat needs keeping off a soldier."""
         for bullet in bullets_for(LIVE, "Headgear"):
             flags = gen.split_flags(bullet)[1]
             self.assertNotIn("civ", flags)
-            self.assertNotIn("mil", flags)
+            if "mil" in flags:
+                self.assertNotIn("hardtech", flags, bullet)
 
 
 class TestTheRegisterIsRecorded(unittest.TestCase):
