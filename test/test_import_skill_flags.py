@@ -52,7 +52,7 @@ SHAPES = {
         r"^- \*\*([A-Za-z ]+)\*\*: (.*)$", SKILL, re.M)
 }
 
-# A row of the §3 routing table: '| what you see | **Table** (or ...) | how to
+# A row of the §2 routing table: '| what you see | **Table** (or ...) | how to
 # tag it |'. This is the THIRD place the skill names flags, and until this file
 # grew a check for it, the only one with no test - which is exactly the one
 # that drifted. It was found claiming Hair took "no flags" a commit after
@@ -61,7 +61,7 @@ SHAPES = {
 # §4 were correct throughout, because the assertions below covered them.
 #
 # It is the worst of the three to leave stale: §0 is a lookup table and §4 is a
-# shape to copy, but §3 is the column a run reads while *deciding* what to tag,
+# shape to copy, but §2 is the column a run reads while *deciding* what to tag,
 # so a flag missing here is one that never gets considered at all.
 ROUTES = {}
 for _line in SKILL.split("\n"):
@@ -170,7 +170,7 @@ class TestEveryLiveFlagIsDocumented(unittest.TestCase):
                 with self.subTest(table=table, flag=flag):
                     self.assertIn(
                         flag, route_flags,
-                        "the import skill's §3 routing row for %s does not "
+                        "the import skill's §2 routing row for %s does not "
                         "mention %r, which the table uses. That row is what a "
                         "staging run reads while deciding what to tag, so a "
                         "flag missing from it is never considered at all."
@@ -181,7 +181,7 @@ class TestEveryLiveFlagIsDocumented(unittest.TestCase):
         vacuously rather than fail."""
         self.assertGreaterEqual(
             len(ROUTES), 8,
-            "only parsed %d routing rows out of the skill's §3 table - the "
+            "only parsed %d routing rows out of the skill's §2 table - the "
             "row format probably changed; this file expects "
             "'| seen | **Table** | how to tag |'" % len(ROUTES))
         self.assertIn("Hair", ROUTES)

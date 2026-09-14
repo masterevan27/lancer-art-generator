@@ -1,6 +1,6 @@
 ---
 name: npc-trait-import
-description: Extract Backdrop scenes, Stance poses, Weapon and Gear items, Outfit, Headgear, Hair, Hair colour, Feature, Demeanor (facial expression), Faction, Glow colour and Glow placement entries from reference images and stage them as importable candidate entries in a timestamped JSON file, for later selective review/import into npc-generator-tables.md (by the import webpage or by hand) rather than editing that file directly. Reads the live Theme table so every '@theme' tag it writes names a real theme, and where one run's images evidence a coherent visual world none of the live themes covers, stages a new named Theme entry alongside them. Use whenever the user shares one or more reference images (pasted inline or given as file paths) from this Lancer campaign's ComfyUI/Krea pipeline and asks to add, extract, stage, or import backdrops, scenes, poses, weapons, gear, outfits, headgear, hairstyles, hair colours, scars or prosthetics, expressions, themes or a new visual style, or where a glow or rim light falls "from these" or "in our house style" into the NPC generator.
+description: Extract Backdrop scenes, Stance poses, Weapon and Gear items, Outfit (including its group tables), Headgear, Hair, Hair colour, Build (body type), Feature, Demeanor (facial expression), Faction, Glow colour and Glow placement entries from reference images and stage them as importable candidate entries in a timestamped JSON file, for later selective review/import into npc-generator-tables.md (by the import webpage or by hand) rather than editing that file directly. Reads the live Theme table so every '@theme' tag it writes names a real theme, and where one run's images evidence a coherent visual world none of the live themes covers, stages a new named Theme entry alongside them. Use whenever the user shares one or more reference images (pasted inline or given as file paths) from this Lancer campaign's ComfyUI/Krea pipeline and asks to add, extract, stage, or import backdrops, scenes, poses, weapons, gear, outfits, headgear, hairstyles, hair colours, body types or builds, scars or prosthetics, expressions, themes or a new visual style, or where a glow or rim light falls "from these" or "in our house style" into the NPC generator.
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 argument-hint: [image paths or a directory, or omit to use images already shown in the conversation]
 model: sonnet
@@ -84,7 +84,7 @@ conventions, and the pronoun placeholders. As of this writing the flags are:
 | `air` | Glow placement | Prop gate, inverted: the glow hangs as a haze, and hard vacuum has no atmosphere to scatter it, so this one names what the scene must **not** be. Weightlessness is not the test — most zero-gravity scenes are shirt-sleeve interiors and hold a haze fine. Pairs with `scene`. |
 | `clear` | Weather | Contributes nothing to the prompt. |
 | `young` | Age | NPC under twenty; swaps the adult clauses. |
-| `figure` | Build | Written in terms of an adult woman's figure; dropped when Age rolled `young`. |
+| `figure` | Build | Written in terms of an adult woman's figure — bust, hips, waist, curves; dropped when Age rolled `young`. In practice it lives on `Build (she)`, the replacement table she/her rolls from. A build describing frame and conditioning alone stays unflagged, and those unflagged builds are the whole pool a late-teen NPC rolls from. |
 | `older` | Hair colour | An age-linked colour (greying, salt-and-pepper); dropped when the Age roll came up `young`, the same pairing `figure` has with Build. |
 | `@<theme>` | Hair, Hair colour, Feature, Outfit, Headgear, Weapon, Backdrop — **and nowhere else** | A *theme tag*, not a behavioural flag: the bullet belongs to that visual world. Untagged is neutral and reachable from every theme. `Gear` is deliberately not on this list — it split away from `Weapon` precisely because it isn't theme-defining. See the trap below before using one. |
 
@@ -122,16 +122,16 @@ entirely, and a run trusting it emitted wrong flags. Diff it against the file
 every run and fix this skill if they disagree.
 
 **This skill mirrors the flags in three places, and they drift apart in a
-predictable order.** The table above, the *Tag …* column of the routing table
-in §3, and the per-table shapes in §4 all name flags, and a change that adds
-one has reliably updated the first and the last while leaving §3 behind: §3
+predictable order.** The table above, the *Notes* column of the routing table
+in §2, and the per-table shapes in §4 all name flags, and a change that adds
+one has reliably updated the first and the last while leaving §2 behind: §2
 was found claiming `Hair` took *no flags* after `updo` shipped, describing
 `Headgear` without `helmet`, and listing `hands`/`mil` *only* for `Gear` when
-`helmet` and `admin` also reach it. §3 is the column a run actually reads
+`helmet` and `admin` also reach it. §2 is the column a run actually reads
 while deciding what to tag, so it is the worst of the three to leave stale.
 
 All three are now held to the live tables by `test/test_import_skill_flags.py`,
-which is why §3 is correct today — it had no test until the drift above was
+which is why §2 is correct today — it had no test until the drift above was
 found, and the two mirrors that did have one never drifted. **Run that file
 after editing any of the three**, and treat a failure as this skill's bug
 rather than the tables'. It checks in one direction only: documenting a flag
@@ -148,13 +148,19 @@ It reads the third segment for `Backdrop`, `Faction` and `Hair colour` and the
 second for everything else, so every row is accurate as printed, and it keeps
 only the real tables in `REQUIRED_TABLES` — without that filter the prose of
 `## How the script reads this file` parses as a table and floods the output.
-A flag on a row here that is missing from §0, §3 or §4 is this skill's bug,
+A flag on a row here that is missing from §0, §2 or §4 is this skill's bug,
 not the tables' — fix the skill.
 
 **Flags the design specifies that do NOT exist yet — do not emit these.**
 `docs/superpowers/specs/2026-09-03-themed-npc-generation-design.md` §7 lists
 `bulk`, `enclosed`, `sealed`, `vacuum` and `mechown`/`mechwork`/`mechnear`.
-**None of that has landed.** Those tables/flags don't exist and no filter
+**`bulk`, `enclosed`, `sealed`, `mechown` and `mechnear` have not landed.**
+Two names on that list did ship, but not with the design's meaning: `vacuum`
+and `mechwork` are Backdrop **occupation gates** (see the table above), read
+by `BACKDROP_ROLES`, and gate who may roll the scene. The design's `vacuum`
+instead required a `sealed` Outfit and Headgear, and nothing enforces that, so
+don't reason from the design when staging either one. The unlanded flags don't
+exist and no filter
 reads them, so emitting one now produces a bullet that is silently ignored —
 or, on a table that is never split, one that renders the flag as literal
 prompt text. Add them to this skill in the same change that adds them to the
@@ -182,11 +188,11 @@ Three flag traps worth stating outright, because each has been gotten wrong:
   up in grey coveralls. Tag a bullet only when it would look *wrong* in
   another theme's NPC — lacquered plate, a horned kabuto, glowing data
   ports. A tag on a plain jacket doesn't enrich a theme, it shrinks the
-  neutral floor for all eight. **When in doubt, leave it neutral**; a
+  neutral floor for every theme. **When in doubt, leave it neutral**; a
   reviewer can add a tag in one keystroke and will never notice a missing
   one.
 
-  Two further rules, both silent when broken:
+  Three further rules, the first two silent when broken:
 
   - **The tag is read on seven tables only** — `Hair`, `Hair colour`,
     `Feature`, `Outfit`, `Headgear`, `Weapon`, `Backdrop`. `Weapon` **is**
@@ -197,8 +203,8 @@ Three flag traps worth stating outright, because each has been gotten wrong:
     lands in the flag segment) — it's just silently ignored as an
     unrecognized flag, the same as any other typo'd flag, and the bullet
     stays reachable from every theme regardless of the tag. `Glow placement`
-    behaves the same way: split on `||`, but not themed, so a tag there is
-    swallowed rather than rendered. On `Skin`,
+    and `Build` behave the same way: split on `||`, but not themed, so a tag
+    there is swallowed rather than rendered. On `Skin`,
     `Eyes`, `Demeanor`, `Glow colour`, `Height` and the name tables a tag is
     *worse* than silently ignored: those are never split on `||` at all, so
     a bullet reading `- chrome-inlaid irises || @cyberpunk` ships the literal
@@ -206,6 +212,18 @@ Three flag traps worth stating outright, because each has been gotten wrong:
   - **A bullet may carry more than one tag** (`|| civ @cyberpunk @gundam`)
     and is then reachable from either — the right move for genuinely
     cross-over hardware, and better than picking one arbitrarily.
+  - **A group table inherits its parent's theming, and a themed group owns
+    its tag.** A group heading (`## Flight suits`) holds `Outfit`-shaped
+    bullets, so it reads tags exactly as `Outfit` does, even though its name
+    is not on the list above. A group whose `- => …` reference carries a tag
+    is a *themed group*: `- => Glowing-seam bodysuits (cyberpunk) ||
+    @cyberpunk` makes every member of `## Glowing-seam bodysuits (cyberpunk)`
+    cyberpunk already. A member there must carry **no** tag of its own, and
+    this one is loud rather than silent: `check_tables` refuses the whole
+    tables file, so nothing generates until the tag is removed. A member of a
+    *neutral* group (no tag on its reference) may carry a tag like any
+    `Outfit` bullet. The `(cyberpunk)` in that heading is part of the group's
+    name, not a pronoun variant like `(she)`.
 
 The pronoun placeholders are
 `{Subject}`/`{subject}`/`{object}`/`{possessive}`/`{Possessive}`/`{is_are}`/
@@ -306,10 +324,11 @@ subagents, but hold these lines, all of which have failed in practice:
 | A body pose with no particular environment, meant for the full-body token | **Stance** | Token only, and that means **the body and nothing else** — no ground, ledge, wall, furniture, weather or props that aren't in a hand. A pose may crouch, kneel or sit; it must not sit *on* anything. See the trap in §4. Tag `hands` if the pose needs both hands free, `armed` if it references a weapon at all, `gun` if it specifically aims or fires one. An untagged pose is treated as hands-free and weaponless, so a raised blade left untagged will turn up on an unarmed NPC. |
 | A weapon — held, slung, holstered or worn | **Weapon** | Tag `hands`/`gun`/`mil`/`weapon`/`simple`/`sidearm` as applicable — see the flag traps in §0. Tag `blade` **as well** on anything edged — a katana, a sword, a knife, a dagger — since a Role named in `WEAPON_ROLES` can reach nothing else, and an unflagged blade is invisible to it. |
 | A tool, pack, or other carried item that isn't a weapon | **Gear** | Tag `hands`/`mil` — `gun`/`weapon`/`simple`/`sidearm` moved to `Weapon` with the split and no longer apply here. Two others do reach this table: `helmet` for a helmet **carried** rather than worn, and `admin`, a role lock you may only stage under the conditions in §0. |
-| A garment, armor, or full kit | **Outfit** (or `Outfit (she) +` if the cut only reads on a woman's figure) | Tag `civ`/`mil`, plus `notac` if it is elaborate or traditional and `dressy` if it is finery. The two are not the same — see the flag table. |
+| A garment, armor, or full kit | **Outfit** (or `Outfit (she) +` if the cut only reads on a woman's figure), **or the group table for its family** | Tag `civ`/`mil`, plus `notac` if it is elaborate or traditional and `dressy` if it is finery. The two are not the same — see the flag table. **Check the group headings first**: `Outfit` enters twenty-odd family tables through `- => Name` references (flight suits, work coveralls, kimonos and fine robes, glowing-seam bodysuits…), and a variant of one of those families goes under that group's exact heading, or its `(she) +` variant, not under `Outfit`, where it would weigh as much as a whole family. See §4's group note, and the group rule in §0's theme trap before tagging one. |
+| A full-body figure whose body type reads clearly | **Build** (for he/him and they/them), or `Build (she)` (for she/her) | Portrait crops and wide environment shots don't qualify, see §4. `Build (she)` **replaces** `Build` rather than adding to it, so pick by the subject, and stage a build that suits either as **two** entries, one per table. Tag `figure` if the phrase names bust, hips, waist or curves; leave it off a build of frame and conditioning alone. Never tag a theme. |
 | A helmet, hood, hat, or headset | **Headgear** (or `Headgear (she) +`) | Full sentence: `{Subject} {wear} ...`. Tag `hardtech` if it is a visor rig, sensor or comms hardware, a breather mask or a cybernetic piece; leave soft hats, hoods, plain eyewear and the traditional register unflagged **for that flag**. Tag `crown` wherever the thing sits on top of the skull without enclosing it — any hat or cap, a wide brim, a rig clamped over the crown — which is a question of volume rather than register, so it applies to soft hats and hardware alike; a brow visor, a headset, an earpiece or a hood leaves the crown free and takes neither. Tag `helmet` **as well** wherever the head is actually inside a helmet — that is the narrower flag, and it is what keeps a second helmet out of the hands and a gathered updo off the crown. A kabuto takes `helmet` alone, without `hardtech`. Never author the `bare` bullet: an image cannot show an absence, and the table already has the one. |
 | A hairstyle/cut visible on its own (not tucked under headgear) | **Hair** (or `Hair (she) +` / `Hair (he) +` if the cut only reads on one gender) | Noun phrase with exactly one `{colour}` placeholder standing in for the shade — no literal color word. Tag `updo` if the hair is gathered on top of the skull; see the tell in §4. **Prefer never to name a worn garment inside the phrase** — no headscarf, cap, hood or headset, however plainly the image shows one; stage the covering as its own `Headgear` candidate and record the cut alone. Where the cut genuinely cannot be described without it, the bullet must carry `covered`, which forces the NPC bare-headed — an expensive tag, since it spends the whole Headgear roll. A distinctive *shade* seen in the image (not just the cut) is a separate `Hair colour` candidate — see the note on that table's shape in §0. |
-| A distinctive facial expression / mood on the subject | **Demeanor** (or `Demeanor (she) +`) | Noun phrase describing the look, not the backstory behind it — "a wry, crooked grin," not "someone who's seen a lot." |
+| A distinctive facial expression / mood on the subject | **Demeanor** (or `Demeanor (she) +`) | Noun phrase describing the look, not the backstory behind it — "a wry, crooked grin," not "someone who's seen a lot." This is the NPC's rolled resting expression. It is **not** the expression-sprite set: `prompts/expression-tables.md` drives `generate-expressions.py` and is outside this skill's scope, and nothing here writes to it. |
 | A scar, tattoo, prosthetic, implant or other mark carried on the body | **Feature** (or `Feature (she) +` / `Feature (he) +`) | Noun phrase, no behavioural flags — but it *is* one of the seven themed tables, so a mark strongly of one look may carry a `@theme` tag. Distinct from `Demeanor`, which is the expression, and from `Headgear`, which is worn and removable: a cybernetic optic wired into the face is a Feature, a visor strapped over the eyes is Headgear. |
 | An insignia, unit livery, or faction-defining look | **Faction** | `name || visual || flags` — the name is dossier-only; the visual is the only part that reaches the prompt, and it must describe fabric, tailoring, insignia or patina, **never a garment category** (that loses to `Outfit` every time). Tag `civ` or `mil` — that pair is what keeps a militia's livery off a shopkeeper, and a faction carrying neither reaches both. Tag `palette` if the faction asserts colours of its own, `dressy` if the livery is ceremonial. Never tag `unaffiliated`: it marks the absence of an affiliation, and an image cannot show one. See §4 for the full shape. |
 | A distinctive glow/neon color with nothing else new | **Glow colour** | Just the color name — see the palette-strip rule below before adding one. |
@@ -318,7 +337,10 @@ subagents, but hold these lines, all of which have failed in practice:
 
 Most reference images you'll be handed for this campaign are wide "hero
 shot" environments (a mech towering over a street, a ruin, a battlefield) —
-those are Backdrop entries nine times out of ten. Hair and Demeanor only come
+those are Backdrop entries nine times out of ten. Build needs the opposite
+framing from Hair and Demeanor: a full-body shot with the figure's silhouette
+unobscured, since a portrait crop always reads slim, and bulky armor or a
+long coat hides the frame it would describe. Hair and Demeanor only come
 up when a reference is a close-enough character/portrait shot to actually show
 a cut or an expression clearly — don't force one out of a wide environment
 shot where the face is small or averted.
@@ -413,6 +435,21 @@ the image will not fit this file. Apply all of these:
   included. Stage a variant of an existing family under the group's exact
   heading (`"table": "Flight suits"`) rather than under `Outfit`. A run
   never authors a `=>` bullet: creating a group is a curation decision.
+  List the live groups with `python -c "import importlib.util,sys,pathlib;s=importlib.util.spec_from_file_location('g','generate-npc.py');m=importlib.util.module_from_spec(s);sys.modules['g']=m;s.loader.exec_module(m);T=m.parse_tables(pathlib.Path('prompts/npc-generator-tables.md'));[print(k) for k in sorted(m.group_tables(T))]"`
+  rather than recalling them, since they are re-cut as the table grows.
+  Three things to get right when targeting one:
+  - **Pronoun variants work as they do on the parent.** A group's
+    `(she) +` table adds to the group for she/her, so a cut that only reads
+    on a woman's figure goes under `Flight suits (she) +`, not `Flight suits`.
+  - **A themed group's members carry no tag.** Under
+    `Glowing-seam bodysuits (cyberpunk)` the reference already makes every
+    member cyberpunk, and a member tag makes `check_tables` refuse the tables
+    file. A cyberpunk variant of a neutral family goes in the themed sibling
+    group, untagged, rather than in the neutral group with a tag, where one
+    exists.
+  - **Five near-identical candidates with no group are a finding, not a
+    group.** Stage them under `Outfit` and say in §8 that they look like a
+    family worth grouping; the user makes that call.
 - **Headgear**: `{Subject} {wear} <full sentence>. || [hardtech] [helmet] [crown]`
   Flag it if the piece is a helmet, a visor or lens rig, sensor or
   night-vision hardware, a breather mask, a comms headset, anything cabled or
@@ -457,6 +494,45 @@ the image will not fit this file. Apply all of these:
   an ornamental pin, a flower, a mechanical binder — those are part of the
   hairstyle and leave the head free for a hat, and flagging one would spend
   the Headgear roll for nothing.
+- **Build**: `<descriptive phrase, no placeholders> || [figure]` — the
+  phrase fills `{build}` in "{Subject} {is_are} {height}, **{build}**,
+  {face}", so it is an adjective phrase about the body, comma-joined like the
+  live entries: `wiry and hard-trained, visibly strong without being bulky`.
+  Six rules, each drawn from the table or its tests:
+  - **Pick the table by the subject, never blind.** `Build (she)` is used
+    *instead of* `Build` for she/her, and `Build` is what he/him and
+    they/them roll. There is no `Build (she) +` and no `Build (he)`. A
+    build that reads right on anyone is staged twice, one entry per table,
+    with each entry's `notes` naming its twin's id.
+  - **`figure` on anything that names bust, hips, waist or curves**, and
+    only there. Those builds are dropped for an under-twenty NPC, and the
+    unflagged ones are the whole pool a teenager rolls from, so a missing
+    flag puts an adult figure on a seventeen-year-old. On `Build` itself,
+    written for men and they/them, it should essentially never come up.
+  - **Silhouette, not anatomy.** Name a shape with the table's compound
+    idiom (`small-busted`, `full-busted`, `narrow-hipped`), never a bare
+    body-part noun with an intensifier. `test/test_build_content.py` rejects
+    `breasts`/`boobs`/`tits`, and the reason generalises past those words:
+    that register pulls Krea's pose, framing and rendering toward the
+    pornographic and distorts proportion, because there is no shape in the
+    phrase to draw.
+  - **Frame and conditioning only.** No clothing (that is `Outfit`), no skin
+    or scars (`Skin`, `Feature`) and no height. `Height` is its own roll,
+    and "a full head taller" beside a rolled "a shade under five foot nine"
+    is a dossier disagreeing with itself. No age either: "gaunt with age" on
+    a twenty-one-year-old is the same fault.
+  - **Weights follow the table's lean.** `Build (she)`'s comment keeps
+    lean, fit and athletic frames heavy and gives the heavier entries weight
+    1 apiece. Stage heavy builds unweighted and leave raising any weight to
+    the reviewer. §3's rule against short, slight or baby-faced adult entries
+    applies here most of all, since this table is the body. The one live
+    exception, `compact and athletic, short and densely muscled`, earns it
+    with *densely muscled*. Don't add a second small frame without that kind
+    of counterweight.
+  - **Only from a full-body figure whose frame is visible.** A portrait crop
+    reads slim whatever the body is, and hardsuits, long coats and robes
+    hide the frame. Skip the build rather than guess. If the image yields
+    nothing else either, it goes in `skipped` like any other.
 - **Hair colour**: `<base, consonant-initial> || [tail] || [older]` — the
   `base` fills the cut's `{colour}` slot, the optional `tail` is a trailing
   clause for gradients, and `older` is the only flag. See the consonant and
@@ -676,8 +752,9 @@ Group every candidate from this run into one file's `entries` array, even
 when they target different tables — the review step filters by table on its
 own side.
 
-**What the importer actually does with this file** (`import-gui-server`'s
-`allTraitCandidates()` / `insertBulletIntoTables()`), which shapes what
+**What the importer actually does with this file** (`allTraitCandidates()` /
+`insertBulletIntoTables()` in the sibling `lancer-npc-import-gui` repo's
+`server.js`), which shapes what
 matters here:
 
 - It reads only `entries` and `generated_at`. Extra top-level keys like
@@ -685,7 +762,8 @@ matters here:
   does when marking an entry `imported`.
 - It **refuses a `table` whose `## heading` doesn't exist** rather than
   inventing one — so an invented or misspelled table name is a hard failure
-  at import, not a silent one.
+  at import, not a silent one. It matches any heading, so `Build (she)` and
+  a group heading like `Flight suits (she) +` are both valid targets.
 - It appends the bullet as the **last bullet in that section**, so
   `placement_hint` is advice for the human reviewer, not something the
   importer acts on. Write it for a person.
@@ -746,14 +824,23 @@ against the file you just wrote and fix anything they surface:
    bug: the bullet belongs to no theme, is not untagged either, and never
    rolls again. And every tag **sits on one of the seven tables that read
    it** — `Hair`, `Hair colour`, `Feature`, `Outfit`, `Headgear`, `Weapon`,
-   `Backdrop` (**not** `Gear`), counting variant suffixes (`Outfit (she) +`
-   reads tags; `Eyes (she) +` does not). Both failures are silent at render
-   time, and the second renders the tag as literal prompt text.
+   `Backdrop` (**not** `Gear` or `Build`), counting variant suffixes
+   (`Outfit (she) +` reads tags; `Eyes (she) +` does not) **and group
+   headings**, which read tags as their parent does (`Flight suits` counts
+   as `Outfit`). Resolve a heading to its parent before checking it by name,
+   or every group entry is misjudged. Both failures are silent at render
+   time, and the second renders the tag as literal prompt text. One more,
+   which is not silent: **no candidate staged under a themed group carries a
+   tag** (a group whose `- => …` reference is tagged, e.g.
+   `Glowing-seam bodysuits (cyberpunk)`). `check_tables` refuses the whole
+   tables file once it is imported.
 5. **The run did not over-tag.** Count the tagged candidates against the
    untagged ones for the seven themed tables. If most of this run's
    appearance candidates carry a tag, stop and re-read the over-tagging trap
    in §0 — that ratio is backwards, and the fix is to drop tags, not to
-   justify them. Report the ratio in §8 either way.
+   justify them. Count group entries with their parent, and count an entry
+   under a themed group as tagged, since it is themed whether or not its own
+   bullet says so. Report the ratio in §8 either way.
 6. **Every `{placeholder}` is in the allowed set**, with no `{Object}` and no
    `{object}'s`.
 7. **Every `source_image` exists on disk**, compared against a real directory
@@ -818,9 +905,18 @@ against the file you just wrote and fix anything they surface:
     a byte-identical name and a non-zero size — the §6.1 copy step, checked
     rather than assumed. Any that are missing go in the §8 report by name;
     they are a degraded preview, not a broken run, so don't fail on them.
+18. **Every `Build` candidate is right for its table.** Its `table` is
+    exactly `Build` or `Build (she)` and matches the subject in its source
+    image. A build that suits anyone is staged once per table, with each
+    `notes` naming the twin's id. `figure` is present if and only if the
+    phrase names bust, hips, waist or curves. It names no bare anatomy
+    (`breasts`, `boobs`, `tits`: `test_build_content.py` checks the table
+    for them after import, which is too late), no height, clothing, skin or
+    age, no `{placeholder}` and no `@theme`. And its source image is a
+    full-body figure whose frame is visible, not a portrait crop.
 
 A short script is the fast way to do most of these — 13, and the judgement
-halves of 14 and 16, are a read rather than a regex; if the run was small
+halves of 14, 16 and 18, are a read rather than a regex; if the run was small
 enough to eyeball, eyeball it. Report what you
 checked, not just that you checked.
 
@@ -828,7 +924,7 @@ checked, not just that you checked.
 
 **If this run staged a `Theme` entry, say so first, before the counts.** Name
 the theme, say what evidence cleared §4.8's gate (which candidates, which
-tables), say which of the eight live themes you considered it against and why
+tables), say which of the live themes you considered it against and why
 it isn't one of them, and state the ordering constraint plainly: import `t1`
 first, or reject the tagged candidates along with it, because a tag naming a
 theme that isn't in the table excludes its bullet from every roll. That last
@@ -840,7 +936,7 @@ watching for it, and they can only make it if each run reports the near-miss.
 After writing the file, summarize in chat: how many candidates, which tables
 they target, how many images were skipped and why (in categories, not one
 line per image), **the theme-tag ratio from §7.5** (how many of this run's
-six-table appearance candidates carry a tag, and which themes), and the file
+seven-table appearance candidates carry a tag, and which themes), and the file
 path — so the user knows a review step is waiting without needing to open the
 JSON to check.
 
@@ -856,7 +952,9 @@ report rather than from an empty detail sheet.
 
 Surface anything the reviewer would otherwise discover the hard way:
 candidates that overlap each other or an existing bullet, judgment calls you
-made on their behalf, and any bookkeeping counts that will need recounting
+made on their behalf, near-identical `Outfit` candidates that look like a
+family worth grouping, `Build` candidates staged as a pair across both
+tables, and any bookkeeping counts that will need recounting
 after they choose what to import.
 
 ## 9. Confirm a candidate renders, if the user wants a check
@@ -956,3 +1054,8 @@ All of these have actually happened on a run of this skill.
 | Staging armament as a `Gear` candidate | Anything that reads as a weapon is `Weapon` now — `Gear` is equipment only, and `weapon`/`gun`/`simple`/`sidearm` are silently ignored there. 25 staged entries had to be re-tabled after the split. |
 | A `Stance` pose that names the ground, a wall, or the weather | The token has no environment. Describe the body and drop the rest — §4. |
 | A `Faction` flag written in the second segment | That segment is the visual signature and reaches the prompt as literal text. `name \|\| \|\| civ`. |
+| Staging a family variant under `Outfit` | Check the group headings first. A flight suit goes under `Flight suits`, where it shares one slot with its family instead of weighing as much as the whole family. |
+| A theme tag on a member of a themed group | The `- => …` reference already carries it, and `check_tables` refuses the file. Stage the member untagged. |
+| A `Build` for a woman staged under `Build` | `Build (she)` replaces `Build` for she/her, so the entry is never rolled by the NPC it describes. |
+| A `Build` naming bust or hips without `figure` | It stays in the pool for an under-twenty NPC. Flag every build that names the figure. |
+| A `Build` read off a portrait crop | A crop always reads slim. Only a full-body figure with a visible frame supports a build. |

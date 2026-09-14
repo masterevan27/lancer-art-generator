@@ -57,9 +57,6 @@ NOT_STAGED = {
               "one would need a matching Build register rather than a bullet",
     "Age": "a closed set carrying the 'young' flag that gates Build; adding "
            "one is a change to that pairing, not a staged observation",
-    "Build": "same pairing from the other side, and 'Build (she)' replaces "
-             "rather than extends it - a bullet added blind lands in the "
-             "wrong one half the time",
     "Skin": "a closed phrase set, and one an image reads unreliably under "
             "the coloured lighting most references have",
     "Eyes": "as Skin, and shorter still",
@@ -180,6 +177,34 @@ class TestEveryTableHasAShape(unittest.TestCase):
                                      "%s is a group of %s and takes its shape line" % (group, name))
                     self.assertTrue(name in SHAPE_LINES or name in NOT_STAGED,
                                     "%s references %s but has no shape line" % (name, group))
+
+
+class TestReplacementVariantsAreNamed(unittest.TestCase):
+    """A staged table whose '(she)' variant REPLACES it must name that variant.
+
+    Build was exempt from staging until the skill learned to pick between
+    'Build' and 'Build (she)' by the subject, because variant_table() uses a
+    '(she)' table instead of the base rather than alongside it: a woman's
+    build staged under 'Build' is never rolled for the NPC it describes. An
+    additive '(she) +' variant is forgiving - its base still reaches her - so
+    only the replacement form needs the guard. Any future table that gains
+    one, while having a shape line, lands here with no edit.
+    """
+
+    def test_the_skill_names_every_replacement_variant_of_a_staged_table(self):
+        replacements = [key for key in LIVE
+                        if key.endswith(")") and " (" in key
+                        and key.partition(" (")[0] in SHAPE_LINES]
+        self.assertIn("Build (she)", replacements,
+                      "Build (she) is no longer a replacement variant of a "
+                      "shaped table - this guard is measuring nothing")
+        for key in replacements:
+            with self.subTest(table=key):
+                self.assertIn(
+                    "`%s`" % key, SKILL,
+                    "%s replaces %s for its pronoun set, but the import skill "
+                    "never names it, so a run stages every build under the "
+                    "base table" % (key, key.partition(" (")[0]))
 
 
 class TestTheSegmentCountsAgree(unittest.TestCase):

@@ -65,6 +65,9 @@ COUNT_WORDS = {5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine"}
 COUNT_PATTERNS = (
     r"([a-z]+) themed tables",
     r"read on ([a-z]+) tables",
+    # §8's report line. It read "six-table" while the generator gated seven,
+    # and neither pattern above could see it.
+    r"([a-z]+)-table appearance",
 )
 
 # '4 candidates across 2 of the seven themed tables' - §4.8's gate for
