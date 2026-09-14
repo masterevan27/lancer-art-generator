@@ -73,8 +73,8 @@ conventions, and the pronoun placeholders. As of this writing the flags are:
 | `deskwork` | Backdrop | Occupation gate: operating a command, plot, watch or surveillance station. Pilots, Soldiers, Officials, Support, Criminals, Civilians — every bucket but Laborers and Technicians, since a screen wall is genre-neutral in a way a cockpit is not. |
 | `ceremony` | Backdrop | Occupation gate: the subject presides — a ceremonial ramp, a throne, the front of a rally. Pilots, Soldiers, Officials, Criminals. |
 | `inspection` | Backdrop | Occupation gate: auditing someone else's work — badge out, folio closed, a placard held against a serial plate. Officials. |
-| `salvage` | Backdrop | Occupation gate: stripping machine wreckage as work rather than as spectacle. Laborers, plus the scavenger-priest by name. |
-| `clergy` | Backdrop | Occupation gate: officiating — hands raised before a bowed congregation. Named to the scavenger-priest alone. |
+| `salvage` | Backdrop | Occupation gate: stripping machine wreckage as work rather than as spectacle. Laborers. |
+| `clergy` | Backdrop | Occupation gate: officiating — hands raised before a bowed congregation. Named to the municipal recycler foreman alone. |
 | `medic` | Backdrop | Occupation gate: triage, a sick bay, a ripperdoc's chair. Named to the field medic alone. |
 | `barkeep` | Backdrop | Occupation gate: behind the counter, or across the booth table from a contact. Named to the bar owner and information broker alone. |
 | `scene` | Glow placement | The light falls out in the *environment* — on a wall, in the air, across the ground. Only reachable when the Backdrop is what casts it, since the alternative source is something the NPC wears or carries and a lit visor cannot light the wall behind them. An unflagged placement keeps the light on or immediately around the figure and is reachable either way; most should stay unflagged, because the equipped case is the common one. |

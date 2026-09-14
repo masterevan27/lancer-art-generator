@@ -811,8 +811,8 @@ WEAPON_POLICY = {
 # in the table - so they are barred already. Officials is the case this gate
 # must NOT break: fine dress is correct for a corporate liaison or a colonial
 # administrator. Criminals keeps it because a pirate in finery is a genre
-# staple, and Civilians because it holds the scavenger-priest, for whom robes
-# are the point.
+# staple, and Civilians because a bar owner or a broadcast coordinator may
+# dress as well as they like.
 DRESS_POLICY = {
     "Laborers": "plain",       # dockworker, freelance salvager
     "Technicians": "plain",    # chief mechanic, maintenance technician
@@ -828,7 +828,7 @@ DEFAULT_DRESS_POLICY = "any"
 # What a non-mil Role gets when WEAPON_POLICY names no policy for it. It used
 # to be "none at all", which meant seven civilian Roles - dockworker, chief
 # mechanic, maintenance technician, freelance salvager, bar owner, data
-# courier, scavenger-priest - rolled the raw pool and came out armed 65% of
+# courier, recycler foreman - rolled the raw pool and came out armed 65% of
 # the time. Weapon sits outside the civ/mil filter by design (a civilian may
 # carry a military-issue weapon), so nothing else was holding them back.
 # A default rather than seven more WEAPON_POLICY entries, so a civilian Role
@@ -948,11 +948,11 @@ WEAPON_ROLES = {
 # already encodes what kind of work an occupation is, and restating it per-Role
 # would only drift from it, which is the argument DRESS_POLICY makes too.
 #
-# An entry may also name an exact Role bullet, and four of them do, because the
+# An entry may also name an exact Role bullet, and three of them do, because the
 # bucket is too coarse where the scene is one job's alone. 'Civilians' holds the
-# bar owner, the data courier AND the scavenger-priest, so gating 'clergy' or
-# 'barkeep' by bucket would re-admit precisely the roles the flag exists to
-# keep out. 'medic' is the same case inside 'Support', which also holds a comms
+# bar owner AND the data courier, and 'Laborers' the recycler foreman AND the
+# dockworker, so gating 'barkeep' or 'clergy' by bucket would re-admit
+# precisely the roles the flag exists to keep out. 'medic' is the same case inside 'Support', which also holds a comms
 # operator, who does not run a triage tent. A bucket name is capitalized and a
 # Role bullet starts lowercase, so the two never collide; test_backdrop_role.py
 # holds that every name here is still a live bucket or a live Role bullet.
@@ -1004,9 +1004,10 @@ BACKDROP_ROLES = {
     # liaison or an administrator tours a facility on the same terms.
     "inspection": ("Officials",),
     # Stripping machine wreckage as work rather than as spectacle.
-    "salvage": ("Laborers", "a scavenger-priest of a local machine cult"),
-    # Officiating. The priest's image and nobody else's.
-    "clergy": ("a scavenger-priest of a local machine cult",),
+    # The recycler foreman is a Laborer, so the bucket already covers him.
+    "salvage": ("Laborers",),
+    # Officiating. The recycler foreman's image and nobody else's.
+    "clergy": ("a municipal recycler foreman",),
     # Triage, a sick bay, a ripperdoc's chair.
     "medic": ("a field medic",),
     # Behind the counter, or across the booth table from a contact.
