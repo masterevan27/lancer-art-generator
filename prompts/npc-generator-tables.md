@@ -1851,6 +1851,7 @@ bullet there changes no portrait or token.
 - a maintenance technician
 - a security officer || mil
 - a data courier
+- a scavenger-priest of a local machine cult
 - a municipal recycler foreman
 - a mercenary sniper || mil
 - an elite mercenary pilot || mil
