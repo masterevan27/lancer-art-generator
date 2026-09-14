@@ -1304,6 +1304,11 @@ bullet there changes no portrait or token.
 - tall and statuesque, long-legged and narrow-waisted || figure
 - slender but full-busted, with a clearly defined waist || figure
 - sturdy and thickset through the shoulders and hips || figure
+- voluptuous and long-limbed, full through the bust and hips above a sharply cinched waist || figure
+- athletic and powerfully built through the thighs and hips, full-busted and hard-muscled || figure
+- long-legged and lean-waisted, powerful through the thighs and hips || figure
+- hourglass-shaped and strong-legged, full through the bust and hips with a sharply narrow waist || figure
+- powerfully muscled and deep-chested, with thick corded forearms and a heavy neck
 
 ## Height
 
@@ -1805,10 +1810,40 @@ bullet there changes no portrait or token.
 - a maintenance technician
 - a security officer || mil
 - a data courier
-- a scavenger-priest of a local machine cult
+- a municipal recycler foreman
 - a mercenary sniper || mil
 - an elite mercenary pilot || mil
 - a close-quarters blade specialist || mil
+- a deep-core scout pilot || mil
+- an orbital interceptor pilot || mil
+- a stealth dropship pilot || mil
+- a grav-lift fighter pilot || mil
+- a courier-liaison pilot || mil
+- a jump-troop sergeant || mil
+- a voidguard rifleman || mil
+- a heavy-armor assault specialist || mil
+- a covert strike specialist || mil
+- a rapid-response marine || mil
+- a reinforced infantryman || mil
+- an urban recon scout || mil
+- a tactical planning officer || mil
+- a civilian trauma counselor
+- a public broadcast coordinator
+- an orbital traffic coordinator
+- a starship systems technician
+- a gravitic drive mechanic
+- a servo-augmented armorer
+- a cybernetic field engineer
+- a mech-frame maintenance technician
+- a prototype reactor engineer
+- a frontier magistrate
+- a corporate compliance auditor
+- a station syndicate clerk
+- a neon-market cartographer
+- a dockside black-market broker
+- a data-rat courier
+- a data pirate
+- an undercity fixer
 
 ## Faction
 
@@ -1885,6 +1920,26 @@ bullet there changes no portrait or token.
 - Redstar Salvage || a red five-point star roundel stitched above the chest zipper, edges frayed and sun-faded || civ palette
 - Ashfall Vanguard || a red skull-and-shield roundel stitched high on one shoulder, canvas gone soft with wear || mil palette
 - Diamond Line Couriers || a faded orange diamond patch stitched high on one sleeve, canvas worn thin with age || civ palette
+- Crimson Meridian Cartel || matte-black suits with violet seams and translucent chest tags || civ palette
+- Neon Lotus Network || reflective cyan rainwear over charcoal layers and chrome trim || civ palette
+- Kestrel City Couriers || narrow charcoal jackets, orange route stripes, and clipped satchel rigs || civ
+- Redline Habitat Union || magenta overalls with olive-grey rope-burned shoulders || civ palette
+- Ghostline Ascetics || silver-gray veils and black robes stitched with red prayer threads || civ dressy
+- Iron Bastion Legion || tan-black plate coats, red armbands, and rank chevrons || mil palette
+- Null-Sector Rangers || black body armor with green visor slits and matte field seams || mil palette
+- Void Seraph Guard || white-black ceremonial harnesses over tactical layers, blue polished insignia || mil palette dressy
+- Inquisitorial Host || midnight-blue capes, brass shoulder seals, and rigid gauntlet clasps || mil palette dressy
+- Ashen Forge Mandate || soot-black work jackets and brown canvas tool belts over simple overalls || civ
+- Redstar Covenant || crimson work coats over ivory underlayers and brass shoulder loops || civ palette
+- Cinder Gate Customs || burnt-orange docking coats with bronze buckles and permit loops || mil
+- Asterion Ascendance || iridescent green coats with gold thread and bead braids || civ palette
+- Black Market Choir || cracked leather coats, violet embroidery, and coin-and-gear chains || civ dressy
+- Gloom Market Merchants || dark indigo wraps over patched brown waistcoats and rope belts || civ
+- Titanfall Veterans Brotherhood || forest-green field greaves, black pauldron wraps, weathered runes || mil palette
+- Sable Mechanicus Choir || slate-gray robes, copper tool plates, and data loops || civ
+- Dawnglass Priory || pale-blue clerical coats with silver trim and thin black gloves || mil palette dressy
+- Kinetica Salvage Trust || heavy blue-grey vests with chain mesh and warning tape || civ
+- Orbital Mercy Chapter || white and gold medical tabards over black stress-sleeves || mil palette
 
 ## Outfit
 
@@ -3040,6 +3095,9 @@ bullet there changes no portrait or token.
 - A character portrait || {Subject} {is_are} standing at the head of a briefing table pointing up into a projected overlay hanging above it, seated silhouettes ranked down both sides of the room - the projector's beam cuts through drifting smoke above {possessive} shoulder. || nogear deskwork
 - A character portrait || {Subject} {is_are} slumped back at a desk at the dead hour with {possessive} boots crossed on an open drawer and a cold cup balanced on {possessive} chest, staring at a screen of unread traffic - the office behind {object} is dark but for three other terminals left running. || nogear deskwork
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a records basement of racked case files, a single terminal glowing at the end of a long aisle with its cursor blinking on an open query. || deskwork
+- A character portrait seen from behind || {Subject} {is_are} standing at the edge of a bridge viewport, looking out at a vast slab-sided capital ship gliding past above a sea of cloud, its engine bank blazing and a screen of escort fighters streaking alongside - a pale moon hangs in the black above the curve of the planet beyond {object}.
+- A character portrait || {Subject} {is_are} reclined across a battered red sofa set out in the rain, legs stretched long and one hand propping a clear umbrella over {possessive} shoulder - behind {object} a rain-streaked alley of glowing shop signage and ribbed tower pipework dissolves into haze, steam venting from a rooftop stack. || nogear weather
+- A half-body character portrait || Behind {object}, out of focus, the bright curve of a planet falls away beneath a dense starfield, a small ringed world hanging luminous in the dark.
 
 ## Weather
 
