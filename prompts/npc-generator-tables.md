@@ -1610,6 +1610,16 @@ bullet there changes no portrait or token.
 - pale icy blue
 - black || fading to red at the tips
 - dark brown || fading to sun-bleached orange at the tips
+- obsidian black || fading to cobalt blue at the roots
+- deep umber || fading to olive-green at the tips
+- gunmetal silver || fading to violet at the tips
+- dark mahogany || melting to steel blue at the roots
+- burnt sienna || fading to matte copper at the ends
+- slate indigo || shading to pale chartreuse at the hairline
+- charcoal olive || fading to icy violet at the ends
+- black ink || fading to emerald green in the lowlight strands
+- dusty lilac-black || with electric violet at the crown
+- muted amethyst || fading to dark cyan at the temples
 
 ## Hair colour (she) +
 
