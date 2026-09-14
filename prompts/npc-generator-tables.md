@@ -42,6 +42,25 @@ the script also draws somewhere that cannot resolve it - Gear, which a `nogear`
 backdrop re-draws, and the traits an old entry re-rolls by hand. The `###`
 sub-headings under Callsigns are the other kind of grouping, cosmetic only.
 
+**Adding a new group** takes three steps, and the order of the blocks matters,
+because a table runs from its heading to the next `##` heading:
+
+1. Add one reference bullet, `- => Formal wear`, at the end of `## Outfit`. That
+   single bullet covers the group's `(she)` variants too. Don't also add
+   `- => Formal wear (she) +` to `## Outfit (she) +`. It isn't refused, but it
+   gives she/her NPCs a second Formal wear slot that draws only from the
+   `(she) +` bullets, doubling the group's weight for them. Put the reference in
+   `## Outfit (she) +` *instead* only when the whole group should be women-only.
+2. Add the `## Formal wear` table, and its `## Formal wear (she) +` if it has one,
+   **after the last bullet of `## Outfit (she) +`**, beside the other group
+   tables (`## Flight suits` onwards, before `## Weapon`). Never put a heading
+   directly under `## Outfit (she) +` or between any table's bullets: every
+   bullet below the new heading moves into the group. Outfit's own `=> ...`
+   references are among them, and they then fail the one-level rule.
+3. Write the members as plain bullets carrying their own flags. Once the heading
+   exists, the importer and the Tables tab can add bullets to it, but neither
+   ever creates a heading or a `=>` reference.
+
 `||` splits a bullet into segments. Thirteen tables use it:
 
 - **Age** and **Build** bullets carry a paired flag. `|| young` on an Age entry
