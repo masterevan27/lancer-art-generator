@@ -1248,6 +1248,8 @@ bullet there changes no portrait or token.
 - grimdark
 - corporate
 - scav
+<!-- - ghostintheshell -->
+<!-- - cowboybebop -->
 
 ## Age
 
@@ -1912,7 +1914,7 @@ bullet there changes no portrait or token.
 - {Subject} {wear} a sleek over-ear headset with a lit ring on each cup, its band merging into cabling that disappears down the back of {possessive} neck. || hardtech
 - {Subject} {wear} a heavy head-harness clamped down over the crown, vents and cabling ringing the band. || hardtech crown
 - {Subject} {wear} a full-face sensor visor that conceals the features entirely, a cross-shaped optic band glowing across the eyes. || hardtech helmet
-- {Subject} {wear} a ragged black hood shadowing a bone-white skull mask crowned with branching antlers, twin points of light burning in the eye sockets. || @grimdark
+- {Subject} {wear} a ragged black hood shadowing a bone-white skull mask crowned with branching antlers, twin points of light burning in the eye sockets. || helmet @grimdark
 - {Subject} {wear} a sealed helmet with curved cat-like ear flares and a rounded transparent visor. || hardtech helmet
 - {Subject} {wear} a tall spiked black crown catching the last light. || crown @grimdark
 - {Subject} {wear} a gilded segmented helmet with an ornate brow guard, swirling filigree engraved along the crown. || helmet @neogothic
@@ -1979,6 +1981,7 @@ bullet there changes no portrait or token.
 - {Subject} {wear} a scarred helmet with a clear face shield, a large circular ear module and a paired-filter breathing mask. || hardtech helmet
 - {Subject} {wear} a lacquered kabuto helmet with curved crescent horns at the brow and a hinged face guard framing {possessive} cheeks.
 - {Subject} {wear} a horned kabuto helmet with twin sweeping crescent horns rising from the brow.
+- {Subject} {wear} bold black rectangular glasses, giving {possessive} stare a severe, appraising edge.
 
 ## Headgear (she) +
 
@@ -2334,6 +2337,26 @@ bullet there changes no portrait or token.
 - a long hooded rain slicker hanging below the knee over heavy rubber boots || civ
 - a navy work shirt with the sleeves rolled, a climbing harness buckled over grey cargo trousers and strapped knee pads || civ
 - a rumpled white lab coat hanging open over a charcoal shirt and dark tie, a photo ID badge clipped at the breast pocket || civ lab
+- a short graphite lab jacket with sealed cuffs over a ribbed utility shirt, sample-safe trousers and a magnetic ID strip || civ lab
+- a translucent polymer overcoat over a dark knit base layer, its hem marked with contamination bands and a dosimeter clipped at the chest || civ lab
+- a slate-blue research smock with reinforced elbow panels, a high collar and a grid of colour-coded specimen tags at the hip || civ lab
+- a fitted white cleanroom coat over a charcoal undersuit, pale boot covers and a respirator cartridge pouch at the belt || civ lab
+- a weathered field-research jacket over a sealed thermal layer, its pockets packed flat and a survey badge stitched to the shoulder || civ lab
+- a long ivory coat with a split tail for climbing ladderways, dark gloves tucked into the belt and a hazard stripe around one sleeve || civ lab
+- a pale polymer apron over a dark sleeveless utility suit, magnetic fasteners running from throat to knee and a sample log clipped at the waist || civ lab
+- a deep-green xenobiology coat over a fitted pressure liner, translucent shoulder panels and a ring of empty sample vials at the belt || civ lab
+- a high-collared laboratory tunic with asymmetrical closures, reinforced leggings and a compact emergency hood folded between the shoulders || civ lab
+- a cream thermal lab coat over layered expedition clothing, insulated cuffs and a brass specimen key hanging from the collar || civ lab
+- a black-and-white reactor technician's coat with ceramic forearm guards, a dosimeter patch and heat-scuffed boots || civ lab
+- a soft grey cognitive-research jacket over a close-fitting black undersuit, thin interface leads tucked into the collar || civ lab
+- a rust-red geology smock over a dust-stained base layer, a strapped notebook pocket and mineral sample tubes lining one hip || civ lab
+- a clean white coat with narrow teal piping, a sealed throat and a transparent badge sleeve showing stacked research credentials || civ lab
+- a sleeveless lab vest over a dark high-neck shirt, protective apron panels at the front and a fold-flat magnifier clipped near the shoulder || civ lab
+- a long navy diagnostics coat with silver conductive seams, insulated gloves tucked into the side pockets and a compact tool belt || civ lab
+- a loose assay-room jacket over dark work trousers, its cuffs rolled above disposable gloves and a strip of numbered reagent tabs at the breast || civ lab
+- a pale blue exobiology coat with a raised hood collar, sealed ankle gaiters and a faded planetary survey emblem at the back || civ lab
+- a charcoal field-science coat over a quilted undersuit, weatherproof closures, reinforced knees and a tiny sample freezer pouch at the hip || civ lab
+- a white neural-interface research coat with dark shoulder panels, cable-safe closures and a slim diagnostic tablet holster || civ lab
 - => Formal wear
 - a fitted black bodysuit with gold filigree trim, a spiked shoulder guard, and a tattered floor-length cape || notac dressy
 - a loose white blouse-dress cinched at the waist by a laced leather corset harness, sleeves rolled to the elbow || notac dressy
@@ -2485,6 +2508,7 @@ bullet there changes no portrait or token.
 - a tailored light coat draped over the shoulders above a dark V-neck dress || civ dressy
 - an embroidered pale ceremonial dress with a long split skirt and an ornate red cape edged in gold || civ dressy notac
 - a sleeveless floral sundress with a short gathered skirt and dark lace-up ankle boots || civ
+- a long white lab coat with a high dark-trimmed collar, unbuttoned deep past the bust over a fitted dark bodysuit and parted below the belt over white thigh-high boots, an ID badge clipped at the hip and black gloves at the wrists || lab
 
 ## Formal wear
 
@@ -3248,6 +3272,26 @@ bullet there changes no portrait or token.
 - a compact padded backpack with a stitched rear pocket and thick shoulder straps
 - a compact life-support backpack with a looped breathing hose and cylindrical side canister
 - a compact wrist computer with an illuminated rectangular screen set into a thick cuff
+- a transparent specimen cylinder held upright in a padded carrier, a cloudy culture turning slowly inside || hands lab
+- a triple-lensed field microscope folded into a hard case and carried by its handle || hands lab
+- a rack of sealed sample tubes in a foam-lined tray, each cap marked with a different hazard colour || hands lab
+- a ceramic crucible nested in insulated tongs, a faint heat shimmer rising above it || hands lab
+- a palm-sized DNA sequencer clipped to a belt pouch, its status strip pulsing beside a roll of sterile sleeves || lab
+- a sealed biohazard transport box strapped across the chest, its locking indicator glowing amber || lab
+- a compact radiation dosimeter clipped at the collar beside a folded calibration card || lab
+- a telescoping soil sampler and three capped vials secured in loops at the hip || lab
+- a neural activity visor resting in a padded shoulder holster, fine interface leads coiled beneath it || lab
+- a folding spectrometer mounted on a chest harness, its small display scrolling through absorption bands || lab
+- a specimen net folded into a rigid tube and strapped along the back, a collection jar nested at the belt || lab
+- a slim thermal camera hanging from a neck strap, its lens hood pointed toward the floor || lab
+- a foam-lined tray of mineral cores balanced in both hands, numbered labels running along their cut faces || hands lab
+- a portable cleanroom hood folded over one arm, its clear face shield tucked inside the sterile fabric || hands lab
+- a palm-sized gravimetric sensor dangling from a wrist lanyard, three stabilizer fins folded flat || lab
+- a set of pipettes in a hard sleeve clipped to the thigh, their coloured plungers visible through the clear lid || lab
+- a compact chemical analyser worn at the hip, a flexible sample tube running from its intake to a capped cup || lab
+- a sealed field incubator strapped high on the back, its small circular window lit with a cool internal glow || lab
+- a holographic molecular model hovering above an open projector puck in one palm || hands lab
+- a folded quarantine placard and a roll of boundary tape tucked into a side pouch beside a clipped respirator || lab
 
 ## Glow colour
 
@@ -3834,6 +3878,26 @@ bullet there changes no portrait or token.
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a tiered tiled-roof palace beside an arched bridge, flowering trees and lantern reflections crowding the still canal. || weather @neosamurai
 - => Alien gardens
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a spotless white spacecraft laboratory with paired workbenches, glossy dark flooring and a curved skylight opening onto stars. || lab
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a xenobiology lab with tiered aquaria, sealed specimen drawers and a wall of softly glowing habitat readouts. || lab
+- A character portrait || {Subject} {is_are} leaning over a sterile bench, one gloved hand holding a sample vial beneath a ring lamp while a bank of incubators hums behind {object}. || nogear lab
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a genetics suite of glass partitions, chilled storage towers and illuminated strands of projected molecular data. || lab
+- A character portrait || {Subject} {is_are} peering through a portable microscope at a field station table, sample trays and a folded pressure hood spread around {object}. || nogear lab
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a reactor physics control room with concentric diagnostic screens, ceramic shielding and a glowing containment diagram. || lab
+- A character portrait || {Subject} {is_are} fastening a dosimeter beside an open radiation hood, warning lamps and thick observation glass filling the chamber behind {object}. || nogear lab
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a neurointerface theatre with a reclining test cradle, articulated sensor arms and a quiet halo of blue diagnostic light. || lab
+- A character portrait || {Subject} {is_are} adjusting a neural scan on a transparent console, fine interface leads and folded calibration cloths arranged across the bench beside {object}. || nogear lab
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a computational materials lab with a suspended lattice model, polished sample blocks and a wall of stress-test graphs. || lab
+- A character portrait || {Subject} {is_are} comparing two mineral cores beneath a magnifying lamp, numbered trays and a portable spectrometer open across the worktable in front of {object}. || nogear lab
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a chemical assay room lined with reagent lockers, extraction hoods and narrow amber status lights. || lab
+- A character portrait || {Subject} {is_are} transferring a glowing solution between sealed vessels at a fume hood, insulated tongs and a spill kit ready beside {object}. || nogear lab
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is an exobiology quarantine bay with transparent isolation cells, decontamination arches and misted observation windows. || lab
+- A character portrait || {Subject} {is_are} checking a specimen carrier at the mouth of a quarantine airlock, one hand on the seal control and a warning placard beside {object}. || nogear lab
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a planetary survey lab built into a rover module, instrument racks and sample lockers vibrating against a dust-streaked viewport. || lab
+- A character portrait || {Subject} {is_are} kneeling over a field spectrometer on a folding bench, soil cores and a tagged sample cylinder arranged around {object}. || nogear weather lab
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a quiet bioinformatics room with tall data stacks, a projected genome spiral and clipped research notes across the walls. || lab
+- A character portrait || {Subject} {is_are} standing at a glass display of protein structures, one hand tracing a branching model while terminal light reflects across {possessive} face. || nogear lab
+- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a cryogenic archive with frosted sample drawers, vapor curling from floor vents and numbered racks receding into the distance. || lab
+- A character portrait || {Subject} {is_are} opening a cryogenic sample drawer with both hands, a plume of cold vapor spilling around {object} and preservation racks behind {object}. || nogear lab
 - A character portrait || {Subject} {is_are} sitting beside a companion at a tiny outdoor table, both turned toward an enormous mushroom cloud rising over the distant plain. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a circular landing dais surrounded by broken stone, a narrow beacon rising toward a hovering ship beneath an immense planetary limb. || weather
 - A character portrait || {Subject} {is_are} walking along a narrow railed landing gantry with a round flight helmet tucked beneath one arm, terraces and distant spacecraft opening behind {object}. || nogear weather
@@ -4030,7 +4094,7 @@ bullet there changes no portrait or token.
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a quiet fishing harbor at sunset, rust-streaked cranes looming over weathered boats moored at the pier. || weather
 - A character portrait seen from behind || {Subject} {is_are} walking alone across wind-carved dunes toward the wreckage of a colossal crashed superstructure, a tattered black cloak dragging long across the sand - overhead a churning sky burns dull orange-red through drifting haze. || weather @grimdark
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a still tidal river winding through low hills beneath an enormous ringed planet rising huge on the horizon.
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a black cathedral-spired dreadnought hanging low over the planet's curve, a small escort gunship peeling away nearby and a lone amber moon rising past its towers. || @neogothic
+<!-- - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a black cathedral-spired dreadnought hanging low over the planet's curve, a small escort gunship peeling away nearby and a lone amber moon rising past its towers. || @neogothic -->
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a sleek cross-winged white fighter craft banking above the planet's cloud tops, twin engines burning blue.
 - A character portrait seen from behind || {Subject} {is_are} seated at a bank of monitors dense with scrolling code, the glow lighting {possessive} face from below - beyond the window a neon-lit high-rise skyline burns orange into violet at dusk. || nogear
 - A dynamic character portrait || {Subject} {is_are} sprinting across a rain-lashed gantry alongside {possessive} squad toward a docked warship, lightning cracking through the clouds overhead - beyond {object} massive loading cranes rise over a storm-tossed sea and inbound gunships streak past through the rain. || weather
@@ -4040,7 +4104,7 @@ bullet there changes no portrait or token.
 - A character portrait seen from behind || {Subject} {is_are} standing at the edge of a snowbound peak, watching an ornate gilded airship glide low over an endless sea of clouds, {possessive} cloak snapping in the wind. || weather
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a sleek dropship grounded on a drifting ice floe, open arctic water stretching to the horizon. || weather
 - A half-body character portrait || Behind {object}, out of focus, is a towering gilded ceremonial archway on a mountain terrace, robed acolytes assembled in ranks before it. || weather
-- A half-body character portrait || Behind {object}, softly blurred well out of focus, is a convoy of armored escort ships flanking a marked prison hauler low over a cratered planet, thin engine trails cutting through the dark.
+<!-- - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a convoy of armored escort ships flanking a marked prison hauler low over a cratered planet, thin engine trails cutting through the dark. -->
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a fleet of angular warships hanging low over a dense neon-lit cityscape at night. || weather
 - A half-body character portrait || Behind {object}, out of focus, is a fireball erupting over a sun-baked desert airfield, a pair of strike aircraft peeling away through the smoke. || weather warzone
 - A half-body character portrait || Behind {object}, softly blurred well out of focus, is a vast ringed orbital station studded with domes, hanging over a cloud-wrapped planet.

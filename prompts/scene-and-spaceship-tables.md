@@ -110,6 +110,52 @@ can roll one and drop it into its own prompt template.
 - A mountaintop landing platform strung with cable lifts, a hulking
   transport resting with its prow over the edge, snow-capped peaks falling
   away below and a second craft crossing the sky beyond.
+- A frontier xenobiology greenhouse beneath a translucent pressure dome,
+  tiered alien plants and sealed aquaria glowing beside walkways, a survey
+  rover parked under the central gantry.
+- A deep-orbit genetics archive, long white storage towers and transparent
+  data ribbons arranged around a circular central aisle, stars visible through
+  the black viewport beyond.
+- A reactor-neutrino observatory carved into an asteroid, concentric shield
+  rings and instrument pylons surrounding a dark measurement chamber, small
+  work lights reflected in polished flooring.
+- A planetary geology field camp at the edge of a red canyon, folding sample
+  shelters, core racks and sensor masts clustered beneath a huge pale moon.
+- A cleanroom materials laboratory, suspended alloy lattices and ceramic test
+  plates arranged around a broad central bench, amber warning bands marking the
+  floor.
+- A floating oceanographic station above a dark alien sea, transparent tanks,
+  cable winches and wet research platforms framed by storm-lit windows.
+- A neurointerface research theatre with a circular test cradle, articulated
+  sensor arms and quiet diagnostic screens arranged inside a glass-walled room.
+- A quarantine laboratory at the end of a sealed colony corridor, double
+  airlocks, decontamination arches and red-striped observation windows glowing
+  through drifting sterilization mist.
+- A subterranean fungal ecology lab, immense luminous growth chambers rising
+  between catwalks while pipes and humidity monitors disappear into the dark.
+- A desert atmospheric research tower, instrument decks and balloon winches
+  stacked above a wind-scoured landing pad beneath bands of dust-filled sky.
+- A cryogenic specimen vault, frosted cylindrical drawers and vapor vents
+  receding between tall insulated pillars, a cold blue service light at the far
+  end of the aisle.
+- A compact orbital chemistry lab, extraction hoods and reagent lockers lining
+  a curved white compartment while a planet's bright limb fills the viewport.
+- A megafauna observation reserve, a broad glass research bunker overlooking
+  alien wetlands, sensor poles and floating tracking buoys scattered beyond.
+- A computational physics chamber, a ring of dark consoles around a suspended
+  holographic equation lattice, cable bundles feeding into the floor beneath.
+- A volcanic mineral survey outpost, black basalt terraces, portable drills and
+  glowing sample cases arranged around a pressure-hardened research module.
+- A high-altitude pollen station on a cable bridge between cliff towers, sealed
+  collection pods and weather instruments silhouetted against a giant planet.
+- A surgical augmentation laboratory, articulated medical gantries and sterile
+  instrument carts surrounding an empty treatment cradle under white lamps.
+- A submerged xenobiology habitat, broad viewports opening onto luminous reefs,
+  pressure doors and specimen tanks framing the quiet central walkway.
+- A remote signal-analysis station, dish antennas and shielded receiver rooms
+  gathered around a dark operations dome beneath a sky crowded with stars.
+- An exobiology landing survey site, a parked shuttle beside portable clean
+  tents, specimen crates and scanning pylons spread across a pale alien plain.
 
 ## Spaceships
 

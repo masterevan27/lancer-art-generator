@@ -902,6 +902,9 @@ ROLE_LOCKS = {
     # Exactly the Criminals bucket, which test_role_lock.py holds.
     "outlaw": ("a smuggler", "a pirate", "a dockside black-market broker",
                "a data-rat courier", "a data pirate", "an undercity fixer"),
+    # Laboratory equipment and specialist attire belong to the Scientists
+    # category, just as a cane of office belongs to an administrator.
+    "lab": ("Scientists",),
 }
 
 # Roles whose own text says they work for nobody, and which therefore may only
@@ -2480,7 +2483,7 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         # REQUIRED_TABLES, so npc["Role"] is already the value this NPC keeps.
         # Headgear takes the same lock, for the same reason and in the same
         # place: before the 'updo', 'covered' and 'notac' yields below.
-        if name in ("Gear", "Headgear"):
+        if name in ("Outfit", "Gear", "Headgear"):
             options = filter_by_role_lock(options, npc["Role"])
 
         # A scene that asserts an occupation, kept off everyone who does not

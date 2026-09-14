@@ -31,3 +31,5 @@ prompts/staged-imports-spaceship/refs/
 # Ignore the batch work directory, which is a local working folder for the spaceship-trait-import skill:
 prompts/ship-batch5-work
 
+# Ignore personal NPC presets:
+prompts/presets/
