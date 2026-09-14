@@ -290,6 +290,45 @@ from the prompt instead of erroring. Paste a whole bullet, or write your own
 python generate-npc.py --set-trait Faction="Harrison Armory || sharply pressed, high collar and polished fittings, in imperial green and gold || mil palette"
 ```
 
+## Editing who a gate admits
+
+Five maps in this script decide which Roles a gate flag admits, and they
+are the only part of a gate that is not in the tables file: `ROLE_LOCKS`
+(a Gear or Headgear flag → the Roles or categories that may roll it),
+`BACKDROP_ROLES` (the same for a scene), `WEAPON_ROLES` (the reverse: a Role
+that may roll *only* bullets carrying the flag), `UNAFFILIATED_ROLES` (Roles
+cut to the `unaffiliated` Factions) and `ROLE_CATEGORIES` (which bucket each
+Role bullet belongs to, which is what the bucket-keyed gates, the dress
+policy and the weapon policy all read).
+
+The literals in the script are the defaults. A JSON file beside the tables —
+`npc-generator-tables.gates.json` next to `npc-generator-tables.md`, or the
+same `.gates.json` beside whatever `--tables` names — replaces any map it
+names, whole:
+
+```json
+{
+  "roleLocks": { "admin": ["Officials"], "outlaw": ["Criminals"] },
+  "backdropRoles": { "cockpit": ["Pilots", "a field medic"] },
+  "unaffiliatedRoles": ["a freelance salvager"]
+}
+```
+
+A map the file leaves out keeps its default, so a file written before a map
+existed still loads. An entry may name a category (capitalised) or an exact
+Role bullet (lowercase), for every map — `ROLE_LOCKS` accepts a category now,
+the way `BACKDROP_ROLES` always has. A Role the tables no longer carry is
+reported on stderr and kept, since a lock on nobody is harmless; a file that
+is not valid JSON, or a map of the wrong shape, stops the run with the file
+named, before anything rolls. Every mode that reads the tables reads the
+sidecar too: a roll, `--trait-odds`, `--trait-choices`, `--reroll-trait` and
+`--set-trait`.
+
+The Import GUI's Tables tab is what writes this file — a gate panel above
+the bullets of Gear, Headgear, Backdrop and Weapon, and a category control
+on each Role — but it is plain JSON and can be edited by hand. Delete it to
+go back to the script's own maps.
+
 ## Hair colour
 
 Cut and colour roll separately, so a new shade is one bullet rather than a

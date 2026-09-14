@@ -1013,6 +1013,110 @@ BACKDROP_ROLES = {
     "barkeep": ("a bar owner and information broker",),
 }
 
+# The five gate maps above, as the Import GUI may redefine them: a JSON file
+# beside the tables (see gates_path()) whose keys name a map and whose values
+# replace it whole. The literals in this file stay the defaults, and a map
+# the sidecar does not name keeps its default - so a sidecar written before
+# a map existed here still loads. Values are lists in the file and become
+# the tuple/frozenset the filters already read.
+#
+# A sidecar rather than the GUI rewriting these literals: the maps above are
+# two thirds comment by volume, and a Node process editing them in place with
+# a regex would have to keep the prose right too. The tables file is the
+# user's data and lives in prompts/; its gates belong beside it, and travel
+# with it, for the same reason.
+GATE_MAPS = {
+    "roleCategories": "ROLE_CATEGORIES",
+    "roleLocks": "ROLE_LOCKS",
+    "backdropRoles": "BACKDROP_ROLES",
+    "weaponRoles": "WEAPON_ROLES",
+    "unaffiliatedRoles": "UNAFFILIATED_ROLES",
+}
+
+
+def gates_path(tables_path):
+    """The gate sidecar for a tables file: `npc-generator-tables.gates.json`
+    beside `npc-generator-tables.md`."""
+    tables_path = Path(tables_path)
+    return tables_path.with_name(tables_path.stem + ".gates.json")
+
+
+def _gate_names(key, value, path):
+    """A list of names out of the sidecar, as a tuple, or SystemExit."""
+    if not isinstance(value, list) or not all(isinstance(v, str) for v in value):
+        raise SystemExit("%s: %s must map each flag to a list of Role or "
+                         "category names" % (path.name, key))
+    return tuple(value)
+
+
+def load_gates(tables_path):
+    """Apply the gate sidecar beside `tables_path`, if there is one.
+
+    Rebinds the module-level maps rather than mutating them, and only after
+    the whole file has been read and checked, so a refused sidecar leaves
+    every default in place rather than half of them. Returns the parsed file,
+    or None when there is no sidecar - which is the common case and a no-op.
+
+    A Role the sidecar names but the tables file lacks is reported on stderr
+    and kept: a lock on a Role nobody rolls is harmless, and the GUI that
+    writes this file checks names before it does, so a mismatch here means
+    the tables changed underneath it and the user should hear which name.
+    """
+    path = gates_path(tables_path)
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except ValueError as err:
+        raise SystemExit("%s is not valid JSON: %s" % (path.name, err))
+    if not isinstance(data, dict):
+        raise SystemExit("%s must be a JSON object" % path.name)
+
+    loaded = {}
+    for key, constant in GATE_MAPS.items():
+        if key not in data:
+            continue
+        value = data[key]
+        if key == "unaffiliatedRoles":
+            loaded[constant] = frozenset(_gate_names(key, value, path))
+        elif key == "roleCategories":
+            if not isinstance(value, dict) or not all(
+                    isinstance(k, str) and isinstance(v, str) for k, v in value.items()):
+                raise SystemExit("%s: roleCategories must map each Role to one "
+                                 "category name" % path.name)
+            loaded[constant] = dict(value)
+        else:
+            if not isinstance(value, dict):
+                raise SystemExit("%s: %s must be an object keyed by flag"
+                                 % (path.name, key))
+            loaded[constant] = {flag: _gate_names(key, names, path)
+                                for flag, names in value.items()}
+
+    known = set()
+    try:
+        for bullet in parse_tables(tables_path).get("Role", ()):
+            known.add(split_flags(bullet)[0])
+    except Exception:  # noqa: BLE001 - the tables are checked elsewhere
+        known = None
+    if known is not None:
+        named = set()
+        for constant, value in loaded.items():
+            if constant == "ROLE_CATEGORIES":
+                named |= set(value)
+            elif constant == "UNAFFILIATED_ROLES":
+                named |= set(value)
+            else:
+                for names in value.values():
+                    named |= {n for n in names if n[:1].islower()}
+        for name in sorted(named - known):
+            print("! %s names %r, which '## Role' does not carry - the tables "
+                  "changed under the gate editor; that entry admits nobody."
+                  % (path.name, name), file=sys.stderr)
+
+    for constant, value in loaded.items():
+        globals()[constant] = value
+    return data
+
 # Trait names that have changed, old -> new. --regen-manifest rebuilds an NPC
 # from a stored traits dict rather than re-rolling, so an entry written before
 # a rename still carries the old key and would otherwise KeyError in
@@ -1687,9 +1791,17 @@ def filter_by_role_lock(options, role):
     Takes the rolled Role's stripped text: ROLE_LOCKS is keyed on the bullet
     as the Role table writes it, and roll_npc() has already split the '|| mil'
     flag off by the time Gear rolls.
+
+    An entry may name a ROLE_CATEGORIES bucket as well as an exact Role, the
+    way a BACKDROP_ROLES entry may - buckets are capitalized and Role bullets
+    are not, so the two never collide. That is what lets the gate sidecar
+    (load_gates) write 'outlaw' as the Criminals bucket rather than restating
+    its six Roles, and lets the Import GUI offer one shape of editor for
+    every gate.
     """
+    bucket = ROLE_CATEGORIES.get(role, UNCATEGORIZED_ROLE)
     return [x for x in options
-            if all(role in ROLE_LOCKS[f]
+            if all(role in ROLE_LOCKS[f] or bucket in ROLE_LOCKS[f]
                    for f in split_flags(x)[1] if f in ROLE_LOCKS)]
 
 
@@ -4408,6 +4520,7 @@ def print_trait_choices(args):
         raise SystemExit("--trait-choices needs the tables file: %s" % args.tables)
     tables = parse_tables(args.tables)
     check_tables(tables, args.tables, getattr(parse_tables, "repeated", ()))
+    load_gates(args.tables)
 
     json.dump({
         "trait": args.trait_choices,
@@ -4568,6 +4681,7 @@ def regenerate_one(args):
             raise SystemExit("--reroll-trait needs the tables file: %s" % args.tables)
         tables = parse_tables(args.tables)
         check_tables(tables, args.tables, getattr(parse_tables, "repeated", ()))
+        load_gates(args.tables)
         # Snapshot before the re-roll replaces the dict wholesale, and every
         # trait rather than the named one: on the raw path a dozen of them can
         # move and the old values are gone once roll_npc() has run.
@@ -4603,6 +4717,7 @@ def regenerate_one(args):
             raise SystemExit("--set-trait needs the tables file: %s" % args.tables)
         tables = parse_tables(args.tables)
         check_tables(tables, args.tables, getattr(parse_tables, "repeated", ()))
+        load_gates(args.tables)
         if not npc.get("_raw"):
             raise SystemExit(
                 "--set-trait on a regen needs the entry's raw bullets, so the "
@@ -4815,6 +4930,10 @@ def main(argv=None):
         raise SystemExit("Tables file not found: %s" % args.tables)
     tables = parse_tables(args.tables)
     check_tables(tables, args.tables, getattr(parse_tables, "repeated", ()))
+    # After check_tables, which validates the file the gates refer to, and
+    # before anything rolls or samples - the odds and the choices both read
+    # the filters, so both have to see the sidecar.
+    load_gates(args.tables)
 
     # Before anything that prints, seeds or picks a folder. The caller parses
     # stdout whole, so one stray line of the run banner below would break it.
