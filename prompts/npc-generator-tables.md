@@ -2054,6 +2054,7 @@ bullet there changes no portrait or token.
 - a long hooded rain slicker hanging below the knee over heavy rubber boots || civ
 - a navy work shirt with the sleeves rolled, a climbing harness buckled over grey cargo trousers and strapped knee pads || civ
 - a rumpled white lab coat hanging open over a charcoal shirt and dark tie, a photo ID badge clipped at the breast pocket || civ
+- => Formal wear
 
 ## Outfit (she) +
 
@@ -2096,6 +2097,32 @@ bullet there changes no portrait or token.
 - a floor-length black column dress with sharp padded shoulders and long fitted sleeves, slit up the back of one leg || civ dressy
 - a long white high-collared lab coat cut with dark side panels, slit high up one leg over dark leggings, an ID badge clipped at the hip || civ
 - a cropped olive armored vest bulked out with padded pouch plates over a black crop top, pouched bands strapped round both upper arms and fingerless armored gloves
+
+## Formal wear
+
+- a tailored charcoal formal coat with satin lapels, a narrow waistcoat and polished brass buttons over a pressed white shirt || civ dressy
+- a floor-length black formal coat with a high collar and slim-cut pleats, worn over a pale undershirt and muted cuffs || civ dressy
+- a dark olive dinner jacket with matte gold piping, a silk sash at the waist and pointed lapels folded at the throat || civ dressy
+- a cream silk evening coat with a narrow high neckline, structured shoulders and a short side slit at the hem || civ dressy
+- a white-collar ceremonial coat with subtle embroidery along the seams, a narrow cummerbund and restrained cuff bracelets || civ dressy
+- a black velvet blazer with a soft lapel and narrow waist tie, cuffed sleeves finished with thin chrome thread || civ dressy
+- a pale gray tailored frock coat with sculpted shoulders, a silk panel at the back and polished silver watch chain across the chest || civ dressy
+- a midnight-blue civic coat with a narrow front drape, high-buttoned front and understated gold trim at cuffs || civ dressy
+- a burgundy formal waistcoat worn over a clean shirt, short pleated skirt-tail and discreet chain loops at the beltline || civ dressy
+- a silver-threaded ceremonial jacket with broad shoulders, a stiff collar and buttoned side panels over narrow dark slacks || civ dressy
+
+## Formal wear (she) +
+
+- a pleated ivory evening coat with a narrow waist seam, structured shoulders, and a narrow silk sash at the side || civ dressy
+- a charcoal silk wrap dress with a high collar and hidden button stand, cut close through a tailored waist with slim cuffs || civ dressy
+- a deep-burgundy formal jacket with sculpted lapels, narrow side slits, and a matte-gold waist sash || civ dressy
+- a floor-length cobalt silk dress with a subtle bustle at the hips and restrained sleeve piping || civ dressy
+- a black and ivory formal two-piece with a short-tail skirt and broad shoulder seams, pinned at the lapel with a tiny enamel badge || civ dressy
+- a glossy white ceremonial coat over a fitted dark dress, with a narrow ribbon collar and a thin chain-belt at the back || civ dressy
+- a pale gray tailored office dress with a structured bodice, narrow skirt panels and narrow-hemmed cuffs folded to the elbow || civ dressy
+- a silver-threaded court coat with a high stand collar, short pleated panel at the waist and elegant wrist cuffs || civ dressy
+- a dark jade evening jacket with matte-gold cuffs, sculpted front drape, and an ankle-length dark skirt panel over tailored slacks || civ dressy
+- a cream formal bolero coat over a crisp white blouse and narrow-trouser jumpset, cut with a single side split || civ dressy
 
 ## Flight suits
 
@@ -2143,6 +2170,17 @@ bullet there changes no portrait or token.
 - a mottled camouflage jacket worn open over a plain dark tee stencilled with a bold unit number, cargo trousers and fingerless tactical gloves || mil
 - a weathered dark-green field jacket, collar turned up, patched high on one shoulder || mil
 - a bulky fleece-collared field jacket gathered high at the throat, cuffs frayed at the wrist || civ
+- a charcoal field jacket with reinforced elbow cuffs, zipped-open chest panels and a short harness loop over one shoulder
+- a dark utility jacket with matte shoulder guards, a folded toolkit loop on the strap and an exposed diagnostic cable across the side
+- a black field jacket with an open front, integrated wrist console strap and cable ties along the lower hem
+- an olive drab jacket with patchwork seam tape, broad shoulder seams and a compact satchel hanging from a rear strap
+- a weatherproof blue-green work jacket with rolled cuffs, steel-capped sleeves and a cross-body tool sling under the chest
+- a short-collared field jacket with reinforced chest plate and stacked chain loops for quick sensor packs
+- a lightweight utility jacket with twin forearm pockets, clipped gauge clips and a narrow utility cord tied at the waist
+- a graphite field jacket with a partial quilted lining, open seams for heat vents and a clipped hardhat strap at the hip
+- a broad-shouldered weather jacket with dark piping, a harness slot at the back and spare couplings on the belt
+- a rugged tan field jacket open over an armored undershirt, with thumb loops for power clamps and knee braces
+- a soot-streaked service jacket with hidden mesh vents, two pocketed patch flaps and a folded comm card at the collar
 
 ## Field jackets (she) +
 
@@ -2265,6 +2303,16 @@ bullet there changes no portrait or token.
 - a sun-faded orange work jumpsuit worn under a heavy grey scarf, cuffed sleeves over grease-stained gloves, a multi-pouch tool belt cinched at the waist || civ
 - grease-blackened overalls stripped to the waist and knotted there over a sweat-damp undershirt, a heavy tool belt slung at the hips || civ
 - olive expedition coveralls zipped open at the collar over a pale shirt and dark tie, heavy work gloves tucked into a laden belt || civ
+- a faded charcoal work coverall with reinforced knee panels, patched elbows and a clipped radio pouch on the chest || civ
+- a cobalt maintenance coverall with cable-port seams, tool loops at the thighs and a folded cloth patch for quick repairs
+- a dust-caked orange-blue work overall split at the shoulder seams, thick seam tape down the calves and a belt harness for tool tubes || civ
+- a deep slate coverall with riveted thigh pockets and an old respirator strap hanging loose across the chest
+- a black field coverall over a short undershirt, sleeves tied high and a magnetic wrist rig fastened at the left forearm
+- an olive utility jumpsuit with reinforced elbows, weathered knee guards and a short zipped utility panel at the waist
+- a sun-bleached maintenance suit with scuffed cargo seams, a canvas chart roll folded at the belt and a taped forearm tab
+- a greased brown mechanic coverall with folded knee pads, double-stitched shoulder seams and a broad cloth pouch at the rear
+- an acid-washed industrial coverall with bright hazard tape at the cuffs, split thigh pockets and a clipped tablet case on the hip || civ
+- a rust-red dock worker coverall with short sleeves, reinforced arm wraps and a looped tool satchel across the back
 
 ## Work coveralls (she) +
 
@@ -2335,6 +2383,16 @@ bullet there changes no portrait or token.
 
 - a cheap dark suit with the tie pulled loose, a thin wire running from one ear down inside the collar || civ
 - a rumpled brown suit under an open plastic raincoat, both hems dripping || civ
+- a narrow-shoulder charcoal suit with loosened cuffs and a pale office shirt, desk dust on the collar
+- a faded ash-gray blazer over a light shirt, tie draped at the neck and a penciled note card in a coat pocket
+- a low-cost navy pinstriped jacket with rolled cuffs, a short ledger pencil clipped to the lapel
+- a drab gray suit jacket with a synthetic vest, narrow slacks and a chain of process stamps tucked at the side
+- a practical beige business coat with a soft undershirt, collar turned up and a clipped office pass at the throat
+- an old office suit with a white shirt, sleeves pushed above the wrist and a folded stack of forms at the breast
+- a cheap black jacket with a rain-softened lapel, untucked short-sleeve blouse and a utility folder hanging from the cuff
+- a slate and ivory two-piece suit, tie loosened and pockets swollen from printed permits and station maps
+- a plain beige office jacket over a narrow tie and practical trousers, cuffs rolled from long hours at a terminal
+- a narrow charcoal blazer worn open at the front, with a chipped badge tab at the cuff and a hand-drawn chart in the pocket
 
 ## Corporate skirt suits
 
