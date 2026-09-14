@@ -544,8 +544,8 @@ deliberate: Pilots, Soldiers and Support are entirely `mil` Roles and
 `filter_by_mil()` already drops every `civ` bullet from their pool, which is
 every ceremonial outfit there is; Officials is the case the gate must *not*
 break, since fine dress is right for a corporate liaison; Criminals keeps it
-because a pirate in finery is a genre staple; and Civilians holds the
-scavenger-priest, for whom robes are the point.
+because a pirate in finery is a genre staple; and Civilians because a bar
+owner or a broadcast coordinator may dress as well as they like.
 
 **The two tables consume the flag differently.** A `dressy` Outfit is dropped
 from a `plain` Role's pool. A `dressy` Faction is not — it keeps its place and

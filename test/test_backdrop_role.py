@@ -99,15 +99,15 @@ class TestTheFilter(unittest.TestCase):
                          live)
 
     def test_a_role_flag_reaches_the_one_role_it_names(self):
-        """Four entries name an exact Role bullet rather than a bucket, because
-        the bucket is too coarse: 'Civilians' holds the bar owner, the data
-        courier and the scavenger-priest alike."""
+        """Three entries name an exact Role bullet rather than a bucket, because
+        the bucket is too coarse: 'Civilians' holds the bar owner and the data
+        courier alike."""
         pool = ["A character portrait || {Subject} {is_are} behind the bar. "
                 "|| barkeep"]
         owner = "a bar owner and information broker"
         self.assertEqual(gen.filter_by_backdrop_role(pool, owner), pool)
-        for role in ("a data courier",
-                     "a scavenger-priest of a local machine cult", DOCKER):
+        for role in ("a data courier", "a public broadcast coordinator",
+                     DOCKER):
             self.assertEqual(gen.filter_by_backdrop_role(pool, role), [],
                              "%r shares a bucket with %r but not the job"
                              % (role, owner))

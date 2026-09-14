@@ -1,0 +1,37 @@
+{
+  "name": "F - Security Officer",
+  "created": "2026-09-14T06:11:51.072Z",
+  "kind": "create-form",
+  "settings": {
+    "count": 5,
+    "seed": null,
+    "pronouns": "she",
+    "server": "",
+    "portrait": true,
+    "token": true,
+    "keepRawToken": false,
+    "unarmed": false,
+    "overrides": [
+      {
+        "table": "Theme",
+        "value": "gundam",
+        "custom": false
+      },
+      {
+        "table": "Outfit",
+        "value": "a long white high-collared lab coat cut with dark side panels, slit high up one leg over dark leggings, an ID badge clipped at the hip || civ",
+        "custom": false
+      },
+      {
+        "table": "Role",
+        "value": "a security officer || mil",
+        "custom": false
+      },
+      {
+        "table": "Build",
+        "value": "hourglass-shaped and strong-legged, full through the bust and hips with a sharply narrow waist || figure",
+        "custom": false
+      }
+    ]
+  }
+}
