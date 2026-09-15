@@ -1335,7 +1335,7 @@ PORTRAIT_TEMPLATE = (
     "painterly illustration style with fine grain texture, clean linework and halftone "
     "dot shading worked into the shadows, moody cinematic lighting. {figure_line}"
     "{headgear_line}{demeanor_line}"
-    "{gear_line}{extra_line}{backdrop} {weather_line}{glow_line} "
+    "{gear_line}{extra_line}{backdrop} {weather_line}{glow_line}"
     "Shallow depth of field, square framing, high detail, atmospheric sci-fi character "
     "portrait, painterly brushwork with heavy grain and dense halftone screentone worked "
     "into every shadow."
@@ -1395,7 +1395,7 @@ TOKEN_TEMPLATE = (
     "in frame with clear empty space above and below, in realistic adult proportions "
     "roughly seven to eight heads tall. "
     "{figure_line}{headgear_line}{demeanor_line}{gear_line}{extra_line}{stance_line}"
-    "{glow_line} Behind {object} the background is an empty plain white void. "
+    "{glow_line}Behind {object} the background is an empty plain white void. "
     "Full-length wide shot, the whole "
     "figure clear of the frame edge, centered composition, dramatic "
     "lighting, high detail, isolated character illustration, clean silhouette, painterly brushwork "
@@ -3657,17 +3657,22 @@ def build_prompts(npc, style=None, guidance=None):
     # rolled Stance, so nothing there contradicts what the NPC carries.
     if color_guidance.is_custom(guidance):
         # Selected colour guidance: its sentence replaces every house palette
-        # line, and the glow keeps only its own sentence ahead of it.
+        # line, and the glow keeps only its own sentence ahead of it. The
+        # built-in 'none' entry has an empty sentence, so a run with no
+        # rolled glow says nothing about colour at all.
         palette = guidance["prompt"]
-        portrait_glow_line = (GLOW_PORTRAIT_ONLY.format(**fields) + " " if portrait_glow else "") + palette
-        token_glow_line = (GLOW_TOKEN_ONLY.format(**fields) + " " if equipped_glow else "") + palette
+        portrait_glow_line = " ".join(s for s in (GLOW_PORTRAIT_ONLY.format(**fields) if portrait_glow else "", palette) if s)
+        token_glow_line = " ".join(s for s in (GLOW_TOKEN_ONLY.format(**fields) if equipped_glow else "", palette) if s)
     else:
         portrait_glow_line = (GLOW_PORTRAIT if portrait_glow else none_line).format(**fields)
         token_glow_line = (GLOW_TOKEN if equipped_glow else none_line).format(**fields)
+    # The slot carries its own trailing space, like weather_line above, so an
+    # empty line collapses cleanly instead of leaving a double space.
     portrait_fields = dict(
         fields, gear_line="" if "nogear" in flags else carrying,
-        glow_line=portrait_glow_line)
-    token_fields = dict(fields, gear_line=carrying, glow_line=token_glow_line)
+        glow_line=portrait_glow_line + " " if portrait_glow_line else "")
+    token_fields = dict(fields, gear_line=carrying,
+                        glow_line=token_glow_line + " " if token_glow_line else "")
 
     prompts = (art_styles.apply_style(PORTRAIT_TEMPLATE.format(**portrait_fields), style),
                art_styles.apply_style(TOKEN_TEMPLATE.format(**token_fields), style))

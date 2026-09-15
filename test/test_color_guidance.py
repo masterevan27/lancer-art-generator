@@ -22,6 +22,7 @@ from test.helpers import FIXTURE_TABLES, load_generator
 HOUSE = "Keep the palette restrained"
 HOUSE_PIGMENT = "Keep the rest of the palette restrained"
 CUSTOM = "Keep the palette to sun-bleached ochre, teal and bone white."
+NONE_NAME = "None (no colour guidance)"
 
 
 class ColorGuidanceTests(unittest.TestCase):
@@ -42,16 +43,51 @@ class ColorGuidanceTests(unittest.TestCase):
     def custom(self):
         return dict(id='ochre', name='Ochre', prompt=CUSTOM, hidden=False)
 
-    def test_default_survives_missing_catalog_and_reserved_id_is_refused(self):
+    def test_builtins_survive_missing_catalog_and_reserved_ids_are_refused(self):
         guidance = self.module()
-        self.assertEqual(guidance.load_catalog(self.root / 'missing'), [dict(guidance.DEFAULT_GUIDANCE)])
+        builtins = [dict(guidance.DEFAULT_GUIDANCE), dict(id='none', name=NONE_NAME, prompt='', hidden=False)]
+        self.assertEqual(guidance.load_catalog(self.root / 'missing'), builtins)
         for content in ('', '{"guidance":[]}'):
-            self.assertEqual(guidance.load_catalog(self.catalog(content)), [dict(guidance.DEFAULT_GUIDANCE)])
+            self.assertEqual(guidance.load_catalog(self.catalog(content)), builtins)
         for content in ('[]', '{"guidance":[{"id":"default","name":"X","prompt":"x"}]}',
+                        '{"guidance":[{"id":"none","name":"X","prompt":"x"}]}',
                         '{"guidance":[{"id":"ochre","name":"Ochre","prompt":""}]}',
                         '{"guidance":[{"id":"../x","name":"X","prompt":"x"}]}'):
             with self.assertRaises(ValueError):
                 guidance.load_catalog(self.catalog(content))
+        self.assertEqual(guidance.select_guidance(self.root / 'missing', 'none')['prompt'], '')
+
+    def test_none_guidance_drops_the_palette_sentence_and_keeps_glow(self):
+        gen = load_generator()
+        tables = gen.parse_tables(FIXTURE_TABLES)
+        none = gen.color_guidance.select_guidance(self.root / 'missing', 'none')
+        saw_glow = saw_dark = False
+        for seed in range(40):
+            npc = gen.roll_npc(tables, random.Random(seed))
+            default_prompts = gen.build_prompts(npc)
+            none_prompts = gen.build_prompts(npc, None, none)
+            for before, after in zip(default_prompts, none_prompts):
+                self.assertNotIn('palette', after.lower())
+                self.assertNotIn('  ', after)
+                self.assertTrue(before.startswith(after.split(' A faint ')[0][:40]))
+                # The house line without a glow is one of two no-glow forms;
+                # anything else means the default prompt described a glow.
+                if 'no stray saturated color' in before or HOUSE_PIGMENT in before:
+                    saw_dark = True
+                    self.assertNotIn('A faint ', after)
+                else:
+                    saw_glow = True
+                    self.assertIn('A faint ', after)
+                    self.assertIn(' glow', after)
+            portrait, token = none_prompts
+            # The fixture's Weather bullet is a bare fragment, so only the
+            # token's seam can be checked for a clean sentence boundary.
+            self.assertIn(' Shallow depth of field', portrait)
+            self.assertIn('. Behind ', token)
+        self.assertTrue(saw_glow and saw_dark, 'fixture never rolled both a glow and no glow')
+        for prompt in gen.build_prompts(npc, dict(id='ink', name='Ink', prompt='Monochrome ink wash.', hidden=False), none):
+            self.assertNotIn('palette', prompt.lower())
+            self.assertIn('Monochrome ink wash.', prompt)
 
     def test_select_honours_hidden_and_unknown_ids(self):
         guidance = self.module()
@@ -133,7 +169,18 @@ class ColorGuidanceTests(unittest.TestCase):
             reverted = json.loads(manifest_path.read_text())[folder]
             self.assertEqual(reverted['color_guidance'], {'id': 'default', 'name': 'Default'})
             self.assertIn(HOUSE, reverted['portraitPrompt'] + reverted['tokenPrompt'])
-        self.assertGreaterEqual(len(graphs), 3)
+
+            self.assertEqual(gen.main(flags + ['--regen-manifest', str(manifest_path), '--regen-id', entry['id'],
+                                              '--color-guidance', 'none']), 0, logs.getvalue())
+            bare = json.loads(manifest_path.read_text())[folder]
+            self.assertEqual(bare['color_guidance'], {'id': 'none', 'name': NONE_NAME})
+            self.assertNotIn('palette', (bare['portraitPrompt'] + bare['tokenPrompt']).lower())
+
+            self.assertEqual(gen.main(flags + ['--regen-manifest', str(manifest_path), '--regen-id', entry['id']]), 0, logs.getvalue())
+            kept = json.loads(manifest_path.read_text())[folder]
+            self.assertEqual(kept['color_guidance'], {'id': 'none', 'name': NONE_NAME})
+            self.assertNotIn('palette', (kept['portraitPrompt'] + kept['tokenPrompt']).lower())
+        self.assertGreaterEqual(len(graphs), 5)
 
     def test_legacy_entry_without_guidance_regenerates_with_default(self):
         guidance = self.module()

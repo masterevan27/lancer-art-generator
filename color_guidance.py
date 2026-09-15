@@ -9,7 +9,9 @@ glow is light rather than pigment, so it keeps its own sentence either way -
 see build_prompts() in generate-npc.py.
 
 The built-in 'default' entry means "the house line, exactly as before", and
-survives a missing, blank or empty catalog the way the default art style does.
+the built-in 'none' entry means "no palette sentence at all" - the prompt says
+nothing about colour beyond the glow's own line. Both survive a missing, blank
+or empty catalog the way the default and none art styles do.
 Deliberately its own loader rather than a call into art_styles.load_catalog:
 the two catalogs share a shape today, but the art style one carries the
 private-output contract and is free to grow reserved entries of its own.
@@ -21,6 +23,7 @@ from types import MappingProxyType
 
 DEFAULT_CATALOG = Path(__file__).resolve().parent / 'color-guidance.json'
 DEFAULT_GUIDANCE = MappingProxyType({'id': 'default', 'name': 'Default', 'prompt': '', 'hidden': False})
+EMPTY_GUIDANCE = MappingProxyType({'id': 'none', 'name': 'None (no colour guidance)', 'prompt': '', 'hidden': False})
 
 
 def load_catalog(path=DEFAULT_CATALOG):
@@ -29,8 +32,8 @@ def load_catalog(path=DEFAULT_CATALOG):
     data = json.loads(text) if text.strip() else {'guidance': []}
     if not isinstance(data, dict) or not isinstance(data.get('guidance'), list):
         raise ValueError('Colour guidance catalog must contain a guidance array')
-    result = [dict(DEFAULT_GUIDANCE)]
-    seen = {'default'}
+    result = [dict(DEFAULT_GUIDANCE), dict(EMPTY_GUIDANCE)]
+    seen = {'default', 'none'}
     for item in data['guidance']:
         if not isinstance(item, dict):
             raise ValueError('Each colour guidance entry must be an object')
@@ -62,7 +65,7 @@ def select_guidance(path=DEFAULT_CATALOG, guidance_id=None, secret=False):
 
 def add_arguments(parser):
     parser.add_argument('--color-guidance', metavar='ID',
-                        help='palette sentence for the prompts (default: the house palette)')
+                        help='palette sentence for the prompts (default: the house palette; none: no palette sentence)')
     parser.add_argument('--color-guidance-catalog', type=Path, default=DEFAULT_CATALOG, metavar='PATH')
 
 
@@ -86,4 +89,6 @@ def restore_record(args, entry):
 
 
 def is_custom(guidance):
+    """True when the guidance replaces the house palette line - a catalog
+    entry's own sentence, or 'none', whose empty prompt drops the line."""
     return bool(guidance) and guidance['id'] != 'default'

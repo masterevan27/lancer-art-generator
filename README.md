@@ -122,7 +122,9 @@ complete palette sentence:
 The built-in `default` keeps the house line ("Keep the palette restrained -
 greys, olive drab and rust ..."). A custom entry replaces that sentence in both
 the portrait and token prompts; the rolled glow, which is light rather than
-pigment, keeps its own short sentence ahead of it. Manifest records carry
+pigment, keeps its own short sentence ahead of it. The built-in `none`
+(**None (no colour guidance)**) drops the palette sentence entirely, so the
+prompt says nothing about colour beyond the glow's own line. Manifest records carry
 `color_guidance` (`id`, `name`) and regeneration reuses the saved guidance
 unless `--color-guidance` names another. `hidden: true` entries require
 `--secret`, as with art styles.
