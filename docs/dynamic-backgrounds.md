@@ -88,6 +88,10 @@ with small gestures and keep any existing animals in place.
 
 Backgrounds use the NPC illustration prompts' painterly brushwork, fine grain,
 clean linework and dense halftone shadows, with wide environmental composition.
+Every prompt closes with the NPC portraits' style line, "High detail, atmospheric
+sci-fi environment illustration, painterly brushwork with heavy grain and dense
+halftone screentone worked into every shadow", with the portraits' shallow depth
+of field and square framing left out.
 
 Preview returns `{"plans":[...]}`. Each plan has exactly `version:1`,
 `environment`, `seed`, `traits`, `prompt`, `motionPrompt`, `view`, `notes`, `width`

@@ -320,8 +320,11 @@ def assemble_prompt(settings, traits):
         )
     if settings["notes"].strip():
         parts.append("Additional scene and layout direction: " + settings["notes"].strip())
-    parts.append("Detailed environmental illustration, painterly brushwork with heavy grain and dense halftone screentone worked "
-                 "into every shadow. Render people and scenery in the same illustration style, with realistic proportions and consistent lighting.")
+    # The NPC portraits' closing style line, minus "Shallow depth of field, square framing" and
+    # "character portrait", which describe portrait framing rather than the shared look.
+    parts.append("Render people and scenery in the same illustration style, with realistic proportions and consistent lighting. "
+                 "High detail, atmospheric sci-fi environment illustration, painterly brushwork with heavy grain "
+                 "and dense halftone screentone worked into every shadow.")
     return "\n".join(parts)
 
 

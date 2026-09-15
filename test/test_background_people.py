@@ -72,8 +72,13 @@ class BackgroundPeopleTests(unittest.TestCase):
         plan = scene.preview({"seed": 7}, self.catalogue)["plans"][0]
         for phrase in ("painterly illustration", "fine grain texture", "clean linework", "halftone", "painterly brushwork"):
             self.assertIn(phrase, plan["prompt"])
+        # The closing line is the NPC portraits' style tail minus its portrait framing.
+        self.assertTrue(plan["prompt"].endswith(
+            "High detail, atmospheric sci-fi environment illustration, painterly brushwork with heavy grain "
+            "and dense halftone screentone worked into every shadow."), plan["prompt"][-300:])
         self.assertIn("full-frame", plan["prompt"])
-        self.assertNotIn("Shallow depth of field", plan["prompt"])
+        for framing in ("Shallow depth of field", "square framing", "character portrait"):
+            self.assertNotIn(framing, plan["prompt"])
         self.assertNotIn("median age around 20-25", plan["prompt"])
 
 
