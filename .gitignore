@@ -2,6 +2,9 @@
 __pycache__/
 *.pyc
 
+# Local workflow visibility
+workflows.json
+
 # ComfyUI run logs (local state, regenerated per machine)
 .generated-manifest.json
 .generated-npcs.json
@@ -39,3 +42,6 @@ art-styles.json
 
 # Ignore personal ComfyUI workflows:
 workflows/api/secret
+
+# Ignore personal prompt tables:
+prompts/secret-tables
