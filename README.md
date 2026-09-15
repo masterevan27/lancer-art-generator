@@ -73,12 +73,14 @@ files.
 both prompts - `--disable-table Stance` when a private table describes the
 pose. The trait is still rolled, so every filter that reads it runs as before
 and the seed reproduces the same NPC; only the sentence goes, and the dossier
-marks the row `(disabled)`. The list is the descriptive tables: Height, Build,
-Skin, Hair, Eyes, Feature, Demeanor, Faction, Outfit, Headgear, Weapon, Gear,
-Weather, Stance and Glow colour. Names, Pronouns, Theme, Age and Role decide
-the folder, the id and the gendered pools; Backdrop supplies the portrait's
-shot; Glow placement is nothing without its colour; Hair colour is folded into
-the Hair text and goes with it.
+marks the row `(disabled)`. Every table in `REQUIRED_TABLES` can be selected
+independently. Backdrop removes the rolled shot and scene in favor of neutral
+portrait framing. Hair colour removes the base and appended colour tail while
+retaining the cut; Glow placement keeps the colour with a generic glow
+description. Age removes maturity and face-age wording, and Pronouns uses
+neutral narration without the gender description. Names, callsigns and Theme
+already contribute no direct image-prompt text: their switches record the
+choice while keeping the metadata, folder names, IDs and roll dependencies.
 
 ```powershell
 python generate-npc.py --dry-run --extra-tables prompts/secret-tables/mine.json --disable-table Stance

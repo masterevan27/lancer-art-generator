@@ -136,16 +136,14 @@ REQUIRED_TABLES = [
 # prompt-time switch, not a roll-time one: the trait is still drawn, so every
 # filter that reads it (Weapon gates Stance and Gear, Backdrop gates Gear) runs
 # exactly as it always has and a seed still reproduces the same NPC - only the
-# clause is dropped from the templates. That is what keeps the list to the
-# descriptive tables. Names, Pronouns, Theme, Age and Role decide the folder,
-# the manifest id, the maturity wording and every gendered variant pool;
-# Backdrop supplies the portrait's shot phrase and the hue the glow is checked
-# against; Glow placement is meaningless without its colour; and Hair colour is
-# folded into the Hair text at roll time, so it can only go with Hair.
+# clause is dropped from the templates. All default tables can be selected;
+# names, callsigns and Theme already contribute no direct prompt text, so
+# their switches only record intent. Metadata and roll dependencies stay intact.
 DISABLEABLE_TABLES = (
-    "Height", "Build", "Skin", "Hair", "Eyes", "Feature", "Demeanor",
-    "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Weather", "Stance",
-    "Glow colour",
+    "Given names", "Family names", "Callsigns", "Pronouns", "Theme", "Age",
+    "Build", "Height", "Skin", "Hair", "Hair colour", "Eyes", "Feature",
+    "Demeanor", "Role", "Faction", "Outfit", "Headgear", "Weapon", "Gear",
+    "Backdrop", "Glow colour", "Glow placement", "Weather", "Stance",
 )
 # Glow colour follows Backdrop for the reason Glow placement always has: a
 # scene that commits to a colour of light ("lit crimson", "red emergency
@@ -1331,11 +1329,11 @@ STANCE_SENTENCE = (
 )
 
 PORTRAIT_TEMPLATE = (
-    "{shot} of {role}, {maturity} {gender} {age}, rendered in a detailed "
+    "{shot} of {identity}, rendered in a detailed "
     "painterly illustration style with fine grain texture, clean linework and halftone "
     "dot shading worked into the shadows, moody cinematic lighting. {figure_line}"
     "{headgear_line}{demeanor_line}"
-    "{gear_line}{extra_line}{backdrop} {weather_line}{glow_line}"
+    "{gear_line}{extra_line}{backdrop_line}{weather_line}{glow_line}"
     "Shallow depth of field, square framing, high detail, atmospheric sci-fi character "
     "portrait, painterly brushwork with heavy grain and dense halftone screentone worked "
     "into every shadow."
@@ -1386,7 +1384,7 @@ PORTRAIT_TEMPLATE = (
 # them asserts the same requirement positively, for the background-removal
 # pass, without describing how anything is rendered.
 TOKEN_TEMPLATE = (
-    "A full-body character illustration of {role}, {maturity} {gender} {age}, "
+    "A full-body character illustration of {identity}, "
     "rendered in a detailed painterly illustration style with fine grain texture, clean "
     "linework and halftone dot shading worked into the shadows, moody cinematic lighting "
     "on the figure. {Subject} {is_are} "
@@ -3516,7 +3514,7 @@ def figure_sentence(fields, disabled=()):
              if t not in off]
     if inner:
         inner[0] = fields["traits"] + inner[0]
-    if outer or inner:
+    if (outer or inner) and "Age" not in off:
         outer.append(fields["face"])
     if inner:
         outer.append(_oxford(inner))
@@ -3553,7 +3551,31 @@ def build_prompts(npc, style=None, guidance=None):
     one from color_guidance (the palette sentence). Either may be None or the
     built-in default, which leaves the house wording untouched.
     """
+    disabled = set(npc.get("_disabled") or ())
+    # Work on a prompt-only copy: stored traits, IDs and workflow selection
+    # still use the original roll. Neutral narration replaces gendered
+    # pronouns when that table's contribution is disabled.
+    if "Pronouns" in disabled:
+        original = dict(npc["_pronouns"], colour=npc["Hair colour"])
+        neutral = pronoun_fields("they/them/their/person")
+        npc = dict(npc, _pronouns=neutral)
+        # Render the original placeholders again: 'her' can mean object or
+        # possessive, which cannot be recovered by replacing English words.
+        # Legacy entries without raw bullets retain their authored trait text.
+        for table, raw in (npc.get("_raw") or {}).items():
+            targets = (table, "Hair") if table == "Hair colour" else (table,)
+            for part in raw.split("||"):
+                part = part.strip()
+                if "{" not in part:
+                    continue
+                before = part.format(**original)
+                after = part.format(**dict(neutral, colour=npc["Hair colour"]))
+                for target in targets:
+                    if target in npc:
+                        npc[target] = npc[target].replace(before, after)
     shot, scene, flags = split_backdrop(npc["Backdrop"])
+    if "Backdrop" in disabled:
+        shot, scene, flags = "A portrait", "", set()
     # .get, not npc["Weapon"]: --regen-manifest rebuilds npc from a stored
     # traits dict, and every entry written before this phase has no Weapon
     # key at all. Unlike the Height backfill above in regen_from_manifest,
@@ -3564,7 +3586,6 @@ def build_prompts(npc, style=None, guidance=None):
     # A disabled table's text is kept off the prompt everywhere it could
     # reach, including the light-source check below: a glow asserted for a
     # weapon the prompt no longer names would be a light with no source.
-    disabled = set(npc.get("_disabled") or ())
     if "Weapon" in disabled:
         weapon = ""
     gear = "" if "Gear" in disabled else npc["Gear"]
@@ -3594,6 +3615,29 @@ def build_prompts(npc, style=None, guidance=None):
         "backdrop": scene,
         "stance": npc["Stance"],
     })
+    if "Pronouns" in disabled:
+        fields["traits"] = ""
+    if "Hair colour" in disabled:
+        raw_hair = (npc.get("_raw") or {}).get("Hair")
+        if raw_hair:
+            fields["hair"] = " ".join(split_flags(raw_hair)[0].replace("{colour}", "").format(**fields).split())
+        else:
+            # Legacy manifests without raw bullets can only remove the known
+            # base; the original cut and appended tail cannot be separated.
+            fields["hair"] = " ".join(npc["Hair"].replace(npc["Hair colour"], "").split())
+    description = " ".join(value for value in (
+        "" if "Age" in disabled else fields["maturity"],
+        "" if "Pronouns" in disabled else fields["gender"],
+        "" if "Age" in disabled else fields["age"],
+    ) if value)
+    identity = [] if "Role" in disabled else [fields["role"]]
+    if description:
+        identity.append(description)
+    fields["identity"] = ", ".join(identity) or "a person"
+    fields["backdrop_line"] = scene + " " if scene else ""
+    if "Glow placement" in disabled or ("Backdrop" in disabled and
+            "scene" in split_flags((npc.get("_raw") or {}).get("Glow placement", ""))[1]):
+        fields["placement"] = "on the figure"
     weather = "" if "Weather" in disabled else weather_sentence(npc)
     fields["weather_line"] = weather + " " if weather else ""
     # Empty when the Hair bullet already put the covering on the head - see

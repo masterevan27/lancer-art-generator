@@ -240,15 +240,64 @@ class TestDisabledTables(unittest.TestCase):
             self.assertEqual(gen.figure_sentence(fields, ()),
                              gen.FIGURE_SENTENCE.format(**fields))
 
-    def test_the_disableable_set_is_the_descriptive_tables(self):
-        for name in gen.DISABLEABLE_TABLES:
-            self.assertIn(name, gen.REQUIRED_TABLES)
-        for structural in ("Given names", "Family names", "Callsigns", "Pronouns",
-                           "Theme", "Age", "Role", "Backdrop", "Glow placement",
-                           "Hair colour"):
-            self.assertNotIn(structural, gen.DISABLEABLE_TABLES)
-        for name in ("Stance", "Weapon", "Gear", "Outfit", "Height", "Demeanor"):
-            self.assertIn(name, gen.DISABLEABLE_TABLES)
+    def test_every_default_table_can_be_disabled(self):
+        self.assertEqual(set(gen.DISABLEABLE_TABLES), set(gen.REQUIRED_TABLES))
+
+    def test_backdrop_off_removes_shot_scene_and_scene_light(self):
+        npc = roll(disabled=("Backdrop", "Weapon", "Gear", "Outfit", "Headgear", "Feature", "Eyes"))
+        npc["Backdrop"] = "A low-angle close-up || beside a glowing neon sign || nogear"
+        portrait, _ = gen.build_prompts(npc)
+        self.assertTrue(portrait.startswith("A portrait of "))
+        self.assertNotIn("neon sign", portrait)
+        self.assertNotIn(npc["Glow colour"], portrait)
+        self.assertClean(portrait)
+
+    def test_backdrop_off_does_not_suppress_carrying(self):
+        npc = roll(disabled=("Backdrop",))
+        npc["Backdrop"] = "A close-up || holding a glowing panel || nogear"
+        npc["Gear"] = "a canvas tool roll at the hip"
+        self.assertIn(npc["Gear"], gen.build_prompts(npc)[0])
+
+    def test_hair_colour_off_preserves_cut_without_base_or_tail(self):
+        npc = gen.roll_npc(TABLES, random.Random(7), overrides={
+            "Hair": "a long {colour} braid", "Hair colour": "silver-white || fading to green at the tips"})
+        npc["_disabled"] = ("Hair colour",)
+        for prompt in gen.build_prompts(npc):
+            self.assertIn("a long braid", prompt)
+            self.assertNotIn("silver-white", prompt)
+            self.assertNotIn("fading to green", prompt)
+            self.assertClean(prompt)
+
+    def test_age_and_pronouns_off_remove_gender_and_maturity_wording(self):
+        npc = roll(disabled=("Age", "Pronouns"))
+        for prompt in gen.build_prompts(npc):
+            self.assertNotIn(npc["Age"], prompt)
+            for word in ("woman", "feminine", "young face", "mature face", "She ", " her "):
+                self.assertNotIn(word, prompt)
+            self.assertClean(prompt)
+
+    def test_glow_placement_off_preserves_equipped_colour(self):
+        npc = roll(disabled=("Glow placement",))
+        npc["Gear"] = "a glowing neon wrist display"
+        portrait, token = gen.build_prompts(npc)
+        self.assertNotIn(npc["Glow placement"], portrait)
+        self.assertIn(npc["Glow colour"], portrait)
+        self.assertIn(npc["Glow colour"], token)
+
+    def test_neutral_pronouns_distinguish_object_and_possessive_without_changing_words(self):
+        for pronouns in ("she/her/her/woman", "he/him/his/man"):
+            with self.subTest(pronouns=pronouns):
+                npc = gen.roll_npc(TABLES, random.Random(7), overrides={
+                    "Pronouns": pronouns,
+                    "Headgear": "{Subject} {wear} a visor on {possessive} head, with a cable behind {object}.",
+                    "Backdrop": "A portrait || {Subject} {is_are} on the island. || weather",
+                })
+                npc["_disabled"] = ("Pronouns",)
+                stored = dict(npc)
+                portrait, _ = gen.build_prompts(npc)
+                self.assertIn("They wear a visor on their head, with a cable behind them.", portrait)
+                self.assertIn("They are on the island.", portrait)
+                self.assertEqual(npc, stored)
 
     def assertClean(self, prompt):
         for bad in (", ,", ",,", "  ", " .", ", and ,", "and , ", " , "):
@@ -270,6 +319,8 @@ class TestDisabledTables(unittest.TestCase):
 
     def test_each_descriptive_table_drops_its_own_clause(self):
         for name in gen.DISABLEABLE_TABLES:
+            if name in ("Given names", "Family names", "Callsigns", "Theme", "Pronouns", "Backdrop"):
+                continue  # Metadata-only or composite fields have separate coverage.
             npc = roll(seed=7, disabled=(name,))
             value = npc[name]
             if name == "Faction":
@@ -333,7 +384,7 @@ class TestDisabledTables(unittest.TestCase):
             npc = roll(seed=seed, disabled=tuple(gen.DISABLEABLE_TABLES))
             for prompt in gen.build_prompts(npc):
                 self.assertClean(prompt)
-                self.assertIn(npc["Role"], prompt)
+                self.assertNotIn(npc["Role"], prompt)
 
 
 class TestCli(unittest.TestCase):
@@ -384,8 +435,14 @@ class TestCli(unittest.TestCase):
         self.assertIn("both feet in frame", plain)
         self.assertNotIn("both feet in frame", off)
 
-    def test_disable_table_refuses_a_structural_or_unknown_table(self):
-        for name in ("Role", "Nope"):
+    def test_disable_table_accepts_every_default_table(self):
+        for name in gen.REQUIRED_TABLES:
+            with self.subTest(table=name):
+                code, _ = self.run_main("--disable-table", name)
+                self.assertEqual(code, 0)
+
+    def test_disable_table_refuses_an_unknown_table(self):
+        for name in ("Nope",):
             with self.subTest(table=name):
                 with self.assertRaises(SystemExit) as caught:
                     self.run_main("--disable-table", name)
@@ -401,6 +458,19 @@ class TestCli(unittest.TestCase):
 
 
 class TestManifestRoundTrip(unittest.TestCase):
+    def test_new_switches_preserve_prompts_and_metadata_through_regeneration(self):
+        for disabled in (("Backdrop", "Callsigns", "Role"), ("Pronouns", "Hair colour", "Age"),
+                         tuple(gen.REQUIRED_TABLES)):
+            with self.subTest(disabled=disabled):
+                npc = roll(disabled=disabled)
+                entry = manifest_entry(seed=5)
+                gen.persist_traits(entry, npc)
+                restored = gen.npc_from_entry(entry, entry["id"], warn=False)
+                self.assertEqual(gen.build_prompts(npc), gen.build_prompts(restored))
+                self.assertEqual(restored["Callsigns"], npc["Callsigns"])
+                self.assertEqual(restored["Pronouns"], npc["Pronouns"])
+                self.assertEqual(restored["_disabled"], disabled)
+
     def test_persist_writes_extra_and_disabled_only_when_present(self):
         npc = roll()
         entry = {}
