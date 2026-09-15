@@ -188,6 +188,12 @@ python generate-npc.py --dry-run --count 5
 python generate-npc.py --count 3
 ```
 
+Private table rolls can fix a value with `--extra-value "TABLE=VALUE"` alongside
+`--extra-tables PATH` (repeat for multiple tables). The value must occur in a
+selected extra table; other tables retain their weighted random rolls. The
+Import GUI's Secret mode offers these choices and saves private Create NPC
+recipes under `prompts/presets/secret-presets/`.
+
 Adding options to a table needs no code change — every `-` bullet under a `##`
 heading in the tables file is one option. A `- => Name` bullet is a group
 reference, one slot that resolves from `## Name`; the tables file's own

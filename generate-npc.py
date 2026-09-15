@@ -1488,7 +1488,7 @@ def parse_tables(md_path):
     return {name: options for name, options in tables.items() if options}
 
 
-def load_extra_tables(paths, only=None):
+def load_extra_tables(paths, only=None, values=None):
     """Private tables, as an ordered dict of name -> [(value, weight)].
 
     Two file shapes, told apart by extension. A .json file is one object of
@@ -1511,6 +1511,8 @@ def load_extra_tables(paths, only=None):
     `only` narrows the result to the named tables, in file order, and refuses
     a name no loaded file holds - a typo would otherwise roll nothing and
     report success.
+    `values` fixes selected tables to exact row text, retaining a weighted
+    draw for every table so later tables still consume the same RNG stream.
     """
     extra = {}
     for path in paths:
@@ -1566,6 +1568,13 @@ def load_extra_tables(paths, only=None):
                              % (", ".join(missing), ", ".join(extra) or "none"))
         wanted = set(only)
         extra = {name: rows for name, rows in extra.items() if name in wanted}
+    for name, value in (values or {}).items():
+        if name not in extra:
+            raise ValueError("fixed value names an unselected extra table: %s" % name)
+        matches = [(v, w) for v, w in extra[name] if v == value]
+        if not matches:
+            raise ValueError("value is not offered by extra table '%s': %s" % (name, value))
+        extra[name] = matches
     return extra
 
 
@@ -3905,6 +3914,8 @@ def parse_args(argv=None):
     roll.add_argument("--extra-table", action="append", default=[], metavar="NAME",
                       help="with --extra-tables, roll only the named table(s) from the "
                            "loaded files (repeatable; default: every table in every file)")
+    roll.add_argument("--extra-value", action="append", default=[], metavar="TABLE=VALUE",
+                      help="choose an exact value from a selected extra table (repeatable)")
     roll.add_argument("--disable-table", action="append", default=[], metavar="TABLE",
                       help="leave one default table's clause out of both prompts, e.g. "
                            "--disable-table Stance when a private table covers the pose. "
@@ -5390,7 +5401,13 @@ def main(argv=None):
     if args.extra_table and not args.extra_tables:
         raise SystemExit("--extra-table needs at least one --extra-tables file")
     try:
-        extra = load_extra_tables(args.extra_tables, args.extra_table)
+        values = {}
+        for choice in args.extra_value:
+            name, separator, value = choice.partition("=")
+            if not separator or not name or not value:
+                raise ValueError("--extra-value needs TABLE=VALUE")
+            values[name] = value
+        extra = load_extra_tables(args.extra_tables, args.extra_table, values)
     except ValueError as exc:
         raise SystemExit("--extra-tables: %s" % exc)
 

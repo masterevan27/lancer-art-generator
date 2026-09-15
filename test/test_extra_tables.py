@@ -74,6 +74,20 @@ def roll(seed=3, extra=None, disabled=()):
 
 
 class TestLoadExtraTables(unittest.TestCase):
+    def test_fixed_values_narrow_only_the_selected_table(self):
+        extra = gen.load_extra_tables([self.a], values={"camera_framing": "eye level medium shot"})
+        self.assertEqual(extra["camera_framing"], [("eye level medium shot", 1)])
+        self.assertEqual(len(extra["partner_archetypes"]), 2)
+        for seed in range(10):
+            self.assertEqual(gen.roll_extra(extra, random.Random(seed))["camera_framing"], "eye level medium shot")
+
+    def test_fixed_values_reject_unknown_or_unselected_tables_and_values(self):
+        for only, values in [(None, {"missing": "value"}),
+                             (["partner_archetypes"], {"camera_framing": "eye level medium shot"}),
+                             (None, {"camera_framing": "not offered"})]:
+            with self.assertRaises(ValueError):
+                gen.load_extra_tables([self.a], only, values=values)
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
@@ -345,6 +359,18 @@ class TestCli(unittest.TestCase):
         code, out = self.run_main("--extra-tables", str(self.a), "--extra-table", "camera_framing")
         self.assertEqual(code, 0)
         self.assertFalse(any(v["value"] in out.lower() for v in SET_A["partner_archetypes"]), out)
+
+    def test_extra_value_reaches_every_dry_run_prompt(self):
+        code, out = self.run_main("--extra-tables", str(self.a), "--count", "3",
+                                  "--extra-value", "camera_framing=eye level medium shot")
+        self.assertEqual(code, 0)
+        self.assertEqual(out.lower().count("eye level medium shot"), 6)
+        self.assertNotIn("low angle looking up", out.lower())
+
+    def test_extra_value_refuses_invalid_cli_choices(self):
+        for choice in ("missing separator", "camera_framing=", "camera_framing=not offered"):
+            with self.subTest(choice=choice), self.assertRaises(SystemExit):
+                self.run_main("--extra-tables", str(self.a), "--extra-value", choice)
 
     def test_extra_tables_do_not_move_the_base_roll(self):
         _, plain = self.run_main()
