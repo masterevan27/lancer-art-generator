@@ -33,3 +33,6 @@ prompts/ship-batch5-work
 
 # Ignore personal NPC presets:
 prompts/presets/
+
+# Ignore personal art styles:
+art-styles.json
