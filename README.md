@@ -103,6 +103,30 @@ including intermediate background-removal and mesh passes. ComfyUI itself is
 an operator-controlled backend; browser authentication is provided by the GUI
 server, not by these trusted local CLIs. No credentials are shipped here.
 
+### Colour guidance
+
+`generate-npc.py` also accepts `--color-guidance ID` and
+`--color-guidance-catalog PATH` (default: `color-guidance.json` beside the
+scripts, see `color-guidance.example.json`). The catalog has the same shape as
+the art style one under a `guidance` key, and each entry's `prompt` is a
+complete palette sentence:
+
+```json
+{
+  "guidance": [
+    {"id": "sun-bleached", "name": "Sun-bleached desert", "prompt": "Keep the palette to sun-bleached ochre, dusty teal and bone white."}
+  ]
+}
+```
+
+The built-in `default` keeps the house line ("Keep the palette restrained -
+greys, olive drab and rust ..."). A custom entry replaces that sentence in both
+the portrait and token prompts; the rolled glow, which is light rather than
+pigment, keeps its own short sentence ahead of it. Manifest records carry
+`color_guidance` (`id`, `name`) and regeneration reuses the saved guidance
+unless `--color-guidance` names another. `hidden: true` entries require
+`--secret`, as with art styles.
+
 A ComfyUI-driven batch art pipeline for a *Lancer* TTRPG campaign, extracted
 from the [Lancer-TTRPG-GM-Hub](https://github.com/masterevan27/Lancer-TTRPG-GM-Hub)
 campaign repository into its own standalone tool. Three entry points —

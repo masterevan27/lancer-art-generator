@@ -60,6 +60,7 @@ from __future__ import annotations
 
 import argparse
 import art_styles
+import color_guidance
 import functools
 import importlib.util
 import json
@@ -1436,6 +1437,13 @@ GLOW_TOKEN = (
     "Keep the palette restrained - greys, olive drab and rust - with a single "
     "{glow} glow the only {other}saturated color."
 )
+# The glow half of the two lines above on its own, for a run whose
+# --color-guidance replaces the house palette sentence: the light still has
+# to be described, but the "only saturated color" claim belongs to the
+# restrained house palette and would contradict whatever the custom guidance
+# asks for, so the custom sentence follows these verbatim instead.
+GLOW_PORTRAIT_ONLY = "A faint {glow} glow {placement}."
+GLOW_TOKEN_ONLY = "A faint {glow} glow on the figure."
 GLOW_NONE = (
     "Keep the palette restrained - greys, olive drab and rust, with no stray "
     "saturated color."
@@ -3529,8 +3537,13 @@ def extra_sentence(npc):
     return "%s%s. " % (text[0].upper(), text[1:])
 
 
-def build_prompts(npc, style=None):
-    """The portrait and token prompt text for one rolled NPC."""
+def build_prompts(npc, style=None, guidance=None):
+    """The portrait and token prompt text for one rolled NPC.
+
+    `style` is a catalog entry from art_styles (rendering clauses); `guidance`
+    one from color_guidance (the palette sentence). Either may be None or the
+    built-in default, which leaves the house wording untouched.
+    """
     shot, scene, flags = split_backdrop(npc["Backdrop"])
     # .get, not npc["Weapon"]: --regen-manifest rebuilds npc from a stored
     # traits dict, and every entry written before this phase has no Weapon
@@ -3642,12 +3655,19 @@ def build_prompts(npc, style=None):
     # equipment held in one hand exactly as much as it contradicts a weapon.
     # The token keeps it: it has no backdrop at all, just flat white and a
     # rolled Stance, so nothing there contradicts what the NPC carries.
+    if color_guidance.is_custom(guidance):
+        # Selected colour guidance: its sentence replaces every house palette
+        # line, and the glow keeps only its own sentence ahead of it.
+        palette = guidance["prompt"]
+        portrait_glow_line = (GLOW_PORTRAIT_ONLY.format(**fields) + " " if portrait_glow else "") + palette
+        token_glow_line = (GLOW_TOKEN_ONLY.format(**fields) + " " if equipped_glow else "") + palette
+    else:
+        portrait_glow_line = (GLOW_PORTRAIT if portrait_glow else none_line).format(**fields)
+        token_glow_line = (GLOW_TOKEN if equipped_glow else none_line).format(**fields)
     portrait_fields = dict(
         fields, gear_line="" if "nogear" in flags else carrying,
-        glow_line=(GLOW_PORTRAIT if portrait_glow else none_line).format(**fields))
-    token_fields = dict(
-        fields, gear_line=carrying,
-        glow_line=(GLOW_TOKEN if equipped_glow else none_line).format(**fields))
+        glow_line=portrait_glow_line)
+    token_fields = dict(fields, gear_line=carrying, glow_line=token_glow_line)
 
     prompts = (art_styles.apply_style(PORTRAIT_TEMPLATE.format(**portrait_fields), style),
                art_styles.apply_style(TOKEN_TEMPLATE.format(**token_fields), style))
@@ -3988,6 +4008,7 @@ def parse_args(argv=None):
                           "faster than the server can keep up (default: %(default)s)")
 
     art_styles.add_arguments(p)
+    color_guidance.add_arguments(p)
     args = p.parse_args(argv)
     supplied = sys.argv[1:] if argv is None else argv
     args.workflow_explicit = any(a == '--workflow' or a.startswith('--workflow=') for a in supplied)
@@ -3996,6 +4017,7 @@ def parse_args(argv=None):
         args.workflow_woman = args.workflow
     try:
         art_styles.configure(args, "npcs", "out")
+        color_guidance.configure(args)
     except (ValueError, OSError) as exc:
         p.error(str(exc))
 
@@ -4839,6 +4861,7 @@ def print_trait_choices(args):
     manifest = art.load_manifest(args.regen_manifest)
     folder_path, entry = find_regen_entry(manifest, args.regen_id, args.regen_manifest)
     art_styles.restore_record(args, entry, folder_path, args.regen_manifest)
+    color_guidance.restore_record(args, entry)
     npc = npc_from_entry(entry, args.regen_id, warn=False)
 
     # Pinning is what makes a chosen value mean anything, and a legacy entry
@@ -5030,8 +5053,10 @@ def regenerate_one(args):
     manifest = art.load_manifest(args.regen_manifest)
     folder_path, entry = find_regen_entry(manifest, args.regen_id, args.regen_manifest)
     art_styles.restore_record(args, entry, folder_path, args.regen_manifest)
+    color_guidance.restore_record(args, entry)
     art_styles.safe_output_directory(args, folder_path)
     entry.update(art_styles.metadata(args))
+    entry.update(color_guidance.metadata(args))
     npc = npc_from_entry(entry, args.regen_id)
 
     # --apply-only's caller parses stdout whole, the same contract
@@ -5163,7 +5188,7 @@ def regenerate_one(args):
         return 0
 
     seed = args.new_seed if args.new_seed is not None else entry["seed"]
-    prompts = build_prompts(npc, args.selected_style)
+    prompts = build_prompts(npc, args.selected_style, args.selected_guidance)
     portrait_prompt, token_prompt = prompts
     category = role_category(npc)
     folder = Path(folder_path)
@@ -5380,7 +5405,7 @@ def main(argv=None):
         # see the stream they always have - see roll_extra().
         npc["_extra"] = roll_extra(extra, rng)
         npc["_disabled"] = tuple(dict.fromkeys(args.disable_table))
-        rolled.append((seed, npc, build_prompts(npc, args.selected_style)))
+        rolled.append((seed, npc, build_prompts(npc, args.selected_style, args.selected_guidance)))
 
     print("%s: %d tables, %d NPC(s) rolled from base seed %d" % (
         args.tables.name, len(tables), args.count, base_seed))
@@ -5503,6 +5528,7 @@ def main(argv=None):
         done += 1
         manifest[str(folder)] = {
             **art_styles.metadata(args),
+            **color_guidance.metadata(args),
             # Deterministic from name+seed so a --overwrite rerun of the same
             # NPC reuses it rather than minting a new one - this is what the
             # Foundry importer keys its "already imported" tracking on.

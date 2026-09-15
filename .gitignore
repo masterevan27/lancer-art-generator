@@ -45,3 +45,6 @@ workflows/api/secret
 
 # Ignore personal prompt tables:
 prompts/secret-tables
+
+# Ignore personal colour guidance:
+color-guidance.json

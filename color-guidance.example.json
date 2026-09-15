@@ -1,0 +1,10 @@
+{
+  "guidance": [
+    {
+      "id": "sun-bleached",
+      "name": "Sun-bleached desert",
+      "prompt": "Keep the palette to sun-bleached ochre, dusty teal and bone white, with warm shadows and no cold greys.",
+      "hidden": false
+    }
+  ]
+}
