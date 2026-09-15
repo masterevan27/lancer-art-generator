@@ -409,9 +409,9 @@ def art_module():
     return _load_module("generate-art.py", "lancer_background_art")
 
 
-def build_scene_graph(plan, prefix):
+def build_scene_graph(plan, prefix, workflow=None):
     art = art_module()
-    graph = art.load_api_workflow(ROOT / "workflows/api/Lancer_Scene_Workflow_v1.json")
+    graph = art.load_api_workflow(workflow or ROOT / "workflows/api/Lancer_Scene_Workflow_v1.json")
     slots = art.locate_slots(graph)
     graph[slots.positive]["inputs"]["text"] = plan["prompt"]
     graph[slots.sampler]["inputs"]["seed"] = plan["seed"]

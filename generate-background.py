@@ -28,6 +28,7 @@ def parse_args(argv=None):
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--notes", default="")
     parser.add_argument("--timeout", type=int, default=1800)
+    parser.add_argument("--workflow", type=Path, help="API workflow for scene rendering (battlemap utilities are separate)")
     art_styles.add_arguments(parser)
     args = parser.parse_args(argv)
     try:
@@ -94,7 +95,7 @@ def main(argv=None):
             for plan in plans:
                 plan["prompt"] = art_styles.apply_style(plan["prompt"], args.selected_style)
                 with contextlib.redirect_stdout(sys.stderr):
-                    graph = scene.build_scene_graph(plan, art_styles.private_prefix(args, "LancerBackgrounds/" + uuid.uuid4().hex))
+                    graph = scene.build_scene_graph(plan, art_styles.private_prefix(args, "LancerBackgrounds/" + uuid.uuid4().hex), args.workflow)
                     data = _render_graph(comfy, art_styles.protect_graph(graph, args), args.timeout)
                     path = scene.save_result(args.output_dir, f"Background-{plan['environment']}-{plan['seed']}", data, dict(plan, kind="background", **art_styles.metadata(args)))
                 _event(path)

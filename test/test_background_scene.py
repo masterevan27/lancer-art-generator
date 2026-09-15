@@ -167,6 +167,19 @@ class BackgroundSceneTests(unittest.TestCase):
         self.assertFalse(any(n["class_type"] in {"RMBG", "SaveAnimatedWEBP"} for n in edit.values()))
         self.assertTrue(any(n["class_type"] == "SaveImage" for n in edit.values()))
 
+    def test_custom_scene_workflow_retains_its_sampler_settings(self):
+        p = scene.preview({"seed": 123}, self.catalogue)["plans"][0]
+        graph = scene.build_scene_graph(p, "original")
+        sampler = next(n for n in graph.values() if n["class_type"] == "KSampler")
+        sampler["inputs"]["steps"] = 7
+        with tempfile.TemporaryDirectory() as folder:
+            workflow = Path(folder) / "custom.json"
+            workflow.write_text(json.dumps(graph), encoding="utf-8")
+            result = scene.build_scene_graph(dict(p, seed=456), "custom", workflow)
+        sampler = next(n for n in result.values() if n["class_type"] == "KSampler")
+        self.assertEqual(sampler["inputs"]["steps"], 7)
+        self.assertEqual(sampler["inputs"]["seed"], 456)
+
     def test_sidecars_preserve_identity_source_and_never_overwrite(self):
         with tempfile.TemporaryDirectory() as folder:
             source = Path(folder) / "Original.png"

@@ -1,0 +1,6 @@
+{
+  "workflows": [
+    { "file": "Lancer_Scene_Workflow_v1.json", "name": "Lancer Scene", "hidden": false },
+    { "file": "your-private-workflow.json", "name": "Private workflow", "secret": true }
+  ]
+}

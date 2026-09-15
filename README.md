@@ -14,10 +14,13 @@ defaults to `art-styles.json` beside the scripts. Its format is:
 ```
 
 The built-in `default` style always preserves the original subject-specific
-prompts. It remains available when the catalog is missing, blank, or empty; its
-reserved ID cannot be redefined. Custom styles replace the house rendering
+prompts. The built-in `none` style (**None (no art style)**) removes the house
+rendering clauses and adds no `Art style:` suffix. Both remain available when
+the catalog is missing, blank, or empty; neither reserved ID can be redefined.
+Custom styles replace the house rendering
 clauses while retaining subject and framing instructions. IDs use letters,
-digits, hyphens, and underscores; names and prompts must be nonblank.
+digits, hyphens, and underscores; names must be nonblank. Prompts must be strings;
+empty or whitespace-only prompts behave like `none`.
 `secret: true` is accepted as an alias for `hidden: true`.
 
 Hidden styles require `--secret`. Every `--secret` job, including one using the
@@ -27,6 +30,7 @@ directly. Relative storage paths resolve beside the configuration file.
 
 ```powershell
 python generate-npc.py --art-style ink --dry-run
+python generate-npc.py --art-style none --dry-run
 python generate-npc.py --secret --secret-config C:/private/lancer-config.json --art-style ink
 python generate-spaceship.py --secret --secret-config C:/private/lancer-config.json
 ```
@@ -403,3 +407,21 @@ Dual-licensed, because this repository holds both prose and code:
 
 *Lancer* is a trademark of Massif Press. This is an unofficial fan project, not
 affiliated with or endorsed by Massif Press, and contains no rulebook text.
+# Choosing a generation workflow
+
+`generate-art.py`, `generate-npc.py`, `generate-spaceship.py`, and dynamic
+scene rendering with `generate-background.py` accept `--workflow PATH` for a
+ComfyUI API-format JSON graph. The graph must expose the prompt, sampler,
+latent size, and image output slots supported by the generator.
+
+For NPCs, an explicit `--workflow` applies to every gender and overrides the
+recorded workflow during regeneration. `--workflow-woman` can still provide a
+separate override for new women NPCs. Without `--workflow`, existing defaults
+and recorded regeneration workflows continue to apply. Spaceship regeneration
+also keeps its recorded workflow unless `--workflow` overrides it.
+
+The import GUI discovers graphs in `workflows/api/`. Put private graphs in
+`workflows/api/secret/` to make them selectable only in Secret mode. `UTIL_`
+files are always excluded. Optional `workflows.json` beside the scripts uses
+the format in `workflows.example.json` to give main-folder graphs friendly
+names or mark them `hidden`/`secret`. This local catalog is ignored by Git.

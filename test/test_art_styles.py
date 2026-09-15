@@ -28,9 +28,10 @@ class ArtStylesTests(unittest.TestCase):
 
     def test_default_survives_missing_empty_and_reserved_override(self):
         styles = self.styles()
-        self.assertEqual(styles.load_catalog(self.root / 'missing'), [dict(styles.DEFAULT_STYLE)])
+        builtins = [dict(styles.DEFAULT_STYLE), dict(id='none', name='None (no art style)', prompt='', hidden=False)]
+        self.assertEqual(styles.load_catalog(self.root / 'missing'), builtins)
         for content in ('', ' \n\t ', '{"styles":[]}'):
-            self.assertEqual(styles.load_catalog(self.catalog(content)), [dict(styles.DEFAULT_STYLE)])
+            self.assertEqual(styles.load_catalog(self.catalog(content)), builtins)
         with self.assertRaises(ValueError):
             styles.load_catalog(self.catalog('{"styles":[{"id":"default","name":"Secret","prompt":"x","hidden":true}]}'))
 
@@ -40,10 +41,39 @@ class ArtStylesTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             styles.select_style(path, 'ink', False)
         self.assertTrue(styles.select_style(path, 'ink', True)['hidden'])
-        for content in ('[]', '{"styles":[{"id":"x","name":"X","prompt":"","hidden":false}]}',
+        for content in ('[]', '{"styles":[{"id":"x","name":"X","prompt":null,"hidden":false}]}',
                         '{"styles":[{"id":"../x","name":"X","prompt":"ink"}]}'):
             with self.assertRaises(ValueError):
                 styles.load_catalog(self.catalog(content))
+
+    def test_empty_style_removes_rendering_clauses_and_previous_style_suffix(self):
+        styles = self.styles()
+        for value in ('', ' \n\t '):
+            path = self.catalog(json.dumps({'styles': [{'id': 'blank', 'name': 'Blank', 'prompt': value}]}))
+            for style_id in ('none', 'blank'):
+                style = styles.select_style(path, style_id)
+                self.assertEqual(style['prompt'], '')
+                for module in (load_generator(), load_ship_generator()):
+                    for template in (module.PORTRAIT_TEMPLATE, module.TOKEN_TEMPLATE):
+                        actual = styles.apply_style(template + '\nArt style: Old ink wash.', style)
+                        for removed in ('Art style:', 'Old ink wash.', 'selected art style', 'painterly', 'halftone'):
+                            self.assertNotIn(removed, actual)
+                        self.assertEqual(styles.apply_style(actual, style), actual)
+                        if template == module.TOKEN_TEMPLATE:
+                            self.assertIn('empty plain white void', actual)
+                            self.assertIn('frame', actual)
+
+    def test_none_cli_selection_and_saved_style_survive_regeneration(self):
+        styles = self.styles()
+        for module in (load_generator(), load_ship_generator()):
+            args = module.parse_args(['--art-style', 'none', '--art-styles', str(self.root / 'missing'), '--dry-run'])
+            self.assertEqual(styles.metadata(args)['art_style'], {'id': 'none', 'name': 'None (no art style)'})
+            args.art_style = None
+            args.selected_style = styles.DEFAULT_STYLE
+            styles.restore_record(args, {'art_style': {'id': 'none'}})
+            self.assertEqual(args.selected_style['id'], 'none')
+        with self.assertRaises(ValueError):
+            styles.load_catalog(self.catalog('{"styles":[{"id":"none","name":"Override","prompt":"ink"}]}'))
 
     def test_private_cli_routes_and_rejects_escape(self):
         self.styles()

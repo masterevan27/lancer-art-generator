@@ -2041,6 +2041,8 @@ def parse_args(argv=None):
 
     art_styles.add_arguments(p)
     args = p.parse_args(argv)
+    supplied = sys.argv[1:] if argv is None else argv
+    args.workflow_explicit = any(a == '--workflow' or a.startswith('--workflow=') for a in supplied)
     try:
         art_styles.configure(args, "spaceships", "out")
     except (ValueError, OSError) as exc:
@@ -2273,6 +2275,19 @@ def print_trait_choices(args):
 # ---------------------------------------------------------------------------
 # Workflows
 # ---------------------------------------------------------------------------
+
+
+def resolve_recorded_workflow(entry, args):
+    """Keep a saved ship's graph unless the caller explicitly selects another."""
+    if getattr(args, 'workflow_explicit', False) or not entry.get('workflow'):
+        return args.workflow
+    recorded = Path(entry['workflow'])
+    if recorded.exists():
+        return recorded
+    packaged = art.WORKFLOW_DIR / recorded.name
+    if packaged.exists():
+        return packaged
+    raise SystemExit('Workflow not found: %s; pass --workflow to select a replacement' % recorded)
 
 
 def load_workflow(args):
@@ -2619,6 +2634,7 @@ def regenerate_one(args):
           % (ship["name"], callsign, seed, band,
              TOKEN_GRID[band][0], TOKEN_GRID[band][1], folder))
 
+    args.workflow = resolve_recorded_workflow(entry, args)
     template, slots = load_workflow(args)
     post_template = post_slots = None
     if not args.no_token:
@@ -2708,6 +2724,7 @@ def regenerate_one(args):
     # and cannot leave traits and rawTraits describing different ships.
     persist_traits(entry, ship)
     persist_size(entry, ship, args.max_token_px)
+    entry['workflow'] = str(args.workflow)
     entry["when"] = time.strftime("%Y-%m-%d %H:%M:%S")
     # A real render brings the art back in line with the traits. Popped rather
     # than set False so an entry that never staged anything stays identical to

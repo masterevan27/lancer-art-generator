@@ -3749,6 +3749,11 @@ def parse_args(argv=None):
 
     art_styles.add_arguments(p)
     args = p.parse_args(argv)
+    supplied = sys.argv[1:] if argv is None else argv
+    args.workflow_explicit = any(a == '--workflow' or a.startswith('--workflow=') for a in supplied)
+    woman_explicit = any(a == '--workflow-woman' or a.startswith('--workflow-woman=') for a in supplied)
+    if args.workflow_explicit and not woman_explicit:
+        args.workflow_woman = args.workflow
     try:
         art_styles.configure(args, "npcs", "out")
     except (ValueError, OSError) as exc:
@@ -3872,6 +3877,8 @@ def resolve_recorded_workflow(entry, npc, args):
     reported rather than swallowed: regenerating through a *different* workflow
     than the original would quietly stop reproducing the original art.
     """
+    if getattr(args, 'workflow_explicit', False):
+        return args.workflow
     recorded = entry.get("workflow")
     if not recorded:
         # No entry this script has ever written is missing the field, but a
@@ -4999,6 +5006,7 @@ def regenerate_one(args):
     # That is corruption, not staleness.
     if rerolled is not None or args.overrides:
         persist_traits(entry, npc)
+    entry["workflow"] = str(workflow_path)
     entry["when"] = time.strftime("%Y-%m-%d %H:%M:%S")
     # A real render brings the art back in line with the traits. Popped rather
     # than set False so an entry that never staged anything stays identical to

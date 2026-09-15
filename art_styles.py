@@ -8,6 +8,7 @@ from types import MappingProxyType
 
 DEFAULT_CATALOG = Path(__file__).resolve().parent / 'art-styles.json'
 DEFAULT_STYLE = MappingProxyType({'id': 'default', 'name': 'Default', 'prompt': '', 'hidden': False})
+EMPTY_STYLE = MappingProxyType({'id': 'none', 'name': 'None (no art style)', 'prompt': '', 'hidden': False})
 
 
 def load_catalog(path=DEFAULT_CATALOG):
@@ -16,8 +17,8 @@ def load_catalog(path=DEFAULT_CATALOG):
     data = json.loads(text) if text.strip() else {'styles': []}
     if not isinstance(data, dict) or not isinstance(data.get('styles'), list):
         raise ValueError('Art style catalog must contain a styles array')
-    result = [dict(DEFAULT_STYLE)]
-    seen = {'default'}
+    result = [dict(DEFAULT_STYLE), dict(EMPTY_STYLE)]
+    seen = {'default', 'none'}
     for item in data['styles']:
         if not isinstance(item, dict):
             raise ValueError('Each art style must be an object')
@@ -26,9 +27,10 @@ def load_catalog(path=DEFAULT_CATALOG):
             raise ValueError('Art style id must contain only letters, digits, underscores and hyphens')
         if sid in seen:
             raise ValueError('Duplicate or reserved art style id: ' + sid)
-        for field in ('name', 'prompt'):
-            if not isinstance(item.get(field), str) or not item[field].strip():
-                raise ValueError('Art style %s requires a nonblank %s' % (sid, field))
+        if not isinstance(item.get('name'), str) or not item['name'].strip():
+            raise ValueError('Art style %s requires a nonblank name' % sid)
+        if not isinstance(item.get('prompt'), str):
+            raise ValueError('Art style %s requires a string prompt (may be empty)' % sid)
         for field in ('hidden', 'secret'):
             if field in item and not isinstance(item[field], bool):
                 raise ValueError('Art style %s %s must be boolean' % (sid, field))
@@ -48,7 +50,7 @@ def select_style(path=DEFAULT_CATALOG, style_id=None, secret=False):
 
 
 def add_arguments(parser):
-    parser.add_argument('--art-style', metavar='ID', help='rendering style (default: default)')
+    parser.add_argument('--art-style', metavar='ID', help='rendering style (default: default; none: no art style)')
     parser.add_argument('--art-styles', type=Path, default=DEFAULT_CATALOG, metavar='PATH')
     parser.add_argument('--secret', action='store_true', help='keep every output in private storage')
     parser.add_argument('--secret-config', type=Path, metavar='PATH', help='JSON configuration containing secretImagesDir')
@@ -140,7 +142,11 @@ def apply_style(prompt, style=None):
                     r'no cel shading,\s*no painterly brushwork\.', '', prompt, flags=re.I)
     prompt = re.sub(r'Photorealistic,\s*', '', prompt, flags=re.I)
     prompt = re.sub(r'\bphotograph\b', 'image', prompt, flags=re.I)
-    return prompt + '\nArt style: ' + style['prompt']
+    style_prompt = style['prompt'].strip()
+    if not style_prompt:
+        prompt = re.sub(r',?\s*rendered using the selected art style', '', prompt)
+        return prompt.strip()
+    return prompt + '\nArt style: ' + style_prompt
 
 
 def private_prefix(args, prefix):
