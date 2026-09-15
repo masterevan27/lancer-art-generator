@@ -130,6 +130,22 @@ REQUIRED_TABLES = [
     "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Backdrop",
     "Glow colour", "Glow placement", "Weather", "Stance",
 ]
+
+# The tables --disable-table may take OUT of the prompt. Disabling is a
+# prompt-time switch, not a roll-time one: the trait is still drawn, so every
+# filter that reads it (Weapon gates Stance and Gear, Backdrop gates Gear) runs
+# exactly as it always has and a seed still reproduces the same NPC - only the
+# clause is dropped from the templates. That is what keeps the list to the
+# descriptive tables. Names, Pronouns, Theme, Age and Role decide the folder,
+# the manifest id, the maturity wording and every gendered variant pool;
+# Backdrop supplies the portrait's shot phrase and the hue the glow is checked
+# against; Glow placement is meaningless without its colour; and Hair colour is
+# folded into the Hair text at roll time, so it can only go with Hair.
+DISABLEABLE_TABLES = (
+    "Height", "Build", "Skin", "Hair", "Eyes", "Feature", "Demeanor",
+    "Faction", "Outfit", "Headgear", "Weapon", "Gear", "Weather", "Stance",
+    "Glow colour",
+)
 # Glow colour follows Backdrop for the reason Glow placement always has: a
 # scene that commits to a colour of light ("lit crimson", "red emergency
 # strip-lighting") is what filter_by_hue() matches the shade against, and it
@@ -1296,15 +1312,29 @@ GENDER_WORKFLOWS = {
 PORTRAIT_SIZE = (1024, 1024)   # square, straight onto the Foundry actor sheet
 TOKEN_SIZE = (1024, 1280)      # tall, so head and boots keep their margin
 
+# The figure sentence both templates share. It is one string here and a
+# '{figure_line}' slot in the templates because --disable-table can take any of
+# its six appearance tables, or the Outfit, out of the prompt, and a slot left
+# empty in the middle of a comma list leaves ", ," behind. figure_sentence()
+# rebuilds the list around the gaps; with nothing disabled it renders this
+# string exactly, which test_extra_tables pins.
+FIGURE_SENTENCE = (
+    "{Subject} {is_are} {height}, {build}, {face}, and {traits}"
+    "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction_line}{possessive} "
+    "clothing following the shape of {possessive} frame. "
+)
+DEMEANOR_SENTENCE = "{Possessive} face carries {demeanor}. "
+# Token-only: the portrait takes its pose from the Backdrop.
+STANCE_SENTENCE = (
+    "{Subject} {is_are} {stance}, both feet in frame, the pose natural and unforced. "
+)
+
 PORTRAIT_TEMPLATE = (
     "{shot} of {role}, {maturity} {gender} {age}, rendered in a detailed "
     "painterly illustration style with fine grain texture, clean linework and halftone "
-    "dot shading worked into the shadows, moody cinematic lighting. {Subject} {is_are} "
-    "{height}, {build}, {face}, and {traits}"
-    "{skin}, {hair}, {eyes}, and {feature}, wearing {outfit}, {faction_line}{possessive} "
-    "clothing following the shape of {possessive} frame. {headgear_line}"
-    "{Possessive} face carries {demeanor}. "
-    "{gear_line}{backdrop} {weather_line}{glow_line} "
+    "dot shading worked into the shadows, moody cinematic lighting. {figure_line}"
+    "{headgear_line}{demeanor_line}"
+    "{gear_line}{extra_line}{backdrop} {weather_line}{glow_line} "
     "Shallow depth of field, square framing, high detail, atmospheric sci-fi character "
     "portrait, painterly brushwork with heavy grain and dense halftone screentone worked "
     "into every shadow."
@@ -1363,12 +1393,7 @@ TOKEN_TEMPLATE = (
     "{possessive} head to the soles of {possessive} shoes, the head drawn small "
     "in frame with clear empty space above and below, in realistic adult proportions "
     "roughly seven to eight heads tall. "
-    "{Subject} {is_are} {height}, {build}, {face}, and {traits}{skin}, {hair}, {eyes}, "
-    "and {feature}, wearing "
-    "{outfit}, {faction_line}{possessive} clothing following the shape of "
-    "{possessive} frame. {headgear_line}"
-    "{Possessive} face carries {demeanor}. {gear_line}{Subject} {is_are} {stance}, both "
-    "feet in frame, the pose natural and unforced. "
+    "{figure_line}{headgear_line}{demeanor_line}{gear_line}{extra_line}{stance_line}"
     "{glow_line} Behind {object} the background is an empty plain white void. "
     "Full-length wide shot, the whole "
     "figure clear of the frame edge, centered composition, dramatic "
@@ -1453,6 +1478,114 @@ def parse_tables(md_path):
 
     parse_tables.repeated = sorted(set(seen))
     return {name: options for name, options in tables.items() if options}
+
+
+def load_extra_tables(paths, only=None):
+    """Private tables, as an ordered dict of name -> [(value, weight)].
+
+    Two file shapes, told apart by extension. A .json file is one object of
+    tables, each a list of {"value", "weight"} rows, with a missing weight
+    read as 1. A .md file is the tables file's own format - '## Heading'
+    opens a table, '- bullet' is a row, a leading 'xN ' weights it - read
+    through parse_tables() so the two never drift, then folded from N copies
+    back into one weighted row. A markdown bullet is taken whole: the '||'
+    flags and '=> Name' references the default tables carry mean nothing
+    here, since a private value is appended as its own text and never
+    filtered. Every complaint names the file, since a set of
+    these is somebody's own collection and the one line that is wrong is
+    the whole question. Tables are refused, rather than merged, when they
+    collide: with a default table, because these are appended to the prompt
+    as their own sentence and never fill a template slot (--disable-table is
+    how a private table takes a default one's place); and with each other
+    across files, because two rolls of the same name would be two sentences
+    saying the same kind of thing.
+
+    `only` narrows the result to the named tables, in file order, and refuses
+    a name no loaded file holds - a typo would otherwise roll nothing and
+    report success.
+    """
+    extra = {}
+    for path in paths:
+        path = Path(path)
+        kind = path.suffix.lower()
+        if kind not in (".json", ".md"):
+            raise ValueError("%s: an extra tables file is .json or .md" % path.name)
+        try:
+            if kind == ".md":
+                data = _markdown_extra_rows(path)
+            else:
+                data = json.loads(path.read_text(encoding="utf-8-sig"))
+        except OSError as exc:
+            raise ValueError("%s: cannot read the extra tables file: %s" % (path.name, exc))
+        except ValueError as exc:
+            raise ValueError("%s: not valid JSON: %s" % (path.name, exc))
+        if not isinstance(data, dict):
+            raise ValueError("%s: an extra tables file is one JSON object of "
+                             "table name -> list of rows" % path.name)
+        if not data:
+            raise ValueError("%s: holds no tables" % path.name)
+        for name, rows in data.items():
+            if not isinstance(name, str) or not name.strip():
+                raise ValueError("%s: a table name must be non-blank text" % path.name)
+            if name in REQUIRED_TABLES:
+                raise ValueError(
+                    "%s: '%s' is a default table; pass --disable-table %s and give "
+                    "the private table another name" % (path.name, name, name))
+            if name in extra:
+                raise ValueError("%s: table '%s' is already loaded from another file"
+                                 % (path.name, name))
+            if not isinstance(rows, list) or not rows:
+                raise ValueError("%s: table '%s' must be a non-empty list of rows"
+                                 % (path.name, name))
+            options = []
+            for row in rows:
+                if not isinstance(row, dict) or not isinstance(row.get("value"), str) \
+                        or not row["value"].strip():
+                    raise ValueError(
+                        "%s: every row of '%s' is {\"value\": text, \"weight\": number}"
+                        % (path.name, name))
+                weight = row.get("weight", 1)
+                if isinstance(weight, bool) or not isinstance(weight, (int, float)) \
+                        or weight <= 0:
+                    raise ValueError("%s: '%s' row %r has a weight that is not a "
+                                     "positive number" % (path.name, name, row["value"]))
+                options.append((row["value"].strip(), weight))
+            extra[name] = options
+    if only:
+        missing = [name for name in only if name not in extra]
+        if missing:
+            raise ValueError("no loaded extra tables file holds: %s (loaded: %s)"
+                             % (", ".join(missing), ", ".join(extra) or "none"))
+        wanted = set(only)
+        extra = {name: rows for name, rows in extra.items() if name in wanted}
+    return extra
+
+
+def _markdown_extra_rows(path):
+    """A markdown tables file as the row objects a JSON one would hold.
+
+    parse_tables() expands 'x3 bullet' into three identical strings; this
+    counts them back down, first appearance keeping the row's place, so a
+    markdown table and the JSON table it is equivalent to load the same.
+    """
+    data = {}
+    for name, options in parse_tables(path).items():
+        counts = {}
+        for option in options:
+            counts[option] = counts.get(option, 0) + 1
+        data[name] = [{"value": value, "weight": count} for value, count in counts.items()]
+    return data
+
+
+def roll_extra(extra, rng):
+    """One weighted draw per extra table, keyed by table name in table order.
+
+    Drawn AFTER roll_npc() from the same generator, so loading a private set
+    never moves the base NPC a seed rolls - the default tables consume the
+    stream first and these read what is left.
+    """
+    return {name: rng.choices([v for v, _ in rows], [w for _, w in rows])[0]
+            for name, rows in extra.items()}
 
 
 # The three rolled tables the main draw site does not handle: Pronouns and
@@ -2949,6 +3082,12 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
     # a table, and REQUIRED_TABLES is the authority on which is which.
     raw.update({k: v for k, v in (overrides or {}).items() if k in REQUIRED_TABLES})
     npc["_raw"] = raw
+    # The private tables' values and the disabled list, empty from a plain
+    # roll. Published here so a roll and an entry rebuilt by npc_from_entry()
+    # have the same keys; main() fills them after the roll, the entry writer
+    # records them only when non-empty - see extra_record().
+    npc["_extra"] = {}
+    npc["_disabled"] = ()
 
     # Whether the Gear the NPC KEEPS is a carried helmet, published for the
     # same reason '_outfit_notac' is: the manifest stores Gear with its flags
@@ -3332,6 +3471,64 @@ def carry_sentence(fields, weapon, gear):
     return "{Subject} {carry} %s. ".format(**fields) % join.join(carried)
 
 
+def _oxford(items):
+    if len(items) < 3:
+        return " and ".join(items)
+    return "%s, and %s" % (", ".join(items[:-1]), items[-1])
+
+
+def figure_sentence(fields, disabled=()):
+    """FIGURE_SENTENCE with the disabled tables' clauses closed over.
+
+    The sentence is two comma lists nested one inside the other - height,
+    build, face, and [skin, hair, eyes, and feature] - followed by the wearing
+    clause. Each list is rebuilt from whichever members survive, so a gap
+    never leaves ', ,' behind. The face clause is not a table and rides with
+    the appearance list: it stays while any of the six is present and goes
+    when all of them do, since "She is with a young face, wearing" has nothing
+    to hang on. The gender traits prefix ("full lips, feminine posture, ")
+    stays glued to the first surviving member of the inner list, as it is to
+    the skin today. With nothing disabled the result is FIGURE_SENTENCE
+    exactly.
+    """
+    off = set(disabled)
+    outer = [fields[k] for k, t in (("height", "Height"), ("build", "Build"))
+             if t not in off]
+    inner = [fields[k] for k, t in (("skin", "Skin"), ("hair", "Hair"),
+                                    ("eyes", "Eyes"), ("feature", "Feature"))
+             if t not in off]
+    if inner:
+        inner[0] = fields["traits"] + inner[0]
+    if outer or inner:
+        outer.append(fields["face"])
+    if inner:
+        outer.append(_oxford(inner))
+    description = _oxford(outer)
+    wearing = ("" if "Outfit" in off else
+               "wearing {outfit}, {faction_line}{possessive} clothing following the "
+               "shape of {possessive} frame".format(**fields))
+    if not description and not wearing:
+        return ""
+    body = ", ".join(part for part in (description, wearing) if part)
+    return "{Subject} {is_are} %s. ".format(**fields) % body
+
+
+def extra_sentence(npc):
+    """The private tables' rolled values as one sentence, or '' for none.
+
+    Joined with commas in table order, the first letter raised and one period
+    closing the lot: a diffusion prompt reads a comma list as well as it reads
+    prose, and the values are the user's own phrasing, which this does not
+    edit beyond the capital and the full stop.
+    """
+    values = [v.strip().rstrip(".").strip() for v in (npc.get("_extra") or {}).values()]
+    values = [v for v in values if v]
+    if not values:
+        return ""
+    text = ", ".join(values)
+    return "%s%s. " % (text[0].upper(), text[1:])
+
+
 def build_prompts(npc, style=None):
     """The portrait and token prompt text for one rolled NPC."""
     shot, scene, flags = split_backdrop(npc["Backdrop"])
@@ -3342,6 +3539,13 @@ def build_prompts(npc, style=None):
     # that genuinely had no weapon, so '' reproduces it exactly rather than
     # papering over a loss.
     weapon = npc.get("Weapon", "")
+    # A disabled table's text is kept off the prompt everywhere it could
+    # reach, including the light-source check below: a glow asserted for a
+    # weapon the prompt no longer names would be a light with no source.
+    disabled = set(npc.get("_disabled") or ())
+    if "Weapon" in disabled:
+        weapon = ""
+    gear = "" if "Gear" in disabled else npc["Gear"]
     fields = dict(npc["_pronouns"])
     fields.update({
         "role": npc["Role"],
@@ -3368,16 +3572,21 @@ def build_prompts(npc, style=None):
         "backdrop": scene,
         "stance": npc["Stance"],
     })
-    weather = weather_sentence(npc)
+    weather = "" if "Weather" in disabled else weather_sentence(npc)
     fields["weather_line"] = weather + " " if weather else ""
     # Empty when the Hair bullet already put the covering on the head - see
     # headgear_line(). 'headgear' stays in fields above as the raw value; only
     # the templates' slot moved.
-    fields["headgear_line"] = headgear_line(npc)
+    fields["headgear_line"] = "" if "Headgear" in disabled else headgear_line(npc)
+    fields["demeanor_line"] = (
+        "" if "Demeanor" in disabled else DEMEANOR_SENTENCE.format(**fields))
+    fields["stance_line"] = (
+        "" if "Stance" in disabled else STANCE_SENTENCE.format(**fields))
+    fields["extra_line"] = extra_sentence(npc)
 
     # Built from the same fields and inserted already-substituted, since
     # str.format does a single pass and would leave any nested placeholder raw.
-    carrying = carry_sentence(fields, weapon, npc["Gear"])
+    carrying = carry_sentence(fields, weapon, gear)
 
     # Pre-formatted rather than a bare slot, because a Faction with no visual
     # signature - the two non-affiliations - would otherwise leave a doubled
@@ -3398,8 +3607,12 @@ def build_prompts(npc, style=None):
     if ("dressy" in faction_flags
             and dress_policy_for(role_category(npc)) == "plain"):
         faction_visual = ""
+    if "Faction" in disabled:
+        faction_visual = ""
 
     fields["faction_line"] = "%s, " % faction_visual if faction_visual else ""
+    # After faction_line, which the wearing clause reads.
+    fields["figure_line"] = figure_sentence(fields, disabled)
 
     # A Faction flagged 'palette' asserts pigment of its own - dye in cloth,
     # not light - so the closing line's claim that the glow is the ONLY
@@ -3416,9 +3629,12 @@ def build_prompts(npc, style=None):
     # instrument panel, a muzzle flash - only reaches the portrait, since the
     # token has no backdrop at all, just flat white.
     equipped_glow = has_light_source(
-        weapon, npc["Gear"], npc["Outfit"], npc["Headgear"],
-        npc["Feature"], npc["Eyes"])
+        weapon, gear,
+        *("" if table in disabled else npc[table]
+          for table in ("Outfit", "Headgear", "Feature", "Eyes")))
     portrait_glow = equipped_glow or has_light_source(scene)
+    if "Glow colour" in disabled:
+        equipped_glow = portrait_glow = False
 
     # 'nogear' means the backdrop scene already put something in the subject's
     # hands, so the merged carry sentence is dropped from the PORTRAIT
@@ -3510,6 +3726,17 @@ def write_dossier(path, npc, seed, prompts, images):
             else "none - the rolled scene is indoors or in vacuum")),
         ("Token stance", npc["Stance"]),
     ]
+    # A disabled table's row stays - the trait was rolled and a re-roll or a
+    # regen still reads it - marked so the dossier does not claim a stance the
+    # prompt below never mentions.
+    disabled = set(npc.get("_disabled") or ())
+    marks = {"Affiliation": "Faction", "Distinguishing": "Feature",
+             "Wearing": "Outfit", "Carrying": "Gear", "Armed with": "Weapon",
+             "Portrait weather": "Weather", "Token stance": "Stance"}
+    traits = [(label, "%s (disabled)" % value
+               if marks.get(label, label) in disabled else value)
+              for label, value in traits]
+    traits += list((npc.get("_extra") or {}).items())
 
     lines = [
         "# %s" % npc["name"],
@@ -3645,6 +3872,19 @@ def parse_args(argv=None):
                       help="roll every NPC unarmed, except military Roles and "
                            "Criminals - a soldier's sidearm and a pirate's "
                            "armament are what make them read as one")
+    roll.add_argument("--extra-tables", action="append", default=[], type=Path,
+                      metavar="PATH",
+                      help="a JSON file of private tables, {name: [{value, weight}]}, "
+                           "each rolled once per NPC by weight and appended to both "
+                           "prompts as one extra sentence (repeatable)")
+    roll.add_argument("--extra-table", action="append", default=[], metavar="NAME",
+                      help="with --extra-tables, roll only the named table(s) from the "
+                           "loaded files (repeatable; default: every table in every file)")
+    roll.add_argument("--disable-table", action="append", default=[], metavar="TABLE",
+                      help="leave one default table's clause out of both prompts, e.g. "
+                           "--disable-table Stance when a private table covers the pose. "
+                           "The trait is still rolled and recorded (repeatable). One of: "
+                           + ", ".join(DISABLEABLE_TABLES))
 
     gen = p.add_argument_group("generation")
     gen.add_argument("--workflow", type=Path, default=art.DEFAULT_WORKFLOW,
@@ -4163,8 +4403,12 @@ def reroll_from_raw(tables, npc, free, rng, pinned=None):
                  if trait not in free}
     overrides.update(pinned or {})
     fresh = roll_npc(tables, rng, overrides)
+    # Neither is a table roll, so the fresh roll knows nothing of them: the
+    # private values and the disabled list travel with the entry.
+    kept = {k: npc[k] for k in ("_extra", "_disabled") if k in npc}
     npc.clear()
     npc.update(fresh)
+    npc.update(kept)
 
 
 def reroll_trait(tables, npc, name, rng):
@@ -4685,6 +4929,11 @@ def npc_from_entry(entry, regen_id, warn=True):
     # not a helmet, so neither of those keys answers this question.
     npc["_hair_covered"] = entry.get("hair_covered")
     npc["_headgear_bare"] = entry.get("headgear_bare")
+    # The private tables' rolled values and the default tables taken out of
+    # the prompt, both written only when there were any - so a public entry
+    # has neither key and reads back as the empty case.
+    npc["_extra"] = dict(entry.get("extraTraits") or {})
+    npc["_disabled"] = tuple(entry.get("disabledTables") or ())
     # No default here either, for the same reason: absent means "not
     # recorded" (an entry written before rawTraits existed), and that has to
     # stay distinguishable from a recorded-but-empty dict. A plain regen never
@@ -4726,6 +4975,21 @@ def persist_traits(entry, npc):
     # actually had.
     if npc.get("_raw") is not None:
         entry["rawTraits"] = dict(npc["_raw"])
+    entry.update(extra_record(npc))
+
+
+def extra_record(npc):
+    """The manifest keys for the private tables and the disabled list.
+
+    Only when there is something to record, so an entry rolled without either
+    is byte-identical to one written before they existed.
+    """
+    record = {}
+    if npc.get("_extra"):
+        record["extraTraits"] = dict(npc["_extra"])
+    if npc.get("_disabled"):
+        record["disabledTables"] = list(npc["_disabled"])
+    return record
 
 
 def persist_flags(entry, npc):
@@ -5088,6 +5352,18 @@ def main(argv=None):
                 "Available: %s" % (args.overrides["Theme"], ", ".join(known))
             )
 
+    undisableable = [t for t in args.disable_table if t not in DISABLEABLE_TABLES]
+    if undisableable:
+        raise SystemExit(
+            "--disable-table: cannot disable %s. Disableable: %s"
+            % (", ".join(undisableable), ", ".join(DISABLEABLE_TABLES)))
+    if args.extra_table and not args.extra_tables:
+        raise SystemExit("--extra-table needs at least one --extra-tables file")
+    try:
+        extra = load_extra_tables(args.extra_tables, args.extra_table)
+    except ValueError as exc:
+        raise SystemExit("--extra-tables: %s" % exc)
+
     base_seed = args.seed if args.seed is not None else random.randint(0, 2 ** 32 - 1)
     overrides = dict(args.overrides)
     if args.name:
@@ -5098,7 +5374,12 @@ def main(argv=None):
     rolled = []
     for n in range(args.count):
         seed = base_seed + n
-        npc = roll_npc(tables, random.Random(seed), overrides, args.unarmed)
+        rng = random.Random(seed)
+        npc = roll_npc(tables, rng, overrides, args.unarmed)
+        # From the same generator, after the base roll, so the default tables
+        # see the stream they always have - see roll_extra().
+        npc["_extra"] = roll_extra(extra, rng)
+        npc["_disabled"] = tuple(dict.fromkeys(args.disable_table))
         rolled.append((seed, npc, build_prompts(npc, args.selected_style)))
 
     print("%s: %d tables, %d NPC(s) rolled from base seed %d" % (
@@ -5266,6 +5547,8 @@ def main(argv=None):
             # to keep out a soft hat, which is neither bare nor a helmet.
             "hair_covered": npc["_hair_covered"],
             "headgear_bare": npc["_headgear_bare"],
+            # Only when present - see extra_record().
+            **extra_record(npc),
             "files": written,
             "portrait": portrait_file,
             "portraitPrompt": portrait_prompt,

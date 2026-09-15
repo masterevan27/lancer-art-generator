@@ -32,12 +32,15 @@ class TestClothingPossessive(unittest.TestCase):
         return gen.build_prompts(npc)
 
     def test_both_templates_use_the_possessive(self):
+        # The clothing clause lives in FIGURE_SENTENCE, which both templates
+        # take through their {figure_line} slot.
+        self.assertIn(
+            "{possessive} clothing following the shape of {possessive} frame",
+            gen.FIGURE_SENTENCE)
+        self.assertNotIn("shape of that frame", gen.FIGURE_SENTENCE)
         for template in (gen.PORTRAIT_TEMPLATE, gen.TOKEN_TEMPLATE):
             with self.subTest(template=template[:40]):
-                self.assertIn(
-                    "{possessive} clothing following the shape of {possessive} frame",
-                    template)
-                self.assertNotIn("shape of that frame", template)
+                self.assertIn("{figure_line}", template)
 
     def test_a_she_npc_renders_her(self):
         for prompt in self._prompts("she/her/her/woman"):

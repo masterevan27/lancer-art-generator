@@ -35,6 +35,59 @@ python generate-npc.py --secret --secret-config C:/private/lancer-config.json --
 python generate-spaceship.py --secret --secret-config C:/private/lancer-config.json
 ```
 
+### Private tables, and switching a default table off
+
+`generate-npc.py` can roll tables of your own alongside the default ones.
+`--extra-tables PATH` (repeatable) loads a file of them; every table in every
+loaded file rolls one value per NPC, by weight, and the values are appended to
+both prompts as one extra sentence, in table order, after the line naming what
+the NPC carries. The rolled values are recorded on the manifest entry as
+`extraTraits` and in the dossier, so a regeneration reproduces them. Two file
+shapes are read, told apart by extension:
+
+```json
+{
+  "camera_framing": [
+    {"value": "low angle looking up", "weight": 3},
+    {"value": "eye level medium shot"}
+  ]
+}
+```
+
+```markdown
+## camera_framing
+
+- x3 low angle looking up
+- eye level medium shot
+```
+
+A missing JSON weight is 1; a markdown `xN ` prefix is the weight, exactly as
+in `npc-generator-tables.md`, and a markdown bullet is taken whole - the
+`|| flag` and `=> Name` conventions the default tables use mean nothing to a
+private table, which is appended as text and never filtered. A table name that
+matches a default table is refused, as is the same name in two files.
+`--extra-table NAME` (repeatable) rolls only the named tables from the loaded
+files.
+
+`--disable-table TABLE` (repeatable) leaves a default table's clause out of
+both prompts - `--disable-table Stance` when a private table describes the
+pose. The trait is still rolled, so every filter that reads it runs as before
+and the seed reproduces the same NPC; only the sentence goes, and the dossier
+marks the row `(disabled)`. The list is the descriptive tables: Height, Build,
+Skin, Hair, Eyes, Feature, Demeanor, Faction, Outfit, Headgear, Weapon, Gear,
+Weather, Stance and Glow colour. Names, Pronouns, Theme, Age and Role decide
+the folder, the id and the gendered pools; Backdrop supplies the portrait's
+shot; Glow placement is nothing without its colour; Hair colour is folded into
+the Hair text and goes with it.
+
+```powershell
+python generate-npc.py --dry-run --extra-tables prompts/secret-tables/mine.json --disable-table Stance
+python generate-npc.py --dry-run --extra-tables mine.md --extra-tables more.json --extra-table camera_framing
+```
+
+`prompts/secret-tables/` is gitignored and is where the Import GUI looks for
+these files in Secret mode. The flags themselves are not tied to `--secret`.
+
 Private NPCs, ships, and backgrounds go under `secretImagesDir/npcs`,
 `secretImagesDir/spaceships`, and `secretImagesDir/backgrounds`. The shared
 private manifest is `secretImagesDir/manifest.json`. Output overrides and
