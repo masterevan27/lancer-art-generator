@@ -36,3 +36,6 @@ prompts/presets/
 
 # Ignore personal art styles:
 art-styles.json
+
+# Ignore personal ComfyUI workflows:
+workflows/api/secret
