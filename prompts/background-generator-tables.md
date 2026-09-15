@@ -8,10 +8,32 @@ in every context. `[weather=rain]` and similar flags link Weather and Motion.
 Flags and weights remain in saved traits but are removed from image prompts.
 Empty selected traits omit that feature. No groups or implicit duplicate entries.
 Space means a vacuum exterior; sealed station rooms belong to indoor.
-Vegetation, Interior life and Activity are controlled by the scene-life settings.
+Vegetation, Interior life and the people pools are controlled by the scene-life settings.
 They remain available to lock and reroll even when omitted from the prompt.
+Population, Clothing and equipment, and Activity may use `[population=civilian]`,
+`[population=military]`, `[population=mixed]`, or comma-separated combinations.
+Tagged choices must share a population category; untagged choices suit any group.
+Locks on clothing or activity also constrain the population roll. Adult age mix
+and Appearance variety describe a group, with individual differences inside it.
+
+The expanded settings draw on the Backdrop scenes and groups, Weather, and Glow
+tables in `npc-generator-tables.md`, plus the subject-free Backdrop scenes in
+`scene-and-spaceship-tables.md`. They extract places, light, routes and props into
+independent choices, without portrait framing, character placeholders or NPC flags.
 
 ## Outdoor location
+- [outdoor] a forward operating base of hardened shelters linked by duckboard paths and earth-filled blast walls
+- [outdoor] a mech proving ground with reinforced observation bunkers and scarred target berms
+- [outdoor] a carrier landing apron cut into a mountainside, with recessed fueling points and blast deflectors
+- [outdoor] an evacuated city intersection converted into a fortified logistics checkpoint
+- [outdoor] a field hospital compound of pressure tents around a sheltered casualty transfer lane
+- [outdoor] a siege-battered transit station with an improvised defensive perimeter around the surviving platforms
+- [outdoor] a jungle listening post with raised equipment huts and a narrow reinforced landing pad
+- [outdoor] a coastal artillery redoubt with armored observation slits and salt-stained access ramps
+- [outdoor] a dusty frontier trading town with domed ochre buildings and overhead utility cables
+- [outdoor] a scrapyard of stacked transport hulls divided by floodlit salvage lanes
+- [outdoor] a flooded wreck recovery site with a half-submerged dropship and a stable shore staging area
+- [outdoor] a canyon settlement beneath transit bridges and tightly packed service balconies
 - [outdoor] a frontier dropship landing yard with blast berms and recessed service pits
 - [outdoor] a terraced mountain relay station above a deep communications gorge
 - [outdoor] a flooded industrial district where loading bridges connect warehouse roofs
@@ -34,6 +56,18 @@ They remain available to lock and reroll even when omitted from the prompt.
 - [outdoor] a border rail depot with parallel sidings and armored signal huts
 
 ## Indoor location
+- [indoor] a buried command bunker with recessed tactical displays and thick segmented blast doors
+- [indoor] a mech maintenance hangar with gantries, chain hoists and separated repair cradles
+- [indoor] a carrier ready room with flight gear lockers and compact briefing stations
+- [indoor] an armored troop transport hold with folded restraint seats and secured equipment racks
+- [indoor] a garrison mess hall with long practical tables and a closed serving counter
+- [indoor] a field surgical module with screened treatment bays and sealed supply cabinets
+- [indoor] a military communications room with shielded consoles and redundant cable trunks
+- [indoor] a fortified armory with closed weapons cages and an inspection counter
+- [indoor] a dropship cockpit with recessed instrument readouts and reinforced forward glazing
+- [indoor] a cramped repair shop with parts racks reaching the ceiling and a clear central workbench
+- [indoor] a station transit corridor lined with exposed conduit and worn hazard stripes
+- [indoor] a dim salvage hangar containing immobilized derelict hulls beneath heavy support trusses
 - [indoor] a dropship maintenance hangar with gantry access and recessed repair bays
 - [indoor] a station command room with tiered consoles and a central projection well
 - [indoor] a colonial clinic with partitioned treatment rooms and sterile supply alcoves
@@ -56,6 +90,14 @@ They remain available to lock and reroll even when omitted from the prompt.
 - [indoor] an emergency shelter with modular sleeping berths and supply lockers
 
 ## Space location
+- [space] the exterior flight deck of an orbital carrier with docking clamps and armored service recesses
+- [space] a military repair dock surrounding the damaged flank of a moored capital ship
+- [space] a fortified customs platform with external inspection cradles and redundant sensor masts
+- [space] a naval listening array built from widely separated shielded receiver booms
+- [space] a fleet ammunition transfer station with isolated armored storage pods
+- [space] a damaged orbital defense ring with sealed bulkhead ends and tethered repair frames
+- [space] the exterior hull of a troop carrier beside recessed boarding locks and equipment rails
+- [space] a remote picket station with armored observation housings and folded docking arms
 - [space] an orbital drydock surrounding an incomplete capital ship hull
 - [space] a fractured asteroid refinery linked by exposed ore transfer spines
 - [space] a communications satellite cluster arranged around a central relay bus
@@ -78,6 +120,12 @@ They remain available to lock and reroll even when omitted from the prompt.
 - [space] a jump navigation installation with nested field coils and anchor pylons
 
 ## Architecture
+- [outdoor,indoor] layered bunker concrete with recessed armored shutters and sacrificial outer panels
+- modular military shelter sections joined by standardized sealed couplings and protected service channels
+- thick naval bulkheads with dogged access doors and rounded pressure-bearing corners
+- [outdoor,indoor] prefabricated revetment walls braced by gabions and inset maintenance niches
+- ribbed carrier-deck construction with flush latching panels and heavily reinforced load points
+- [outdoor,indoor] domed frontier masonry joined to salvaged steel lintels and bundled cable conduits
 - massive cast-concrete structural ribs with inset metal access panels
 - modular ceramic cladding held in exposed precision-machined frames
 - utilitarian corrugated steel surfaces patched with riveted repair plates
@@ -122,6 +170,16 @@ They remain available to lock and reroll even when omitted from the prompt.
 - washed denim blue and dark brown with soft gray ceramic surfaces
 
 ## Lighting
+- [outdoor] [time=night] narrow shielded perimeter floodlights leaving the distant approaches dark
+- [outdoor] [time=twilight] pale dusk over the structures with red readiness lamps at access points
+- [outdoor] [time=day] hard midday light broken into bands by overhead gantries and blast screens
+- [outdoor] [time=night] cool blue gantry lamps and warm loading lights reflecting off metal fittings
+- [indoor] red low-level readiness lighting beneath dim neutral ceiling strips
+- [indoor] pale tactical display glow edged by warm console task lamps
+- [indoor] bright surgical task lighting confined to work surfaces, with softer surrounding illumination
+- [indoor] heavy overhead trusses casting broad shadow bands between white maintenance lamps
+- [indoor] cool instrument readouts reflected in worn cockpit glazing and dark control housings
+- [space] hard rim sunlight on armored edges with tiny recessed docking lights in deep shadow
 - [outdoor] [time=day] low angled sunlight casting long parallel shadows through the structures
 - [outdoor] [time=day] pale diffuse daylight that keeps surface textures evenly readable
 - [outdoor] [time=day] amber sunlight grazing upper edges and leaving cool recesses
@@ -147,6 +205,16 @@ They remain available to lock and reroll even when omitted from the prompt.
 - [space] a narrow solar rim illuminating raised structures above dark recesses
 
 ## Layout
+- [outdoor,indoor] a staggered checkpoint route with offset barriers and a broad inspection pocket
+- a central service lane flanked by recessed equipment bays and protected side routes
+- [outdoor,indoor] a layered defensive arrangement with successive thresholds and sheltered fallback passages
+- [outdoor,indoor] a branching trench-like circulation plan linking recessed work areas and protected junctions
+- paired observation positions overlooking a central approach, connected by a rear service route
+- [outdoor,indoor] an open assembly area with supply storage on one side and clear evacuation routes on the other
+- a narrow central spine opening into larger transverse staging bays
+- [outdoor,indoor] parallel treatment or rest bays divided by partitions, with an uninterrupted supply aisle
+- [outdoor,indoor] a compact courtyard surrounded by linked sheltered galleries and two offset entrances
+- [space] several docking fingers extending from a reinforced central spine with separate maintenance rails
 - a broad central route with narrower parallel service paths and staggered cover
 - two connected zones separated by a substantial structural choke point
 - a ring circulation route around a densely detailed central installation
@@ -169,6 +237,16 @@ They remain available to lock and reroll even when omitted from the prompt.
 - multiple small operating areas connected through a larger shared loading zone
 
 ## Weather
+- [outdoor] [weather=rain] driving rain blowing diagonally across exposed approaches and pooling in wheel ruts
+- [outdoor] [weather=rain] a passing storm leaving fresh runoff cascading from reinforced roof edges
+- [outdoor] [weather=snow] wind-driven snow collecting against blast walls and half-burying unused tracks
+- [outdoor] [weather=snow] wet sleet crusting railings and softening the outlines of distant gantries
+- [outdoor] [weather=dust] an ochre dust front reducing distant structures to layered silhouettes
+- [outdoor] [weather=dust] intermittent grit-laden gusts sweeping broad cleared landing surfaces
+- [outdoor] [weather=fog] sea mist rolling over the approaches and diffusing distant practical lights
+- [outdoor] [weather=fog] a cold fogbank hanging low between ruined building shells
+- [outdoor] [weather=wind] strong crosswinds tugging at secured camouflage fabric and loose straps
+- [outdoor] [weather=dry] oppressive dry heat producing a shallow shimmer over exposed hardstanding
 - [outdoor] [weather=dry] dry still air with crisp distant visibility
 - [outdoor] [weather=dry] dry cool air under scattered high cloud
 - [outdoor] [weather=dry] warm dry air with a faint distant heat shimmer
@@ -191,6 +269,16 @@ They remain available to lock and reroll even when omitted from the prompt.
 - [outdoor] [weather=dry] dry overcast conditions with unusually sharp near-field detail
 
 ## Details
+- [outdoor,indoor] sealed ammunition transit cases strapped into a protected storage recess
+- [outdoor,indoor] folded camouflage screens bundled beside portable sensor tripods
+- [outdoor,indoor] wheeled casualty stretchers secured beside a closed medical supply cabinet
+- [outdoor,indoor] portable armored partitions with visible impact wear around their lower edges
+- [outdoor,indoor] ration containers and rolled bedding stowed in orderly recessed racks
+- [outdoor,indoor] rugged field radios connected to neatly tied cable runs and backup battery cases
+- [indoor] flight helmets in individual cubbies beside folded restraint harnesses
+- [indoor] a tactical planning table with inset abstract illuminated shapes and no readable text
+- [space] closed armored boarding hatches flanked by tether rails and recessed readiness lamps
+- [space] external rescue pods held in mechanical release cradles along a protected hull recess
 - [outdoor] low concrete vehicle barriers arranged around a maintenance access hatch
 - [outdoor] empty cargo dollies parked beside sealed freight pallets
 - [outdoor] worn direction markings and repaired seams in the paving
@@ -242,6 +330,12 @@ They remain available to lock and reroll even when omitted from the prompt.
 - [space] a tethered sensor package makes a slow restrained rotation in the vacuum
 
 ## Foreground
+- [outdoor] a chipped blast barrier with rain-dark seams and gravel gathered at its base
+- [outdoor] a recessed trench entrance edged by sand-filled modular retaining blocks
+- [outdoor,indoor] a secured stack of rugged field equipment cases beside a clear passing lane
+- [indoor] a folded stretcher and sealed trauma kit resting within a marked storage bay
+- [indoor] the edge of a reinforced briefing console with inset status lights
+- [space] a closed armored service hatch surrounded by handholds and scuffed tether sockets
 - [outdoor] a waist-high equipment enclosure with a hinged service lid
 - [outdoor] a pair of staggered concrete traffic blocks beside the approach
 - [outdoor] a recessed maintenance trench crossed by a removable steel plate
@@ -264,6 +358,12 @@ They remain available to lock and reroll even when omitted from the prompt.
 - [space] a cargo restraint bracket with a coiled capture tether
 
 ## Distant features
+- [outdoor] the silhouettes of parked mechs beneath far-off maintenance gantries
+- [outdoor] a line of fortified watch positions following the ridge beyond the site
+- [outdoor] a ruined transit viaduct fading between hollowed-out towers
+- [outdoor] distant carrier superstructures rising above layered docks and cranes
+- [space] a formation of distant patrol ships reduced to small hull silhouettes against the starfield
+- [space] the segmented arc of an orbital defense ring beyond the nearest structures
 - [outdoor] low industrial towers forming a broken skyline beyond the site
 - [outdoor] an elevated rail viaduct crossing the far edge of the district
 - [outdoor] a stepped ridge carrying a line of communications masts
@@ -286,6 +386,12 @@ They remain available to lock and reroll even when omitted from the prompt.
 - [space] a distant tether anchor built into a separate rock outcrop
 
 ## Terrain or floor
+- [outdoor] deeply rutted hardstanding reinforced with interlocking expeditionary ground panels
+- [outdoor] packed earth crossed by shallow drainage cuts and battered duckboards
+- [outdoor] broken concrete with embedded rebar ends covered by safe temporary bridging plates
+- [indoor] scuffed carrier deck plating with recessed tie-down sockets and broad non-slip strips
+- [indoor] easy-clean sealed floor panels with narrow drainage channels around work bays
+- [space] ribbed hull walkway plates with magnetic foothold strips and captive fasteners
 - [outdoor] cracked reinforced paving with broad expansion joints
 - [outdoor] compacted gravel divided by embedded service conduits
 - [outdoor] stepped basalt shelves joined by prefabricated access ramps
@@ -374,6 +480,12 @@ They remain available to lock and reroll even when omitted from the prompt.
 - a recently abandoned corporate concession with obsolete branded shapes but no readable logos
 
 ## Condition
+- recently mobilized readiness with freshly secured stores and equipment prepared for deployment
+- veteran military upkeep with worn finishes, carefully repaired fittings and orderly service access
+- [outdoor,indoor] a recently evacuated position with neatly closed equipment cases and empty workstations
+- [outdoor,indoor] a reclaimed defensive site with cleared routes through older impact damage
+- post-mission recovery with temporary repair braces and protected inspection points
+- newly commissioned infrastructure with clean seals, unused sockets and pristine replacement panels
 - recently commissioned surfaces with clean joints and only light tool marks
 - well-maintained older infrastructure with polished wear around frequent access points
 - heavy daily use visible in scratched paint and neatly repaired fittings
@@ -396,6 +508,12 @@ They remain available to lock and reroll even when omitted from the prompt.
 - ceremonial refurbishment with repainted panels over otherwise practical working infrastructure
 
 ## Atmosphere
+- restrained military readiness conveyed by orderly stores and protected lines of movement
+- the disciplined quiet of a watch change, with practical light concentrated at duty stations
+- tense anticipation suggested by closed protective shutters and prepared staging areas
+- exhausted post-deployment calm with workspaces reset for maintenance and rest
+- a temporary expeditionary foothold, practical and well organized despite limited infrastructure
+- the solemn stillness of an evacuated outpost with its essential systems left running
 - quiet operational readiness conveyed by orderly equipment and clear access routes
 - tense isolation conveyed by sealed thresholds and uncompromising structural forms
 - patient abandonment conveyed by idle machinery and interrupted maintenance work
@@ -464,6 +582,22 @@ They remain available to lock and reroll even when omitted from the prompt.
 - [indoor] a sleepy fox companion tucked into a soft basket away from the working area
 
 ## Activity
+- [outdoor,indoor] [population=military,mixed] uniformed personnel checking equipment before a watch change, each attending to a different small task
+- [outdoor,indoor] [population=military,mixed] a small patrol moving along a clear route with relaxed spacing and equipment carried safely
+- [outdoor,indoor] [population=military,mixed] service personnel consulting a portable map while a colleague observes the approaches
+- [outdoor,indoor] [population=military,mixed] off-duty troops sharing a quiet meal beside their neatly stowed kit
+- [outdoor,indoor] [population=military,mixed] a squad leader briefing a few attentive adults with varied listening postures
+- [outdoor,indoor] [population=military,mixed] military technicians checking secured maintenance fittings while a supervisor records the inspection
+- [outdoor,indoor] [population=military,mixed] uniformed logistics personnel comparing supply cases against a handheld manifest
+- [outdoor,indoor] [population=military,mixed] a sentry exchanging a brief handover with an arriving colleague
+- [outdoor,indoor] [population=civilian,mixed] civilian travelers checking their bags and quietly discussing their onward route
+- [outdoor,indoor] [population=civilian,mixed] local workers taking a brief break and sharing a drink away from moving equipment
+- [outdoor,indoor] [population=mixed] uniformed personnel giving directions to civilian visitors at a safe stopping point
+- [outdoor,indoor] [population=mixed] civilian contractors and military technicians comparing notes over a small secured tool case
+- [space] [population=military,mixed] tethered naval technicians inspecting closed boarding hatches with gloved hand signals
+- [space] [population=military,mixed] a pressure-suited military repair team securing replacement panels from anchored work positions
+- [space] [population=civilian,mixed] a tethered civilian salvage crew checking strapped-down components without releasing debris
+- [space] [population=mixed] a suited naval inspector and civilian technician comparing an exterior service fitting from secure handholds
 - [outdoor,indoor] individuals walking to their destinations, with one pair pausing for a quiet conversation
 - [outdoor,indoor] residents relaxing on available seating while others pass naturally through the space
 - [outdoor,indoor] maintenance workers checking a safe service point while a colleague consults a handheld tool
@@ -484,3 +618,102 @@ They remain available to lock and reroll even when omitted from the prompt.
 - [space] tethered inspection workers exchanging hand signals beside a docking structure
 - [space] pressure-suited specialists checking a secured instrument bay without drifting away
 - [space] suited maintenance workers at separate anchored work positions along an exterior truss
+
+## Population
+- x3 [population=civilian] civilian residents and local workers going about their day
+- x3 [population=civilian] civilian travelers with a few local guides and transport staff
+- x3 [population=civilian] civilian engineers and maintenance specialists on a routine assignment
+- x3 [population=civilian] civilian port workers and freight handlers between scheduled transfers
+- x3 [population=civilian] civilian researchers and survey staff comparing observations
+- x3 [population=civilian] civilian medical and support staff taking a break between duties
+- x3 [population=civilian] civilian contractors and site managers checking ongoing work
+- x3 [population=civilian] civilian salvage specialists and visiting inspectors examining the site
+- [population=military] regular military personnel from one unit, with distinct individuals and varied duties
+- [population=military] naval service personnel including deck crew, technicians and watch officers
+- [population=military] mech pilots accompanied by military maintenance and support specialists
+- [population=military] expeditionary infantry and their logistics support personnel
+- [population=military] garrison troops and a small number of duty officers
+- [population=military] military medical personnel and service support staff
+- [population=military] reconnaissance personnel with a few communications specialists
+- [population=military] off-duty military personnel relaxing between assignments
+- x2 [population=mixed] mixed civilian workers and uniformed military personnel sharing the location
+- x2 [population=mixed] civilian contractors working alongside military engineers
+- x2 [population=mixed] civilian travelers passing through with uniformed service personnel nearby
+- x2 [population=mixed] local civilian specialists coordinating with a visiting military delegation
+
+## Clothing and equipment
+- [outdoor,indoor] [population=civilian] varied practical civilian jackets, trousers and comfortable footwear with individual colors and wear
+- [outdoor,indoor] [population=civilian] civilian work coveralls with differently rolled sleeves and small personal tool pouches
+- [outdoor,indoor] [population=civilian] layered civilian travel clothing with compact bags and light outerwear
+- [outdoor,indoor] [population=civilian] civilian utility vests over mixed shirts and rugged work trousers
+- [outdoor,indoor] [population=civilian] understated tailored civilian clothing with distinct cuts and restrained accessories
+- [outdoor,indoor] [population=civilian] civilian technical workwear with safety harnesses or protective gear where the location requires it
+- [outdoor,indoor] [population=civilian] worn civilian salvage clothing with patched pockets and securely carried compact tools
+- [outdoor,indoor] [population=civilian] civilian medical workwear with practical closed shoes and small duty bags
+- [outdoor,indoor] [population=military] coherent service uniforms with individual fit, sleeve choices and subtle wear
+- [outdoor,indoor] [population=military] field fatigues with compact webbing and safely secured duty equipment
+- [outdoor,indoor] [population=military] flight suits with individual harness adjustments and helmets stowed when the environment permits
+- [outdoor,indoor] [population=military] naval duty coveralls with restrained rank distinctions and personal tool pouches
+- [outdoor,indoor] [population=military] light protective service armor over fitted underlayers, with safely slung equipment
+- [outdoor,indoor] [population=military] off-duty service shirts and trousers with jackets loosely worn or folded nearby
+- [outdoor,indoor] [population=military] military engineering coveralls with reinforced knees and compact maintenance kits
+- [outdoor,indoor] [population=military] medical service fatigues with small trauma pouches and practical protective gloves
+- [outdoor,indoor] [population=mixed] clearly civilian jackets and workwear alongside a smaller group in coherent service uniforms
+- [outdoor,indoor] [population=mixed] civilian contractor coveralls alongside military engineering fatigues, distinguished by cut and equipment
+- [outdoor,indoor] [population=mixed] varied civilian travel layers alongside naval duty coveralls and compact service bags
+- [outdoor,indoor] [population=mixed] civilian specialist workwear alongside military field uniforms, with distinct individual wear and accessories
+- [outdoor,indoor] practical layered clothing suited to the selected roles, with a few restrained personal accessories
+- [outdoor,indoor] environment-appropriate protective workwear, with differences in fit, wear and securely carried tools
+- [space] [population=civilian] civilian industrial pressure suits with closed helmets, compact life-support packs and tethered tools
+- [space] [population=civilian] patched civilian salvage pressure suits with sealed gloves, closed helmets and scuffed protective knee plates
+- [space] [population=civilian] civilian survey pressure suits with closed helmets, secured instrument pouches and individual suit colors
+- [space] [population=military] military EVA pressure suits with sealed helmets, armored outer panels and compact secured duty equipment
+- [space] [population=military] naval maintenance pressure suits with closed helmets, protected joints and tethered service tools
+- [space] [population=military] military rescue pressure suits with sealed helmets, compact medical packs and secure handhold attachments
+- [space] [population=mixed] civilian work pressure suits alongside military EVA pressure suits, all with sealed helmets and visibly different equipment
+- [space] [population=mixed] civilian survey pressure suits and naval inspection pressure suits, with closed helmets and distinct individual suit markings
+- [space] role-appropriate sealed pressure suits with closed helmets, secured tools and restrained individual color accents
+
+## Adult age mix
+- x3 mostly young adults in their twenties, with a few experienced adults in their forties
+- x3 young adults spanning their twenties and early thirties, with visibly different levels of maturity
+- x3 mostly adults in their twenties and thirties, with one older colleague when group size permits
+- x3 a young adult majority supported by a small number of middle-aged mentors
+- adults distributed evenly from their twenties through their fifties
+- a broad adult age range from early twenties to late sixties, avoiding a single dominant age
+- mostly adults in their thirties and forties, with a few younger colleagues
+- mostly middle-aged adults with varied signs of age and a few younger adults
+- mostly adults in their forties and fifties, with a small number of older specialists
+- older adults in their fifties and sixties with a few younger adult colleagues
+- mostly older adults, with natural facial lines, varied posture and realistic mobility
+- a few young adults working alongside a larger group of experienced middle-aged adults
+- pairs or small groups that each include adults of different generations
+- young adult newcomers alongside older adult mentors, with neither group dominating the scene
+- a mix of early-career adults and late-career adults with fewer people of intermediate ages
+- adults mostly in their thirties, with distinct faces rather than a uniform youthful appearance
+- adults mostly in their forties, with varied hairlines, facial lines and body types
+- adults mostly in their fifties, with believable differences in fitness and posture
+- a small intergenerational adult group spanning several decades, scaled to the requested population density
+- an unstructured adult age mix, with each small group showing a different balance of younger and older adults
+
+## Appearance variety
+- varied skin tones, face shapes, hair textures and builds, with restrained natural hair colors
+- broad variation in height and body build, with each person's silhouette easy to distinguish
+- a balanced mix of masculine, feminine and androgynous adult presentations, with individual styling
+- varied natural hairstyles including short cuts, tied-back hair, curls and close-cropped hair
+- a few selectively dyed hair accents among mostly natural hair colors, consistent with the selected roles
+- varied adult faces with freckles, fine lines or small healed scars visible only at appropriate distances
+- a few practical assistive devices or unobtrusive prosthetic limbs, with natural everyday posture
+- subtle cybernetic details on a minority of adults, integrated into otherwise ordinary human appearances
+- a wide mix of adult body types, including slender, broad, stocky and soft builds
+- mostly practical short or tied-back hairstyles, with varied textures, hairlines and natural colors
+- varied facial hair, clean-shaven faces and makeup choices appropriate to each adult's presentation
+- a few distinctive eyeglass frames or practical eyewear, without repeating the same face or accessory
+- diverse skin tones with individual freckles, facial structure and hair texture where visible
+- mostly feminine-presenting adults with varied heights, builds and distinct individual faces
+- mostly masculine-presenting adults with varied heights, builds and distinct individual faces
+- many androgynous-presenting adults alongside other presentations, with varied faces and builds
+- occasional visible tattoos or small personal jewelry, kept subtle and appropriate to clothing and duties
+- visibly different postures and movement styles, with a few relaxed and a few more alert individuals
+- varied natural hair colors including dark, brown, blond, red and gray, with realistic individual combinations
+- restrained personal styling within the selected dress code, expressed through hair, grooming and minor accessories

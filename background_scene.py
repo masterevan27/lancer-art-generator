@@ -17,6 +17,9 @@ DEFAULT_TABLES = ROOT / "prompts/background-generator-tables.md"
 ENVIRONMENTS = ["outdoor", "indoor", "space"]
 MAX_SEED = 2**32 - 1
 LIFE_KEYS = {"populatePeople", "populationDensity", "vegetation", "interiorLife"}
+POPULATION_KINDS = {"civilian", "military", "mixed"}
+POPULATION_TRAITS = {"Population", "Clothing and equipment", "Activity"}
+PEOPLE_TRAITS = POPULATION_TRAITS | {"Adult age mix", "Appearance variety"}
 REQUEST_KEYS = {"environment", "seed", "count", "traits", "locked", "reroll", "view", "notes", "width", "height"} | LIFE_KEYS
 PLAN_KEYS = {"version", "environment", "seed", "traits", "prompt", "motionPrompt", "view", "notes", "width", "height"}
 TOPDOWN = (
@@ -76,6 +79,9 @@ def _entry(raw):
         elif flag.startswith("time="):
             if flag[5:] not in ("day", "night", "twilight"):
                 raise ValueError(f"Invalid time flag: {raw}")
+        elif flag.startswith("population="):
+            if not set(flag[11:].split(",")) <= POPULATION_KINDS:
+                raise ValueError(f"Invalid population flag: {raw}")
         elif set(flag.split(",")) <= set(ENVIRONMENTS):
             if seen_context:
                 raise ValueError(f"Use one comma-separated context flag: {raw}")
@@ -103,6 +109,8 @@ def load_catalogue(path=DEFAULT_TABLES):
         elif line.startswith("- ") and table is not None:
             raw = line[2:].strip()
             envs, weight, _, _ = _entry(raw)
+            if "[population=" in raw and table["name"] not in POPULATION_TRAITS:
+                raise ValueError(f"Population flags belong only in {', '.join(sorted(POPULATION_TRAITS))}")
             if any(v["text"] == raw for v in table["values"]):
                 raise ValueError(f"Duplicate entry in {table['name']}: {raw}")
             table["values"].append({"text": raw, "environments": envs, "weight": weight})
@@ -167,6 +175,17 @@ def _validate_traits(traits, environment, catalogue):
         required = _time_tag(traits["Lighting"])
         if required and required != _time_tag(traits["Time"]):
             raise ValueError("Lighting is incompatible with the selected Time")
+    if not _population_kinds(traits):
+        raise ValueError("Population, Clothing and equipment, and Activity are incompatible; release a lock or change a choice")
+
+
+def _population_kinds(traits):
+    """Common population categories allowed by all supplied people choices."""
+    kinds = set(POPULATION_KINDS)
+    for name in POPULATION_TRAITS:
+        for match in re.finditer(r"\[population=([^]]+)\]", traits.get(name, "")):
+            kinds.intersection_update(match[1].split(","))
+    return kinds
 
 
 def _time_tag(raw):
@@ -179,12 +198,24 @@ def _roll(rng, environment, pins, catalogue):
              for t in catalogue["tables"]}
     pools = {name: values for name, values in pools.items() if values}
     traits = dict(pins)
+    # A category must be realizable in every enabled people pool, including ones
+    # rolled later. Otherwise disabling civilian garments could strand a civilian
+    # population roll even though a complete military combination is available.
+    population_kinds = _population_kinds(pins)
+    for name in POPULATION_TRAITS & pools.keys():
+        if name not in pins:
+            available = set().union(*(_population_kinds({name: v["text"]}) for v in pools[name]))
+            population_kinds.intersection_update(available)
+    if not population_kinds:
+        raise ValueError("No compatible Population, Clothing and equipment, and Activity combination; adjust the pinned traits or enabled pools")
     # Weather goes first even when the user reorders headings in the table editor.
-    order = sorted(pools, key=lambda n: 0 if n in ("Weather", "Time") else 2 if n in ("Motion", "Lighting") else 1)
+    order = sorted(pools, key=lambda n: 0 if n in ("Weather", "Time", "Population") else 2 if n in ("Motion", "Lighting", "Activity", "Clothing and equipment") else 1)
     for name in order:
         if name in traits:
             continue
         options = pools[name]
+        if name in POPULATION_TRAITS:
+            options = [v for v in options if population_kinds & _population_kinds(dict(traits, **{name: v["text"]}))]
         if name == "Weather" and pins.get("Motion"):
             weather = _entry(pins["Motion"])[2]
             if weather:
@@ -215,7 +246,8 @@ def assemble_prompt(settings, traits):
         "space": "An exposed vacuum environment. No atmospheric haze, rain, snow, wind, drifting smoke, clouds, vegetation, pets or aquariums among the structures.",
     }[settings["environment"]]
     parts = [intro, context,
-             "Lancer science-fiction environment illustration, confident ink linework, restrained halftone texture, believable industrial construction. "
+             "Lancer science-fiction environment rendered in a detailed painterly illustration style with fine grain texture, "
+             "clean linework and halftone dot shading worked into the shadows, moody cinematic lighting, believable industrial construction. "
              "Distribute visual interest naturally across the entire image. No text, logos or interface overlays."]
     people = settings["populatePeople"] and settings["view"] != "topdown"
     greenery = settings["vegetation"] != "none" and settings["environment"] != "space" and bool(traits.get("Vegetation"))
@@ -229,13 +261,14 @@ def assemble_prompt(settings, traits):
         }[settings["populationDensity"]]
         parts.append(
             "People: " + density + " Keep people secondary to the environment, mostly in the middle distance; "
-            "preserve clear routes and sightlines. Show candid everyday activity and natural interactions, "
-            "not a posed lineup or everyone facing the camera. Mostly young adults, median age around 20-25, "
-            "with some middle-aged and older adults; children are exceptionally rare and absent from hazardous or restricted sites. "
+            "preserve clear routes and sightlines. Show candid activity and natural interactions suited to the selected population, "
+            "not a posed lineup or everyone facing the camera. Depict adults according to the Adult age mix when supplied. "
             "Give each person a distinct combination of height, build, age, race/ethnicity, skin tone, sex, gender presentation, "
             "face shape, hair texture, hairstyle, hair color, and eye color where visible. Avoid duplicate faces, "
             "cloned bodies and repeated outfits; standard uniforms may match, but their wearers remain distinct. "
             "Keep facial detail appropriate to distance, without enlarging people to show their eyes. "
+            "Population determines who is present; adapt clothing, equipment and activities to those people and the location. "
+            "Military personnel may perform duties or relax off duty; mixed populations include visibly distinct civilian and service groups. "
             "Match roles and activities to the location; abandoned sites may have a few visiting explorers rather than residents."
         )
         if settings["environment"] == "space":
@@ -262,7 +295,7 @@ def assemble_prompt(settings, traits):
         if settings["view"] == "topdown" and name in ("Sky", "Distant features", "Motion"):
             continue
         if (name == "Vegetation" and not greenery or name == "Interior life" and not interior_life
-                or name == "Activity" and not people):
+                or name in PEOPLE_TRAITS and not people):
             continue
         if raw:
             description = _entry(raw)[3]
@@ -285,6 +318,8 @@ def assemble_prompt(settings, traits):
         )
     if settings["notes"].strip():
         parts.append("Additional scene and layout direction: " + settings["notes"].strip())
+    parts.append("Detailed environmental illustration, painterly brushwork with heavy grain and dense halftone screentone worked "
+                 "into every shadow. Render people and scenery in the same illustration style, with realistic proportions and consistent lighting.")
     return "\n".join(parts)
 
 

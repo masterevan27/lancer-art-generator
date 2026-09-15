@@ -156,6 +156,9 @@ per-trait locks and batch rendering, with metadata saved beside each image.
 Scenes now include distinct people by default, with population density, balanced
 or lush vegetation, and optional indoor pets/aquariums. All choices are saved
 with the scene; top-down maps omit people and pets.
+People traits customize civilian, military or mixed groups, clothing and equipment,
+adult ages, appearance and activities. Expanded scene pools include military settings
+and NPC-inspired backdrops, rendered with the NPC prompts' painterly house style.
 
 `--background` points the same machinery at a scene instead of a face:
 widescreen, a motion prompt that moves smoke and cloud and lights rather

@@ -32,7 +32,7 @@ Preview stdin is a JSON object with these optional fields:
 | `locked` | Array of supplied trait names to preserve through rerolls and batches |
 | `reroll` | Boolean; default false |
 | `view` | `perspective` (default) or `topdown` |
-| `populatePeople` | Boolean, default true; adds distinct people doing everyday activities in perspective scenes |
+| `populatePeople` | Boolean, default true; adds distinct people with customizable roles, clothing and activities in perspective scenes |
 | `populationDensity` | `sparse`, `natural` (default), or `lively`; scales the number of people to the location |
 | `vegetation` | `none`, `balanced` (default), or `lush`; applies outdoors and indoors |
 | `interiorLife` | Boolean, default true; adds an indoor pet or aquarium vignette in perspective scenes |
@@ -57,23 +57,31 @@ Every scene fills the frame; no area is reserved for a chat overlay.
 Scene life adds outdoor trees, wild plants, shrubs, flowers and cultivated bonsai,
 or indoor potted plants, orchids and small bonsai. The **Vegetation** pool chooses
 the planting; the amount setting controls its abundance. **Interior life** picks
-one small pet (cat, dog or fox) or fish tank. **Activity** supplies everyday tasks
-for people. These three pools support the same pickers, omissions, locks and
+one small pet (cat, dog or fox) or fish tank. The people pools select population,
+clothing, adult age mix, appearance variety and activities. These pools support the same pickers, omissions, locks and
 rerolls as other traits. Disabling a feature suppresses its prompt instructions
 while retaining its chosen trait for later reuse. Space excludes planting and
 interior life; its people wear sealed pressure suits. Top-down views omit people,
-Activity and Interior life, retain planting as terrain, and have no motion prompt.
+all people traits and Interior life, retain planting as terrain, and have no motion prompt.
 Location, condition, atmosphere and time take priority over life suggestions:
 abandoned scenes use sparse visitors, and pets/aquariums are omitted where no
 safe maintained habitat fits. These are prompt directions, interpreted by the
 image model, so incompatible custom choices may still need adjustment.
 
-People stay secondary to the setting, mostly young adults with a requested median
-age around 20–25, some older adults and exceptionally rare children. Prompts ask
-for distinct faces, hair, skin tones, sexes, builds, heights and outfits; uniforms
-can match while their wearers differ. Density and age distribution are image-model
+People stay secondary to the setting. **Population** selects civilians, military
+personnel or mixed groups; **Clothing and equipment** sets their dress and carried
+kit; **Adult age mix** ranges from young adult groups to older or intergenerational
+groups; **Appearance variety** guides individual faces, hair, skin tones, builds,
+presentation and personal details. **Activity** includes work, downtime, patrols,
+briefings and inspections. Population, clothing and activity choices must share
+a category when tagged. Pinning any of these constrains the other rolls; conflicting
+pins are rejected. Untagged activities adapt to the selected people and setting.
+Uniforms can match while their wearers differ. Density and age distribution are image-model
 directions, not exact counts or guarantees. Animation directions preserve the cast
 with small gestures and keep any existing animals in place.
+
+Backgrounds use the NPC illustration prompts' painterly brushwork, fine grain,
+clean linework and dense halftone shadows, with wide environmental composition.
 
 Preview returns `{"plans":[...]}`. Each plan has exactly `version:1`,
 `environment`, `seed`, `traits`, `prompt`, `motionPrompt`, `view`, `notes`, `width`
@@ -92,19 +100,26 @@ Model/GPU execution itself is subject to the normal ComfyUI reproducibility limi
 
 ## Tables
 
-`prompts/background-generator-tables.md` contains 21 pools with at least 20
+`prompts/background-generator-tables.md` contains 25 pools with at least 20
 distinct substantive entries each: three context-specific location pools,
 Architecture, Palette, Lighting, Layout, Weather, Details, Motion, Foreground,
 Distant features, Terrain or floor, Sky, Time, Faction presence, Condition and
-Atmosphere, Vegetation, Interior life and Activity. Context subsets of a shared
+Atmosphere, Vegetation, Interior life, Activity, Population, Clothing and equipment,
+Adult age mix and Appearance variety. Context subsets of a shared
 pool may contain fewer than 20 entries.
+
+Expanded locations, layouts, weather, lighting and details draw on NPC Backdrop
+scenes and the general scene tables. Military choices include command bunkers,
+mech service bays, carrier decks, field hospitals, checkpoints and defensive sites.
 
 Each `## Heading` starts a pool. `- ` bullets are enabled entries; HTML comments
 disable entries. Prefix a bullet with `xN` for an integer weight from 1–10000.
 Flags precede prose: `[outdoor]`, `[indoor]`, `[space]`, or a comma-separated
 combination. Unflagged entries apply to every environment. Weather and Motion
 use matching `[weather=rain]`, `[weather=snow]`, etc. Time and Lighting use
-`[time=day]`, `[time=twilight]`, or `[time=night]`. These flag dependencies belong
+`[time=day]`, `[time=twilight]`, or `[time=night]`. Population, Clothing and equipment,
+and Activity accept `[population=civilian]`, `[population=military]`,
+`[population=mixed]` or a comma-separated combination. These flag dependencies belong
 to those named pools; custom headings are otherwise ordinary independent pools.
 No groups or duplicated weight-expanded entries are used.
 

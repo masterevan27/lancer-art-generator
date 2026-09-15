@@ -41,7 +41,7 @@ class BackgroundSceneTests(unittest.TestCase):
         plan = scene.preview({"environment": "indoor", "seed": 19}, self.catalogue)["plans"][0]
         self.assertIs(plan.get("populatePeople"), True)
         self.assertIn("People:", plan["prompt"])
-        self.assertIn("median age around 20-25", plan["prompt"])
+        self.assertIn("Adult age mix:", plan["prompt"])
         self.assertIn("Vegetation:", plan["prompt"])
         self.assertIn("Interior life:", plan["prompt"])
         self.assertNotIn("No people, characters", plan["prompt"])
