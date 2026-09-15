@@ -18,7 +18,7 @@ ENVIRONMENTS = ["outdoor", "indoor", "space"]
 MAX_SEED = 2**32 - 1
 LIFE_KEYS = {"populatePeople", "populationDensity", "vegetation", "interiorLife"}
 POPULATION_KINDS = {"civilian", "military", "mixed"}
-POPULATION_TRAITS = {"Population", "Clothing and equipment", "Activity"}
+POPULATION_TRAITS = {"Population", "Clothing and equipment", "Activity", "Armament"}
 PEOPLE_TRAITS = POPULATION_TRAITS | {"Adult age mix", "Appearance variety"}
 REQUEST_KEYS = {"environment", "seed", "count", "traits", "locked", "reroll", "view", "notes", "width", "height"} | LIFE_KEYS
 PLAN_KEYS = {"version", "environment", "seed", "traits", "prompt", "motionPrompt", "view", "notes", "width", "height"}
@@ -176,7 +176,7 @@ def _validate_traits(traits, environment, catalogue):
         if required and required != _time_tag(traits["Time"]):
             raise ValueError("Lighting is incompatible with the selected Time")
     if not _population_kinds(traits):
-        raise ValueError("Population, Clothing and equipment, and Activity are incompatible; release a lock or change a choice")
+        raise ValueError("Population, Clothing and equipment, Activity and Armament are incompatible; release a lock or change a choice")
 
 
 def _population_kinds(traits):
@@ -207,9 +207,9 @@ def _roll(rng, environment, pins, catalogue):
             available = set().union(*(_population_kinds({name: v["text"]}) for v in pools[name]))
             population_kinds.intersection_update(available)
     if not population_kinds:
-        raise ValueError("No compatible Population, Clothing and equipment, and Activity combination; adjust the pinned traits or enabled pools")
+        raise ValueError("No compatible Population, Clothing and equipment, Activity and Armament combination; adjust the pinned traits or enabled pools")
     # Weather goes first even when the user reorders headings in the table editor.
-    order = sorted(pools, key=lambda n: 0 if n in ("Weather", "Time", "Population") else 2 if n in ("Motion", "Lighting", "Activity", "Clothing and equipment") else 1)
+    order = sorted(pools, key=lambda n: 0 if n in ("Weather", "Time", "Population") else 2 if n in ("Motion", "Lighting", "Activity", "Clothing and equipment", "Armament") else 1)
     for name in order:
         if name in traits:
             continue
@@ -269,7 +269,9 @@ def assemble_prompt(settings, traits):
             "Keep facial detail appropriate to distance, without enlarging people to show their eyes. "
             "Population determines who is present; adapt clothing, equipment and activities to those people and the location. "
             "Military personnel may perform duties or relax off duty; mixed populations include visibly distinct civilian and service groups. "
-            "Match roles and activities to the location; abandoned sites may have a few visiting explorers rather than residents."
+            "Match roles and activities to the location; abandoned sites may have a few visiting explorers rather than residents. "
+            "Armament states who carries weapons and how. Carried weapons stay slung, holstered, sheathed or held at a relaxed low ready, "
+            "never aimed at the camera or at anyone; no muzzle flashes or combat. People without a stated weapon are unarmed."
         )
         if settings["environment"] == "space":
             parts.append("All people outside wear sealed pressure suits with helmets and secure tethers or handholds. "
@@ -361,6 +363,8 @@ def preview(request, catalogue):
         plan["motionPrompt"] = motion + "The camera is locked off and does not move. Preserve the scene geometry; no new objects or characters."
         if settings["populatePeople"]:
             plan["motionPrompt"] += " Preserve each person's face, clothing, body proportions and position; only subtle breathing, glances and small gestures. No duplicated people or arrivals and departures."
+            if chosen.get("Armament"):
+                plan["motionPrompt"] += " Weapons stay slung or holstered exactly as drawn; nobody draws, raises or fires one."
         if settings["interiorLife"] and settings["environment"] == "indoor" and chosen.get("Interior life"):
             plan["motionPrompt"] += " Existing pets may blink or breathe gently; existing fish swim slowly within their tank. Do not add animals."
         if settings["view"] == "topdown":

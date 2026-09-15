@@ -73,7 +73,13 @@ personnel or mixed groups; **Clothing and equipment** sets their dress and carri
 kit; **Adult age mix** ranges from young adult groups to older or intergenerational
 groups; **Appearance variety** guides individual faces, hair, skin tones, builds,
 presentation and personal details. **Activity** includes work, downtime, patrols,
-briefings and inspections. Population, clothing and activity choices must share
+briefings and inspections. **Armament** decides who carries weapons: military and
+mixed groups roll holstered pistols, slung rifles, carbines, sheathed swords,
+polearms and the occasional heavy weapon in a weighted spread, with about a
+quarter of military groups unarmed or working beside racked rifles; civilians stay
+unarmed except for a few civilian-tagged choices such as private security or a
+settler's hunting rifle. Weapons are always slung, holstered, sheathed or at a low
+ready, never aimed. Population, clothing, activity and armament choices must share
 a category when tagged. Pinning any of these constrains the other rolls; conflicting
 pins are rejected. Untagged activities adapt to the selected people and setting.
 Uniforms can match while their wearers differ. Density and age distribution are image-model
@@ -100,13 +106,19 @@ Model/GPU execution itself is subject to the normal ComfyUI reproducibility limi
 
 ## Tables
 
-`prompts/background-generator-tables.md` contains 25 pools with at least 20
+`prompts/background-generator-tables.md` contains 26 pools with at least 20
 distinct substantive entries each: three context-specific location pools,
 Architecture, Palette, Lighting, Layout, Weather, Details, Motion, Foreground,
 Distant features, Terrain or floor, Sky, Time, Faction presence, Condition and
 Atmosphere, Vegetation, Interior life, Activity, Population, Clothing and equipment,
-Adult age mix and Appearance variety. Context subsets of a shared
+Armament, Adult age mix and Appearance variety. Context subsets of a shared
 pool may contain fewer than 20 entries.
+
+The location pools reach well beyond military sites: air bases and airstrips,
+canyons, desert plains, grassy hills, snowfields, coasts, farmland, shrines and
+ruins, neon megacity streets, frontier towns and orbital works. Sky and Distant
+features add distant mountain ranges, far cities, multiple suns, nebulae, huge
+planets, orbital rings and flying superstructures.
 
 Expanded locations, layouts, weather, lighting and details draw on NPC Backdrop
 scenes and the general scene tables. Military choices include command bunkers,
@@ -118,7 +130,7 @@ Flags precede prose: `[outdoor]`, `[indoor]`, `[space]`, or a comma-separated
 combination. Unflagged entries apply to every environment. Weather and Motion
 use matching `[weather=rain]`, `[weather=snow]`, etc. Time and Lighting use
 `[time=day]`, `[time=twilight]`, or `[time=night]`. Population, Clothing and equipment,
-and Activity accept `[population=civilian]`, `[population=military]`,
+Activity and Armament accept `[population=civilian]`, `[population=military]`,
 `[population=mixed]` or a comma-separated combination. These flag dependencies belong
 to those named pools; custom headings are otherwise ordinary independent pools.
 No groups or duplicated weight-expanded entries are used.

@@ -10,10 +10,11 @@ Empty selected traits omit that feature. No groups or implicit duplicate entries
 Space means a vacuum exterior; sealed station rooms belong to indoor.
 Vegetation, Interior life and the people pools are controlled by the scene-life settings.
 They remain available to lock and reroll even when omitted from the prompt.
-Population, Clothing and equipment, and Activity may use `[population=civilian]`,
+Population, Clothing and equipment, Activity and Armament may use `[population=civilian]`,
 `[population=military]`, `[population=mixed]`, or comma-separated combinations.
 Tagged choices must share a population category; untagged choices suit any group.
-Locks on clothing or activity also constrain the population roll. Adult age mix
+Locks on clothing, activity or armament also constrain the population roll. Armament
+keeps civilians unarmed unless a civilian-tagged choice arms a few of them. Adult age mix
 and Appearance variety describe a group, with individual differences inside it.
 
 The expanded settings draw on the Backdrop scenes and groups, Weather, and Glow
@@ -54,6 +55,92 @@ independent choices, without portrait framing, character placeholders or NPC fla
 - [outdoor] a dense residential courtyard between modular habitation towers
 - [outdoor] an alien basalt basin crossed by mineral-processing pipelines
 - [outdoor] a border rail depot with parallel sidings and armored signal huts
+- [outdoor] a sprawling military air base with rows of parked attack craft along a sun-bleached flightline below distant control towers
+- [outdoor] a forward airstrip of pierced-steel matting laid across a grassy plateau, with fuel bladders under camouflage netting
+- [outdoor] a mountaintop aerodrome where interceptors sit on cliff-edge hardstands above a sea of cloud
+- [outdoor] a desert air base of half-buried hangars and heat-shimmering runways stretching to the horizon
+- [outdoor] a civilian spaceport apron with passenger gantries and shuttles queued for launch
+- [outdoor] a mech drop zone marked out on open steppe with smoking landing scars and marker beacons
+- [outdoor] a wide desert plain of cracked salt flats broken by a lone fuel station and a wind-torn flag
+- [outdoor] a dune sea crossed by a raised maglev track on tall concrete pylons
+- [outdoor] a red rock canyon with a shallow river and a cliffside monorail platform
+- [outdoor] a slot canyon hideout where salvaged habitat pods are wedged between the walls
+- [outdoor] a canyon-rim highway rest stop with a cantilevered diner and a fuel gantry
+- [outdoor] a mesa-top settlement reached by a cable lift and shaded by sail canopies
+- [outdoor] a desert boneyard of half-buried mech carcasses drifted over with sand
+- [outdoor] a sun-bleached desert town of wind-scoured concrete homes around a dry fountain
+- [outdoor] rolling grassy hills with a lone dirt road winding toward a stilted wayside shrine
+- [outdoor] a windswept plain of tall pale grass around a solitary radar dome
+- [outdoor] a hillside of grazing pasture and stone walls beneath an ancient radio telescope
+- [outdoor] a wildflower meadow where a grounded transport has become a picnic landmark
+- [outdoor] an alpine pass with a fortified toll gate and prayer-flag lines snapping in the wind
+- [outdoor] a highland ranch with corral fences and an agricultural mech parked under a lean-to
+- [outdoor] a wooded mountain valley with a cable-car station beside a trickling stream
+- [outdoor] a snowbound crash site where a downed transport smolders against a wall of white peaks
+- [outdoor] a frozen lake crossing with ice-road markers and a heated waystation
+- [outdoor] a glacier research camp of insulated domes on stilts above blue crevasses
+- [outdoor] a fishing harbor where trawlers moor beside a beached amphibious landing craft
+- [outdoor] a tidal salt marsh crossed by a rusted causeway toward an offshore wind array
+- [outdoor] a tropical beach strip with palm shade, surf and a rusting coastal defense gun
+- [outdoor] a river delta town of stilt houses and floating market boats
+- [outdoor] a neon-drenched megacity street at night, tangled overhead wires and stacked signage smeared across wet pavement
+- [outdoor] a rain-slicked stairway alley strung with paper lanterns beside a tiny bar counter
+- [outdoor] a graffiti-tagged alley lit by tube neon bleeding red and teal through drifting mist
+- [outdoor] a rooftop cluster of water tanks, antenna masts and laundry lines above a night-time sprawl
+- [outdoor] an elevated train platform between dense towers, with holographic adverts flickering in the haze
+- [outdoor] a grand civic plaza with fountains, wide steps and monumental government facades
+- [outdoor] a corporate arcology forecourt of polished stone, reflecting pools and glass towers
+- [outdoor] a covered night market of food stalls, steam and hanging lanterns under a tangle of cables
+- [outdoor] a highway interchange of stacked overpasses with a cantilevered noodle bar wedged beneath
+- [outdoor] a hillside favela of stacked tin-roofed homes linked by stairways and cable runs
+- [outdoor] a dense harborfront district where cargo cranes loom over crowded waterfront bars
+- [outdoor] a sunlit ruin of towering stone archways and a broken aqueduct climbing a green mountainside
+- [outdoor] misty shrine ruins with mossy torii gates and a path of great stone lanterns
+- [outdoor] a ruined cathedral nave open to the sky, dust hanging in shafts of light over a crouched war machine
+- [outdoor] a bombed-out city block with concrete walls pocked by bullet holes and pinned notices
+- [outdoor] a scorched battlefield of churned mud, wrecked walkers and drifting embers under rain
+- [outdoor] an overgrown alley where ivy has reclaimed dead neon signage and an old arcade cabinet
+- [outdoor] a shattered cityscape around a great ring of ruined structural arches
+- [outdoor] terraced rice paddies climbing a valley below a hilltop radio mast
+- [outdoor] endless wheat fields with a lone grain elevator and a parked harvester mech
+- [outdoor] a vineyard estate on a sunny slope with a landing pad tucked behind the winery
+- [outdoor] a mangrove-ringed lagoon with a floating research pontoon
+- [outdoor] a vast open-cast mine with spiral haul roads and walking excavators
+- [outdoor] a wind farm ridge with slowly turning turbines and a lone maintenance cabin
+- [outdoor] a cracked desert highway running toward a fallen warship jutting from the earth
+- [outdoor] a wind-carved dune field strewn with the wreck of a colossal superstructure
+- [outdoor] a moonlit alien desert bristling with distant black megastructure spires
+- [outdoor] a fog-shrouded canyon settlement of steam-vented ironwork towers and lantern terraces
+- [outdoor] a deep rocky cavern floor lit by a shaft of sunlight from an opening far overhead
+- [outdoor] an alien valley of rust-orange feather-leafed trees and glowing turquoise blossoms
+- [outdoor] a highland farming village of stone-and-tin cottages terraced into a hillside
+- [outdoor] a misty old-growth forest where a waterfall tumbles over mossy boulders into a stream
+- [outdoor] a cherry blossom grove at dusk beside weathered shrine eaves, petals drifting through warm light
+- [outdoor] a bamboo grove opening through drifting fog toward a distant tiered pagoda
+- [outdoor] a snowbound rail line between gutted trolley cars and frost-blackened tenements
+- [outdoor] a snowbound industrial dockyard of floodlit gantries and cable runs at night
+- [outdoor] a black volcanic shoreline lashed by surf, with needlelike industrial towers across the bay
+- [outdoor] a flooded coastal city with waves surging between the surviving towers
+- [outdoor] a scavenged coastal shantytown of salvaged junk piled between leaning towers
+- [outdoor] a tidal scrapyard at low water with half-sunk hulls bedded in grey mud
+- [outdoor] a lantern-lit canal winding between tiered palace roofs and flowering trees
+- [outdoor] a fog-choked cyberpunk avenue of stacked signage with traffic crawling beneath
+- [outdoor] a rain-lashed construction site of pile drivers and floodlit scaffolding
+- [outdoor] a stadium with bleachers descending toward a floodlit empty pitch at night
+- [outdoor] an abandoned gas station forecourt with rain-slick pumps and a flickering canopy
+- [outdoor] a cliffside villa of stacked glass balconies glowing above a dark sea
+- [outdoor] a megacity canyon split by twin spires and linked by sweeping elevated bridges
+- [outdoor] a canvas-tented refugee camp before a smoke-hazed bombed-out skyline
+- [outdoor] a fog-wrapped hillside town of wooden gatehouses below a tiered castle
+- [outdoor] the gutted dome of a ruined library with sunlight falling through a collapsed roof
+- [outdoor] a colonnaded marble temple glowing at the mouth of a vast stone cavern
+- [outdoor] a cliffside temple-city of green-domed rotundas linked by a soaring stone bridge
+- [outdoor] floating rock spires crowned with overgrown ruins above a sea of cloud
+- [outdoor] a smoke-hazed industrial spaceport at dawn with freight haulers and ground crews
+- [outdoor] an exobiology survey site of clean tents and scanning pylons on a pale alien plain
+- [outdoor] a rocky overlook above a pale sprawling city under a crescent moon
+- [outdoor] a colossal fortress complex of concrete ramparts with transports rolling past its gates
+- [outdoor] a rain-slicked spaceport tarmac of parked dropships and idling ground vehicles
 
 ## Indoor location
 - [indoor] a buried command bunker with recessed tactical displays and thick segmented blast doors
@@ -88,6 +175,47 @@ independent choices, without portrait framing, character placeholders or NPC fla
 - [indoor] a salvage auction hall with display plinths and a sealed delivery gate
 - [indoor] a station chapel with acoustic panels and an abstract memorial wall
 - [indoor] an emergency shelter with modular sleeping berths and supply lockers
+- [indoor] a smoky dive bar with out-of-focus figures at the tables and neon signs behind the counter
+- [indoor] a cramped noodle shop lit by paper lanterns, steam rising behind a small counter
+- [indoor] a retro arcade of glowing cabinets beneath mirrored ceiling tiles
+- [indoor] a corporate tower lobby with a marble reception island and floor-to-ceiling windows over a neon skyline
+- [indoor] an executive office with a window wall overlooking a rain-swept high-rise skyline
+- [indoor] a night train carriage with worn seats and rain streaking the windows
+- [indoor] a shuttle passenger cabin with rows of padded seats and a viewport strip
+- [indoor] a wrecked server room with fallen struts and racks of dead monitors
+- [indoor] an operations room walled in tactical displays around a glowing planning table
+- [indoor] a temple hall of lacquered pillars and incense smoke before a gilded machine altar
+- [indoor] a gutted apartment used as a safehouse, with a mattress, a wall of monitors and blackout curtains
+- [indoor] a capsule hotel corridor of stacked sleeping pods and glowing door numbers
+- [indoor] a subway platform with tiled walls, flickering strip lights and rolled shutters
+- [indoor] a greenhouse conservatory of glass panes and tropical planting inside a habitat dome
+- [indoor] a boxing gym with a roped ring, hanging bags and grimy windows
+- [indoor] a bathhouse of tiled pools and steam beneath a vaulted ceiling
+- [indoor] a diagnostic lab with reclining rigs, trailing cabling and a wall of readouts
+- [indoor] a crowded gaming den of battered chairs, headset jacks and stacked screens
+- [indoor] a luxury casino floor with velvet ropes and chandeliers over holographic tables
+- [indoor] a shopping mall atrium with escalators, hologram adverts and a central fountain
+- [indoor] a derelict theatre with torn velvet seats and a collapsed balcony
+- [indoor] a police precinct desk area with glass partitions and evidence lockers
+- [indoor] a sprawling underground parking garage with low concrete ceilings and pooled light
+- [indoor] a monastery library of tall shelves and reading lamps in a stone vault
+- [indoor] a wardroom lounge with a bar counter and a viewport over the flight deck
+- [indoor] a back-alley implant clinic with a reclining chair under a ring of surgical lamps
+- [indoor] a cyberbrain surgery theatre of cold green tiles and folded skull-cradle arms
+- [indoor] a hacker's den lit green by a wall of humming dust-caked CRT monitors
+- [indoor] a cavernous server hall of illuminated rack columns and shallow floor reflections
+- [indoor] a chrome retro diner counter with neon ramen signage glowing through rain-streaked glass
+- [indoor] a nightclub of illuminated rectangular frames suspended over a reflective dance floor
+- [indoor] a cassette-lined listening room of speaker cabinets and strung neon tubes
+- [indoor] a plant-filled loft with a domed window over a rain-streaked neon skyline
+- [indoor] a permit office papered with pinned notices above a shuttered ticket counter
+- [indoor] a red-lit plot room of paper charts under hooded lamps
+- [indoor] a moss-drowned factory atrium reclaimed by a canal and one wide-canopied tree
+- [indoor] a cylindrical habitat atrium of planted terraces under a circular skylight
+- [indoor] a cryogenic specimen vault of frosted drawers and vapor curling from floor vents
+- [indoor] a quarantine lab of double airlocks and red-striped windows in sterilization mist
+- [indoor] an ice-walled hangar cave with parked starfighters and a pack-animal shelter
+- [indoor] a locker room of narrow steel doors under humming fluorescent strips
 
 ## Space location
 - [space] the exterior flight deck of an orbital carrier with docking clamps and armored service recesses
@@ -118,6 +246,28 @@ independent choices, without portrait framing, character placeholders or NPC fla
 - [space] a crater observatory with sunken antenna dishes and buried conduits
 - [space] a wreckage recovery site with tethered fragments and a salvage cradle
 - [space] a jump navigation installation with nested field coils and anchor pylons
+- [space] the surface of a cratered moon where a besieged orbital structure hangs low in the sky
+- [space] a field of tumbling rock and debris around a shattered hull
+- [space] a battleship graveyard where broken hulls drift in a slow ring
+- [space] an asteroid mining pit with drilling rigs anchored around the rim
+- [space] an orbital shipyard gantry framing a half-built cruiser and welding flares
+- [space] a lunar mass driver rail stretching to the horizon with capsule loaders
+- [space] the exterior of a derelict ring station, its spokes bent and lights dark
+- [space] a frozen moon's ice plain with a cracked landing beacon and rover tracks
+- [space] a captured comet's surface strung with anchor cables and processing rigs
+- [space] a carrier's flight deck lip where fighters hang in launch cradles above open space
+- [space] an orbital cannon platform with a barrel longer than a city block
+- [space] a lonely lighthouse beacon on a spar at a gravitational balance point
+- [space] a fragment of an ancient alien megastructure strung with survey lights
+- [space] a shattered solar array trailing glittering fragments past a planet's terminator
+- [space] a launch tube of ranked catapult lights receding into the dark
+- [space] a crumpled derelict transport half-buried in grey regolith
+- [space] a faceted crystalline structure breaking up through cratered grey regolith
+- [space] an asteroid-carved neutrino observatory of concentric shield rings and pylons
+- [space] a frost-coated habitat exterior spanned by a low bridge under a planetary crescent
+- [space] a mineral flat of jagged spires beneath a bulbous low-hanging transport
+- [space] the outer hull of a colony cylinder curving toward a burning mirror panel
+- [space] an open cargo lock of netted pallets under a rank of amber strobes
 
 ## Architecture
 - [outdoor,indoor] layered bunker concrete with recessed armored shutters and sacrificial outer panels
@@ -146,6 +296,25 @@ independent choices, without portrait framing, character placeholders or NPC fla
 - oxidized iron surfaces polished bright around frequently serviced fittings
 - layered sacrificial shielding with offset plates and visible stand-off mounts
 - charcoal synthetic timber cladding over a practical aluminum frame
+- [outdoor,indoor] rockcrete slabs with faded warning stencils and bullet-pocked corners
+- [outdoor] dense stacked tenements of concrete and corrugated tin knotted with cables and neon
+- [outdoor,indoor] glass curtain walls and polished stone of a corporate megatower
+- [outdoor,indoor] lacquered timber pillars and tiled temple roofs beside modern service ducts
+- [outdoor] mud-brick and rammed-earth walls with solar tiles and satellite dishes
+- [outdoor] ancient stone archways and aqueduct piers overgrown with ivy
+- [outdoor,indoor] retro-futurist chrome curves and porthole windows with chunky rivets
+- [outdoor] stilt-house timber decks and woven screens over tidal water
+- [outdoor,indoor] gothic stone vaulting threaded with modern conduit
+- [outdoor,indoor] gold filigree and dark plating of ancient precolonial machine ruins
+- [outdoor] sail-canopy shade structures over tent-like fabric habitats
+- [outdoor] log cabins and stone chimneys beside a prefab landing pad
+- [outdoor] towers of stacked circular balconies wrapped in cylindrical advertising panels
+- [outdoor] needle spires and saucer-topped retrofuturist towers looped by monorail tracks
+- [outdoor,indoor] marble colonnades, fluted columns and carved winged figures
+- [outdoor] tarpaulin stalls, hand-lettered signboards and strung amber work lights
+- [outdoor,space] translucent pressure domes, airlock arches and painted hazard chevrons
+- [outdoor] exposed pipe-clad apartment blocks with stacked glowing balcony windows
+- [outdoor] slab towers capped by sharply slanted pale roof fins
 
 ## Palette
 - warm ivory and faded olive with restrained rust-orange accents
@@ -203,6 +372,20 @@ independent choices, without portrait framing, character placeholders or NPC fla
 - [space] cold navigation lamps outlining otherwise unlit structural edges
 - [space] bright maintenance floodlights revealing tool scars and panel joints
 - [space] a narrow solar rim illuminating raised structures above dark recesses
+- [outdoor] [time=night] neon bleeding pink and cyan across wet pavement and smeared in puddles
+- [outdoor] [time=twilight] smog-orange dusk with a flat hazy sun low between the towers
+- [outdoor] [time=day] heat haze and drifting dust flattening a hot white sky
+- [outdoor] [time=night] floodlight cones burning through a heavy downpour
+- [outdoor] [time=day] flat overcast colorless light with almost no shadow
+- [outdoor] [time=twilight] a molten sunset burning behind smoking stacks
+- [outdoor] [time=night] lantern glow diffused through low ground mist
+- [outdoor] [time=day] hard shafts of light beaming down through openings far overhead
+- [indoor] a green wash of stacked CRT screens across dusty surfaces
+- [indoor] arc-welding flare stuttering off the walls of a work bay
+- [indoor] a swinging bare bulb and slatted shutter light laid across the floor
+- [indoor] teal light on one side and deep crimson on the other across an empty room
+- [indoor] warm candlelight and string lights against a cold rain-lit window
+- [space] the pale glow of a nebula tinting shadowed surfaces violet
 
 ## Layout
 - [outdoor,indoor] a staggered checkpoint route with offset barriers and a broad inspection pocket
@@ -300,6 +483,14 @@ independent choices, without portrait framing, character placeholders or NPC fla
 - [space] bolted-down cargo frames holding sealed transport containers
 - [space] clusters of reaction-control nozzles around reinforced support junctions
 - [space] stowed cable reels and latching tool mounts on an external service panel
+- [outdoor] a glowing vending machine beside a bus stop bench
+- [outdoor] a parked matte-black superbike leaning under an awning
+- [outdoor] a battered open-top ground car with its hood propped up
+- [outdoor] prayer flags and paper streamers strung between poles
+- [outdoor] a spear driven upright beside a shrine, trailing a strip of red cloth
+- [indoor] a wall of dead monitors stacked in a corner
+- [indoor] a hand of cards left on a low table beside an ashtray
+- [indoor] a jukebox glowing beside a row of bar stools
 
 ## Motion
 - [outdoor] [weather=rain] rain falls continuously and beads slide down the already wet metal surfaces
@@ -356,6 +547,14 @@ independent choices, without portrait framing, character placeholders or NPC fla
 - [space] a folded external maintenance ladder beside a sealed hatch
 - [space] a cluster of armored cable couplings on the nearest structural frame
 - [space] a cargo restraint bracket with a coiled capture tether
+- [outdoor] a rooftop ledge with a chipped parapet and a rusted antenna base
+- [outdoor] a bus-stop shelter with a cracked panel and a glowing vending machine
+- [outdoor] the bent knee of a crouched military mech, stencilled with unit markings
+- [outdoor] a windswept rocky overlook with a cairn of stones
+- [outdoor] a low stone shrine wall strung with paper streamers
+- [outdoor] the tail fin of a parked attack craft, stencilled and scuffed
+- [indoor] a bar counter with ring stains and a row of stools
+- [indoor] the back of a worn diner booth with a chipped tabletop
 
 ## Distant features
 - [outdoor] the silhouettes of parked mechs beneath far-off maintenance gantries
@@ -384,6 +583,43 @@ independent choices, without portrait framing, character placeholders or NPC fla
 - [space] the armored silhouette of an adjacent uncrewed station module
 - [space] an array of long antenna booms beyond the perimeter rail
 - [space] a distant tether anchor built into a separate rock outcrop
+- [outdoor] a distant mountain range with snow-capped peaks floating above haze
+- [outdoor] a jagged blue ridgeline against the far horizon
+- [outdoor] a hazy desert city ringed by tall spires far across the plain
+- [outdoor] a dense neon skyline glowing on the horizon beneath low cloud
+- [outdoor] a vast ring of wreckage hanging frozen in the air above a plunging waterfall
+- [outdoor] the towering silhouette of a dormant war machine on the far ridge
+- [outdoor] an immense flying superstructure eclipsing the low sun over sun-baked rooftops
+- [outdoor] a line of wind turbines turning slowly along a distant escarpment
+- [outdoor] an orbital elevator base station rising like a needle at the horizon
+- [outdoor] a colossal robotic figure half-risen from a canal, gold filigree tracing its dark plating
+- [outdoor] the glowing stack plumes of a distant refinery at the edge of the plain
+- [outdoor] a mega-dam spanning the far end of the valley
+- [outdoor] distant volcanic cones venting thin plumes
+- [outdoor] a far spaceport with ships climbing on bright exhaust trails
+- [outdoor] a distant arcology dome catching the light like a pearl
+- [outdoor] a herd of grazing animals scattered across far pasture
+- [outdoor] a sea horizon broken by a chain of offshore platforms
+- [outdoor] a cliff-city built into a rock face far across the water
+- [outdoor] tiered pagoda roofs of a temple complex high on a wooded hillside
+- [outdoor] a distant battle glow and columns of smoke beyond the hills
+- [indoor] a viewport strip framing a planet's curve beyond the far bulkhead
+- [indoor] a vast hangar interior receding to a distant open bay door and pale daylight
+- [indoor] a far window wall revealing a neon skyline through the rain
+- [indoor] a distant colossal mech frame lit by welding flares at the end of the hall
+- [space] a dead moon's horizon cut by the arc of a mass driver
+- [space] the distant sparkle of a fleet at anchor beyond the station
+- [space] a gigantic derelict hulk drifting far beyond the perimeter
+- [space] a lonely beacon blinking on a far spar
+- [outdoor] a distant mushroom cloud rising over the open plain
+- [outdoor] floating rock spires trailing stone tendrils into distant mist
+- [outdoor] a tiered castle on a fog-wrapped hill beyond the rooftops
+- [outdoor] a burning warship listing low over a harbor city far along the coast
+- [outdoor] a line of heavy war machines advancing along a smoke-filled far ridge
+- [outdoor] a gilded pyramid tower rising above a sun-baked hillside city
+- [outdoor] an ancient stone ring-gate at the end of a causeway through misty jungle
+- [outdoor] a sea of cloud below the ridge with distant peaks breaking through
+- [outdoor] twin megatowers rising at the far end of a tiered market street
 
 ## Terrain or floor
 - [outdoor] deeply rutted hardstanding reinforced with interlocking expeditionary ground panels
@@ -412,6 +648,19 @@ independent choices, without portrait framing, character placeholders or NPC fla
 - [space] sintered regolith slabs forming a level vacuum work surface
 - [space] open lattice platforms with bolted solid operating pads
 - [space] segmented ceramic shields inset between reinforced hull ribs
+- [outdoor] tall pale grass rippling across open ground, with a worn footpath
+- [outdoor] fine wind-rippled sand drifting across a cracked salt crust
+- [outdoor] red sandstone ledges and dry washes floored with pale gravel
+- [outdoor] deep snow crust broken by tracks and windblown ice crystals
+- [outdoor] wet cobblestones reflecting neon signage
+- [outdoor] cracked asphalt with faded lane paint and puddles
+- [outdoor] alpine turf and lichen-covered boulders
+- [outdoor] muddy churned ground with tank tracks and standing water
+- [outdoor] tidal sand and seaweed-wrapped rocks
+- [outdoor] black volcanic sand with a scatter of pumice
+- [indoor] worn wooden floorboards of a bar, scuffed and ring-stained
+- [indoor] tatami mats edged in dark timber
+- [indoor] densely patterned casino carpet
 
 ## Sky
 - [outdoor] a broad pale sky above the structural silhouette
@@ -434,6 +683,47 @@ independent choices, without portrait framing, character placeholders or NPC fla
 - [space] the small bright disc of a remote companion star
 - [space] a dense distant galactic star band beyond the local vacuum
 - [space] the shadowed hemisphere of a nearby rocky planet
+- [outdoor] twin suns, one white and one orange, hanging low over the horizon
+- [outdoor] three suns of different sizes strung across a hazy sky
+- [outdoor] a huge glowing sun rising behind a ring of ruined arches
+- [outdoor] a banded gas giant with a debris ring filling half the sky
+- [outdoor] a massive moon so close its craters are readable above the rooftops
+- [outdoor] a churning red nebula faintly visible in the dusk
+- [outdoor] a great orbital ring crossing the sky like a bridge of light
+- [outdoor] the shadow of an immense flying superstructure passing across the sun
+- [outdoor] a sky full of drifting cargo airships and their running lights
+- [outdoor] contrails and bright exhaust trails of ships climbing to orbit
+- [outdoor] auroras rippling green and violet over a dark horizon
+- [outdoor] a deep purple twilight sky pricked by the first stars
+- [outdoor] a low white sun in a bleached haze
+- [outdoor] towering thunderheads lit from within by lightning
+- [outdoor] a pale green sky with strange high cirrus
+- [outdoor] two moons, one small and cratered, one large and pale
+- [outdoor] a besieged orbital structure hanging low beneath a huge moon
+- [space] a swirling violet and orange nebula filling the background
+- [space] twin stars, a blue giant and a red dwarf, casting doubled shadows
+- [space] a searing white sun with a coronal glare beyond the structures
+- [space] a black hole's accretion disc glowing far in the distance
+- [space] a planet's night side scattered with city lights
+- [space] a ring of tumbling wreckage catching starlight
+- [space] a cold dim sky with a distant binary pair
+- [space] a storm-banded brown dwarf glowing dull red
+- [space] a comet's tail streaking across the starfield
+- [outdoor] a huge blood-red moon rising over the skyline
+- [outdoor] a total eclipse burning a thin ring of light around a blacked-out sun
+- [outdoor] a huge turbulent red giant star swallowing half the sky
+- [outdoor] a vivid magenta sun sinking behind jagged peaks
+- [outdoor] the galactic core blazing red and smeared low across the night sky
+- [outdoor] a shattered orange moon crumbling into flame overhead
+- [outdoor] a fleet of angular warships descending through a blood-red sunset
+- [outdoor] a mile-long dreadnought drifting low over the skyline through falling snow
+- [outdoor] a gold-trimmed ornate airship gliding over an endless sea of clouds
+- [outdoor] a shattered planet burning apart high in the daytime sky
+- [space] a vast ringed orbital station wheeling with transports threading its rings
+- [space] a luminous spiral galaxy rising above a close regolith horizon
+- [space] a shower of meteor fragments burning in short bright trails near the horizon
+- [space] a colossal dark world encircled by blazing orange rings of light
+- [space] a massive dark planet crowned in a thin halo of light
 
 ## Time
 - [outdoor] [time=day] early morning as the daily work cycle begins
@@ -478,6 +768,11 @@ independent choices, without portrait framing, character placeholders or NPC fla
 - a station residents' association maintaining patched communal infrastructure
 - a remote observatory consortium with delicate instrument enclosures and calibration rigs
 - a recently abandoned corporate concession with obsolete branded shapes but no readable logos
+- a corporate security division with polished barriers and matching black vehicles
+- a street syndicate with tricked-out ground cars and a discreet neon emblem
+- a bounty hunters' cooperative with mismatched ships and a shared bulletin board
+- a pirate crew using patched hulls and flamboyant handmade markings
+- a machine cult with gilded ornament over reclaimed machinery
 
 ## Condition
 - recently mobilized readiness with freshly secured stores and equipment prepared for deployment
@@ -534,6 +829,12 @@ independent choices, without portrait framing, character placeholders or NPC fla
 - frontier self-sufficiency conveyed by multipurpose installations and visible repair capability
 - remote scientific detachment conveyed by specialized apparatus and minimal comforts
 - durable everyday normality conveyed by modest service equipment and unremarkable practical repairs
+- late-night melancholy conveyed by empty neon streets and a single lit window
+- lazy frontier heat conveyed by shade, dust and idle machinery
+- big-sky loneliness conveyed by a tiny settlement beneath an enormous horizon
+- rain-washed noir mood conveyed by reflections, steam and long shadows
+- festival warmth conveyed by lanterns, banners and shared seating
+- ancient stillness conveyed by weathered ruins and slow overgrowth
 
 ## Vegetation
 - [outdoor] wild grasses and fern patches beneath large native trees, with medium and small shrubs along the edges
@@ -673,6 +974,41 @@ independent choices, without portrait framing, character placeholders or NPC fla
 - [space] [population=mixed] civilian work pressure suits alongside military EVA pressure suits, all with sealed helmets and visibly different equipment
 - [space] [population=mixed] civilian survey pressure suits and naval inspection pressure suits, with closed helmets and distinct individual suit markings
 - [space] role-appropriate sealed pressure suits with closed helmets, secured tools and restrained individual color accents
+
+## Armament
+- x10 no weapons carried; hands free for tools, bags and everyday tasks
+- x2 nobody armed beyond sheathed work knives and multitools worn on belts
+- x2 no weapons carried; hard equipment cases and tool bags are the only kit in hand
+- [population=civilian,mixed] a couple of private security guards with holstered pistols among otherwise unarmed civilians
+- [population=civilian,mixed] one frontier settler with a hunting rifle slung over the shoulder while everyone else goes unarmed
+- [population=civilian,mixed] a plainclothes bodyguard with a compact pistol in a shoulder holster beside an unarmed client
+- [population=civilian,mixed] a civilian ranger with a scoped bolt-action rifle slung and a machete sheathed on the pack, others unarmed
+- x3 [population=military,mixed] every service member wears a holstered service pistol at the hip, hands otherwise free
+- x2 [population=military,mixed] sidearms in drop-leg holsters with magazine pouches strapped down one thigh
+- x2 [population=military,mixed] compact pistols holstered high on chest rigs over the uniform
+- x3 [population=military,mixed] bullpup service carbines slung muzzle-down across the chest, hands resting on the slings
+- x2 [population=military,mixed] service rifles slung over one shoulder, muzzles up, while people carry on with their tasks
+- x2 [population=military,mixed] a sentry pair holding rifles at a relaxed low ready while the rest of the group is unarmed
+- [population=military,mixed] AK-pattern rifles with curved magazines on cord slings, worn with mismatched irregular kit
+- [population=military,mixed] suppressed precision rifles with covered scopes slung across the back, sidearms holstered
+- x2 [population=military,mixed] rifles slung on most people with a holstered pistol on the officers
+- [population=military,mixed] a few slung carbines and one belt-fed light machine gun carried on its sling by a single gunner
+- [population=military,mixed] compact submachine guns with folded stocks clipped to chest rigs
+- [population=military,mixed] combat shotguns slung across the back beside sheathed utility knives
+- x2 [population=military,mixed] sheathed swords worn at the hip beside holstered pistols
+- [population=military,mixed] one officer with a sheathed katana crossed against the back, its edge glowing faintly at the guard, rifles slung on the rest
+- [population=military,mixed] long single-edged swords sheathed on the back and no firearms in sight
+- [outdoor,indoor] [population=military,mixed] ceremonial sabers worn at the hip on dress uniforms, otherwise unarmed
+- [population=military,mixed] long polearms banded with red cord planted upright beside the sentries, sidearms on everyone else
+- [population=military,mixed] a two-person weapons team with a shouldered rocket launcher on its strap, carbines slung on their escorts
+- [population=military,mixed] a heavy anti-mech rifle with a thick barrel shroud carried between two people, pistols holstered on the rest
+- [population=military,mixed] rifles stacked in a neat rack at the edge of the scene while the group works with only holstered pistols
+- [space] [population=military,mixed] compact carbines clamped to pressure-suit chest plates and tethered like tools
+- [space] [population=military,mixed] holstered pistols on pressure-suit thigh mounts, hands free for handholds
+- x2 [population=mixed] uniformed personnel with slung rifles and holstered pistols alongside unarmed civilians
+- [population=mixed] military escorts wearing sidearms only, with the civilians unarmed
+- [population=military] every squad member fully kitted with a slung carbine, a holstered pistol and a sheathed combat knife
+- [population=military] one marksman with a long scoped rifle slung across the back among troops carrying only pistols
 
 ## Adult age mix
 - x3 mostly young adults in their twenties, with a few experienced adults in their forties
