@@ -6,6 +6,7 @@ disk. Each sprite is an independent Qwen image edit of that original source;
 no generated expression is ever used as the next expression's input.
 """
 import argparse
+import art_styles
 import importlib.util
 import json
 import os
@@ -95,6 +96,7 @@ class Source:
     mode: str
     style_prompt: str = ""
     source_kind: str = "image"
+    art_metadata: dict = None
 
 
 @dataclass(frozen=True)
@@ -265,6 +267,8 @@ def extract_token_style(token_prompt):
 
 
 def extract_source_style(source_kind, prompt):
+    if isinstance(prompt, str) and "\nArt style: " in prompt:
+        return prompt.split("\nArt style: ", 1)[1]
     if source_kind == "token":
         return extract_token_style(prompt)
     return extract_portrait_style(prompt)
@@ -462,7 +466,7 @@ def _stage_bytes(destination, data):
 
 
 def execute_plans(plans, render_one, sidecar_path, source, dry_run=False,
-                  output=None, error=None, source_kind="image"):
+                  output=None, error=None, source_kind="image", art_metadata=None):
     """Render all plans, containing failures and atomically installing output."""
     output = output or sys.stdout
     error = error or sys.stderr
@@ -517,6 +521,7 @@ def execute_plans(plans, render_one, sidecar_path, source, dry_run=False,
                     staged.unlink()
 
             metadata[destination.name] = {
+                **(art_metadata or {}),
                 "label": plan.label,
                 "prompt": plan.prompt,
                 "seed": plan.seed,
@@ -525,6 +530,8 @@ def execute_plans(plans, render_one, sidecar_path, source, dry_run=False,
                 "when": datetime.now(timezone.utc).isoformat(),
             }
             _atomic_json(sidecar_path, metadata)
+            if art_metadata:
+                _atomic_json(sidecar_path.parent / ".art.json", art_metadata)
             if plan.replace_mode:
                 replacement_successes[plan.label] = (
                     replacement_successes.get(plan.label, 0) + 1)
@@ -628,9 +635,9 @@ def render_sprite(comfy, image_ref, args, plan, source_slug):
     prefix = "LancerExpressions/%s/%s" % (
         source_slug, plan.destination.stem)
     graph = build_graph(image_ref, plan.prompt, plan.seed, args.steps,
-                        args.quality, plan.keep_background, prefix)
+                        args.quality, plan.keep_background, art_styles.private_prefix(args, prefix))
     save_node = _node(graph, "SaveAnimatedWEBP")
-    record = comfy.wait(comfy.queue(graph), timeout=args.timeout)
+    record = comfy.wait(comfy.queue(art_styles.protect_graph(graph, args)), timeout=args.timeout)
     image = _webp_output(record, save_node)
     query = urllib.parse.urlencode({
         "filename": image["filename"],
@@ -678,6 +685,7 @@ def parse_args(argv=None):
     render.add_argument("--server")
     render.add_argument("--timeout", type=float, default=1800)
     render.add_argument("--dry-run", action="store_true")
+    art_styles.add_arguments(parser)
     args = parser.parse_args(argv)
 
     args.expressions_explicit = args.expressions is not None
@@ -719,6 +727,13 @@ def parse_args(argv=None):
         if conflicts:
             parser.error("--file redoes one sprite and is incompatible with %s"
                          % ", ".join(conflicts))
+    try:
+        had_out = bool(args.out)
+        art_styles.configure(args, "derived")
+        if not had_out and not args.image:
+            args.out = None
+    except (ValueError, OSError) as exc:
+        parser.error(str(exc))
     return args
 
 
@@ -784,15 +799,19 @@ def resolve_sources(args):
     """Resolve and validate all selected original source images before queueing."""
     if args.image:
         image = args.image.resolve()
+        art_styles.check_source(args, image)
         output = (args.out.resolve() if args.out else
                   image.parent / (image.stem + "-expressions"))
+        if getattr(args, "secret", False):
+            output = art_styles.contained(output, args.secret_root)
         return [Source(image, output, args.name or image.stem, {}, "image",
-                       source_kind="image")]
+                       source_kind="image", art_metadata=art_styles.metadata(args))]
 
     if not args.manifest.is_file():
         raise ValueError("manifest not found: %s" % args.manifest)
     jobs = []
     for folder, entry in _select_entries(art.load_manifest(args.manifest), args):
+        art_styles.restore_record(args, entry, folder, args.manifest)
         name = entry.get("name")
         if not name:
             raise ValueError("manifest entry at %s has no name" % folder)
@@ -813,7 +832,7 @@ def resolve_sources(args):
         kind, image = selected
         jobs.append(Source(
             image, Path(folder) / "expressions", name, entry["traits"], "npc",
-            extract_source_style(kind, entry.get(kind + "Prompt")), kind))
+            extract_source_style(kind, entry.get(kind + "Prompt")), kind, art_styles.metadata(args)))
     return jobs
 
 
@@ -827,6 +846,7 @@ def main(argv=None):
         sources = resolve_sources(args)
         prepared = []
         for source in sources:
+            art_styles.safe_output_directory(args, source.output_dir)
             sidecar_path = source.output_dir / "expressions.json"
             sidecar = load_sidecar(sidecar_path)
             plans, skipped = make_plans(
@@ -871,7 +891,8 @@ def main(argv=None):
         if not plans:
             continue
         try:
-            image_ref = upload_image(comfy, source.image)
+            image_ref = (upload_image(comfy, source.image, art_styles.private_prefix(args, "lancer-expressions"))
+                         if args.secret else upload_image(comfy, source.image))
         except (Exception, SystemExit) as exc:
             for plan in plans:
                 print("failed: %s: upload failed: %s" % (plan.label, exc),
@@ -883,7 +904,7 @@ def main(argv=None):
             plans,
             lambda plan, ref=image_ref, source_slug=slug: render_sprite(
                 comfy, ref, args, plan, source_slug),
-            sidecar_path, source.image, source_kind=source.source_kind)
+            sidecar_path, source.image, source_kind=source.source_kind, art_metadata=source.art_metadata)
         total_written += result.written
         total_failed += result.failed
     print("done: %d written, %d skipped, %d failed" %

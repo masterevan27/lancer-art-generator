@@ -15,6 +15,7 @@ slow and failure-prone, and it must never be able to break art generation.
     python generate-3d.py --image figure.png --out G:\\3d\\jules
 """
 import argparse
+import art_styles
 import importlib.util
 import json
 import os
@@ -298,9 +299,9 @@ def height_metres(bullet):
     return None if inches is None else round(inches * 0.0254, 4)
 
 
-def apose_prompt(entry):
+def apose_prompt(entry, style=None):
     """The token prompt Stage 0 renders. The portrait half is discarded."""
-    return npc_gen.build_prompts(apose_npc(entry))[1]
+    return npc_gen.build_prompts(apose_npc(entry), style)[1]
 
 
 # --------------------------------------------------------------------------
@@ -762,7 +763,7 @@ def render_apose(comfy, args, entry):
     Still has its background: cut_out() is the other half.
     """
     npc = apose_npc(entry)
-    prompt = npc_gen.build_prompts(npc)[1]
+    prompt = npc_gen.build_prompts(npc, getattr(args, "selected_style", None))[1]
     category = npc_gen.role_category(npc)
     slug = art._slug(npc["name"])
     knobs = npc_gen.Knobs(args, npc_gen.TOKEN_SIZE, npc_gen.COMFY_PREFIX)
@@ -778,7 +779,7 @@ def render_apose(comfy, args, entry):
                         npc_gen.entry_for(category, slug, "apose", prompt),
                         entry["seed"], knobs)
     images = art.Comfy.images(comfy.wait(
-        comfy.queue(job), timeout=args.timeout))
+        comfy.queue(art_styles.protect_graph(job, args)), timeout=args.timeout))
     if not images:
         raise RuntimeError("the A-pose render produced no image")
     time.sleep(args.pause)
@@ -806,14 +807,14 @@ def cut_out(comfy, args, subject, source, folder):
     except art.WorkflowError as exc:
         raise SystemExit("%s: %s" % (args.rmbg.name, exc))
 
-    ref = upload_image(comfy, source) if isinstance(source, Path) \
+    ref = upload_image(comfy, source, art_styles.private_prefix(args, "lancer3d")) if isinstance(source, Path) \
         else art.image_ref(source)
     prefix = "%s/%s/%s/apose_rmbg" % (npc_gen.COMFY_PREFIX,
                                       subject.category, subject.slug)
     cut_job = art.build_post_job(
         post, post_slots, ref, prefix, subject.seed, knobs)
     cut = art.Comfy.images(comfy.wait(
-        comfy.queue(cut_job), timeout=args.timeout))
+        comfy.queue(art_styles.protect_graph(cut_job, args)), timeout=args.timeout))
     if not cut:
         raise RuntimeError("background removal produced no image")
     time.sleep(args.pause)
@@ -1094,7 +1095,7 @@ def stage_mesh(comfy, args, subject, folder, apose_png):
     side = square_apose(apose_png, square_png)
     print("    squared -> %s (%dx%d)" %
           (square_png.name, side, side), flush=True)
-    ref = upload_image(comfy, square_png)
+    ref = upload_image(comfy, square_png, art_styles.private_prefix(args, "lancer3d"))
 
     written = []
     for workflow, label, target in (
@@ -1107,7 +1108,7 @@ def stage_mesh(comfy, args, subject, folder, apose_png):
         prefix = "%s/%s/%s/%s" % (npc_gen.COMFY_PREFIX,
                                   subject.category, subject.slug, label)
         job = build_mesh_job(template, ref, prefix, subject.seed)
-        record = comfy.wait(comfy.queue(job), timeout=args.timeout)
+        record = comfy.wait(comfy.queue(art_styles.protect_graph(job, args)), timeout=args.timeout)
         files = mesh_outputs(record)
         if not files:
             raise RuntimeError("the %s job produced no .glb" % label)
@@ -1403,8 +1404,8 @@ def generate_back_view(comfy, args, subject, folder, shell, stem, entry,
         raise SystemExit("Workflow not found: %s" % BACKVIEW_WORKFLOW)
     template = art.load_api_workflow(BACKVIEW_WORKFLOW)
 
-    refs = [upload_image(comfy, render),
-            upload_image(comfy, reference_image(folder)),
+    refs = [upload_image(comfy, render, art_styles.private_prefix(args, "lancer3d")),
+            upload_image(comfy, reference_image(folder), art_styles.private_prefix(args, "lancer3d")),
             None]
     # The portrait is evidence only when it was composed from behind (§4.4). A
     # missing file is not an error: an NPC folder moved by hand keeps its 3d/
@@ -1412,7 +1413,7 @@ def generate_back_view(comfy, args, subject, folder, shell, stem, entry,
     if entry is not None and portrait is not None and portrait.exists() \
             and rear_facing(entry):
         print("      portrait is rear-facing - using it as a third reference")
-        refs[2] = upload_image(comfy, portrait)
+        refs[2] = upload_image(comfy, portrait, art_styles.private_prefix(args, "lancer3d"))
 
     # A standalone --out run has no traits to build a prompt from, the same
     # gap that makes --out require --image. The stance alone is what is left
@@ -1426,7 +1427,7 @@ def generate_back_view(comfy, args, subject, folder, shell, stem, entry,
                              subject.seed)
 
     print("    back view ...", flush=True)
-    images = art.Comfy.images(comfy.wait(comfy.queue(job),
+    images = art.Comfy.images(comfy.wait(comfy.queue(art_styles.protect_graph(job, args)),
                                          timeout=args.timeout))
     if not images:
         raise RuntimeError("the back-view job produced no image")
@@ -1569,6 +1570,7 @@ def parse_args(argv=None):
                           "render and the host needs time to give the VRAM back "
                           "(default: %(default)s)")
 
+    art_styles.add_arguments(p)
     args = p.parse_args(argv)
 
     explicit_stage = args.stage is not None
@@ -1632,6 +1634,13 @@ def parse_args(argv=None):
     # object, so the same shape generate-npc.py builds has to be here too.
     args.gender_workflows = dict(
         npc_gen.GENDER_WORKFLOWS, woman=args.workflow_woman)
+    try:
+        had_out = bool(args.out)
+        art_styles.configure(args, "derived")
+        if not had_out:
+            args.out = None
+    except (ValueError, OSError) as exc:
+        p.error(str(exc))
     return args
 
 
@@ -1682,14 +1691,19 @@ def main(argv=None):
             raise SystemExit("Manifest not found: %s" % args.manifest)
         manifest = art.load_manifest(args.manifest)
         picked = select_entries(manifest, args)
+        for folder, entry in picked:
+            art_styles.restore_record(args, entry, folder, args.manifest)
         if not picked:
             print("nothing selected")
             return 0
         jobs = [(npc_3d_folder(p), Path(p), e) for p, e in picked]
 
+    if args.image:
+        art_styles.check_source(args, args.image)
     if args.dry_run:
         for folder, _, entry in jobs:
             if entry:
+                art_styles.restore_record(args, entry, folder, args.manifest)
                 print("\n%s  \"%s\"  -> %s"
                       % (entry["name"], entry.get("callsign", ""), folder))
             else:
@@ -1699,7 +1713,7 @@ def main(argv=None):
                 print("  A-pose supplied: %s%s"
                       % (args.image, " (cut out first)" if args.remove_bg else ""))
             else:
-                print("  A-pose token prompt:\n%s" % apose_prompt(entry))
+                print("  A-pose token prompt:\n%s" % apose_prompt(entry, args.selected_style))
         return 0
 
     check_image(args, [folder for folder, _, _ in jobs])
@@ -1712,6 +1726,8 @@ def main(argv=None):
     started = time.time()
     queued_any = False
     for folder, folder_path, entry in jobs:
+        if entry:
+            art_styles.restore_record(args, entry, folder, args.manifest)
         subject = subject_of(
             entry, args) if entry else standalone_subject(args)
         if should_skip(folder, args):
@@ -1735,7 +1751,11 @@ def main(argv=None):
                   % (entry["name"], entry.get("callsign", ""), folder))
         else:
             print("\n%s  -> %s" % (subject.name, folder))
+        if args.secret:
+            folder = art_styles.safe_output_directory(args, folder)
         folder.mkdir(parents=True, exist_ok=True)
+        if entry or args.secret or args.art_style:
+            art_styles.write_metadata(folder / ".art.json", args)
         try:
             apose = None
             if args.image:

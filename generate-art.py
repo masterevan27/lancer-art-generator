@@ -30,6 +30,7 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import art_styles
 import json
 import os
 import random
@@ -388,7 +389,7 @@ def build_post_job(template, slots, ref, prefix, seed, args):
         graph[slots.sampler]["inputs"]["seed"] = seed
 
     prune_orphans(graph)
-    return graph
+    return art_styles.protect_graph(graph, args)
 
 
 def prune_orphans(graph):
@@ -421,7 +422,7 @@ def prune_orphans(graph):
 def build_job(template, slots, entry, seed, args):
     graph = json.loads(json.dumps(template))  # deep copy per job
 
-    graph[slots.positive]["inputs"]["text"] = entry.prompt
+    graph[slots.positive]["inputs"]["text"] = art_styles.apply_style(entry.prompt, getattr(args, "selected_style", None))
     prefix = (args.output_prefix + "/" + entry.prefix).strip("/")
     graph[slots.save]["inputs"]["filename_prefix"] = prefix
 
@@ -465,7 +466,7 @@ def build_job(template, slots, entry, seed, args):
             "know how to set: " + ", ".join(leftover)
         )
 
-    return graph
+    return art_styles.protect_graph(graph, args)
 
 
 # --------------------------------------------------------------------------
@@ -587,7 +588,7 @@ class Comfy:
             }
         )
         data = self._get_bytes("/view?" + query)
-        target = dest_dir / image.get("subfolder", "") / image["filename"]
+        target = art_styles.contained(dest_dir / image.get("subfolder", "") / image["filename"], dest_dir)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
         return target
@@ -736,7 +737,12 @@ def parse_args(argv=None):
     run.add_argument("--timeout", type=float, default=1800,
                      help="per-image timeout in seconds (default 1800)")
 
+    art_styles.add_arguments(p)
     args = p.parse_args(argv)
+    try:
+        art_styles.configure(args, "catalogue", "download_to")
+    except (ValueError, OSError) as exc:
+        p.error(str(exc))
     if args.skip_alternates and args.only_alternates:
         p.error("--skip-alternates and --only-alternates are mutually exclusive")
     if args.variants < 1:
@@ -861,6 +867,9 @@ def main(argv=None):
 
     selected = select(entries, args)
     manifest = load_manifest(args.manifest)
+    for stored in manifest.values():
+        if isinstance(stored, dict) and stored.get("secret") and not args.secret:
+            raise SystemExit("Private manifest records require --secret")
     if args.resume:
         before = len(selected)
         selected = [e for e in selected if e.key not in manifest]
@@ -966,7 +975,11 @@ def main(argv=None):
             print("%s-> %s" % (indent, os.path.join(image.get("subfolder", ""), image["filename"])))
             if args.download_to:
                 try:
-                    comfy.download(image, args.download_to)
+                    downloaded = comfy.download(image, args.download_to)
+                    sidecar = art_styles.contained(downloaded.with_suffix(".background.json"), args.download_to)
+                    details = dict(art_styles.metadata(args), kind="background" if "background" in args.prompts.name.lower() else "catalogue",
+                                   prompt=art_styles.apply_style(entry.prompt, args.selected_style))
+                    sidecar.write_text(json.dumps(details, indent=2) + "\n", encoding="utf-8")
                 except Exception as exc:
                     print("%s! download failed: %s" % (indent, exc), file=sys.stderr)
         return out
@@ -991,6 +1004,8 @@ def main(argv=None):
         return produced
 
     for index, entry in enumerate(selected, 1):
+        if entry.key in manifest:
+            art_styles.restore_record(args, manifest[entry.key], manifest=args.manifest)
         for variant in range(args.variants):
             seed = (args.seed + variant) if args.seed is not None else random.randint(0, 2 ** 32 - 1)
             tag = "[%d/%d]" % (index, len(selected))
@@ -1037,6 +1052,7 @@ def main(argv=None):
                 "prefix": entry.prefix,
                 "runs": [],
             })
+            record_entry.update(art_styles.metadata(args))
             record_entry["runs"].append({
                 "seed": seed,
                 "source": [

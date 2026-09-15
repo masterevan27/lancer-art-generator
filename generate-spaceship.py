@@ -58,6 +58,7 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import art_styles
 import importlib.util
 import json
 import os
@@ -1131,7 +1132,7 @@ def faction_line(ship):
     return "%s, " % visual if visual else ""
 
 
-def build_ship_prompts(ship):
+def build_ship_prompts(ship, style=None):
     """The portrait and token prompt text for one rolled ship."""
     _, scene, _ = split_backdrop(ship["Backdrop"])
     band = sp.size_of(ship["_raw"]["Size"])
@@ -1223,8 +1224,8 @@ def build_ship_prompts(ship):
         fields,
         glow_line=(GLOW_TOKEN if equipped_glow else none_line).format(**fields))
 
-    prompts = (PORTRAIT_TEMPLATE.format(**portrait_fields),
-               TOKEN_TEMPLATE.format(**token_fields))
+    prompts = (art_styles.apply_style(PORTRAIT_TEMPLATE.format(**portrait_fields), style),
+               art_styles.apply_style(TOKEN_TEMPLATE.format(**token_fields), style))
 
     for label, text in zip(("portrait", "token"), prompts):
         n = estimate_tokens(text)
@@ -1481,6 +1482,7 @@ def write_ship_dossier(path, ship, seed, prompts, images, callsign, band, max_px
     manifest already carries it as integers: a human reading "3 x 2 hexes"
     learns something the entry's gridWidth/gridHeight only tell a program.
     """
+    path = art_styles.contained(path, path.parent)
     portrait_prompt, token_prompt = prompts
     grid_w, grid_h = TOKEN_GRID[band]
     # Off the rendered traits rather than off _raw, so a regen from an entry
@@ -2037,7 +2039,12 @@ def parse_args(argv=None):
                           "background removal), so a batch doesn't queue jobs back-to-back "
                           "faster than the server can keep up (default: %(default)s)")
 
+    art_styles.add_arguments(p)
     args = p.parse_args(argv)
+    try:
+        art_styles.configure(args, "spaceships", "out")
+    except (ValueError, OSError) as exc:
+        p.error(str(exc))
 
     # --pronouns and --unarmed are deliberately absent rather than accepted and
     # ignored. A ship has neither, and a silent no-op would hide a GUI that is
@@ -2224,7 +2231,8 @@ def print_trait_choices(args):
     diagnostic goes to stderr.
     """
     manifest = art.load_manifest(args.regen_manifest)
-    _, entry = find_regen_entry(manifest, args.regen_id, args.regen_manifest)
+    folder_path, entry = find_regen_entry(manifest, args.regen_id, args.regen_manifest)
+    art_styles.restore_record(args, entry, folder_path, args.regen_manifest)
     ship = ship_from_entry(entry, args.regen_id, warn=False)
 
     # Pinning is what makes a chosen value mean anything, and an entry with no
@@ -2459,6 +2467,9 @@ def regenerate_one(args):
     """
     manifest = art.load_manifest(args.regen_manifest)
     folder_path, entry = find_regen_entry(manifest, args.regen_id, args.regen_manifest)
+    art_styles.restore_record(args, entry, folder_path, args.regen_manifest)
+    art_styles.safe_output_directory(args, folder_path)
+    entry.update(art_styles.metadata(args))
     ship = ship_from_entry(entry, args.regen_id)
 
     # --apply-only's caller parses stdout whole, the same contract
@@ -2589,7 +2600,7 @@ def regenerate_one(args):
         return 0
 
     seed = args.new_seed if args.new_seed is not None else entry["seed"]
-    prompts = build_ship_prompts(ship)
+    prompts = build_ship_prompts(ship, args.selected_style)
     portrait_prompt, token_prompt = prompts
     band = band_for_regen(ship, entry, args.regen_id)
     tok_size = token_size(band, args.max_token_px)
@@ -2852,6 +2863,7 @@ def manifest_entry(ship, seed, callsign, band, args, written,
             # written, and never appear in the grid.
             "id": ship_id(ship["name"], seed),
             "kind": "spaceship",
+            **art_styles.metadata(args),
             "name": ship["name"],
             "callsign": callsign,
             "seed": seed,
@@ -2950,7 +2962,7 @@ def main(argv=None):
         # its own: a code drawn off the ship's rng would make every trait after
         # it move if the code's shape ever changed.
         callsign = hull_code(random.Random("%d/hull" % seed))
-        rolled.append((seed, ship, callsign, build_ship_prompts(ship)))
+        rolled.append((seed, ship, callsign, build_ship_prompts(ship, args.selected_style)))
 
     out("%s: %d tables, %d ship(s) rolled from base seed %d"
         % (args.tables.name, len(tables), args.count, base_seed))
@@ -3000,6 +3012,8 @@ def main(argv=None):
         tok_size = token_size(band, args.max_token_px)
         category = ship_category(ship)
         folder = asset_folder(args.out, ship["name"], category, args.overwrite)
+        if args.secret:
+            folder = art_styles.safe_output_directory(args, folder)
         slug = art._slug(ship["name"])
         stem = _safe(ship["name"])
         tag = "[%d/%d]" % (index, len(rolled))

@@ -59,6 +59,7 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import art_styles
 import functools
 import importlib.util
 import json
@@ -3331,7 +3332,7 @@ def carry_sentence(fields, weapon, gear):
     return "{Subject} {carry} %s. ".format(**fields) % join.join(carried)
 
 
-def build_prompts(npc):
+def build_prompts(npc, style=None):
     """The portrait and token prompt text for one rolled NPC."""
     shot, scene, flags = split_backdrop(npc["Backdrop"])
     # .get, not npc["Weapon"]: --regen-manifest rebuilds npc from a stored
@@ -3432,8 +3433,8 @@ def build_prompts(npc):
         fields, gear_line=carrying,
         glow_line=(GLOW_TOKEN if equipped_glow else none_line).format(**fields))
 
-    prompts = (PORTRAIT_TEMPLATE.format(**portrait_fields),
-               TOKEN_TEMPLATE.format(**token_fields))
+    prompts = (art_styles.apply_style(PORTRAIT_TEMPLATE.format(**portrait_fields), style),
+               art_styles.apply_style(TOKEN_TEMPLATE.format(**token_fields), style))
 
     for label, text in zip(("portrait", "token"), prompts):
         n = estimate_tokens(text)
@@ -3479,6 +3480,7 @@ def npc_folder(root, name, category, overwrite):
 
 
 def write_dossier(path, npc, seed, prompts, images):
+    path = art_styles.contained(path, path.parent)
     portrait_prompt, token_prompt = prompts
     traits = [
         ("Callsign", npc["Callsigns"]),
@@ -3569,6 +3571,8 @@ class Knobs:
         self.width, self.height = size
         self.set = args.set
         self.output_prefix = output_prefix
+        self.secret = getattr(args, "secret", False)
+        self.private_prefix = getattr(args, "private_prefix", "secret")
 
 
 def entry_for(category, slug, stage, prompt):
@@ -3582,6 +3586,7 @@ def fetch(comfy, image, target):
     Comfy.download() mirrors the server's subfolder tree under the destination;
     here the destination filename is the whole point, so go to /view directly.
     """
+    target = art_styles.contained(target, target.parent)
     query = urllib.parse.urlencode({
         "filename": image["filename"],
         "subfolder": image.get("subfolder", ""),
@@ -3742,7 +3747,12 @@ def parse_args(argv=None):
                           "background removal), so a batch doesn't queue jobs back-to-back "
                           "faster than the server can keep up (default: %(default)s)")
 
+    art_styles.add_arguments(p)
     args = p.parse_args(argv)
+    try:
+        art_styles.configure(args, "npcs", "out")
+    except (ValueError, OSError) as exc:
+        p.error(str(exc))
 
     if args.no_portrait and args.no_token:
         p.error("--no-portrait and --no-token together leave nothing to generate")
@@ -4576,7 +4586,8 @@ def print_trait_choices(args):
     stderr.
     """
     manifest = art.load_manifest(args.regen_manifest)
-    _, entry = find_regen_entry(manifest, args.regen_id, args.regen_manifest)
+    folder_path, entry = find_regen_entry(manifest, args.regen_id, args.regen_manifest)
+    art_styles.restore_record(args, entry, folder_path, args.regen_manifest)
     npc = npc_from_entry(entry, args.regen_id, warn=False)
 
     # Pinning is what makes a chosen value mean anything, and a legacy entry
@@ -4747,6 +4758,9 @@ def regenerate_one(args):
     """
     manifest = art.load_manifest(args.regen_manifest)
     folder_path, entry = find_regen_entry(manifest, args.regen_id, args.regen_manifest)
+    art_styles.restore_record(args, entry, folder_path, args.regen_manifest)
+    art_styles.safe_output_directory(args, folder_path)
+    entry.update(art_styles.metadata(args))
     npc = npc_from_entry(entry, args.regen_id)
 
     # --apply-only's caller parses stdout whole, the same contract
@@ -4878,7 +4892,7 @@ def regenerate_one(args):
         return 0
 
     seed = args.new_seed if args.new_seed is not None else entry["seed"]
-    prompts = build_prompts(npc)
+    prompts = build_prompts(npc, args.selected_style)
     portrait_prompt, token_prompt = prompts
     category = role_category(npc)
     folder = Path(folder_path)
@@ -5077,7 +5091,7 @@ def main(argv=None):
     for n in range(args.count):
         seed = base_seed + n
         npc = roll_npc(tables, random.Random(seed), overrides, args.unarmed)
-        rolled.append((seed, npc, build_prompts(npc)))
+        rolled.append((seed, npc, build_prompts(npc, args.selected_style)))
 
     print("%s: %d tables, %d NPC(s) rolled from base seed %d" % (
         args.tables.name, len(tables), args.count, base_seed))
@@ -5146,6 +5160,8 @@ def main(argv=None):
         portrait_prompt, token_prompt = prompts
         category = role_category(npc)
         folder = npc_folder(args.out, npc["name"], category, args.overwrite)
+        if args.secret:
+            folder = art_styles.safe_output_directory(args, folder)
         slug = art._slug(npc["name"])
         stem = _safe(npc["name"])
         tag = "[%d/%d]" % (index, len(rolled))
@@ -5197,6 +5213,7 @@ def main(argv=None):
 
         done += 1
         manifest[str(folder)] = {
+            **art_styles.metadata(args),
             # Deterministic from name+seed so a --overwrite rerun of the same
             # NPC reuses it rather than minting a new one - this is what the
             # Foundry importer keys its "already imported" tracking on.

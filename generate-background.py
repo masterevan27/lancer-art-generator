@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Preview reproducible backgrounds and render scenes or reference battlemaps."""
 import argparse
+import art_styles
 import contextlib
 import json
 from pathlib import Path
@@ -27,7 +28,12 @@ def parse_args(argv=None):
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--notes", default="")
     parser.add_argument("--timeout", type=int, default=1800)
+    art_styles.add_arguments(parser)
     args = parser.parse_args(argv)
+    try:
+        art_styles.configure(args, "backgrounds", "output_dir")
+    except (ValueError, OSError) as exc:
+        parser.error(str(exc))
     if (args.preview or args.render) and not args.request_stdin:
         parser.error("--preview and --render require --request-stdin")
     if args.render and not args.output_dir:
@@ -69,29 +75,36 @@ def main(argv=None):
             print(json.dumps(scene.load_catalogue(args.tables), ensure_ascii=False))
             return 0
         if args.preview:
-            print(json.dumps(scene.preview(_request(), scene.load_catalogue(args.tables)), ensure_ascii=False))
+            result = scene.preview(_request(), scene.load_catalogue(args.tables))
+            for plan in result["plans"]:
+                plan["prompt"] = art_styles.apply_style(plan["prompt"], args.selected_style)
+            print(json.dumps(result, ensure_ascii=False))
             return 0
         if args.render:
             plans = scene.validate_plans(_request(), scene.load_catalogue(args.tables))
         else:
+            art_styles.check_source(args, args.battlemap)
             metadata = scene.battlemap_metadata(args.battlemap, args.width, args.height, args.seed, args.notes)
+            metadata["prompt"] = art_styles.apply_style(metadata["prompt"], args.selected_style)
+            metadata.update(art_styles.metadata(args))
         # Existing ComfyUI utilities sometimes log to stdout; reserve it for events.
         with contextlib.redirect_stdout(sys.stderr):
             comfy = scene.art_module().find_server(args.server)
         if args.render:
             for plan in plans:
+                plan["prompt"] = art_styles.apply_style(plan["prompt"], args.selected_style)
                 with contextlib.redirect_stdout(sys.stderr):
-                    graph = scene.build_scene_graph(plan, "LancerBackgrounds/" + uuid.uuid4().hex)
-                    data = _render_graph(comfy, graph, args.timeout)
-                    path = scene.save_result(args.output_dir, f"Background-{plan['environment']}-{plan['seed']}", data, dict(plan, kind="background"))
+                    graph = scene.build_scene_graph(plan, art_styles.private_prefix(args, "LancerBackgrounds/" + uuid.uuid4().hex))
+                    data = _render_graph(comfy, art_styles.protect_graph(graph, args), args.timeout)
+                    path = scene.save_result(args.output_dir, f"Background-{plan['environment']}-{plan['seed']}", data, dict(plan, kind="background", **art_styles.metadata(args)))
                 _event(path)
         else:
             source = args.battlemap.resolve()
             with contextlib.redirect_stdout(sys.stderr):
                 expressions = scene._load_module("generate-expressions.py", "lancer_background_expressions")
-                image_ref = expressions.upload_image(comfy, source, "lancer-backgrounds/" + uuid.uuid4().hex)
-                graph = scene.build_battlemap_graph(image_ref, metadata["prompt"], args.seed, args.width, args.height, "LancerBattlemaps/" + uuid.uuid4().hex)
-                data = _render_graph(comfy, graph, args.timeout)
+                image_ref = expressions.upload_image(comfy, source, art_styles.private_prefix(args, "lancer-backgrounds/" + uuid.uuid4().hex))
+                graph = scene.build_battlemap_graph(image_ref, metadata["prompt"], args.seed, args.width, args.height, art_styles.private_prefix(args, "LancerBattlemaps/" + uuid.uuid4().hex))
+                data = _render_graph(comfy, art_styles.protect_graph(graph, args), args.timeout)
                 path = scene.save_result(args.output_dir or source.parent, source.stem + " Battlemap", data, metadata)
             _event(path)
         return 0

@@ -27,6 +27,7 @@ manifest or the output tree. It borrows only the ComfyUI plumbing.
 Full documentation: docs/animate-portrait.md
 """
 import argparse
+import art_styles
 import collections
 import copy
 import importlib.util
@@ -461,7 +462,17 @@ def parse_args(argv=None):
     parser.add_argument("--server", help="ComfyUI address (default: probe 8000-8015)")
     parser.add_argument("--timeout", type=float, default=3600.0,
                         help="seconds to wait for the render (default: 3600)")
-    return resolve_preset(parser.parse_args(argv))
+    art_styles.add_arguments(parser)
+    args = resolve_preset(parser.parse_args(argv))
+    try:
+        supplied_out = args.out
+        art_styles.configure(args, "animations")
+        if args.secret and not supplied_out:
+            args.out = args.secret_root / "animations" / (Path(args.image).stem + "-animated.webp")
+        args.prefix = art_styles.private_prefix(args, args.prefix)
+    except (ValueError, OSError) as exc:
+        parser.error(str(exc))
+    return args
 
 
 def main(argv=None):
@@ -474,7 +485,10 @@ def main(argv=None):
     width, height = args.width, args.height
     frames = snap_frames(args.frames)
     seed = resolve_seed(args.seed)
+    art_styles.check_source(args, image)
     destination = output_path(image, args.out)
+    if args.secret:
+        destination = art_styles.contained(destination, args.secret_root)
 
     # After the seed is settled, so one --seed reproduces both the draw and
     # the render it went into.
@@ -504,7 +518,7 @@ def main(argv=None):
 
     comfy = art.find_server(args.server)
     print("  uploading...")
-    ref = upload_image(comfy, image)
+    ref = upload_image(comfy, image, art_styles.private_prefix(args, "lancer-portraits"))
 
     graph = build_graph(
         image_ref=ref, description=args.describe, negative=args.negative,
@@ -514,11 +528,12 @@ def main(argv=None):
     graph[_node(graph, "SaveAnimatedWEBP")]["inputs"]["quality"] = args.quality
 
     started = time.time()
-    prompt_id = comfy.queue(graph)
+    prompt_id = comfy.queue(art_styles.protect_graph(graph, args))
     print("  queued %s - a 14B two-stage pass is minutes, not seconds" % prompt_id)
     record = comfy.wait(prompt_id, timeout=args.timeout)
 
     data = save_result(comfy, record, destination)
+    art_styles.write_metadata(destination.with_suffix(".art.json"), args)
 
     print("  %s (%.1f KB) in %.0fs"
           % (destination, len(data) / 1024.0, time.time() - started))

@@ -1,5 +1,51 @@
 # Lancer Art Generator
 
+## Art styles and private generation
+
+The generation CLIs accept `--art-style ID` and `--art-styles PATH`. The latter
+defaults to `art-styles.json` beside the scripts. Its format is:
+
+```json
+{
+  "styles": [
+    {"id": "ink", "name": "Ink wash", "prompt": "Monochrome ink wash with soft paper texture.", "hidden": false}
+  ]
+}
+```
+
+The built-in `default` style always preserves the original subject-specific
+prompts. It remains available when the catalog is missing, blank, or empty; its
+reserved ID cannot be redefined. Custom styles replace the house rendering
+clauses while retaining subject and framing instructions. IDs use letters,
+digits, hyphens, and underscores; names and prompts must be nonblank.
+`secret: true` is accepted as an alias for `hidden: true`.
+
+Hidden styles require `--secret`. Every `--secret` job, including one using the
+default or a public style, also requires `--secret-config PATH`. That JSON file
+must contain `secretImagesDir`; the GUI configuration file can be passed
+directly. Relative storage paths resolve beside the configuration file.
+
+```powershell
+python generate-npc.py --art-style ink --dry-run
+python generate-npc.py --secret --secret-config C:/private/lancer-config.json --art-style ink
+python generate-spaceship.py --secret --secret-config C:/private/lancer-config.json
+```
+
+Private NPCs, ships, and backgrounds go under `secretImagesDir/npcs`,
+`secretImagesDir/spaceships`, and `secretImagesDir/backgrounds`. The shared
+private manifest is `secretImagesDir/manifest.json`. Output overrides and
+regeneration paths must resolve inside that root. Records retain `art_style`
+(`id`, `name`) and `secret` metadata; regeneration retains the saved style unless
+explicitly changed. Missing saved style definitions cause a clear failure.
+
+Background creation accepts the same flags for preview and render; pass the
+same selection for both. Expressions, animation, and 3D commands also accept
+the privacy flags and refuse recognized private sources without them. Private
+ComfyUI uploads and output prefixes use a separate `secret/` namespace,
+including intermediate background-removal and mesh passes. ComfyUI itself is
+an operator-controlled backend; browser authentication is provided by the GUI
+server, not by these trusted local CLIs. No credentials are shipped here.
+
 A ComfyUI-driven batch art pipeline for a *Lancer* TTRPG campaign, extracted
 from the [Lancer-TTRPG-GM-Hub](https://github.com/masterevan27/Lancer-TTRPG-GM-Hub)
 campaign repository into its own standalone tool. Three entry points —
