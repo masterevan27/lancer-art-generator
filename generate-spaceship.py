@@ -59,6 +59,7 @@ from __future__ import annotations
 
 import argparse
 import art_styles
+import image_dimensions
 import importlib.util
 import json
 import os
@@ -1319,7 +1320,7 @@ def token_size(band, max_px=MAX_TOKEN_PX):
     return w, h
 
 
-def token_metadata(band, max_px=MAX_TOKEN_PX):
+def token_metadata(band, max_px=MAX_TOKEN_PX, canvas=None):
     """The five size fields a manifest entry carries, as ints.
 
     Written from one place because the render path, the regen path and the
@@ -1329,7 +1330,7 @@ def token_metadata(band, max_px=MAX_TOKEN_PX):
     token stretched across the wrong number of hexes rather than as an error.
     """
     grid_w, grid_h = TOKEN_GRID[band]
-    width, height = token_size(band, max_px)
+    width, height = canvas or token_size(band, max_px)
     return {
         "sizeBand": band,
         "hexes": sp.hexes_for(band),
@@ -2040,7 +2041,12 @@ def parse_args(argv=None):
                           "faster than the server can keep up (default: %(default)s)")
 
     art_styles.add_arguments(p)
+    image_dimensions.add_arguments(p)
     args = p.parse_args(argv)
+    try:
+        image_dimensions.validate(args)
+    except ValueError as exc:
+        p.error(str(exc))
     supplied = sys.argv[1:] if argv is None else argv
     args.workflow_explicit = any(a == '--workflow' or a.startswith('--workflow=') for a in supplied)
     try:
@@ -2440,9 +2446,13 @@ def persist_size(entry, ship, max_px=MAX_TOKEN_PX):
     replaced with a guessed 'small'. reroll_from_raw() has already warned about
     the missing bullet by the time this runs.
     """
+    saved = entry.get('imageDimensions')
+    canvas = (saved['width'], saved['height']) if saved else None
+    if saved:
+        entry.update(tokenWidth=canvas[0], tokenHeight=canvas[1])
     if not ship.get("_raw", {}).get("Size"):
         return
-    entry.update(token_metadata(band_of(ship), max_px))
+    entry.update(token_metadata(band_of(ship), max_px, canvas))
 
 
 def band_for_regen(ship, entry, regen_id):
@@ -2485,6 +2495,8 @@ def regenerate_one(args):
     art_styles.restore_record(args, entry, folder_path, args.regen_manifest)
     art_styles.safe_output_directory(args, folder_path)
     entry.update(art_styles.metadata(args))
+    image_dimensions.restore(args, entry)
+    entry.update(image_dimensions.metadata(args))
     ship = ship_from_entry(entry, args.regen_id)
 
     # --apply-only's caller parses stdout whole, the same contract
@@ -2618,7 +2630,7 @@ def regenerate_one(args):
     prompts = build_ship_prompts(ship, args.selected_style)
     portrait_prompt, token_prompt = prompts
     band = band_for_regen(ship, entry, args.regen_id)
-    tok_size = token_size(band, args.max_token_px)
+    tok_size = image_dimensions.size(args, token_size(band, args.max_token_px))
     # The entry's own shipType when the raw bullet is gone: the folder is being
     # reused in place anyway, so `category` here only shapes the ComfyUI
     # filename prefix, and taking the recorded slug keeps that prefix matching
@@ -2644,6 +2656,7 @@ def regenerate_one(args):
     print("ComfyUI: %s" % comfy.base)
 
     def render(prompt, stage, size):
+        image_dimensions.require_slots(args, slots)
         knobs = Knobs(args, size, COMFY_PREFIX)
         job = art.build_job(template, slots, entry_for(category, slug, stage, prompt), seed, knobs)
         record = comfy.wait(comfy.queue(job), timeout=args.timeout)
@@ -2806,11 +2819,11 @@ def dry_run_report(args, rolled):
         print("    workflow %s" % args.workflow.name)
         if not args.no_portrait:
             print("    portrait %dx%d ~%d tok:"
-                  % (PORTRAIT_SIZE + (estimate_tokens(portrait_prompt),)))
+                  % (image_dimensions.size(args, PORTRAIT_SIZE) + (estimate_tokens(portrait_prompt),)))
             print("        %s" % portrait_prompt)
         if not args.no_token:
             print("    token    %dx%d ~%d tok:"
-                  % (token_size(band, args.max_token_px)
+                  % (image_dimensions.size(args, token_size(band, args.max_token_px))
                      + (estimate_tokens(token_prompt),)))
             print("        %s" % token_prompt)
     stages = (0 if args.no_portrait else 1) + (0 if args.no_token else 2)
@@ -2838,7 +2851,8 @@ def dry_run_json(args, rolled):
                 "id": ship_id(ship["name"], seed),
                 "shipType": ship_type_of(ship),
             },
-            **token_metadata(band, args.max_token_px),
+            **token_metadata(band, args.max_token_px, image_dimensions.size(args, None)),
+            **image_dimensions.metadata(args),
             **{
                 "folder": str(asset_folder(args.out, ship["name"],
                                            ship_category(ship), args.overwrite)),
@@ -2881,6 +2895,7 @@ def manifest_entry(ship, seed, callsign, band, args, written,
             "id": ship_id(ship["name"], seed),
             "kind": "spaceship",
             **art_styles.metadata(args),
+            **image_dimensions.metadata(args),
             "name": ship["name"],
             "callsign": callsign,
             "seed": seed,
@@ -2897,7 +2912,7 @@ def manifest_entry(ship, seed, callsign, band, args, written,
             "rawTraits": dict(ship["_raw"]),
             "shipType": ship_type_of(ship),
         },
-        **token_metadata(band, args.max_token_px),
+        **token_metadata(band, args.max_token_px, image_dimensions.size(args, None)),
         **{
             "files": written,
             "portrait": portrait_file,
@@ -3001,6 +3016,7 @@ def main(argv=None):
 
     def render(prompt, category, slug, stage, size, seed):
         """Queue one text -> image job and return the images it produced."""
+        image_dimensions.require_slots(args, slots)
         knobs = Knobs(args, size, COMFY_PREFIX)
         job = art.build_job(template, slots, entry_for(category, slug, stage, prompt), seed, knobs)
         record = comfy.wait(comfy.queue(job), timeout=args.timeout)
@@ -3026,7 +3042,7 @@ def main(argv=None):
     for index, (seed, ship, callsign, prompts) in enumerate(rolled, 1):
         portrait_prompt, token_prompt = prompts
         band = band_of(ship)
-        tok_size = token_size(band, args.max_token_px)
+        tok_size = image_dimensions.size(args, token_size(band, args.max_token_px))
         category = ship_category(ship)
         folder = asset_folder(args.out, ship["name"], category, args.overwrite)
         if args.secret:

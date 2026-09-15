@@ -69,6 +69,13 @@ matches a default table is refused, as is the same name in two files.
 `--extra-table NAME` (repeatable) rolls only the named tables from the loaded
 files.
 
+`--extra-target TABLE=portrait`, `TABLE=token`, or `TABLE=both` (repeatable)
+chooses which image prompts receive a selected table's value. Unspecified
+tables apply to both images, sharing one roll. For example,
+`--extra-target camera_framing=portrait` keeps that table out of the token
+prompt. Targets are saved as `extraTraitTargets` in the manifest and retained
+when regenerating or rerolling traits; older entries default to both.
+
 `--disable-table TABLE` (repeatable) leaves a default table's clause out of
 both prompts - `--disable-table Stance` when a private table describes the
 pose. The trait is still rolled, so every filter that reads it runs as before
@@ -104,6 +111,19 @@ ComfyUI uploads and output prefixes use a separate `secret/` namespace,
 including intermediate background-removal and mesh passes. ComfyUI itself is
 an operator-controlled backend; browser authentication is provided by the GUI
 server, not by these trusted local CLIs. No credentials are shipped here.
+
+### Custom NPC and spaceship image dimensions
+
+`generate-npc.py` and `generate-spaceship.py` accept `--width` and `--height`
+together, for example `--width 1920 --height 1080`. Each dimension must be a
+multiple of 8 from 64 to 8192 pixels. Both portrait and token renders use the
+requested canvas; omitting both flags keeps their existing default sizes.
+The manifest records `imageDimensions`, which regeneration reuses unless a new
+pair is supplied. Workflows must expose an editable latent canvas. Additional
+resizing nodes in a custom workflow still affect its final output.
+
+The Import GUI exposes these options in Secret mode and saves them in Secret NPC
+presets. Update both repositories together.
 
 ### Colour guidance
 

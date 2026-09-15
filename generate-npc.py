@@ -61,6 +61,7 @@ from __future__ import annotations
 import argparse
 import art_styles
 import color_guidance
+import image_dimensions
 import functools
 import importlib.util
 import json
@@ -3102,6 +3103,7 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
     # have the same keys; main() fills them after the roll, the entry writer
     # records them only when non-empty - see extra_record().
     npc["_extra"] = {}
+    npc["_extra_targets"] = {}
     npc["_disabled"] = ()
 
     # Whether the Gear the NPC KEEPS is a carried helmet, published for the
@@ -3528,7 +3530,7 @@ def figure_sentence(fields, disabled=()):
     return "{Subject} {is_are} %s. ".format(**fields) % body
 
 
-def extra_sentence(npc):
+def extra_sentence(npc, target=None):
     """The private tables' rolled values as one sentence, or '' for none.
 
     Joined with commas in table order, the first letter raised and one period
@@ -3536,7 +3538,9 @@ def extra_sentence(npc):
     prose, and the values are the user's own phrasing, which this does not
     edit beyond the capital and the full stop.
     """
-    values = [v.strip().rstrip(".").strip() for v in (npc.get("_extra") or {}).values()]
+    targets = npc.get("_extra_targets") or {}
+    values = [v.strip().rstrip(".").strip() for name, v in (npc.get("_extra") or {}).items()
+              if target is None or targets.get(name, "both") in ("both", target)]
     values = [v for v in values if v]
     if not values:
         return ""
@@ -3648,7 +3652,6 @@ def build_prompts(npc, style=None, guidance=None):
         "" if "Demeanor" in disabled else DEMEANOR_SENTENCE.format(**fields))
     fields["stance_line"] = (
         "" if "Stance" in disabled else STANCE_SENTENCE.format(**fields))
-    fields["extra_line"] = extra_sentence(npc)
 
     # Built from the same fields and inserted already-substituted, since
     # str.format does a single pass and would leave any nested placeholder raw.
@@ -3723,8 +3726,10 @@ def build_prompts(npc, style=None, guidance=None):
     # empty line collapses cleanly instead of leaving a double space.
     portrait_fields = dict(
         fields, gear_line="" if "nogear" in flags else carrying,
+        extra_line=extra_sentence(npc, "portrait"),
         glow_line=portrait_glow_line + " " if portrait_glow_line else "")
     token_fields = dict(fields, gear_line=carrying,
+                        extra_line=extra_sentence(npc, "token"),
                         glow_line=token_glow_line + " " if token_glow_line else "")
 
     prompts = (art_styles.apply_style(PORTRAIT_TEMPLATE.format(**portrait_fields), style),
@@ -3873,7 +3878,7 @@ class Knobs:
         self.cfg = args.cfg
         self.sampler = args.sampler
         self.scheduler = args.scheduler
-        self.width, self.height = size
+        self.width, self.height = image_dimensions.size(args, size)
         self.set = args.set
         self.output_prefix = output_prefix
         self.secret = getattr(args, "secret", False)
@@ -3958,6 +3963,8 @@ def parse_args(argv=None):
     roll.add_argument("--extra-table", action="append", default=[], metavar="NAME",
                       help="with --extra-tables, roll only the named table(s) from the "
                            "loaded files (repeatable; default: every table in every file)")
+    roll.add_argument("--extra-target", action="append", default=[], metavar="TABLE=TARGET",
+                      help="apply an extra table to portrait, token, or both (default); repeatable")
     roll.add_argument("--extra-value", action="append", default=[], metavar="TABLE=VALUE",
                       help="choose an exact value from a selected extra table (repeatable)")
     roll.add_argument("--disable-table", action="append", default=[], metavar="TABLE",
@@ -4069,7 +4076,12 @@ def parse_args(argv=None):
 
     art_styles.add_arguments(p)
     color_guidance.add_arguments(p)
+    image_dimensions.add_arguments(p)
     args = p.parse_args(argv)
+    try:
+        image_dimensions.validate(args)
+    except ValueError as exc:
+        p.error(str(exc))
     supplied = sys.argv[1:] if argv is None else argv
     args.workflow_explicit = any(a == '--workflow' or a.startswith('--workflow=') for a in supplied)
     woman_explicit = any(a == '--workflow-woman' or a.startswith('--workflow-woman=') for a in supplied)
@@ -4487,7 +4499,7 @@ def reroll_from_raw(tables, npc, free, rng, pinned=None):
     fresh = roll_npc(tables, rng, overrides)
     # Neither is a table roll, so the fresh roll knows nothing of them: the
     # private values and the disabled list travel with the entry.
-    kept = {k: npc[k] for k in ("_extra", "_disabled") if k in npc}
+    kept = {k: npc[k] for k in ("_extra", "_extra_targets", "_disabled") if k in npc}
     npc.clear()
     npc.update(fresh)
     npc.update(kept)
@@ -5016,6 +5028,7 @@ def npc_from_entry(entry, regen_id, warn=True):
     # the prompt, both written only when there were any - so a public entry
     # has neither key and reads back as the empty case.
     npc["_extra"] = dict(entry.get("extraTraits") or {})
+    npc["_extra_targets"] = dict(entry.get("extraTraitTargets") or {})
     npc["_disabled"] = tuple(entry.get("disabledTables") or ())
     # No default here either, for the same reason: absent means "not
     # recorded" (an entry written before rawTraits existed), and that has to
@@ -5070,6 +5083,8 @@ def extra_record(npc):
     record = {}
     if npc.get("_extra"):
         record["extraTraits"] = dict(npc["_extra"])
+    if npc.get("_extra_targets"):
+        record["extraTraitTargets"] = dict(npc["_extra_targets"])
     if npc.get("_disabled"):
         record["disabledTables"] = list(npc["_disabled"])
     return record
@@ -5116,6 +5131,8 @@ def regenerate_one(args):
     color_guidance.restore_record(args, entry)
     art_styles.safe_output_directory(args, folder_path)
     entry.update(art_styles.metadata(args))
+    image_dimensions.restore(args, entry)
+    entry.update(image_dimensions.metadata(args))
     entry.update(color_guidance.metadata(args))
     npc = npc_from_entry(entry, args.regen_id)
 
@@ -5278,6 +5295,7 @@ def regenerate_one(args):
     print("ComfyUI: %s" % comfy.base)
 
     def render(prompt, stage, size):
+        image_dimensions.require_slots(args, slots)
         knobs = Knobs(args, size, COMFY_PREFIX)
         job = art.build_job(template, slots, entry_for(category, slug, stage, prompt), seed, knobs)
         record = comfy.wait(comfy.queue(job), timeout=args.timeout)
@@ -5452,6 +5470,12 @@ def main(argv=None):
                 raise ValueError("--extra-value needs TABLE=VALUE")
             values[name] = value
         extra = load_extra_tables(args.extra_tables, args.extra_table, values)
+        targets = {}
+        for choice in args.extra_target:
+            name, separator, target = choice.partition("=")
+            if not separator or name not in extra or target not in ("portrait", "token", "both"):
+                raise ValueError("--extra-target needs a selected TABLE=portrait, TABLE=token, or TABLE=both")
+            targets[name] = target
     except ValueError as exc:
         raise SystemExit("--extra-tables: %s" % exc)
 
@@ -5470,6 +5494,7 @@ def main(argv=None):
         # From the same generator, after the base roll, so the default tables
         # see the stream they always have - see roll_extra().
         npc["_extra"] = roll_extra(extra, rng)
+        npc["_extra_targets"] = dict(targets)
         npc["_disabled"] = tuple(dict.fromkeys(args.disable_table))
         rolled.append((seed, npc, build_prompts(npc, args.selected_style, args.selected_guidance)))
 
@@ -5485,11 +5510,11 @@ def main(argv=None):
             print("    workflow %s" % workflow_for(args, npc).name)
             if not args.no_portrait:
                 print("    portrait %dx%d ~%d tok:" % (
-                    PORTRAIT_SIZE + (estimate_tokens(portrait_prompt),)))
+                    image_dimensions.size(args, PORTRAIT_SIZE) + (estimate_tokens(portrait_prompt),)))
                 print("        %s" % portrait_prompt)
             if not args.no_token:
                 print("    token    %dx%d ~%d tok:" % (
-                    TOKEN_SIZE + (estimate_tokens(token_prompt),)))
+                    image_dimensions.size(args, TOKEN_SIZE) + (estimate_tokens(token_prompt),)))
                 print("        %s" % token_prompt)
         stages = (0 if args.no_portrait else 1) + (0 if args.no_token else 2)
         print("\ndry run OK - %d job(s) would be queued" % (len(rolled) * stages))
@@ -5514,6 +5539,7 @@ def main(argv=None):
     def render(npc, prompt, category, slug, stage, size, seed):
         """Queue one text -> image job and return the images it produced."""
         template, slots = workflows[workflow_for(args, npc)]
+        image_dimensions.require_slots(args, slots)
         knobs = Knobs(args, size, COMFY_PREFIX)
         job = art.build_job(template, slots, entry_for(category, slug, stage, prompt), seed, knobs)
         record = comfy.wait(comfy.queue(job), timeout=args.timeout)
@@ -5593,6 +5619,7 @@ def main(argv=None):
 
         done += 1
         manifest[str(folder)] = {
+            **image_dimensions.metadata(args),
             **art_styles.metadata(args),
             **color_guidance.metadata(args),
             # Deterministic from name+seed so a --overwrite rerun of the same

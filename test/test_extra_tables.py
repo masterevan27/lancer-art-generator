@@ -203,6 +203,22 @@ class TestRollExtra(unittest.TestCase):
 
 
 class TestExtraSentence(unittest.TestCase):
+    def test_targets_filter_each_prompt_and_survive_regeneration_and_rerolls(self):
+        npc = roll(extra={"a": "portrait detail", "b": "token detail", "c": "shared detail"})
+        npc["_extra_targets"] = {"a": "portrait", "b": "token"}
+        portrait, token = gen.build_prompts(npc)
+        self.assertIn("Portrait detail, shared detail. ", portrait)
+        self.assertNotIn("token detail", portrait.lower())
+        self.assertIn("Token detail, shared detail. ", token)
+        self.assertNotIn("portrait detail", token.lower())
+        entry = manifest_entry(seed=3)
+        gen.persist_traits(entry, npc)
+        self.assertEqual(entry["extraTraitTargets"], npc["_extra_targets"])
+        restored = gen.npc_from_entry(entry, entry["id"], warn=False)
+        self.assertEqual(gen.build_prompts(restored), (portrait, token))
+        gen.reroll_from_raw(TABLES, restored, {"Hair"}, random.Random(9))
+        self.assertEqual(restored["_extra_targets"], npc["_extra_targets"])
+
     def test_no_extra_means_no_change_to_the_prompt(self):
         plain = gen.build_prompts(roll())
         with_keys = gen.build_prompts(roll(extra={}, disabled=()))
@@ -388,6 +404,20 @@ class TestDisabledTables(unittest.TestCase):
 
 
 class TestCli(unittest.TestCase):
+    def test_extra_target_reaches_only_the_selected_dry_run_prompt(self):
+        for target in ("portrait", "token", "both"):
+            with self.subTest(target=target):
+                code, out = self.run_main("--extra-tables", str(self.a), "--count", "3",
+                                          "--extra-value", "camera_framing=eye level medium shot",
+                                          "--extra-target", "camera_framing=" + target)
+                self.assertEqual(code, 0)
+                self.assertEqual(out.lower().count("eye level medium shot"), 6 if target == "both" else 3)
+
+    def test_extra_target_refuses_invalid_or_unselected_tables(self):
+        for choice in ("camera_framing=neither", "missing=portrait", "camera_framing", "partner_archetypes=token"):
+            with self.subTest(choice=choice), self.assertRaises(SystemExit):
+                self.run_main("--extra-tables", str(self.a), "--extra-table", "camera_framing", "--extra-target", choice)
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
