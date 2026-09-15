@@ -37,6 +37,59 @@ class BackgroundSceneTests(unittest.TestCase):
             result = scene.load_catalogue(path)["tables"][0]["values"]
             self.assertEqual(result, [{"text": "x3 [outdoor] [weather=rain] steady rain", "environments": ["outdoor"], "weight": 3}])
 
+    def test_scene_life_defaults_and_opt_out_reach_rendered_prompt(self):
+        plan = scene.preview({"environment": "indoor", "seed": 19}, self.catalogue)["plans"][0]
+        self.assertIs(plan.get("populatePeople"), True)
+        self.assertIn("People:", plan["prompt"])
+        self.assertIn("median age around 20-25", plan["prompt"])
+        self.assertIn("Vegetation:", plan["prompt"])
+        self.assertIn("Interior life:", plan["prompt"])
+        self.assertNotIn("No people, characters", plan["prompt"])
+        self.assertIn("Preserve each person's", plan["motionPrompt"])
+        disabled = scene.preview({"environment": "indoor", "seed": 19, "traits": plan["traits"],
+                                  "populatePeople": False, "vegetation": "none", "interiorLife": False}, self.catalogue)["plans"][0]
+        self.assertNotIn("People:", disabled["prompt"])
+        self.assertNotIn("Activity:", disabled["prompt"])
+        self.assertNotIn("Vegetation:", disabled["prompt"])
+        self.assertNotIn("Interior life:", disabled["prompt"])
+        self.assertIn("No people, characters", disabled["prompt"])
+        self.assertNotIn("Preserve each person's", disabled["motionPrompt"])
+        self.assertEqual(scene.validate_plans({"plans": [disabled]}, self.catalogue), [disabled])
+
+    def test_scene_life_context_and_topdown_exclusions(self):
+        for env in ("indoor", "outdoor", "space"):
+            plan = scene.preview({"environment": env, "view": "topdown"}, self.catalogue)["plans"][0]
+            self.assertNotIn("People:", plan["prompt"])
+            self.assertNotIn("Activity:", plan["prompt"])
+            self.assertNotIn("Interior life:", plan["prompt"])
+            self.assertEqual(plan["motionPrompt"], "")
+        vacuum = scene.preview({"environment": "space"}, self.catalogue)["plans"][0]
+        self.assertNotIn("Vegetation", vacuum["traits"])
+        self.assertNotIn("Interior life", vacuum["traits"])
+        self.assertIn("sealed pressure suits", vacuum["prompt"])
+
+    def test_scene_life_validation_and_legacy_render_compatibility(self):
+        for bad in ({"populatePeople": "false"}, {"interiorLife": 1}, {"populationDensity": "packed"}, {"vegetation": False}):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                scene.preview(bad, self.catalogue)
+        plan = scene.preview({"populationDensity": "lively", "vegetation": "lush", "count": 3}, self.catalogue)["plans"]
+        self.assertTrue(all(p["populationDensity"] == "lively" and p["vegetation"] == "lush" for p in plan))
+        legacy = {k: v for k, v in plan[0].items() if k not in ("populatePeople", "populationDensity", "vegetation", "interiorLife")}
+        legacy["prompt"] = "An original saved scene. No people."
+        self.assertEqual(scene.validate_plans({"plans": [legacy]}, self.catalogue)[0]["prompt"], legacy["prompt"])
+
+    def test_people_density_changes_prompt_without_rerolling_traits(self):
+        quiet = scene.preview({"seed": 4, "populationDensity": "sparse"}, self.catalogue)["plans"][0]
+        busy = scene.preview({"seed": 4, "populationDensity": "lively"}, self.catalogue)["plans"][0]
+        self.assertEqual(quiet["traits"], busy["traits"])
+        self.assertNotEqual(quiet["prompt"], busy["prompt"])
+
+    def test_omitting_life_traits_does_not_add_generic_replacements(self):
+        plan = scene.preview({"environment": "indoor", "traits": {"Vegetation": "", "Interior life": ""}}, self.catalogue)["plans"][0]
+        self.assertNotIn("Planting direction:", plan["prompt"])
+        self.assertNotIn("Interior life direction:", plan["prompt"])
+        self.assertNotIn("Existing pets", plan["motionPrompt"])
+
     def test_determinism_context_and_batch_diversity(self):
         for env in self.catalogue["environments"]:
             request = {"environment": env, "seed": 42, "count": 8}
@@ -126,6 +179,8 @@ class BackgroundSceneTests(unittest.TestCase):
             self.assertEqual(meta["source"]["path"], str(source.resolve()))
             self.assertAlmostEqual(meta["source"]["mtime"], source.stat().st_mtime_ns / 1000000)
             self.assertIn("Preserve both doorways.", meta["prompt"])
+            self.assertIn("Remove all people, pets", meta["prompt"])
+            self.assertFalse(meta["populatePeople"])
             a = scene.save_result(folder, "Original Battlemap", b"image-a", meta)
             b = scene.save_result(folder, "Original Battlemap", b"image-b", meta)
             self.assertNotEqual(a, b)

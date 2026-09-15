@@ -16,7 +16,8 @@ ROOT = Path(__file__).resolve().parent
 DEFAULT_TABLES = ROOT / "prompts/background-generator-tables.md"
 ENVIRONMENTS = ["outdoor", "indoor", "space"]
 MAX_SEED = 2**32 - 1
-REQUEST_KEYS = {"environment", "seed", "count", "traits", "locked", "reroll", "view", "notes", "width", "height"}
+LIFE_KEYS = {"populatePeople", "populationDensity", "vegetation", "interiorLife"}
+REQUEST_KEYS = {"environment", "seed", "count", "traits", "locked", "reroll", "view", "notes", "width", "height"} | LIFE_KEYS
 PLAN_KEYS = {"version", "environment", "seed", "traits", "prompt", "motionPrompt", "view", "notes", "width", "height"}
 TOPDOWN = (
     "Draw a true orthographic top-down gridless battlemap. The camera is directly "
@@ -121,6 +122,15 @@ def _settings(request):
     view = request.get("view", "perspective")
     if view not in ("perspective", "topdown"):
         raise ValueError("view must be perspective or topdown")
+    for key in ("populatePeople", "interiorLife"):
+        if type(request.get(key, True)) is not bool:
+            raise ValueError(f"{key} must be boolean")
+    density = request.get("populationDensity", "natural")
+    if density not in ("sparse", "natural", "lively"):
+        raise ValueError("populationDensity must be sparse, natural or lively")
+    vegetation = request.get("vegetation", "balanced")
+    if vegetation not in ("none", "balanced", "lush"):
+        raise ValueError("vegetation must be none, balanced or lush")
     return {
         "environment": environment,
         "seed": integer(request.get("seed", 0), "seed", 0, MAX_SEED),
@@ -128,6 +138,10 @@ def _settings(request):
         "notes": _text(request.get("notes", ""), "notes", 4000),
         "width": integer(request.get("width", 1920), "width", 64, 8192, 8),
         "height": integer(request.get("height", 1080), "height", 64, 8192, 8),
+        "populatePeople": request.get("populatePeople", True),
+        "populationDensity": density,
+        "vegetation": vegetation,
+        "interiorLife": request.get("interiorLife", True),
     }
 
 
@@ -198,13 +212,57 @@ def assemble_prompt(settings, traits):
     context = {
         "outdoor": "An outdoor planetary environment with an atmosphere.",
         "indoor": "An enclosed interior. No outdoor precipitation, windblown dust, or atmospheric weather inside.",
-        "space": "An exposed vacuum environment. No atmospheric haze, rain, snow, wind, drifting smoke, or clouds among the structures.",
+        "space": "An exposed vacuum environment. No atmospheric haze, rain, snow, wind, drifting smoke, clouds, vegetation, pets or aquariums among the structures.",
     }[settings["environment"]]
     parts = [intro, context,
              "Lancer science-fiction environment illustration, confident ink linework, restrained halftone texture, believable industrial construction. "
-             "Distribute visual interest naturally across the entire image. No people, characters, text, logos or interface overlays."]
+             "Distribute visual interest naturally across the entire image. No text, logos or interface overlays."]
+    people = settings["populatePeople"] and settings["view"] != "topdown"
+    greenery = settings["vegetation"] != "none" and settings["environment"] != "space" and bool(traits.get("Vegetation"))
+    interior_life = (settings["interiorLife"] and settings["environment"] == "indoor"
+                     and settings["view"] != "topdown" and bool(traits.get("Interior life")))
+    if people:
+        density = {
+            "sparse": "A few people, with generous space between individuals or pairs.",
+            "natural": "A modest number of people in small, loosely spaced groups appropriate to the location.",
+            "lively": "A lively population in several distinct groups, scaled to the available space without overcrowding.",
+        }[settings["populationDensity"]]
+        parts.append(
+            "People: " + density + " Keep people secondary to the environment, mostly in the middle distance; "
+            "preserve clear routes and sightlines. Show candid everyday activity and natural interactions, "
+            "not a posed lineup or everyone facing the camera. Mostly young adults, median age around 20-25, "
+            "with some middle-aged and older adults; children are exceptionally rare and absent from hazardous or restricted sites. "
+            "Give each person a distinct combination of height, build, age, race/ethnicity, skin tone, sex, gender presentation, "
+            "face shape, hair texture, hairstyle, hair color, and eye color where visible. Avoid duplicate faces, "
+            "cloned bodies and repeated outfits; standard uniforms may match, but their wearers remain distinct. "
+            "Keep facial detail appropriate to distance, without enlarging people to show their eyes. "
+            "Match roles and activities to the location; abandoned sites may have a few visiting explorers rather than residents."
+        )
+        if settings["environment"] == "space":
+            parts.append("All people outside wear sealed pressure suits with helmets and secure tethers or handholds. "
+                         "At vast orbital scales keep workers tiny and limited to reachable structures; never bare skin in vacuum.")
+    else:
+        parts.append("No people, characters, crowds or human silhouettes.")
+    if greenery:
+        amount = ("Layer abundant planting in clusters of different heights, while preserving the architecture and open routes."
+                  if settings["vegetation"] == "lush" else "Use a few well-placed clusters of planting as accents, with breathing room.")
+        parts.append("Planting direction: " + amount + " Match species and placement to the local climate, light and maintenance. "
+                     "Keep plants out of machinery, doorways and sterile work areas; use only believable existing planting zones. "
+                     "In harsh terrain use sheltered or irrigated pockets. Large bonsai belong in cultivated courtyards, "
+                     "not as naturally miniature wild trees. Adapt scale to the space.")
+    elif settings["vegetation"] == "none":
+        parts.append("No vegetation or decorative plants; use bare terrain and unplanted architecture even if a location suggests greenery.")
+    if not interior_life:
+        parts.append("No pets, loose animals or ornamental aquariums.")
+    else:
+        parts.append("Interior life direction: Include at most one small companion-animal vignette or an ornamental fish tank. "
+                     "Use it only if the existing setting provides a safe maintained habitat away from sterile or hazardous work zones; otherwise omit it. "
+                     "Use believable animal anatomy and scale; keep it secondary to the room.")
     for name, raw in traits.items():
         if settings["view"] == "topdown" and name in ("Sky", "Distant features", "Motion"):
+            continue
+        if (name == "Vegetation" and not greenery or name == "Interior life" and not interior_life
+                or name == "Activity" and not people):
             continue
         if raw:
             description = _entry(raw)[3]
@@ -214,6 +272,17 @@ def assemble_prompt(settings, traits):
                 parts.append("Floor-plan arrangement: " + description + ". Depict all routes and changes of level in plan projection, without perspective depth.")
             else:
                 parts.append(f"{name}: {description}.")
+    if people or greenery or interior_life:
+        parts.append(
+            "Scene-life context priority: location, condition, atmosphere, time and available space take precedence over life suggestions above. "
+            "When normal occupants are absent (abandoned, evacuated, derelict or unattended settings), "
+            "depict only sparse visiting explorers or inspectors, never settled residents, "
+            "even when a lively population is requested. Adapt the Activity to their visit. "
+            "Omit pets and fish tanks entirely from abandoned, unattended, evacuated, sterile or hazardous locations, including ammunition "
+            "magazines and reactor or engine rooms. Do not invent a lounge, window, courtyard or alcove solely to accommodate a life suggestion. "
+            "In such locations limit planting to believable existing protected areas or climate-appropriate wild growth; "
+            "do not turn a working industrial site into a garden."
+        )
     if settings["notes"].strip():
         parts.append("Additional scene and layout direction: " + settings["notes"].strip())
     return "\n".join(parts)
@@ -255,6 +324,12 @@ def preview(request, catalogue):
         plan["prompt"] = assemble_prompt(settings, chosen)
         motion = _entry(chosen["Motion"])[3] + ". " if chosen.get("Motion") else ""
         plan["motionPrompt"] = motion + "The camera is locked off and does not move. Preserve the scene geometry; no new objects or characters."
+        if settings["populatePeople"]:
+            plan["motionPrompt"] += " Preserve each person's face, clothing, body proportions and position; only subtle breathing, glances and small gestures. No duplicated people or arrivals and departures."
+        if settings["interiorLife"] and settings["environment"] == "indoor" and chosen.get("Interior life"):
+            plan["motionPrompt"] += " Existing pets may blink or breathe gently; existing fish swim slowly within their tank. Do not add animals."
+        if settings["view"] == "topdown":
+            plan["motionPrompt"] = ""
         plans.append(plan)
     return {"plans": plans}
 
@@ -265,8 +340,8 @@ def validate_plans(request, catalogue):
     if not isinstance(plans, list) or not 1 <= len(plans) <= 8:
         raise ValueError("plans must contain 1 to 8 scene plans")
     for plan in plans:
-        _object(plan, PLAN_KEYS, "plan")
-        if set(plan) != PLAN_KEYS or type(plan["version"]) is not int or plan["version"] != 1:
+        _object(plan, PLAN_KEYS | LIFE_KEYS, "plan")
+        if not PLAN_KEYS <= set(plan) or type(plan["version"]) is not int or plan["version"] != 1:
             raise ValueError("Every plan must have all version 1 plan fields")
         _settings(plan)
         _validate_traits(plan["traits"], plan["environment"], catalogue)
@@ -353,7 +428,8 @@ def battlemap_metadata(source, width, height, seed, notes):
     source = Path(source).resolve(strict=True)
     if not source.is_file() or source.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp"):
         raise ValueError("battlemap source must be an existing PNG, JPEG or WebP image")
-    settings = _settings({"width": width, "height": height, "seed": seed, "notes": notes, "view": "topdown"})
+    settings = _settings({"width": width, "height": height, "seed": seed, "notes": notes,
+                          "view": "topdown", "populatePeople": False, "interiorLife": False})
     sidecar = source.with_suffix(".background.json")
     original = {}
     if sidecar.exists():
@@ -373,7 +449,9 @@ def battlemap_metadata(source, width, height, seed, notes):
         "Remove all ceilings and roofs. Do not show the sides of furniture or the vertical faces of walls. "
         "No perspective, no vanishing point, no isometric view. "
         "Arrange connected rooms or terrain areas and clear walkable routes. "
-        "Keep the reference colors, materials and illustration style. Gridless, no text."
+        "Keep the reference colors, materials, planting areas and illustration style. Gridless, no text. "
+        "Remove all people, pets, creatures, character tokens and their shadows from the reference. "
+        "Show tree canopies, shrubs and planters from above, with traversable routes clearly readable."
     )
     if notes.strip():
         prompt += "\nMap layout direction: " + notes.strip()

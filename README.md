@@ -153,6 +153,9 @@ For editable procedural scenes, full-frame backgrounds, and reference-based
 gridless top-down maps, see [Dynamic backgrounds and battlemaps](docs/dynamic-backgrounds.md)
 and `generate-background.py`. Its scene catalogue supports reproducible previews,
 per-trait locks and batch rendering, with metadata saved beside each image.
+Scenes now include distinct people by default, with population density, balanced
+or lush vegetation, and optional indoor pets/aquariums. All choices are saved
+with the scene; top-down maps omit people and pets.
 
 `--background` points the same machinery at a scene instead of a face:
 widescreen, a motion prompt that moves smoke and cloud and lights rather

@@ -32,6 +32,10 @@ Preview stdin is a JSON object with these optional fields:
 | `locked` | Array of supplied trait names to preserve through rerolls and batches |
 | `reroll` | Boolean; default false |
 | `view` | `perspective` (default) or `topdown` |
+| `populatePeople` | Boolean, default true; adds distinct people doing everyday activities in perspective scenes |
+| `populationDensity` | `sparse`, `natural` (default), or `lively`; scales the number of people to the location |
+| `vegetation` | `none`, `balanced` (default), or `lush`; applies outdoors and indoors |
+| `interiorLife` | Boolean, default true; adds an indoor pet or aquarium vignette in perspective scenes |
 | `notes` | Additional scene/layout direction, at most 4000 characters |
 | `width`, `height` | Multiples of 8 from 64–8192; defaults 1920×1080 |
 
@@ -50,9 +54,33 @@ prompts omit Sky, Distant features and Motion descriptions, adapt Layout into
 floor-plan directions, and specify a gridless orthographic camera.
 Every scene fills the frame; no area is reserved for a chat overlay.
 
+Scene life adds outdoor trees, wild plants, shrubs, flowers and cultivated bonsai,
+or indoor potted plants, orchids and small bonsai. The **Vegetation** pool chooses
+the planting; the amount setting controls its abundance. **Interior life** picks
+one small pet (cat, dog or fox) or fish tank. **Activity** supplies everyday tasks
+for people. These three pools support the same pickers, omissions, locks and
+rerolls as other traits. Disabling a feature suppresses its prompt instructions
+while retaining its chosen trait for later reuse. Space excludes planting and
+interior life; its people wear sealed pressure suits. Top-down views omit people,
+Activity and Interior life, retain planting as terrain, and have no motion prompt.
+Location, condition, atmosphere and time take priority over life suggestions:
+abandoned scenes use sparse visitors, and pets/aquariums are omitted where no
+safe maintained habitat fits. These are prompt directions, interpreted by the
+image model, so incompatible custom choices may still need adjustment.
+
+People stay secondary to the setting, mostly young adults with a requested median
+age around 20–25, some older adults and exceptionally rare children. Prompts ask
+for distinct faces, hair, skin tones, sexes, builds, heights and outfits; uniforms
+can match while their wearers differ. Density and age distribution are image-model
+directions, not exact counts or guarantees. Animation directions preserve the cast
+with small gestures and keep any existing animals in place.
+
 Preview returns `{"plans":[...]}`. Each plan has exactly `version:1`,
 `environment`, `seed`, `traits`, `prompt`, `motionPrompt`, `view`, `notes`, `width`
-and `height`. The render command consumes this object, validates it, and renders
+and `height`, plus `populatePeople`, `populationDensity`, `vegetation` and
+`interiorLife`. The four scene-life fields are optional when rendering older
+version 1 plans, so existing saved prompts remain renderable unchanged.
+The render command consumes this object, validates it, and renders
 the exact `prompt` supplied. The user may edit the prompt before rendering;
 render does not silently rebuild it from traits. Explicit prompt edits can
 override the generated composition, so review them before rendering.
@@ -64,11 +92,12 @@ Model/GPU execution itself is subject to the normal ComfyUI reproducibility limi
 
 ## Tables
 
-`prompts/background-generator-tables.md` contains 18 pools with at least 20
+`prompts/background-generator-tables.md` contains 21 pools with at least 20
 distinct substantive entries each: three context-specific location pools,
 Architecture, Palette, Lighting, Layout, Weather, Details, Motion, Foreground,
 Distant features, Terrain or floor, Sky, Time, Faction presence, Condition and
-Atmosphere. Context subsets of a shared pool may contain fewer than 20 entries.
+Atmosphere, Vegetation, Interior life and Activity. Context subsets of a shared
+pool may contain fewer than 20 entries.
 
 Each `## Heading` starts a pool. `- ` bullets are enabled entries; HTML comments
 disable entries. Prefix a bullet with `xN` for an integer weight from 1–10000.
@@ -100,7 +129,8 @@ The prompt asks for a flat 2D overhead tabletop RPG map, with the camera exactly
 90 degrees to the floor, connected rooms or terrain areas, and clear walkable
 routes. It shows floor surfaces, furniture tops and walls as solid dark
 cross-section outlines, removes roofs and ceilings, and excludes perspective,
-isometric views, grids and text. The image reference supplies the scene's
+isometric views, grids and text. People, pets, creatures and their shadows are
+removed; planting is viewed from above with readable routes. The image reference supplies the scene's
 colors, materials and illustration style.
 
 A source sidecar supplies provenance when available: the original traits and

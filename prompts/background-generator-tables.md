@@ -8,6 +8,8 @@ in every context. `[weather=rain]` and similar flags link Weather and Motion.
 Flags and weights remain in saved traits but are removed from image prompts.
 Empty selected traits omit that feature. No groups or implicit duplicate entries.
 Space means a vacuum exterior; sealed station rooms belong to indoor.
+Vegetation, Interior life and Activity are controlled by the scene-life settings.
+They remain available to lock and reroll even when omitted from the prompt.
 
 ## Outdoor location
 - [outdoor] a frontier dropship landing yard with blast berms and recessed service pits
@@ -414,3 +416,71 @@ Space means a vacuum exterior; sealed station rooms belong to indoor.
 - frontier self-sufficiency conveyed by multipurpose installations and visible repair capability
 - remote scientific detachment conveyed by specialized apparatus and minimal comforts
 - durable everyday normality conveyed by modest service equipment and unremarkable practical repairs
+
+## Vegetation
+- [outdoor] wild grasses and fern patches beneath large native trees, with medium and small shrubs along the edges
+- [outdoor] broad-canopied old trees shading layered flowering shrubs and low groundcover beside the paths
+- [outdoor] hardy wild plants between paving joints and small shrubs sheltered behind retaining walls
+- [outdoor] tall slender trees with fine foliage above medium bushes and drifts of colorful wildflowers
+- [outdoor] an irrigated pocket garden with large shade trees, dwarf shrubs and bright orchids beneath a canopy
+- [outdoor] rain-dark tree trunks surrounded by ferns, moss and delicate flowering vines in sheltered corners
+- [outdoor] sculpted large and medium bonsai trees in broad stone containers beside a cultivated courtyard
+- [outdoor] flowering fruit trees and medium shrubs edged with small daisies and meadow flowers
+- [outdoor] drought-tolerant trees in watered beds with compact shrubs, succulents and small vivid desert flowers
+- [outdoor] weathered native trees with layered understory shrubs and seasonal flowers bordering a clear walkway
+- [outdoor] climbing greenery on trellises, large trees beyond, and pockets of orchids in protected planters
+- [outdoor] a community garden of tall shade trees, medium bonsai, fragrant shrubs and mixed flowering beds
+- [indoor] large leafy plants in floor-standing ceramic pots and medium ferns in smaller planters near the light
+- [indoor] a flowering orchid in a glazed pot beside a small carefully pruned bonsai on a side table
+- [indoor] medium broad-leaf plants in clustered planters beneath a large potted indoor tree
+- [indoor] a small bonsai in a shallow tray, miniature flowering plants and a tall palm in a floor planter
+- [indoor] orchids of different colors on recessed shelves and medium plants in textured earthenware pots
+- [indoor] a large potted ficus beside a bench with smaller fern pots and a few bright flowering plants
+- [indoor] cascading plants on wall shelves above medium rubber plants and one small flowering bonsai
+- [indoor] large and medium foliage plants in built-in planters around seating, with orchids as small accents
+- [indoor] a miniature bonsai collection beside a window, each tree a different shape, with a large leafy floor plant
+- [indoor] a sheltered atrium planting bed with a large indoor tree, medium shrubs and small flowering orchids
+
+## Interior life
+- [indoor] a planted freshwater fish tank in a lounge alcove, with tiny colorful fish among aquatic leaves
+- [indoor] a wide aquarium integrated into a sheltered reception wall, with a few fish at different depths
+- [indoor] a compact aquarium on a sturdy sideboard, with smooth stones and a small shoal of bright fish
+- [indoor] a tall glass fish tank beside seating, with aquatic plants, soft lighting and slow-moving fish
+- [indoor] a low aquarium in a protected common room niche, with driftwood and a few jewel-colored fish
+- [indoor] a small tabby cat curled on a cushion in a quiet seating alcove
+- [indoor] a black-and-white cat stretching beside its bed near a lounge window
+- [indoor] a ginger cat watching the room from a low bench in a safe common area
+- [indoor] a small gray cat resting on a padded shelf beside a water bowl
+- [indoor] a calico cat peeking around a lounge chair with its tail relaxed
+- [indoor] a cute small curly-coated dog dozing on a mat in a sheltered lounge
+- [indoor] a small floppy-eared dog sitting beside a bench with a chew toy at its paws
+- [indoor] a compact cream-colored dog resting in a basket beneath a side table
+- [indoor] a friendly little mixed-breed dog stretching on a rug near a water bowl
+- [indoor] a small short-legged dog watching from its bed beside communal seating
+- [indoor] a calm small red fox curled in a padded pet nook in a residential common area
+- [indoor] a small fennec fox with large ears resting on a cushion in a protected lounge
+- [indoor] a silver fox companion reclining beside its water dish in a cozy habitation alcove
+- [indoor] a small fox with a white-tipped tail sitting alert on a lounge rug
+- [indoor] a sleepy fox companion tucked into a soft basket away from the working area
+
+## Activity
+- [outdoor,indoor] individuals walking to their destinations, with one pair pausing for a quiet conversation
+- [outdoor,indoor] residents relaxing on available seating while others pass naturally through the space
+- [outdoor,indoor] maintenance workers checking a safe service point while a colleague consults a handheld tool
+- [outdoor,indoor] a few visitors orienting themselves and exchanging a casual gesture
+- [outdoor,indoor] workers carrying small supplies along a clear route, at different stages of their tasks
+- [outdoor,indoor] off-duty adults chatting with relaxed postures and varied gazes
+- [outdoor,indoor] one adult reading a handheld device while companions discuss their next destination
+- [outdoor,indoor] site personnel making a routine inspection, with natural spacing and differing stances
+- [outdoor,indoor] travelers resting with small bags near seating while other adults walk past
+- [outdoor,indoor] adults sharing a brief greeting before continuing separate everyday tasks
+- [outdoor,indoor] a local guide pointing out an architectural detail to a couple of interested adult visitors
+- [outdoor,indoor] colleagues comparing notes at a safe stopping place off the main route
+- [outdoor,indoor] a custodian attending to a small upkeep task while passersby give them space
+- [outdoor,indoor] an adult adjusting a shoulder bag as companions wait nearby
+- [outdoor,indoor] adults pausing to appreciate the surroundings while others continue on their way
+- [space] tethered suited technicians inspecting exterior access fittings from secure handholds
+- [space] a small pressure-suited work crew moving supplies between attached service platforms
+- [space] tethered inspection workers exchanging hand signals beside a docking structure
+- [space] pressure-suited specialists checking a secured instrument bay without drifting away
+- [space] suited maintenance workers at separate anchored work positions along an exterior truss
