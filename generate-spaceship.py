@@ -2446,7 +2446,7 @@ def persist_size(entry, ship, max_px=MAX_TOKEN_PX):
     replaced with a guessed 'small'. reroll_from_raw() has already warned about
     the missing bullet by the time this runs.
     """
-    saved = entry.get('imageDimensions')
+    saved = entry.get('tokenImageDimensions') or entry.get('imageDimensions')
     canvas = (saved['width'], saved['height']) if saved else None
     if saved:
         entry.update(tokenWidth=canvas[0], tokenHeight=canvas[1])
@@ -2630,7 +2630,7 @@ def regenerate_one(args):
     prompts = build_ship_prompts(ship, args.selected_style)
     portrait_prompt, token_prompt = prompts
     band = band_for_regen(ship, entry, args.regen_id)
-    tok_size = image_dimensions.size(args, token_size(band, args.max_token_px))
+    tok_size = image_dimensions.size(args, token_size(band, args.max_token_px), token=True)
     # The entry's own shipType when the raw bullet is gone: the folder is being
     # reused in place anyway, so `category` here only shapes the ComfyUI
     # filename prefix, and taking the recorded slug keeps that prefix matching
@@ -2657,7 +2657,7 @@ def regenerate_one(args):
 
     def render(prompt, stage, size):
         image_dimensions.require_slots(args, slots)
-        knobs = Knobs(args, size, COMFY_PREFIX)
+        knobs = Knobs(args, size, COMFY_PREFIX, token=stage == "token")
         job = art.build_job(template, slots, entry_for(category, slug, stage, prompt), seed, knobs)
         record = comfy.wait(comfy.queue(job), timeout=args.timeout)
         images = comfy.images(record)
@@ -2672,7 +2672,7 @@ def regenerate_one(args):
         # Passing the real one costs nothing and means the day a post workflow
         # does read a size, the five-hex carrier is not the thing that finds
         # out.
-        knobs = Knobs(args, tok_size, COMFY_PREFIX)
+        knobs = Knobs(args, tok_size, COMFY_PREFIX, token=True)
         prefix = "%s/%s/%s/token_rmbg" % (COMFY_PREFIX, category, slug)
         job = art.build_post_job(
             post_template, post_slots, art.image_ref(image), prefix, seed, knobs)
@@ -2823,7 +2823,7 @@ def dry_run_report(args, rolled):
             print("        %s" % portrait_prompt)
         if not args.no_token:
             print("    token    %dx%d ~%d tok:"
-                  % (image_dimensions.size(args, token_size(band, args.max_token_px))
+                  % (image_dimensions.size(args, token_size(band, args.max_token_px), token=True)
                      + (estimate_tokens(token_prompt),)))
             print("        %s" % token_prompt)
     stages = (0 if args.no_portrait else 1) + (0 if args.no_token else 2)
@@ -2851,7 +2851,7 @@ def dry_run_json(args, rolled):
                 "id": ship_id(ship["name"], seed),
                 "shipType": ship_type_of(ship),
             },
-            **token_metadata(band, args.max_token_px, image_dimensions.size(args, None)),
+            **token_metadata(band, args.max_token_px, image_dimensions.size(args, None, token=True)),
             **image_dimensions.metadata(args),
             **{
                 "folder": str(asset_folder(args.out, ship["name"],
@@ -2912,7 +2912,7 @@ def manifest_entry(ship, seed, callsign, band, args, written,
             "rawTraits": dict(ship["_raw"]),
             "shipType": ship_type_of(ship),
         },
-        **token_metadata(band, args.max_token_px, image_dimensions.size(args, None)),
+        **token_metadata(band, args.max_token_px, image_dimensions.size(args, None, token=True)),
         **{
             "files": written,
             "portrait": portrait_file,
@@ -3017,7 +3017,7 @@ def main(argv=None):
     def render(prompt, category, slug, stage, size, seed):
         """Queue one text -> image job and return the images it produced."""
         image_dimensions.require_slots(args, slots)
-        knobs = Knobs(args, size, COMFY_PREFIX)
+        knobs = Knobs(args, size, COMFY_PREFIX, token=stage == "token")
         job = art.build_job(template, slots, entry_for(category, slug, stage, prompt), seed, knobs)
         record = comfy.wait(comfy.queue(job), timeout=args.timeout)
         images = comfy.images(record)
@@ -3026,7 +3026,7 @@ def main(argv=None):
         return images
 
     def remove_background(image, category, slug, size, seed):
-        knobs = Knobs(args, size, COMFY_PREFIX)
+        knobs = Knobs(args, size, COMFY_PREFIX, token=True)
         prefix = "%s/%s/%s/token_rmbg" % (COMFY_PREFIX, category, slug)
         job = art.build_post_job(
             post_template, post_slots, art.image_ref(image), prefix, seed, knobs)
@@ -3042,7 +3042,7 @@ def main(argv=None):
     for index, (seed, ship, callsign, prompts) in enumerate(rolled, 1):
         portrait_prompt, token_prompt = prompts
         band = band_of(ship)
-        tok_size = image_dimensions.size(args, token_size(band, args.max_token_px))
+        tok_size = image_dimensions.size(args, token_size(band, args.max_token_px), token=True)
         category = ship_category(ship)
         folder = asset_folder(args.out, ship["name"], category, args.overwrite)
         if args.secret:

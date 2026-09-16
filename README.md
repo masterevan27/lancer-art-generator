@@ -37,6 +37,21 @@ python generate-spaceship.py --secret --secret-config C:/private/lancer-config.j
 
 ### Private tables, and switching a default table off
 
+The Import GUI's Secret Create NPC page includes a **Prompt composer**. It
+previews the generator's prompt fragments, identifies their source tables,
+and lets you reorder them and add literal custom text independently for the
+portrait and token. Secret presets and generated records retain the layout;
+regeneration and trait rerolls reuse it. Random sources appear as placeholders
+in the GUI; conditional fragments can change when those traits roll.
+
+`--prompt-preview` prints the fragments as JSON without rendering or writing
+records. `--prompt-layout JSON` accepts an object with `portrait` and/or `token`
+arrays of fragment IDs (from the preview), mixed with custom text objects such
+as `{"id":"custom:opening","text":"Dramatic overhead lighting."}`. Custom
+text is literal, including braces. Unspecified fragments remain included;
+newly active fragments follow the saved sequence, while inactive IDs are kept
+for later reactivation. Omitting the layout preserves the existing prompts.
+
 `generate-npc.py` can roll tables of your own alongside the default ones.
 `--extra-tables PATH` (repeatable) loads a file of them; every table in every
 loaded file rolls one value per NPC, by weight, and the values are appended to
@@ -114,10 +129,19 @@ server, not by these trusted local CLIs. No credentials are shipped here.
 
 ### Custom NPC and spaceship image dimensions
 
+Add `--token-width 1024 --token-height 1024` to override only the token canvas.
+For example, `--width 1920 --height 1080 --token-width 1024 --token-height 1024`
+renders a landscape portrait and square token. The token pair can also be used
+alone, leaving the portrait at its default. Without a token override, the shared
+`--width`/`--height` setting still applies to both images. Token overrides are
+saved separately as `tokenImageDimensions` and restored during regeneration;
+spaceship token pixel metadata also reflects the override.
+
 `generate-npc.py` and `generate-spaceship.py` accept `--width` and `--height`
 together, for example `--width 1920 --height 1080`. Each dimension must be a
 multiple of 8 from 64 to 8192 pixels. Both portrait and token renders use the
-requested canvas; omitting both flags keeps their existing default sizes.
+requested canvas unless a token override is supplied; omitting all size flags
+keeps their existing default sizes.
 The manifest records `imageDimensions`, which regeneration reuses unless a new
 pair is supplied. Workflows must expose an editable latent canvas. Additional
 resizing nodes in a custom workflow still affect its final output.

@@ -34,21 +34,34 @@ class ImageDimensionsTests(unittest.TestCase):
                 with mock.patch.object(generator.art, 'find_server', return_value=Comfy()), \
                         mock.patch.object(generator, 'fetch', side_effect=lambda comfy, image, target: (target.write_bytes(b'png'), target)[1]), \
                         redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
-                    self.assertEqual(generator.main(flags + ['--width', '1920', '--height', '1080', '--seed', '5']), 0)
+                    self.assertEqual(generator.main(flags + ['--width', '1920', '--height', '1080', '--token-width', '768', '--token-height', '1024', '--seed', '5']), 0)
                     manifest_path = root / 'private' / 'manifest.json'
                     entry = next(iter(json.loads(manifest_path.read_text()).values()))
                     self.assertEqual(entry['imageDimensions'], {'width': 1920, 'height': 1080})
+                    self.assertEqual(entry['tokenImageDimensions'], {'width': 768, 'height': 1024})
                     if entry['kind'] == 'spaceship':
-                        self.assertEqual((entry['tokenWidth'], entry['tokenHeight']), (1920, 1080))
+                        self.assertEqual((entry['tokenWidth'], entry['tokenHeight']), (768, 1024))
                     self.assertEqual(generator.main(flags + ['--regen-manifest', str(manifest_path), '--regen-id', entry['id']]), 0)
                     regenerated = next(iter(json.loads(manifest_path.read_text()).values()))
                     if regenerated['kind'] == 'spaceship':
-                        self.assertEqual((regenerated['tokenWidth'], regenerated['tokenHeight']), (1920, 1080))
+                        self.assertEqual((regenerated['tokenWidth'], regenerated['tokenHeight']), (768, 1024))
                 renders = [graph for graph in graphs if any(node['class_type'].startswith('EmptyLatent') for node in graph.values())]
                 self.assertEqual(len(renders), 4, 'creation and regeneration each render a portrait and token')
-                for graph in renders:
+                for graph, expected in zip(renders, [(1920, 1080), (768, 1024)] * 2):
                     latent = graph[generator.art.locate_slots(graph).latent]['inputs']
-                    self.assertEqual((latent['width'], latent['height']), (1920, 1080))
+                    self.assertEqual((latent['width'], latent['height']), expected)
+
+    def test_token_only_override_and_legacy_shared_size(self):
+        dimensions = importlib.import_module('image_dimensions')
+        args = argparse.Namespace(width=None, height=None, token_width=768, token_height=1024)
+        self.assertEqual(dimensions.size(args, (1024, 1280)), (1024, 1280))
+        self.assertEqual(dimensions.size(args, (1024, 1024), token=True), (768, 1024))
+        legacy = argparse.Namespace(width=None, height=None)
+        dimensions.restore(legacy, {'imageDimensions': {'width': 1920, 'height': 1080}})
+        self.assertEqual(dimensions.size(legacy, (1024, 1024), token=True), (1920, 1080))
+        for width, height in [(768, None), (None, 768), (0, 768), (767, 768), (9000, 768)]:
+            with self.subTest(width=width, height=height), self.assertRaises(ValueError):
+                dimensions.validate(argparse.Namespace(token_width=width, token_height=height))
 
     def test_both_generators_accept_dimensions_and_pass_them_to_workflow(self):
         for generator in (load_generator(), load_ship_generator()):

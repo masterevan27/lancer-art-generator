@@ -3548,7 +3548,11 @@ def extra_sentence(npc, target=None):
     return "%s%s. " % (text[0].upper(), text[1:])
 
 
-def build_prompts(npc, style=None, guidance=None):
+def build_prompt_parts(npc, style=None, guidance=None):
+    return build_prompts(npc, style, guidance, _parts=True)
+
+
+def build_prompts(npc, style=None, guidance=None, _parts=False):
     """The portrait and token prompt text for one rolled NPC.
 
     `style` is a catalog entry from art_styles (rendering clauses); `guidance`
@@ -3735,6 +3739,19 @@ def build_prompts(npc, style=None, guidance=None):
     prompts = (art_styles.apply_style(PORTRAIT_TEMPLATE.format(**portrait_fields), style),
                art_styles.apply_style(TOKEN_TEMPLATE.format(**token_fields), style))
 
+    if _parts or npc.get('_prompt_layout'):
+        import prompt_composer
+        layout = prompt_composer.validate_layout(npc.get('_prompt_layout'))
+        parts = {target: prompt_composer.assemble(template, values, npc, target, style)
+                 for target, template, values in (
+                     ('portrait', PORTRAIT_TEMPLATE, portrait_fields),
+                     ('token', TOKEN_TEMPLATE, token_fields))}
+        if _parts:
+            return parts
+        prompts = tuple(prompt_composer.render(prompt_composer.order_parts(parts[target], layout.get(target)),
+                                               bool(layout.get(target))) if layout.get(target) else original
+                        for target, original in zip(('portrait', 'token'), prompts))
+
     for label, text in zip(("portrait", "token"), prompts):
         n = estimate_tokens(text)
         if n > TOKEN_LIMIT:
@@ -3873,12 +3890,12 @@ class Knobs:
     varying per image.
     """
 
-    def __init__(self, args, size, output_prefix):
+    def __init__(self, args, size, output_prefix, token=False):
         self.steps = args.steps
         self.cfg = args.cfg
         self.sampler = args.sampler
         self.scheduler = args.scheduler
-        self.width, self.height = image_dimensions.size(args, size)
+        self.width, self.height = image_dimensions.size(args, size, token=token)
         self.set = args.set
         self.output_prefix = output_prefix
         self.secret = getattr(args, "secret", False)
@@ -3967,6 +3984,10 @@ def parse_args(argv=None):
                       help="apply an extra table to portrait, token, or both (default); repeatable")
     roll.add_argument("--extra-value", action="append", default=[], metavar="TABLE=VALUE",
                       help="choose an exact value from a selected extra table (repeatable)")
+    roll.add_argument('--prompt-layout', metavar='JSON',
+                      help='portrait/token lists of snippet IDs and custom {id,text} snippets')
+    roll.add_argument('--prompt-preview', action='store_true',
+                      help='print JSON prompt fragments for one NPC without rendering or writing records')
     roll.add_argument("--disable-table", action="append", default=[], metavar="TABLE",
                       help="leave one default table's clause out of both prompts, e.g. "
                            "--disable-table Stance when a private table covers the pose. "
@@ -4078,6 +4099,10 @@ def parse_args(argv=None):
     color_guidance.add_arguments(p)
     image_dimensions.add_arguments(p)
     args = p.parse_args(argv)
+    if args.prompt_preview and args.regen_manifest:
+        p.error('--prompt-preview cannot be combined with regeneration')
+    if args.prompt_layout and args.regen_manifest:
+        p.error('regeneration reuses the recorded prompt layout; --prompt-layout is for new NPCs')
     try:
         image_dimensions.validate(args)
     except ValueError as exc:
@@ -4499,7 +4524,7 @@ def reroll_from_raw(tables, npc, free, rng, pinned=None):
     fresh = roll_npc(tables, rng, overrides)
     # Neither is a table roll, so the fresh roll knows nothing of them: the
     # private values and the disabled list travel with the entry.
-    kept = {k: npc[k] for k in ("_extra", "_extra_targets", "_disabled") if k in npc}
+    kept = {k: npc[k] for k in ("_extra", "_extra_targets", "_disabled", "_prompt_layout") if k in npc}
     npc.clear()
     npc.update(fresh)
     npc.update(kept)
@@ -5030,6 +5055,8 @@ def npc_from_entry(entry, regen_id, warn=True):
     npc["_extra"] = dict(entry.get("extraTraits") or {})
     npc["_extra_targets"] = dict(entry.get("extraTraitTargets") or {})
     npc["_disabled"] = tuple(entry.get("disabledTables") or ())
+    if entry.get('promptLayout'):
+        npc['_prompt_layout'] = entry['promptLayout']
     # No default here either, for the same reason: absent means "not
     # recorded" (an entry written before rawTraits existed), and that has to
     # stay distinguishable from a recorded-but-empty dict. A plain regen never
@@ -5087,6 +5114,8 @@ def extra_record(npc):
         record["extraTraitTargets"] = dict(npc["_extra_targets"])
     if npc.get("_disabled"):
         record["disabledTables"] = list(npc["_disabled"])
+    if npc.get('_prompt_layout'):
+        record['promptLayout'] = npc['_prompt_layout']
     return record
 
 
@@ -5296,7 +5325,7 @@ def regenerate_one(args):
 
     def render(prompt, stage, size):
         image_dimensions.require_slots(args, slots)
-        knobs = Knobs(args, size, COMFY_PREFIX)
+        knobs = Knobs(args, size, COMFY_PREFIX, token=stage == "token")
         job = art.build_job(template, slots, entry_for(category, slug, stage, prompt), seed, knobs)
         record = comfy.wait(comfy.queue(job), timeout=args.timeout)
         images = comfy.images(record)
@@ -5305,7 +5334,7 @@ def regenerate_one(args):
         return images
 
     def remove_background(image):
-        knobs = Knobs(args, TOKEN_SIZE, COMFY_PREFIX)
+        knobs = Knobs(args, TOKEN_SIZE, COMFY_PREFIX, token=True)
         prefix = "%s/%s/%s/token_rmbg" % (COMFY_PREFIX, category, slug)
         job = art.build_post_job(
             post_template, post_slots, art.image_ref(image), prefix, seed, knobs)
@@ -5487,7 +5516,12 @@ def main(argv=None):
         overrides["Pronouns"] = resolve_pronouns(tables, args.pronouns)
 
     rolled = []
-    for n in range(args.count):
+    import prompt_composer
+    try:
+        layout = prompt_composer.validate_layout(json.loads(args.prompt_layout) if args.prompt_layout else None)
+    except (ValueError, TypeError) as exc:
+        raise SystemExit('--prompt-layout: %s' % exc)
+    for n in range(1 if args.prompt_preview else args.count):
         seed = base_seed + n
         rng = random.Random(seed)
         npc = roll_npc(tables, rng, overrides, args.unarmed)
@@ -5496,6 +5530,17 @@ def main(argv=None):
         npc["_extra"] = roll_extra(extra, rng)
         npc["_extra_targets"] = dict(targets)
         npc["_disabled"] = tuple(dict.fromkeys(args.disable_table))
+        if layout:
+            npc['_prompt_layout'] = layout
+        if args.prompt_preview:
+            parts = build_prompt_parts(npc, args.selected_style, args.selected_guidance)
+            fixed = set(overrides)
+            fixed.update(values)
+            for snippets in parts.values():
+                for part in snippets:
+                    part['randomSources'] = [source for source in part['sources'] if source not in fixed]
+            json.dump(parts, sys.stdout)
+            return 0
         rolled.append((seed, npc, build_prompts(npc, args.selected_style, args.selected_guidance)))
 
     print("%s: %d tables, %d NPC(s) rolled from base seed %d" % (
@@ -5514,7 +5559,7 @@ def main(argv=None):
                 print("        %s" % portrait_prompt)
             if not args.no_token:
                 print("    token    %dx%d ~%d tok:" % (
-                    image_dimensions.size(args, TOKEN_SIZE) + (estimate_tokens(token_prompt),)))
+                    image_dimensions.size(args, TOKEN_SIZE, token=True) + (estimate_tokens(token_prompt),)))
                 print("        %s" % token_prompt)
         stages = (0 if args.no_portrait else 1) + (0 if args.no_token else 2)
         print("\ndry run OK - %d job(s) would be queued" % (len(rolled) * stages))
@@ -5540,7 +5585,7 @@ def main(argv=None):
         """Queue one text -> image job and return the images it produced."""
         template, slots = workflows[workflow_for(args, npc)]
         image_dimensions.require_slots(args, slots)
-        knobs = Knobs(args, size, COMFY_PREFIX)
+        knobs = Knobs(args, size, COMFY_PREFIX, token=stage == "token")
         job = art.build_job(template, slots, entry_for(category, slug, stage, prompt), seed, knobs)
         record = comfy.wait(comfy.queue(job), timeout=args.timeout)
         images = comfy.images(record)
@@ -5549,7 +5594,7 @@ def main(argv=None):
         return images
 
     def remove_background(image, category, slug, seed):
-        knobs = Knobs(args, TOKEN_SIZE, COMFY_PREFIX)
+        knobs = Knobs(args, TOKEN_SIZE, COMFY_PREFIX, token=True)
         prefix = "%s/%s/%s/token_rmbg" % (COMFY_PREFIX, category, slug)
         job = art.build_post_job(
             post_template, post_slots, art.image_ref(image), prefix, seed, knobs)
