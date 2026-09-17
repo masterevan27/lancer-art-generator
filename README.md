@@ -155,6 +155,48 @@ python generate-npc.py --dry-run --extra-tables prompts/secret-tables/mine.json 
 python generate-npc.py --dry-run --extra-tables mine.md --extra-tables more.json --extra-table camera_framing
 ```
 
+A *secret prompt* replaces both house templates with one of your own, in
+Secret mode only. `--secret-prompts PATH` (repeatable) loads a markdown file of
+templates and `--secret-prompt NAME` picks one by name, or `random` for a
+weighted draw per NPC that never moves the base NPC a seed rolls:
+
+```markdown
+# Explicit prompts - v1
+tables: explicit-table-3.md, lighting-atmosphere-1.md
+
+## Kneeling solo portrait
+weight: 2
+pin: Pronouns = she/her
+
+### portrait
+A portrait of {npc:identity}, {secret:Subject Archetypes (Female)},
+with {npc:hair} and {npc:eyes}. {npc:Subject} {npc:is_are}
+{secret:Kneeling Poses}, {secret:Clothing States}.
+
+### token
+A full-body figure of {npc:identity}, {secret:Standing/Squatting Poses},
+{secret:Clothing States}, against an empty plain white background.
+```
+
+`tables:` names files in the secret tables folder (`--secret-tables-dir`,
+default the `secret-tables` sibling of the template file's folder). `{npc:…}`
+reads the rolled NPC - `identity`, `hair`, `eyes`, `skin`, `outfit`, `stance`,
+`backdrop`, `shot`, `name`, the pronoun fields and the rest of the list
+`generate-npc.py --help` prints on an error - and `{secret:Table}` rolls one
+row of a table from the `tables:` files, once per NPC however often it is
+used; `{{` and `}}` are literal braces. `weight:` steers `random`; `pin:`
+forces a default table's bullet, the way `--set-trait` does. Every template
+pins adults only: an Age flagged `young` cannot be rolled, pinned or forced
+while a secret prompt is active. `--prompt-layout`, `--disable-table` and the
+`--extra-*` flags except `--extra-value` are refused beside a template, since
+the template decides what appears and in what order. The chosen template is
+saved on the manifest entry as `secretPrompt` (text included, so regeneration
+works after the file changes), the dossier names it, and `--reroll-trait`
+accepts any table the template reads. `--list-secret-prompts` prints the
+templates as JSON for the Import GUI; a file with an error is listed with the
+file, template and line. Templates live in `prompts/secret-prompts/`, which
+is gitignored beside the tables.
+
 `prompts/secret-tables/` is gitignored and is where the Import GUI looks for
 these files in Secret mode. The flags themselves are not tied to `--secret`.
 
