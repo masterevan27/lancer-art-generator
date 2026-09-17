@@ -106,7 +106,9 @@ earlier carries one of its tags.
 ```
 
 - `#tag`s at the very end of a bullet are removed from the value and name the
-  gates it opens (letters, digits, `-`, `_`; case-insensitive).
+  gates it opens (letters, digits, `-`, `_`; case-insensitive). Any trailing
+  `#word` is a tag, digits included - `Jersey number #7` rolls as `Jersey
+  number`; put such text earlier in the line or drop the space before the `#`.
 - `(when: a, b)` at the end of a heading gates the table; it opens on *any*
   listed tag. The table's name is the heading without the suffix, so
   `--extra-value "Men's Attributes=broad shoulders"`.

@@ -117,7 +117,12 @@ that gated table just stays shut (a fixed value in it is refused by §4).
 
 **GUI listing** — applies rules 1–3 across the whole folder in listing order,
 and additionally refuses a `when:` tag that no table in the folder carries (a
-misspelling). The error is attached to the file holding the gated table.
+misspelling); each tag in a multi-tag `(when:)` is checked individually, so a
+gate opened by one correct tag is still refused over a misspelt sibling tag.
+The error is attached to the file holding the gated table. This per-tag check
+(and the whole-gate one it extends) is skipped while any file in the folder
+has an error, since the tag it is missing might be inside that unreadable
+file; the "comes before its opener" rule still runs regardless.
 
 Loops cannot occur, because openers must come earlier in the order. A tag
 that opens nothing is allowed (it may be for a future table). These checks run
@@ -172,8 +177,12 @@ exactly as today (pinned by a test).
 **Regenerate** reuses `extraTraits` as today; a stored trait whose table is
 now gated shut is simply reused (the stored picks are the record).
 
-**Prompt preview** (`--prompt-preview`) shows an unfixed gated table as
-`Random value from [Men's Attributes] if opened`.
+**Prompt preview.** The relabelling to `... if opened` is a GUI concern
+(`secret-mode.js`, applied to the preview response, §5.2), not the
+generator's `--prompt-preview` output itself. It applies only to a gated
+table that rolls open on the preview's own sample seed; a table that stays
+shut on that seed makes no draw and is simply absent from the sample rather
+than appearing with a placeholder.
 
 ## 5. GUI
 
@@ -194,7 +203,7 @@ server give the same answer.
 ### 5.2 Create NPC (`public/secret-mode.js`)
 
 - A gated table keeps its place in its file (its openers always come
-  earlier) and is indented by chain depth, with a small `when: man` label.
+  earlier) and is indented by chain depth, with a small `when: #man` label.
 - **Opener fixed:** gated tables whose `when` meets the fixed value's tags
   are active; the rest are greyed out (dropdown and targets disabled, the
   checkbox still usable, the selection kept but not sent) with a note, e.g.
