@@ -101,18 +101,28 @@ entries follow the same character rule as markdown.
 
 ### 3.3 Load-time validation (both parsers, same wording)
 
-A file set is refused, naming the file and table, when:
+Load order is files in argument order, then tables in file order. The GUI
+always sends files in its listing order (alphabetical).
 
-1. a `when:` tag is carried by no row of any table loaded *before* the gated
-   table (in load order: files in argument order, tables in file order) —
-   covers both a misspelled tag and a gate placed above its opener;
-2. a tag or `when` entry breaks the character rule, or `when:` is empty.
+**Generator** — the loaded set is refused, naming the file and table, when:
 
-Loops cannot occur, because rule 1 only accepts openers earlier in the order.
-A tag that opens nothing is allowed (it may be for a future table).
+1. a `when:` tag is carried by rows of tables loaded *after* the gated table
+   but by none loaded before it (a gate placed above its opener);
+2. a tag or `when` entry breaks the character rule, or `when:` is empty;
+3. a repeated heading disagrees about its `(when:)`.
 
-These checks run on the whole loaded set, before `only` narrows it, so a
-file is valid or invalid regardless of which tables are ticked.
+A `when:` tag carried by no loaded table at all is **not** an error in the
+generator: the file holding its opener may simply not be passed this run, and
+that gated table just stays shut (a fixed value in it is refused by §4).
+
+**GUI listing** — applies rules 1–3 across the whole folder in listing order,
+and additionally refuses a `when:` tag that no table in the folder carries (a
+misspelling). The error is attached to the file holding the gated table.
+
+Loops cannot occur, because openers must come earlier in the order. A tag
+that opens nothing is allowed (it may be for a future table). These checks run
+before `only` narrows the set, so validity does not depend on which tables are
+ticked.
 
 ## 4. Rolling (generator)
 
@@ -147,7 +157,9 @@ each such table's *requirement*:
 3. An earlier table fixed to a value without any `when` tag is not an opener.
    When it is the only table that could have opened the gate, the refusal
    in rule 2 names it: `extra table 'Men's Attributes' has a fixed value but
-   'Styles' is fixed to 'Elegant courtesan', which is not #man`.
+   'Styles' is fixed to 'Elegant courtesan', which is not #man`. When the
+   opener was narrowed by another fixed gated table instead, the text is
+   `... but 'Styles' is already limited to #woman by 'Women's Attributes'`.
 
 Narrowing reuses the existing "fixed value narrows the row list" path, so
 every selected table still makes exactly one draw when it rolls.
@@ -168,22 +180,39 @@ now gated shut is simply reused (the stored picks are the record).
 ### 5.1 Parsing and listing (`lib/secretTables.js`)
 
 `markdownTables` / `jsonTables` apply §3 exactly (same regexes, same
-validation messages) and each table in the list response gains
-`when: string[]` and each value `tags: string[]`. A file failing §3.3 is
+validation messages). A gated table in the list response gains
+`when: string[]`, and a table with tagged rows gains `tags: {value: string[]}`;
+`values` and `groups` stay plain strings, so dropdowns, presets and
+`validateSelection`'s value check are unchanged. A file failing §3.3 is
 listed with its error, as an unreadable file is today, and cannot be ticked.
+
+The gate logic (tag/heading splitting, roll order, resolution and status
+text) lives in one pure module, `public/secret-gates.js`, loaded by the page
+and `require`d by `lib/secretTables.js`, so the form, the panel and the
+server give the same answer.
 
 ### 5.2 Create NPC (`public/secret-mode.js`)
 
-- A gated table is drawn indented under the first table that can open it,
-  with a small `when: man` label.
+- A gated table keeps its place in its file (its openers always come
+  earlier) and is indented by chain depth, with a small `when: man` label.
 - **Opener fixed:** gated tables whose `when` meets the fixed value's tags
-  are active; the rest are greyed out (checkbox and dropdown disabled, their
-  selection kept but not sent) with a note, e.g. `Styles is not #woman`.
+  are active; the rest are greyed out (dropdown and targets disabled, the
+  checkbox still usable, the selection kept but not sent) with a note, e.g.
+  `closed — 'Styles' is fixed to 'Sharp-suited broker', which is not #woman`.
 - **Opener Random:** gated tables keep their controls, with the note
-  `rolled only if a #man value is rolled`.
+  `rolls only if Styles rolls #man`. (Exact status texts are pinned by
+  `test/secretGates.test.js`.)
 - **Gated value fixed while its opener is Random:** the note becomes
   `Styles will be limited to #man values`. If §4's rules would refuse, the
-  note shows that refusal and Create is blocked.
+  section shows that refusal, and Create reports the same refusal from the
+  server (§5.3).
+- A greyed-out (closed) gated table is closed only because nothing selected
+  can open it — its openers are unticked, or the user fixed them to values
+  without its tags. Such a table is left out of the request instead of being
+  refused. A conflict created by narrowing (two fixed gated tables that need
+  different values of the same opener) is always a refusal.
+- The prompt preview relabels a gated table's random source as
+  `Men's Attributes if opened` (in `secret-mode.js`, on the preview response).
 - The dropdown for a table lists values without their tags; `###`
   categories are unchanged.
 
@@ -210,8 +239,9 @@ Each entry shows:
 - a live status from the current form, recomputed on every checkbox and
   dropdown change with the same resolution as §5.2:
   `not selected`, `rolls`, `rolls only if Styles rolls #man`,
-  `closed — Styles is not #woman`, `limits Styles to #man`, or the refusal
-  text when the selection is impossible.
+  `closed — <reason>`, `rolls, limited to #man by 'Men's Attributes'`,
+  `rolls; limits 'Styles' to #man`. An impossible selection is shown once,
+  in the section's error line.
 
 Gated entries are indented by chain depth so a chain reads as a tree inside
 the ordered list. Whether the panel is open is remembered per viewer in
@@ -235,15 +265,17 @@ contradictory is loaded, and the note from §5.2 explains the block.
 
 ## 7. Testing
 
-**Generator** (`test/test_extra_tables.py`):
+**Generator** (new `test/test_extra_table_gates.py`; the existing
+`test/test_extra_tables.py` must pass unchanged):
 
 - tags stripped from values; `#` mid-text kept; case folding;
 - `(when:)` stripped from the name; `--extra-value` uses the bare name;
 - open vs closed gated tables; any-of `when`; chains; cross-file gates;
 - duplicate bullets with different tags merge;
 - JSON `tags` and object-form tables;
-- validation: unknown tag, gate above its opener, empty `when`, bad
-  characters, conflicting repeated heading;
+- validation: gate above its opener, empty `when`, bad characters,
+  conflicting repeated heading; a tag no loaded table carries leaves the
+  gated table shut without an error;
 - fixed gated value narrows a single Random opener (and recursively);
   refusals for no opener and several openers; opener fixed to the wrong tag;
 - a file without gates rolls exactly as before for a pinned seed.
