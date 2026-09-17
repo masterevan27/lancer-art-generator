@@ -1,7 +1,7 @@
 # Secret table gates: tables that only roll when an earlier pick opens them
 
 **Date:** 2026-09-16
-**Status:** design approved in chat; awaiting spec review
+**Status:** approved (spec reviewed 2026-09-16; roll order panel added)
 **Repositories:** `lancer-art-generator` (the format and the roll),
 `lancer-npc-import-gui` (the Secret tables section of Create NPC and the
 server-side check of a selection)
@@ -193,7 +193,34 @@ Runs the same resolution as §4 on the posted selection and refuses the same
 cases with the same messages, so an impossible selection fails before the
 generator starts. Gated tables that are greyed out are not sent.
 
-### 5.4 Presets
+### 5.4 Roll order panel
+
+A collapsible `<details class="secret-roll-order">` titled **Roll order and
+gates**, placed at the top of `#secret-tables-content` and closed by default.
+It lists every table of every listed, readable file as one numbered list in
+the order the generator will walk them (files in the order the GUI sends them
+as `--extra-tables`, which must be the listed order; tables in file order).
+Each entry shows:
+
+- the table name and its file;
+- its gate: `always`, or `when: man, noble — opened by Styles (#man),
+  Nobility (#noble)` naming each earlier table with a row carrying one of
+  the tags (and which tag);
+- the tags its own rows can open, e.g. `can open: #man → Men's Attributes`;
+- a live status from the current form, recomputed on every checkbox and
+  dropdown change with the same resolution as §5.2:
+  `not selected`, `rolls`, `rolls only if Styles rolls #man`,
+  `closed — Styles is not #woman`, `limits Styles to #man`, or the refusal
+  text when the selection is impossible.
+
+Gated entries are indented by chain depth so a chain reads as a tree inside
+the ordered list. Whether the panel is open is remembered per viewer in
+`localStorage` (read and written in `try/catch`; closed when unavailable).
+The summary line carries a count, e.g. `Roll order and gates (7 tables,
+3 gated)`, so it is useful while closed. A file with an error is listed as
+one entry carrying the error.
+
+### 5.5 Presets
 
 No format change: presets store table names and value text, which do not
 include tags or the `(when:)` suffix. A preset whose fixed values are now
@@ -227,8 +254,9 @@ contradictory is loaded, and the note from §5.2 explains the block.
   `validateSelection` resolution and refusals;
 - `test/api.secretTables.test.js`: list response carries `when` and `tags`;
   create refuses an impossible selection;
-- `test/ui.secretTables.test.js`: nesting, greyed-out gated tables, and the
-  Random/limited notes.
+- `test/ui.secretTables.test.js`: nesting, greyed-out gated tables, the
+  Random/limited notes, and the roll order panel (order, gate text, live
+  status, closed by default).
 
 ## 8. Docs
 
