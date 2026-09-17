@@ -13,6 +13,7 @@ same NPC. If that ever stops being true, every legality answer in this file is
 being computed against a roll that never happened.
 """
 import contextlib
+import inspect
 import io
 import json
 import random
@@ -40,7 +41,7 @@ class ProbeIsInert(unittest.TestCase):
         # The default has to stay None rather than {}, or every caller shares
         # one dict and the pools accumulate across rolls.
         self.assertIsNone(
-            gen.roll_npc.__defaults__[-1],
+            inspect.signature(gen.roll_npc).parameters["probe"].default,
             "roll_npc's probe default must be None, not a shared dict")
 
 
