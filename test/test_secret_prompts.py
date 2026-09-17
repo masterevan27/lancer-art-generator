@@ -184,5 +184,88 @@ class TestParseFile(unittest.TestCase):
         self.assertError("# Just a title\n", r"^bad\.md, line 1: .*no templates")
 
 
+class TestLoad(unittest.TestCase):
+    def test_happy_path_resolves_tables_and_pins(self):
+        ws = Workspace(self)
+        templates = ws.load()
+        self.assertEqual(list(templates), ["Kneeling", "Plain"])
+        kneeling = templates["Kneeling"]
+        self.assertEqual(kneeling["tables"], [str(ws.tables.resolve())])
+        self.assertEqual(kneeling["pins"], {"Pronouns": "she/her/her/woman"})
+        self.assertEqual(kneeling["path"], ws.prompts.resolve())
+
+    def test_tables_dir_override_and_default(self):
+        ws = Workspace(self)
+        elsewhere = ws.root / "elsewhere"
+        elsewhere.mkdir()
+        (elsewhere / "tables.md").write_text(TABLES_MD, encoding="utf-8")
+        templates = sp.load([ws.prompts], elsewhere, TABLES, gen.REQUIRED_TABLES, gen.load_extra_tables)
+        self.assertEqual(templates["Kneeling"]["tables"], [str((elsewhere / "tables.md").resolve())])
+
+    def test_a_pin_resolves_to_the_raw_bullet_with_its_flags(self):
+        ws = Workspace(self)
+        path = ws.write_prompts("p.md", "## A\npin: Build = full-figured through the hips\n"
+                                        "### portrait\nx\n### token\ny\n")
+        self.assertEqual(sp.load([path], None, TABLES, gen.REQUIRED_TABLES, gen.load_extra_tables)["A"]["pins"],
+                         {"Build": "full-figured through the hips || figure"})
+
+    def assertLoadError(self, ws, text, pattern, name="bad.md", tables_dir=None):
+        path = ws.write_prompts(name, text)
+        with self.assertRaisesRegex(ValueError, pattern):
+            sp.load([path], tables_dir, TABLES, gen.REQUIRED_TABLES, gen.load_extra_tables)
+
+    def test_context_errors_name_file_template_and_line(self):
+        ws = Workspace(self)
+        ok = "### portrait\nx\n### token\ny\n"
+        cases = [
+            ("tables: tables.md\n## A\n### portrait\n{secret:Nope}\n### token\ny\n", r"^bad\.md, 'A', line 4: .*Nope"),
+            ("## A\n### portrait\n{secret:Poses}\n### token\ny\n", r"^bad\.md, 'A', line 3: .*tables:"),
+            ("tables: missing.md\n## A\n" + ok, r"^bad\.md, line 1: .*missing\.md"),
+            ("tables: ../x.md\n## A\n" + ok, r"^bad\.md, line 1: .*escapes"),
+            ("## A\npin: Nope = x\n" + ok, r"^bad\.md, 'A', line 2: .*Nope"),
+            ("## A\npin: Build = not offered\n" + ok, r"^bad\.md, 'A', line 2: .*not offered"),
+            ("## A\npin: Pronouns = he/him\n" + ok, r"^bad\.md, 'A', line 2: .*he/him"),
+            ("## A\npin: Age = in {possessive} late teens\n" + ok, r"^bad\.md, 'A', line 2: .*adults only"),
+        ]
+        for text, pattern in cases:
+            with self.subTest(text=text):
+                self.assertLoadError(ws, text, pattern)
+
+    def test_a_duplicate_name_across_files_is_an_error_and_nothing_loads(self):
+        ws = Workspace(self)
+        other = ws.write_prompts("y.md", "## Plain\n### portrait\nx\n### token\ny\n")
+        with self.assertRaisesRegex(ValueError, r"^y\.md, 'Plain', line 1: .*x\.md"):
+            ws.load(ws.prompts, other)
+
+    def test_a_missing_or_unreadable_tables_file_names_the_prompts_file(self):
+        ws = Workspace(self)
+        ws.write_tables("broken.json", "{")
+        self.assertLoadError(ws, "tables: broken.json\n## A\n### portrait\nx\n### token\ny\n",
+                             r"^bad\.md, line 1: .*broken\.json")
+
+
+class TestListing(unittest.TestCase):
+    def test_listing_reports_each_file_and_marks_broken_ones(self):
+        ws = Workspace(self)
+        broken = ws.write_prompts("broken.md", "## A\n### portrait\n{npc:nope}\n### token\ny\n")
+        data = sp.listing([ws.prompts, broken], None, TABLES, gen.REQUIRED_TABLES, gen.load_extra_tables)
+        self.assertEqual(data["dir"], str(ws.prompts_dir.resolve()))
+        self.assertEqual([f["file"] for f in data["files"]], ["x.md", "broken.md"])
+        self.assertEqual(data["files"][0]["templates"][0], {
+            "name": "Kneeling", "weight": 3.0, "pins": {"Pronouns": "she/her"},
+            "npcSlots": ["identity", "hair", "Subject", "is_are"],
+            "secretSlots": ["Poses", "Clothing", "Lighting"]})
+        self.assertNotIn("templates", data["files"][1])
+        self.assertRegex(data["files"][1]["error"], r"^broken\.md, 'A', line 3: ")
+        json.dumps(data)
+
+    def test_a_cross_file_duplicate_marks_the_later_file(self):
+        ws = Workspace(self)
+        other = ws.write_prompts("y.md", "## Plain\n### portrait\nx\n### token\ny\n")
+        data = sp.listing([ws.prompts, other], None, TABLES, gen.REQUIRED_TABLES, gen.load_extra_tables)
+        self.assertIn("templates", data["files"][0])
+        self.assertRegex(data["files"][1]["error"], r"^y\.md, 'Plain', line 1: .*x\.md")
+
+
 if __name__ == "__main__":
     unittest.main()

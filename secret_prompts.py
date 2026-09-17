@@ -210,3 +210,127 @@ def parse_file(path):
     if not templates:
         raise _error(path, None, max(1, len(lines)), "no templates ('## Name') in this file")
     return tables or [], tables_line, templates
+
+
+def _core(bullet):
+    return bullet.partition("||")[0].strip()
+
+
+def _resolve_pin(table, value, npc_tables, required):
+    """The raw bullet a 'pin: Table = value' names, flags and all, or a reason.
+
+    Matched on the flag-stripped text across the base table and its
+    per-pronoun variants ('Hair (she)'), and for Pronouns on the subject
+    alone, the way --pronouns matches. The raw bullet is what roll_npc's
+    overrides expect: 'in her late teens || young' carries the flag the
+    adults-only rule reads.
+    """
+    if table not in required:
+        raise ValueError("pin names no default table: %s (one of %s)" % (table, ", ".join(required)))
+    keys = [k for k in npc_tables if k == table or k.startswith(table + " (")]
+    bullets = [b for k in keys for b in npc_tables[k]]
+    if table == "Pronouns":
+        wanted = value.split("/")[0].strip().lower()
+        matches = [b for b in bullets if b.split("/")[0].strip().lower() == wanted]
+    else:
+        matches = [b for b in bullets if _core(b) == value]
+    if not matches:
+        raise ValueError("pin: %s = %s: the %s table offers no such bullet" % (table, value, table))
+    bullet = matches[0]
+    if table == "Age" and "young" in bullet.partition("||")[2].split():
+        raise ValueError("pin: Age = %s is flagged 'young'; secret prompts describe adults only" % value)
+    return bullet
+
+
+def load(paths, tables_dir, npc_tables, required, read_tables):
+    """Every template in `paths`, keyed by name, fully validated - or a ValueError.
+
+    `tables_dir` is where a file's 'tables:' names resolve; None means the
+    'secret-tables' sibling of the prompts file's own folder. `npc_tables`
+    is the parsed default tables file and `required` the REQUIRED_TABLES
+    list, for pins. `read_tables(paths, only=None, values=None)` is
+    generate-npc.py's load_extra_tables, so a tables file that would be
+    refused at roll time is refused here with the same reason.
+    """
+    templates = {}
+    for path in paths:
+        path = Path(path).resolve()
+        tables, tables_line, parsed = parse_file(path)
+        root = (Path(tables_dir) if tables_dir else path.parent.parent / "secret-tables").resolve()
+        resolved = []
+        for name in tables:
+            target = (root / name).resolve()
+            if not target.is_relative_to(root):
+                raise _error(path, None, tables_line, "tables: %s escapes %s" % (name, root))
+            resolved.append(target)
+        loaded = {}
+        if resolved:
+            try:
+                loaded = read_tables(resolved)
+            except ValueError as exc:
+                raise _error(path, None, tables_line, "tables: %s" % exc)
+        for template in parsed:
+            for table in template["secret_slots"]:
+                line = template["slot_lines"][table]
+                if not tables:
+                    raise _error(path, template["name"], line,
+                                 "{secret:%s} needs a 'tables:' line before the first '##'" % table)
+                if table not in loaded:
+                    raise _error(path, template["name"], line,
+                                 "{secret:%s}: no such table in %s (tables: %s)"
+                                 % (table, ", ".join(tables), ", ".join(loaded) or "none"))
+            pins = {}
+            for table, value in template["pin_text"].items():
+                try:
+                    pins[table] = _resolve_pin(table, value, npc_tables, required)
+                except ValueError as exc:
+                    raise _error(path, template["name"], _pin_line(path, template, table), str(exc))
+            if template["name"] in templates:
+                raise _error(path, template["name"], template["line"],
+                             "template name already used in %s" % templates[template["name"]]["file"])
+            template.update(path=path, tables=[str(t) for t in resolved], pins=pins)
+            templates[template["name"]] = template
+    return templates
+
+
+def _pin_line(path, template, table):
+    """The line a template's 'pin: <table>' sits on, re-read for the message."""
+    lines = Path(path).read_text(encoding="utf-8-sig").splitlines()
+    for number in range(template["line"], len(lines) + 1):
+        line = lines[number - 1].strip()
+        if number > template["line"] and line.startswith("#"):
+            break
+        key, sep, value = line.partition(":")
+        if sep and key.strip() == "pin" and value.partition("=")[0].strip() == table:
+            return number
+    return template["line"]
+
+
+def listing(paths, tables_dir, npc_tables, required, read_tables):
+    """The JSON the import GUI lists templates from: one entry per file.
+
+    Each file is loaded on its own so one broken file cannot hide the rest;
+    a template name shared across files marks the later file, since the
+    first to claim the name is the one a preset could already refer to.
+    """
+    files, owners = [], {}
+    for path in paths:
+        path = Path(path).resolve()
+        try:
+            templates = load([path], tables_dir, npc_tables, required, read_tables)
+        except ValueError as exc:
+            files.append({"file": path.name, "error": str(exc)})
+            continue
+        taken = [t for t in templates.values() if t["name"] in owners]
+        if taken:
+            first = taken[0]
+            files.append({"file": path.name, "error": str(_error(
+                path, first["name"], first["line"], "template name already used in %s" % owners[first["name"]]))})
+            continue
+        for name in templates:
+            owners[name] = path.name
+        files.append({"file": path.name, "templates": [
+            {"name": t["name"], "weight": t["weight"], "pins": dict(t["pin_text"]),
+             "npcSlots": list(t["npc_slots"]), "secretSlots": list(t["secret_slots"])}
+            for t in templates.values()]})
+    return {"dir": str(Path(paths[0]).resolve().parent) if paths else "", "files": files}
