@@ -1487,6 +1487,68 @@ def parse_tables(md_path):
     return {name: options for name, options in tables.items() if options}
 
 
+# Tag gates on private tables (docs/superpowers/specs/
+# 2026-09-16-secret-table-gates-design.md). The trailing '#tag' run of a
+# bullet says which gated tables its value opens; '(when: a, b)' at the end
+# of a heading makes a table roll only once an earlier value carries a or b.
+# lancer-npc-import-gui/public/secret-gates.js mirrors these rules and texts.
+EXTRA_TAG = re.compile(r"[A-Za-z0-9_-]+")
+_EXTRA_TRAILING_TAGS = re.compile(r"((?:\s+#[A-Za-z0-9_-]+)+)\s*$")
+_EXTRA_WHEN = re.compile(r"^(.*?)\s*\(when:([^)]*)\)\s*$", re.IGNORECASE)
+
+
+class ExtraTables(dict):
+    """load_extra_tables()'s result: {name: [(value, weight)]}, plus the gates.
+
+    `when` maps a gated table to the tuple of tags that open it; `tags` maps a
+    table to {value: tuple of tags} for the values that carry any. A plain
+    dict still rolls, ungated, so callers that build one by hand keep working.
+    """
+
+    def __init__(self, rows=(), when=None, tags=None):
+        super().__init__(rows)
+        self.when = dict(when or {})
+        self.tags = dict(tags or {})
+
+
+def split_extra_tags(text):
+    """'Rugged dockworker #man #Noble' -> ('Rugged dockworker', ('man', 'noble')).
+
+    Only the trailing run counts, and only when text is left in front of it,
+    so 'a #3 jersey' and a bare '#man' are values, not tags.
+    """
+    match = _EXTRA_TRAILING_TAGS.search(text)
+    if not match or not text[:match.start()].strip():
+        return text, ()
+    tags = re.findall(r"#([A-Za-z0-9_-]+)", match.group(1))
+    return text[:match.start()].rstrip(), tuple(dict.fromkeys(tag.lower() for tag in tags))
+
+
+def extra_when(name, tags):
+    """A gate's tag list, checked and lower-cased, in first-seen order."""
+    if not isinstance(tags, list) or not tags or all(
+            isinstance(tag, str) and not tag.strip() for tag in tags):
+        raise ValueError("table '%s' has an empty (when:)" % name)
+    cleaned = []
+    for tag in tags:
+        if not isinstance(tag, str) or not tag.strip():
+            raise ValueError("table '%s' has an empty entry in (when:)" % name)
+        tag = tag.strip()
+        if not EXTRA_TAG.fullmatch(tag):
+            raise ValueError("table '%s': '%s' is not a tag (letters, digits, - and _)" % (name, tag))
+        cleaned.append(tag.lower())
+    return tuple(dict.fromkeys(cleaned))
+
+
+def split_extra_heading(heading):
+    """"Men's Attributes (when: man)" -> ("Men's Attributes", ("man",)); no suffix -> (heading, None)."""
+    match = _EXTRA_WHEN.match(heading)
+    if not match:
+        return heading, None
+    name = match.group(1).strip()
+    return name, extra_when(name, match.group(2).split(","))
+
+
 def load_extra_tables(paths, only=None, values=None):
     """Private tables, as an ordered dict of name -> [(value, weight)].
 
@@ -1495,11 +1557,11 @@ def load_extra_tables(paths, only=None, values=None):
     read as 1. A .md file is the tables file's own format - '## Heading'
     opens a table, '- bullet' is a row, a leading 'xN ' weights it - read
     through parse_tables() so the two never drift, then folded from N copies
-    back into one weighted row. A markdown bullet is taken whole: the '||'
-    flags and '=> Name' references the default tables carry mean nothing
-    here, since a private value is appended as its own text and never
-    filtered. Every complaint names the file, since a set of
-    these is somebody's own collection and the one line that is wrong is
+    back into one weighted row. A markdown bullet is taken whole apart from
+    its trailing '#tag's: the '||' flags and '=> Name' references the
+    default tables carry mean nothing here. Tags and '(when:)' gates are
+    described above ExtraTables. Every complaint names the file, since a set
+    of these is somebody's own collection and the one line that is wrong is
     the whole question. Tables are refused, rather than merged, when they
     collide: with a default table, because these are appended to the prompt
     as their own sentence and never fill a template slot (--disable-table is
@@ -1513,7 +1575,8 @@ def load_extra_tables(paths, only=None, values=None):
     `values` fixes selected tables to exact row text, retaining a weighted
     draw for every table so later tables still consume the same RNG stream.
     """
-    extra = {}
+    extra = ExtraTables()
+    origin = {}
     for path in paths:
         path = Path(path)
         kind = path.suffix.lower()
@@ -1526,14 +1589,16 @@ def load_extra_tables(paths, only=None, values=None):
                 data = json.loads(path.read_text(encoding="utf-8-sig"))
         except OSError as exc:
             raise ValueError("%s: cannot read the extra tables file: %s" % (path.name, exc))
-        except ValueError as exc:
+        except json.JSONDecodeError as exc:
             raise ValueError("%s: not valid JSON: %s" % (path.name, exc))
+        except ValueError as exc:
+            raise ValueError("%s: %s" % (path.name, exc))
         if not isinstance(data, dict):
             raise ValueError("%s: an extra tables file is one JSON object of "
                              "table name -> list of rows" % path.name)
         if not data:
             raise ValueError("%s: holds no tables" % path.name)
-        for name, rows in data.items():
+        for name, spec in data.items():
             if not isinstance(name, str) or not name.strip():
                 raise ValueError("%s: a table name must be non-blank text" % path.name)
             if name in REQUIRED_TABLES:
@@ -1543,10 +1608,17 @@ def load_extra_tables(paths, only=None, values=None):
             if name in extra:
                 raise ValueError("%s: table '%s' is already loaded from another file"
                                  % (path.name, name))
+            gate, rows = None, spec
+            if isinstance(spec, dict):
+                try:
+                    gate = extra_when(name, spec.get("when"))
+                except ValueError as exc:
+                    raise ValueError("%s: %s" % (path.name, exc))
+                rows = spec.get("rows")
             if not isinstance(rows, list) or not rows:
                 raise ValueError("%s: table '%s' must be a non-empty list of rows"
                                  % (path.name, name))
-            options = []
+            options, row_tags = [], {}
             for row in rows:
                 if not isinstance(row, dict) or not isinstance(row.get("value"), str) \
                         or not row["value"].strip():
@@ -1558,15 +1630,32 @@ def load_extra_tables(paths, only=None, values=None):
                         or weight <= 0:
                     raise ValueError("%s: '%s' row %r has a weight that is not a "
                                      "positive number" % (path.name, name, row["value"]))
-                options.append((row["value"].strip(), weight))
+                tags = row.get("tags", [])
+                if not isinstance(tags, list) or any(
+                        not isinstance(tag, str) or not EXTRA_TAG.fullmatch(tag) for tag in tags):
+                    raise ValueError("%s: '%s' row %r has tags that are not a list of "
+                                     "letters, digits, - and _" % (path.name, name, row["value"]))
+                value = row["value"].strip()
+                options.append((value, weight))
+                known = row_tags.get(value, ())
+                row_tags[value] = tuple(dict.fromkeys(known + tuple(tag.lower() for tag in tags)))
             extra[name] = options
+            origin[name] = path.name
+            if gate:
+                extra.when[name] = gate
+            if any(row_tags.values()):
+                extra.tags[name] = {value: tags for value, tags in row_tags.items() if tags}
+    _check_gate_order(extra, origin)
     if only:
         missing = [name for name in only if name not in extra]
         if missing:
             raise ValueError("no loaded extra tables file holds: %s (loaded: %s)"
                              % (", ".join(missing), ", ".join(extra) or "none"))
         wanted = set(only)
-        extra = {name: rows for name, rows in extra.items() if name in wanted}
+        extra = ExtraTables(
+            ((name, rows) for name, rows in extra.items() if name in wanted),
+            when={name: gate for name, gate in extra.when.items() if name in wanted},
+            tags={name: tags for name, tags in extra.tags.items() if name in wanted})
     for name, value in (values or {}).items():
         if name not in extra:
             raise ValueError("fixed value names an unselected extra table: %s" % name)
@@ -1577,20 +1666,54 @@ def load_extra_tables(paths, only=None, values=None):
     return extra
 
 
+def _check_gate_order(extra, origin):
+    """Refuse a gated table loaded above every table that could open it.
+
+    A tag no loaded table carries is not an error: the file holding the
+    opener may simply not be part of this run, and the gate stays shut.
+    """
+    names = list(extra)
+    carried = {name: {tag for tags in extra.tags.get(name, {}).values() for tag in tags}
+               for name in names}
+    for index, name in enumerate(names):
+        need = extra.when.get(name)
+        if not need or any(carried[other] & set(need) for other in names[:index]):
+            continue
+        later = [other for other in names[index + 1:] if carried[other] & set(need)]
+        if later:
+            raise ValueError("%s: gated table '%s' comes before '%s', the table that opens it "
+                             "(when: %s)" % (origin[name], name, later[0], ", ".join(need)))
+
+
 def _markdown_extra_rows(path):
     """A markdown tables file as the row objects a JSON one would hold.
 
     parse_tables() expands 'x3 bullet' into three identical strings; this
     counts them back down, first appearance keeping the row's place, so a
     markdown table and the JSON table it is equivalent to load the same.
+    Trailing '#tag's are split off each value (the same text with different
+    tags is one row holding all of them) and a '(when:)' heading suffix
+    becomes the object form {"when": [...], "rows": [...]}.
     """
-    data = {}
-    for name, options in parse_tables(path).items():
-        counts = {}
+    data, gates = {}, {}
+    for heading, options in parse_tables(path).items():
+        name, gate = split_extra_heading(heading)
+        if name in gates and gates[name] != gate:
+            raise ValueError("table '%s' is repeated with a different (when:)" % name)
+        gates[name] = gate
+        rows = data.setdefault(name, {})
         for option in options:
-            counts[option] = counts.get(option, 0) + 1
-        data[name] = [{"value": value, "weight": count} for value, count in counts.items()]
-    return data
+            value, tags = split_extra_tags(option)
+            row = rows.setdefault(value, {"value": value, "weight": 0, "tags": ()})
+            row["weight"] += 1
+            row["tags"] = tuple(dict.fromkeys(row["tags"] + tags))
+    result = {}
+    for name, rows in data.items():
+        listed = [{"value": row["value"], "weight": row["weight"], "tags": list(row["tags"])}
+                  if row["tags"] else {"value": row["value"], "weight": row["weight"]}
+                  for row in rows.values()]
+        result[name] = {"when": list(gates[name]), "rows": listed} if gates[name] else listed
+    return result
 
 
 def roll_extra(extra, rng):
