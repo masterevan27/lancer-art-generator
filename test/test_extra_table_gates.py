@@ -153,3 +153,124 @@ class TestOrder(GateCase):
         extra = self.load(only=["Styles", "Scars"])
         self.assertEqual(extra.when, {"Scars": ("scarred",)})
         self.assertEqual(list(extra.tags), ["Styles"])
+
+
+class TestRolling(GateCase):
+    def test_a_gated_table_rolls_only_when_an_earlier_value_opens_it(self):
+        extra = self.load()
+        seen = set()
+        for seed in range(200):
+            rolled = gen.roll_extra(extra, random.Random(seed))
+            man = rolled["Styles"] in ("Rugged dockworker", "Sharp-suited broker")
+            self.assertEqual("Men's Attributes" in rolled, man)
+            self.assertEqual("Jewellery" in rolled, not man)
+            self.assertEqual("Scars" in rolled, rolled.get("Men's Attributes") == "heavy stubble")
+            seen.add(tuple(rolled))
+        self.assertIn(("Styles", "Men's Attributes", "Scars"), seen)
+        self.assertIn(("Styles", "Men's Attributes"), seen)
+        self.assertIn(("Styles", "Jewellery"), seen)
+
+    def test_tags_open_tables_in_another_file(self):
+        opener = self.write("a.md", "## S\n- a #m\n")
+        gated = self.write("b.json", {"G": {"when": ["m"], "rows": [{"value": "b"}]}})
+        self.assertEqual(gen.roll_extra(gen.load_extra_tables([opener, gated]), random.Random(0)),
+                         {"S": "a", "G": "b"})
+
+    def test_a_tag_no_loaded_table_carries_leaves_the_gate_shut(self):
+        extra = gen.load_extra_tables([self.write("a.md", "## G (when: m)\n- b\n")])
+        self.assertEqual(gen.roll_extra(extra, random.Random(1)), {})
+
+    def test_an_unticked_opener_opens_nothing(self):
+        self.assertEqual(gen.roll_extra(self.load(only=["Men's Attributes"]), random.Random(0)), {})
+
+    def test_values_never_carry_their_tags(self):
+        for seed in range(20):
+            rolled = gen.roll_extra(self.load(), random.Random(seed))
+            self.assertFalse(any("#" in value for value in rolled.values()), rolled)
+
+    def test_a_set_without_gates_rolls_exactly_as_before(self):
+        plain = {"a": [("x", 1), ("y", 2)], "b": [("z", 1), ("w", 1)]}
+        path = self.write("plain.json", {name: [{"value": v, "weight": w} for v, w in rows]
+                                         for name, rows in plain.items()})
+        extra = gen.load_extra_tables([path])
+        for seed in range(20):
+            rng = random.Random(seed)
+            expected = {name: rng.choices([v for v, _ in rows], [w for _, w in rows])[0]
+                        for name, rows in plain.items()}
+            self.assertEqual(gen.roll_extra(extra, random.Random(seed)), expected)
+            self.assertEqual(gen.roll_extra(dict(plain), random.Random(seed)), expected)
+
+
+class TestFixedGatedValues(GateCase):
+    def test_a_fixed_gated_value_narrows_its_single_random_opener(self):
+        extra = self.load(values={"Men's Attributes": "broad shoulders"})
+        self.assertEqual(extra["Styles"], [("Rugged dockworker", 2), ("Sharp-suited broker", 1)])
+        for seed in range(30):
+            self.assertEqual(gen.roll_extra(extra, random.Random(seed))["Men's Attributes"],
+                             "broad shoulders")
+
+    def test_narrowing_follows_a_chain(self):
+        extra = self.load(values={"Scars": "a burn scar across one cheek"})
+        self.assertEqual(extra["Men's Attributes"], [("heavy stubble", 1)])
+        self.assertEqual([v for v, _ in extra["Styles"]], ["Rugged dockworker", "Sharp-suited broker"])
+        for seed in range(10):
+            self.assertIn("Scars", gen.roll_extra(extra, random.Random(seed)))
+
+    def test_a_fixed_opener_that_opens_the_gate_is_enough(self):
+        extra = self.load(values={"Styles": "Sharp-suited broker", "Men's Attributes": "broad shoulders"})
+        self.assertEqual(gen.roll_extra(extra, random.Random(0))["Men's Attributes"], "broad shoulders")
+
+    def test_impossible_selections_are_refused(self):
+        styles = self.write("styles.md", STYLES_MD)
+        two = self.write("two.md", "## A\n- a #m\n\n## B\n- b #m\n\n## G (when: m)\n- g\n")
+        cases = [
+            (dict(values={"Styles": "Elegant courtesan", "Men's Attributes": "broad shoulders"}),
+             [styles],
+             "extra table 'Men's Attributes' has a fixed value but 'Styles' is fixed to "
+             "'Elegant courtesan', which is not #man"),
+            (dict(only=["Men's Attributes"], values={"Men's Attributes": "broad shoulders"}),
+             [styles],
+             "extra table 'Men's Attributes' has a fixed value but nothing selected can open it "
+             "(when: man)"),
+            (dict(values={"Men's Attributes": "broad shoulders", "Jewellery": "a thin gold circlet"}),
+             [styles],
+             "extra table 'Jewellery' has a fixed value but 'Styles' is already limited to #man "
+             "by 'Men's Attributes'"),
+            (dict(values={"G": "g"}), [two],
+             "extra table 'G' has a fixed value but 'A' and 'B' could each open it (when: m); "
+             "fix or untick all but one"),
+        ]
+        for kwargs, paths, message in cases:
+            with self.subTest(message=message):
+                self.refused(message, paths, **kwargs)
+
+    def test_fixing_one_of_several_openers_is_enough(self):
+        two = self.write("two.md", "## A\n- a #m\n- c\n\n## B\n- b #m\n\n## G (when: m)\n- g\n")
+        extra = gen.load_extra_tables([two], values={"A": "a", "G": "g"})
+        self.assertEqual(extra["B"], [("b", 1)])
+        self.assertEqual(gen.roll_extra(extra, random.Random(0))["G"], "g")
+
+
+class TestCli(GateCase):
+    def run_main(self, *argv):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = gen.main(["--tables", str(FIXTURE_TABLES), "--dry-run", "--seed", "5",
+                             "--out", self.tmp.name] + list(argv))
+        return code, out.getvalue()
+
+    def test_a_fixed_gated_value_reaches_the_prompt_and_its_shut_sibling_does_not(self):
+        styles = str(self.write("styles.md", STYLES_MD))
+        code, out = self.run_main("--extra-tables", styles, "--count", "3",
+                                  "--extra-value", "Men's Attributes=broad shoulders")
+        self.assertEqual(code, 0)
+        self.assertEqual(out.lower().count("broad shoulders"), 6)
+        self.assertNotIn("gold circlet", out.lower())
+        self.assertNotIn("#man", out.lower())
+
+    def test_an_impossible_selection_is_a_clean_exit(self):
+        styles = str(self.write("styles.md", STYLES_MD))
+        with self.assertRaises(SystemExit) as ctx:
+            self.run_main("--extra-tables", styles, "--extra-table", "Men's Attributes",
+                          "--extra-value", "Men's Attributes=broad shoulders")
+        self.assertIn("nothing selected can open it", str(ctx.exception))

@@ -1663,7 +1663,68 @@ def load_extra_tables(paths, only=None, values=None):
         if not matches:
             raise ValueError("value is not offered by extra table '%s': %s" % (name, value))
         extra[name] = matches
+    _open_fixed_gates(extra, [name for name in extra if name in (values or {})])
     return extra
+
+
+def _open_fixed_gates(extra, fixed_names):
+    """Make sure every gated table given a fixed value will be open.
+
+    An earlier fixed table whose every row opens the gate is enough.
+    Otherwise the one Random table that could open it is narrowed to its
+    opening rows (and, if that table is gated too, the same is done for it).
+    Anything else is a selection that cannot happen, refused with the text
+    public/secret-gates.js shows in the form.
+    """
+    names = list(extra)
+    fixed = set(fixed_names)
+    narrowed_by = {}
+    done = set()
+
+    def opens(table, value, need):
+        return any(tag in need for tag in extra.tags.get(table, {}).get(value, ()))
+
+    def tag_list(tags):
+        return " or ".join("#" + tag for tag in tags)
+
+    def require(name):
+        if name in done:
+            return
+        done.add(name)
+        need = extra.when.get(name)
+        if not need:
+            return
+        earlier = names[:names.index(name)]
+        for other in earlier:
+            if other in fixed and all(opens(other, v, need) for v, _ in extra[other]):
+                return require(other)
+        openers = [other for other in earlier if other not in fixed
+                   and any(opens(other, v, need) for v, _ in extra[other])]
+        head = "extra table '%s' has a fixed value but " % name
+        if len(openers) == 1:
+            opener = openers[0]
+            extra[opener] = [(v, w) for v, w in extra[opener] if opens(opener, v, need)]
+            fixed.add(opener)
+            narrowed_by[opener] = (name, need)
+            return require(opener)
+        if openers:
+            raise ValueError(head + "%s could each open it (when: %s); fix or untick all but one"
+                             % (" and ".join("'%s'" % o for o in openers), ", ".join(need)))
+        carriers = [other for other in earlier if other in fixed and any(
+            tag in need for tags in extra.tags.get(other, {}).values() for tag in tags)]
+        for other in carriers:
+            if other in narrowed_by:
+                by, limit = narrowed_by[other]
+                raise ValueError(head + "'%s' is already limited to %s by '%s'"
+                                 % (other, tag_list(limit), by))
+        if carriers:
+            raise ValueError(head + "'%s' is fixed to '%s', which is not %s"
+                             % (carriers[0], extra[carriers[0]][0][0], tag_list(need)))
+        raise ValueError(head + "nothing selected can open it (when: %s)" % ", ".join(need))
+
+    for name in names:
+        if name in fixed_names:
+            require(name)
 
 
 def _check_gate_order(extra, origin):
@@ -1717,14 +1778,26 @@ def _markdown_extra_rows(path):
 
 
 def roll_extra(extra, rng):
-    """One weighted draw per extra table, keyed by table name in table order.
+    """One weighted draw per open extra table, keyed by table name in table order.
 
     Drawn AFTER roll_npc() from the same generator, so loading a private set
     never moves the base NPC a seed rolls - the default tables consume the
-    stream first and these read what is left.
+    stream first and these read what is left. A gated table (see
+    ExtraTables) is skipped, with no draw, unless a value drawn before it
+    carries one of its tags; a set with no gates draws exactly as it always
+    has.
     """
-    return {name: rng.choices([v for v, _ in rows], [w for _, w in rows])[0]
-            for name, rows in extra.items()}
+    when = getattr(extra, "when", {})
+    tags = getattr(extra, "tags", {})
+    opened, rolled = set(), {}
+    for name, rows in extra.items():
+        need = when.get(name)
+        if need and not opened.intersection(need):
+            continue
+        value = rng.choices([v for v, _ in rows], [w for _, w in rows])[0]
+        rolled[name] = value
+        opened.update(tags.get(name, {}).get(value, ()))
+    return rolled
 
 
 # The three rolled tables the main draw site does not handle: Pronouns and
