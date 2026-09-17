@@ -13,10 +13,14 @@ defaults to `art-styles.json` beside the scripts. Its format is:
 ```json
 {
   "styles": [
-    {"id": "ink", "name": "Ink wash", "prompt": "Monochrome ink wash with soft paper texture.", "hidden": false}
+    {"id": "ink", "name": "Ink wash", "description": "monochrome ink on soft paper", "prompt": "Monochrome ink wash with soft paper texture.", "hidden": false}
   ]
 }
 ```
+
+The optional `description` is a short, prompt-free phrase the GUI shows in
+parentheses after the name (and as the option tooltip); the generator itself
+ignores it.
 
 The built-in `default` style always preserves the original subject-specific
 prompts. The built-in `none` style (**None (no art style)**) removes the house
@@ -202,7 +206,7 @@ complete palette sentence:
 ```json
 {
   "guidance": [
-    {"id": "sun-bleached", "name": "Sun-bleached desert", "prompt": "Keep the palette to sun-bleached ochre, dusty teal and bone white."}
+    {"id": "sun-bleached", "name": "Sun-bleached desert", "description": "ochre, dusty teal, bone white", "prompt": "Keep the palette to sun-bleached ochre, dusty teal and bone white."}
   ]
 }
 ```
