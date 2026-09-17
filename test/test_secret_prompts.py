@@ -489,5 +489,44 @@ class TestFlags(unittest.TestCase):
                            "--regen-id", "x", "--secret-prompts", str(self.ws.prompts), "--secret-prompt", "Plain")
 
 
+class TestAdultsOnly(unittest.TestCase):
+    YOUNG = "in {possessive} late teens || young"
+
+    def test_a_plain_roll_can_be_young(self):
+        self.assertTrue(any(gen.roll_npc(TABLES, random.Random(s), None)["_young"] for s in range(60)))
+
+    def test_adults_only_never_rolls_young(self):
+        for seed in range(60):
+            self.assertFalse(gen.roll_npc(TABLES, random.Random(seed), None, adults_only=True)["_young"])
+
+    def test_adults_only_does_not_move_other_tables(self):
+        """With no young bullet to drop, the filtered pool is the pool: same seed, same NPC."""
+        tables = dict(TABLES, Age=["in {possessive} thirties"])
+        for seed in range(20):
+            plain = gen.roll_npc(tables, random.Random(seed), None)
+            adult = gen.roll_npc(tables, random.Random(seed), None, adults_only=True)
+            self.assertEqual({k: v for k, v in plain.items() if not k.startswith("_")},
+                             {k: v for k, v in adult.items() if not k.startswith("_")})
+
+    def test_a_forced_young_age_is_refused(self):
+        with self.assertRaisesRegex(SystemExit, "adults only"):
+            gen.roll_npc(TABLES, random.Random(1), {"Age": self.YOUNG}, adults_only=True)
+
+    def test_a_pool_of_only_young_ages_is_refused(self):
+        tables = dict(TABLES, Age=[self.YOUNG])
+        with self.assertRaisesRegex(SystemExit, "adults only"):
+            gen.roll_npc(tables, random.Random(1), None, adults_only=True)
+
+    def test_a_raw_reroll_keeps_the_snapshot_and_the_rule(self):
+        npc = gen.roll_npc(TABLES, random.Random(3), None, adults_only=True)
+        npc["_secret_prompt"] = {"file": "x.md", "name": "T", "portrait": "p", "token": "t", "tables": []}
+        for seed in range(30):
+            gen.reroll_from_raw(TABLES, npc, {"Age"}, random.Random(seed))
+            self.assertFalse(npc["_young"])
+            self.assertEqual(npc["_secret_prompt"]["name"], "T")
+        with self.assertRaisesRegex(SystemExit, "adults only"):
+            gen.reroll_from_raw(TABLES, npc, {"Age"}, random.Random(1), {"Age": self.YOUNG})
+
+
 if __name__ == "__main__":
     unittest.main()

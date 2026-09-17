@@ -2534,7 +2534,7 @@ def pronoun_fields(pronouns):
     }
 
 
-def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
+def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None, adults_only=False):
     """One NPC as a flat dict of trait -> rolled text.
 
     `probe`, when a dict is passed, is filled with the fully-filtered pool
@@ -2554,6 +2554,12 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
     Pronouns is the one table with no entry: it is drawn before the loop from
     an unfiltered list and is refused by both re-roll paths anyway, so there
     is no question to answer about it.
+
+    `adults_only` is the secret-prompt rule: an Age bullet flagged 'young'
+    is dropped from the pool before the draw and refused if forced or
+    pinned. It lives here rather than in the template loader so that no
+    template, override or re-roll path can reach a young Age while a secret
+    prompt is active.
     """
     # Pronouns first: every other table may have a per-pronoun variant, so the
     # roll that selects between them has to happen before the rest.
@@ -2721,6 +2727,17 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
             options = filter_by_theme(options, theme, name)
             if theme_share and name not in LATE_SHARE_TABLES:
                 options = apply_theme_share(options, theme, name)
+
+        # Secret prompts describe adults only. Applied before the figure
+        # pairing so that pairing's "never filter the pool down to nothing"
+        # guard cannot put a young bullet back.
+        if name == "Age" and adults_only:
+            grown = [x for x in options if "young" not in split_flags(x)[1]]
+            if not grown:
+                raise SystemExit(
+                    "every Age bullet the roll could reach is flagged 'young'; a secret "
+                    "prompt describes adults only, so the Age table needs an adult bullet")
+            options = grown
 
         # The Age/Build pairing runs both ways. When the Build was forced
         # to a bullet flagged 'figure' and the Age is being rolled, it is the
@@ -3169,6 +3186,10 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None):
         npc[name] = value
 
     npc["_young"] = young
+    if adults_only and young:
+        raise SystemExit(
+            "Age %r is flagged 'young'; a secret prompt describes adults only. Force or "
+            "pin an adult Age instead." % npc["Age"])
     # The Outfit's register, published for the same reason '_young' is: the
     # manifest stores Outfit with its flags stripped, so without this a
     # Headgear re-roll could not tell whether it was gated, and Headgear would
@@ -4753,10 +4774,12 @@ def reroll_from_raw(tables, npc, free, rng, pinned=None):
     overrides = {trait: bullet for trait, bullet in npc["_raw"].items()
                  if trait not in free}
     overrides.update(pinned or {})
-    fresh = roll_npc(tables, rng, overrides)
+    fresh = roll_npc(tables, rng, overrides, adults_only=bool(npc.get("_secret_prompt")))
     # Neither is a table roll, so the fresh roll knows nothing of them: the
-    # private values and the disabled list travel with the entry.
-    kept = {k: npc[k] for k in ("_extra", "_extra_targets", "_disabled", "_prompt_layout") if k in npc}
+    # private values, the disabled list, the layout and the secret prompt
+    # snapshot travel with the entry.
+    kept = {k: npc[k] for k in ("_extra", "_extra_targets", "_disabled", "_prompt_layout", "_secret_prompt")
+            if k in npc}
     npc.clear()
     npc.update(fresh)
     npc.update(kept)
