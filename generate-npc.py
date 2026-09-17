@@ -4189,6 +4189,16 @@ def parse_args(argv=None):
                            "--disable-table Stance when a private table covers the pose. "
                            "The trait is still rolled and recorded (repeatable). One of: "
                            + ", ".join(DISABLEABLE_TABLES))
+    roll.add_argument("--secret-prompts", action="append", default=[], type=Path, metavar="PATH",
+                      help="a markdown file of secret prompt templates (repeatable; Secret mode only). "
+                           "See README: '## Name' opens a template, '### portrait' and '### token' hold "
+                           "its two prompts, {npc:field} and {secret:Table} are the blanks")
+    roll.add_argument("--secret-prompt", metavar="NAME",
+                      help="with --secret-prompts, the template to use, or 'random' for a weighted "
+                           "draw per NPC; it replaces the house portrait and token templates")
+    roll.add_argument("--secret-tables-dir", type=Path, metavar="DIR",
+                      help="where a template file's 'tables:' names resolve (default: the "
+                           "secret-tables folder beside the template file's own folder)")
 
     gen = p.add_argument_group("generation")
     gen.add_argument("--workflow", type=Path, default=art.DEFAULT_WORKFLOW,
@@ -4282,6 +4292,9 @@ def parse_args(argv=None):
                           "lower than its weight share because it needs a firearm to "
                           "be reachable at all. Read by the Import GUI's Tables page"
                           % DEFAULT_ODDS_SAMPLES)
+    run.add_argument("--list-secret-prompts", action="store_true",
+                     help="with --secret-prompts, print every template as JSON (name, weight, pins, "
+                          "slots, or the file's first error) and exit; read by the Import GUI")
     run.add_argument("--server", help="ComfyUI address, e.g. 127.0.0.1:8000")
     run.add_argument("--dry-run", action="store_true",
                      help="roll and print the NPCs and their prompts, queue nothing")
@@ -4314,6 +4327,28 @@ def parse_args(argv=None):
         color_guidance.configure(args)
     except (ValueError, OSError) as exc:
         p.error(str(exc))
+
+    if (args.secret_prompts or args.secret_prompt or args.list_secret_prompts) and not args.secret:
+        p.error("--secret-prompts, --secret-prompt and --list-secret-prompts require --secret")
+    if args.list_secret_prompts:
+        if not args.secret_prompts:
+            p.error("--list-secret-prompts needs at least one --secret-prompts file")
+    elif bool(args.secret_prompts) != bool(args.secret_prompt):
+        p.error("--secret-prompts and --secret-prompt go together: the files, and the template "
+                "name (or 'random') to use from them")
+    if args.secret_prompt:
+        if args.regen_manifest:
+            p.error("regeneration reuses the recorded secret prompt; --secret-prompt is for new NPCs")
+        # The template decides what appears and in what order, so every flag
+        # that edits the house prompt's composition is meaningless with one.
+        for flag, given in (("--prompt-layout", bool(args.prompt_layout)),
+                            ("--disable-table", bool(args.disable_table)),
+                            ("--extra-tables", bool(args.extra_tables)),
+                            ("--extra-table", bool(args.extra_table)),
+                            ("--extra-target", bool(args.extra_target))):
+            if given:
+                p.error("%s cannot be combined with --secret-prompt: the template decides what "
+                        "appears and in what order (--extra-value still pins a slot table's row)" % flag)
 
     if args.no_portrait and args.no_token:
         p.error("--no-portrait and --no-token together leave nothing to generate")

@@ -8,6 +8,7 @@ import contextlib
 import io
 import json
 import random
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -433,6 +434,59 @@ class TestSnapshot(unittest.TestCase):
         self.assertEqual(snap["tables"], [str(ws.tables.resolve())])
         self.assertEqual(sp.snapshot_secret_slots(snap), ["Poses", "Clothing", "Lighting"])
         json.dumps(snap)
+
+
+class TestFlags(unittest.TestCase):
+    def setUp(self):
+        self.ws = Workspace(self)
+        self.secret = ["--secret", "--secret-config", str(self.ws.config)]
+
+    def parse(self, *argv):
+        return gen.parse_args(["--tables", str(FIXTURE_TABLES), "--dry-run"] + list(argv))
+
+    def assertRefused(self, pattern, *argv):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit):
+            self.parse(*argv)
+        self.assertRegex(err.getvalue(), pattern)
+
+    def test_the_flags_parse(self):
+        args = self.parse(*self.secret, "--secret-prompts", str(self.ws.prompts), "--secret-prompt", "random",
+                          "--secret-tables-dir", str(self.ws.tables_dir))
+        self.assertEqual(args.secret_prompts, [self.ws.prompts])
+        self.assertEqual(args.secret_prompt, "random")
+        self.assertEqual(args.secret_tables_dir, self.ws.tables_dir)
+        self.assertFalse(args.list_secret_prompts)
+        listing = self.parse(*self.secret, "--secret-prompts", str(self.ws.prompts), "--list-secret-prompts")
+        self.assertTrue(listing.list_secret_prompts)
+
+    def test_secret_is_required(self):
+        self.assertRefused("--secret", "--secret-prompts", str(self.ws.prompts), "--secret-prompt", "random")
+        self.assertRefused("--secret", "--secret-prompts", str(self.ws.prompts), "--list-secret-prompts")
+
+    def test_the_pair_requires_each_other(self):
+        self.assertRefused("--secret-prompt", *self.secret, "--secret-prompts", str(self.ws.prompts))
+        self.assertRefused("--secret-prompts", *self.secret, "--secret-prompt", "random")
+
+    def test_listing_requires_the_files(self):
+        self.assertRefused("--secret-prompts", *self.secret, "--list-secret-prompts")
+
+    def test_refused_combinations(self):
+        base = self.secret + ["--secret-prompts", str(self.ws.prompts), "--secret-prompt", "Plain"]
+        for flag in (["--prompt-layout", "{}"], ["--disable-table", "Stance"],
+                     ["--extra-tables", str(self.ws.tables)], ["--extra-table", "Poses"],
+                     ["--extra-target", "Poses=portrait"]):
+            with self.subTest(flag=flag[0]):
+                self.assertRefused(re.escape(flag[0]), *base, *flag)
+
+    def test_extra_value_stays_allowed(self):
+        args = self.parse(*self.secret, "--secret-prompts", str(self.ws.prompts), "--secret-prompt", "Plain",
+                          "--extra-value", "Poses=completely nude")
+        self.assertEqual(args.extra_value, ["Poses=completely nude"])
+
+    def test_refused_on_regeneration(self):
+        self.assertRefused("--secret-prompt", *self.secret, "--regen-manifest", str(self.ws.root / "private" / "manifest.json"),
+                           "--regen-id", "x", "--secret-prompts", str(self.ws.prompts), "--secret-prompt", "Plain")
 
 
 if __name__ == "__main__":
