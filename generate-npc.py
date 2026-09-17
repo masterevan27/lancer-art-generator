@@ -4292,6 +4292,7 @@ def parse_args(argv=None):
                           "faster than the server can keep up (default: %(default)s)")
 
     art_styles.add_arguments(p)
+    p.add_argument('--preset-name', default='', help='Create preset name to record with generated images')
     color_guidance.add_arguments(p)
     image_dimensions.add_arguments(p)
     args = p.parse_args(argv)
@@ -5862,6 +5863,7 @@ def main(argv=None):
         manifest[str(folder)] = {
             **image_dimensions.metadata(args),
             **art_styles.metadata(args),
+            **({'presetName': args.preset_name.strip()} if args.preset_name.strip() else {}),
             **color_guidance.metadata(args),
             # Deterministic from name+seed so a --overwrite rerun of the same
             # NPC reuses it rather than minting a new one - this is what the

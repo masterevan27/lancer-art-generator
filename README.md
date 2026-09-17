@@ -2,6 +2,11 @@
 
 ## Art styles and private generation
 
+NPC and spaceship generation accept `--preset-name NAME` to record the originating
+Create preset in each manifest entry. The Import GUI displays this name on image
+cards; regeneration preserves it. This is a provenance label and does not load
+preset settings itself.
+
 The generation CLIs accept `--art-style ID` and `--art-styles PATH`. The latter
 defaults to `art-styles.json` beside the scripts. Its format is:
 

@@ -214,7 +214,7 @@ class TestManifestEntryFunction(unittest.TestCase):
         rolled = ship.roll_ship(TABLES, random.Random(seed))
         band = sp.size_of(rolled["_raw"]["Size"])
         args = types.SimpleNamespace(tables=FIXTURE_TABLES, workflow=WORKFLOW,
-                                     max_token_px=ship.MAX_TOKEN_PX)
+                                     max_token_px=ship.MAX_TOKEN_PX, preset_name='Fleet')
         entry = ship.manifest_entry(
             rolled, seed, "TST-0005", band, args,
             written=["A Portrait.png", "A Token.png", "A.md"],
@@ -225,6 +225,7 @@ class TestManifestEntryFunction(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertIn(key, entry)
         self.assertEqual(entry["kind"], "spaceship")
+        self.assertEqual(entry['presetName'], 'Fleet')
         self.assertRegex(entry["id"], r"^ship-[a-z0-9-]+-\d+$")
         for key in TestEntryShape.SIZE_FIELDS:
             with self.subTest(key=key):

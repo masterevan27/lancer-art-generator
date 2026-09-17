@@ -2041,6 +2041,7 @@ def parse_args(argv=None):
                           "faster than the server can keep up (default: %(default)s)")
 
     art_styles.add_arguments(p)
+    p.add_argument('--preset-name', default='', help='Create preset name to record with generated images')
     image_dimensions.add_arguments(p)
     args = p.parse_args(argv)
     try:
@@ -2895,6 +2896,7 @@ def manifest_entry(ship, seed, callsign, band, args, written,
             "id": ship_id(ship["name"], seed),
             "kind": "spaceship",
             **art_styles.metadata(args),
+            **({'presetName': args.preset_name.strip()} if getattr(args, 'preset_name', '').strip() else {}),
             **image_dimensions.metadata(args),
             "name": ship["name"],
             "callsign": callsign,

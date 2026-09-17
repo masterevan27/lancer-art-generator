@@ -177,18 +177,20 @@ class ArtStylesTests(unittest.TestCase):
         with mock.patch.object(generator.art, 'find_server', return_value=Comfy()), \
                 mock.patch.object(generator, 'fetch', side_effect=lambda comfy, image, target: (target.write_bytes(b'png'), target)[1]), \
                 redirect_stdout(logs), redirect_stderr(logs):
-            self.assertEqual(generator.main(flags + ['--art-style', 'ink', '--seed', '5']), 0, logs.getvalue())
+            self.assertEqual(generator.main(flags + ['--art-style', 'ink', '--seed', '5', '--preset-name', 'Dock crew']), 0, logs.getvalue())
             manifest_path = private / 'manifest.json'
             manifest = json.loads(manifest_path.read_text())
             folder, entry = next(iter(manifest.items()))
             self.assertTrue(Path(folder).is_relative_to(private / 'npcs'))
             self.assertEqual(entry['art_style'], {'id': 'ink', 'name': 'Ink'})
             self.assertTrue(entry['secret'])
+            self.assertEqual(entry['presetName'], 'Dock crew')
             self.assertIn('Ink {wash}.', entry['portraitPrompt'])
             self.assertEqual(generator.main(flags + ['--regen-manifest', str(manifest_path), '--regen-id', entry['id']]), 0)
             regenerated = json.loads(manifest_path.read_text())[folder]
             self.assertEqual(regenerated['art_style'], entry['art_style'])
             self.assertTrue(regenerated['secret'])
+            self.assertEqual(regenerated['presetName'], 'Dock crew')
         self.assertGreaterEqual(len(graphs), 6)
         for graph in graphs:
             for node in graph.values():
