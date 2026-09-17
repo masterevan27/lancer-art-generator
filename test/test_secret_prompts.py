@@ -243,6 +243,28 @@ class TestLoad(unittest.TestCase):
         self.assertLoadError(ws, "tables: broken.json\n## A\n### portrait\nx\n### token\ny\n",
                              r"^bad\.md, line 1: .*broken\.json")
 
+    def test_a_backdrop_pin_keeps_its_shot_and_scene(self):
+        ws = Workspace(self)
+        path = ws.write_prompts("p.md", "## A\npin: Backdrop = A half-body character portrait || "
+                                        "Behind {object}, a hangar\n### portrait\nx\n### token\ny\n")
+        npc_tables = dict(TABLES, Backdrop=["A half-body character portrait || Behind {object}, a hangar || nogear"])
+        self.assertEqual(sp.load([path], None, npc_tables, gen.REQUIRED_TABLES, gen.load_extra_tables)["A"]["pins"],
+                         {"Backdrop": "A half-body character portrait || Behind {object}, a hangar || nogear"})
+
+    def test_a_pin_ambiguous_across_variants_is_an_error(self):
+        ws = Workspace(self)
+        path = ws.write_prompts("p.md", "## A\npin: Hair = long hair\n### portrait\nx\n### token\ny\n")
+        npc_tables = dict(TABLES, **{"Hair (she)": ["long hair || a"], "Hair (they)": ["long hair || b"]})
+        with self.assertRaisesRegex(ValueError, r"more than one bullet.*long hair \|\| a.*long hair \|\| b"):
+            sp.load([path], None, npc_tables, gen.REQUIRED_TABLES, gen.load_extra_tables)
+
+    def test_a_pin_matching_identical_bullets_across_variants_still_resolves(self):
+        ws = Workspace(self)
+        path = ws.write_prompts("p.md", "## A\npin: Hair = long hair\n### portrait\nx\n### token\ny\n")
+        npc_tables = dict(TABLES, **{"Hair (she)": ["long hair || a"], "Hair (they)": ["long hair || a"]})
+        self.assertEqual(sp.load([path], None, npc_tables, gen.REQUIRED_TABLES, gen.load_extra_tables)["A"]["pins"],
+                         {"Hair": "long hair || a"})
+
 
 class TestListing(unittest.TestCase):
     def test_listing_reports_each_file_and_marks_broken_ones(self):
@@ -362,10 +384,25 @@ class TestChoose(unittest.TestCase):
         expected = random.Random("7:secret-prompt").choices(["Kneeling", "Plain"], [3.0, 1.0])[0]
         self.assertEqual(sp.choose(self.templates, "random", 7)["name"], expected)
 
+    def test_random_with_no_templates_loaded_is_an_error(self):
+        with self.assertRaisesRegex(ValueError, "loaded: none"):
+            sp.choose({}, "random", 1)
+
 
 class TestPins(unittest.TestCase):
     def setUp(self):
         self.template = Workspace(self).load()["Kneeling"]
+
+    def test_a_non_pronoun_pin_accepts_an_agreeing_override_and_refuses_a_disagreeing_one(self):
+        ws = Workspace(self)
+        path = ws.write_prompts("p.md", "## A\npin: Build = full-figured through the hips\n"
+                                        "### portrait\nx\n### token\ny\n")
+        template = sp.load([path], None, TABLES, gen.REQUIRED_TABLES, gen.load_extra_tables)["A"]
+        merged = sp.merge_pins(template, {"Build": "full-figured through the hips || figure"})
+        self.assertEqual(merged["Build"], "full-figured through the hips || figure")
+        with self.assertRaisesRegex(ValueError, r"full-figured through the hips.*lean and wiry|"
+                                                 r"lean and wiry.*full-figured through the hips"):
+            sp.merge_pins(template, {"Build": "lean and wiry"})
 
     def test_pins_merge_into_the_overrides(self):
         merged = sp.merge_pins(self.template, {"Role": "a dockworker"})

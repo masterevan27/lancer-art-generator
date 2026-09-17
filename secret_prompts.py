@@ -212,7 +212,21 @@ def parse_file(path):
     return tables or [], tables_line, templates
 
 
-def _core(bullet):
+def _core(bullet, table=""):
+    """The bullet reduced to the part a pin's value is matched against.
+
+    Every table but Backdrop keeps just its first '||' segment. Backdrop
+    keeps its shot and its scene too (the first two segments, joined by
+    ' || '), the way generate-npc.py's split_backdrop() does, since two
+    scenes can share a shot phrase and a pin has to name both to be
+    unambiguous - this module never imports that function, so the split is
+    repeated here rather than shared.
+    """
+    if table == "Backdrop":
+        parts = [p.strip() for p in bullet.split("||")]
+        shot, scene = ("A half-body character portrait", parts[0]) if len(parts) == 1 \
+            else (parts[0], parts[1])
+        return "%s || %s" % (shot, scene)
     return bullet.partition("||")[0].strip()
 
 
@@ -223,7 +237,9 @@ def _resolve_pin(table, value, npc_tables, required):
     per-pronoun variants ('Hair (she)'), and for Pronouns on the subject
     alone, the way --pronouns matches. The raw bullet is what roll_npc's
     overrides expect: 'in her late teens || young' carries the flag the
-    adults-only rule reads.
+    adults-only rule reads. Distinct raw bullets sharing one flag-stripped
+    core (a value split differently across two pronoun variants) leave the
+    pin's winner to file order, so that is refused rather than guessed at.
     """
     if table not in required:
         raise ValueError("pin names no default table: %s (one of %s)" % (table, ", ".join(required)))
@@ -233,10 +249,17 @@ def _resolve_pin(table, value, npc_tables, required):
         wanted = value.split("/")[0].strip().lower()
         matches = [b for b in bullets if b.split("/")[0].strip().lower() == wanted]
     else:
-        matches = [b for b in bullets if _core(b) == value]
+        matches = [b for b in bullets if _core(b, table) == value]
     if not matches:
         raise ValueError("pin: %s = %s: the %s table offers no such bullet" % (table, value, table))
-    bullet = matches[0]
+    distinct = []
+    for candidate in matches:
+        if candidate not in distinct:
+            distinct.append(candidate)
+    if len(distinct) > 1:
+        raise ValueError("pin: %s = %s matches more than one bullet: %s"
+                         % (table, value, "; ".join(distinct)))
+    bullet = distinct[0]
     if table == "Age" and "young" in bullet.partition("||")[2].split():
         raise ValueError("pin: Age = %s is flagged 'young'; secret prompts describe adults only" % value)
     return bullet
@@ -408,6 +431,8 @@ def choose(templates, name, seed):
     """
     if name == "random":
         pool = list(templates.values())
+        if not pool:
+            raise ValueError("no secret prompts to choose 'random' from; loaded: none")
         rng = random.Random("%s:secret-prompt" % seed)
         return rng.choices(pool, [t["weight"] for t in pool])[0]
     if name not in templates:
@@ -423,7 +448,7 @@ def merge_pins(template, overrides):
             if table == "Pronouns":
                 same = merged[table].split("/")[0].strip().lower() == bullet.split("/")[0].strip().lower()
             else:
-                same = _core(merged[table]) == _core(bullet)
+                same = _core(merged[table], table) == _core(bullet, table)
             if not same:
                 raise ValueError("secret prompt '%s' pins %s = %s, but --set-trait asks for %s = %s"
                                  % (template["name"], table, template["pin_text"][table], table, merged[table]))
