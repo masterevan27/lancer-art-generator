@@ -5823,7 +5823,11 @@ def main(argv=None):
             known = {t for tpl in templates.values() for t in tpl["secret_slots"]}
             stray = [name for name in values if name not in known]
             if stray:
-                raise ValueError("--extra-value %s: no loaded secret prompt has that slot table (slots: %s)"
+                # Raised as its own SystemExit, not a ValueError: the try
+                # block's handler below prefixes "--extra-tables:", which
+                # would be doubly wrong here - this run cannot use
+                # --extra-tables at all.
+                raise SystemExit("--extra-value: %s: no loaded secret prompt has that slot table (slots: %s)"
                                  % (", ".join(stray), ", ".join(sorted(known)) or "none"))
             extra = {}
         else:
@@ -5855,8 +5859,8 @@ def main(argv=None):
         rng = random.Random(seed)
         template = None
         if templates:
-            template = secret_prompts.choose(templates, args.secret_prompt, seed)
             try:
+                template = secret_prompts.choose(templates, args.secret_prompt, seed)
                 pinned = secret_prompts.merge_pins(template, overrides)
             except ValueError as exc:
                 raise SystemExit(str(exc))

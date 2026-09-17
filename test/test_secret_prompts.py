@@ -659,13 +659,20 @@ class TestCli(unittest.TestCase):
     def test_extra_value_pins_a_slot(self):
         _, out = self.templated("Kneeling", "--extra-value", "Poses=lying on her back with legs raised", "--count", "3")
         self.assertEqual(out.count("lying on her back with legs raised"), 6)
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(SystemExit) as caught:
             self.templated("Kneeling", "--extra-value", "Nope=x")
+        self.assertTrue(str(caught.exception).startswith("--extra-value"), caught.exception)
 
     def test_a_pin_versus_override_conflict_is_a_clean_exit(self):
         with self.assertRaises(SystemExit) as caught:
             self.templated("Kneeling", "--pronouns", "they")
         self.assertIn("Pronouns", str(caught.exception))
+
+    def test_an_unknown_template_name_is_a_clean_exit(self):
+        with self.assertRaises(SystemExit) as caught:
+            self.templated("Bogus")
+        self.assertIn("Bogus", str(caught.exception))
+        self.assertIn("Kneeling, Plain", str(caught.exception))
 
     def test_a_young_override_is_refused(self):
         with self.assertRaisesRegex(SystemExit, "adults only"):
