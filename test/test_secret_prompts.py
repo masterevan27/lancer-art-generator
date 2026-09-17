@@ -267,5 +267,76 @@ class TestListing(unittest.TestCase):
         self.assertRegex(data["files"][1]["error"], r"^y\.md, 'Plain', line 1: .*x\.md")
 
 
+FIELDS = dict(gen.pronoun_fields("she/her/her/woman"), identity="a dockworker, a mature adult woman in her thirties",
+              hair="a long silver braid", name="Test Subject")
+EXTRA = {"Poses": "kneeling upright with knees spread", "Clothing": "completely nude", "Lighting": "soft candlelight"}
+
+
+class TestFill(unittest.TestCase):
+    def test_fills_both_slot_kinds_and_tidies(self):
+        text = ("A portrait of {npc:identity}, with {npc:hair}. {npc:Subject} {npc:is_are} {secret:Poses}, "
+                "{secret:Clothing}. {secret:Lighting}.")
+        self.assertEqual(sp.fill(text, FIELDS, EXTRA),
+                         "A portrait of a dockworker, a mature adult woman in her thirties, with a long silver braid. "
+                         "She is kneeling upright with knees spread, completely nude. Soft candlelight.")
+
+    def test_a_value_starting_a_sentence_is_capitalised(self):
+        self.assertEqual(sp.fill("{secret:Lighting}. {secret:Clothing}! {secret:Poses}? {npc:hair}", FIELDS, EXTRA),
+                         "Soft candlelight. Completely nude! Kneeling upright with knees spread? A long silver braid.")
+        self.assertEqual(sp.fill("with {npc:hair}", FIELDS, EXTRA), "with a long silver braid.")
+
+    def test_whitespace_collapses(self):
+        self.assertEqual(sp.fill("A  portrait\tof   {npc:hair} ,  here .", FIELDS, EXTRA),
+                         "A portrait of a long silver braid, here.")
+
+    def test_punctuation_repairs(self):
+        self.assertEqual(sp.tidy("one ,. two .. three,. four"), "one. two. three. four.")
+        self.assertEqual(sp.tidy("ends with a digit 7"), "ends with a digit 7")
+        self.assertEqual(sp.tidy("  padded  "), "padded.")
+        self.assertEqual(sp.tidy(""), "")
+
+    def test_values_are_otherwise_verbatim(self):
+        self.assertEqual(sp.fill("{secret:Poses}", FIELDS, {"Poses": "Kneeling, ALL caps kept"}),
+                         "Kneeling, ALL caps kept.")
+
+    def test_literal_braces_survive(self):
+        self.assertEqual(sp.fill("{{Literal}} braces and {npc:name}", FIELDS, EXTRA), "{Literal} braces and Test Subject.")
+
+    def test_a_missing_value_names_the_slot(self):
+        with self.assertRaisesRegex(ValueError, "secret:Nope"):
+            sp.fill("{secret:Nope}", FIELDS, EXTRA)
+        with self.assertRaisesRegex(ValueError, "npc:nope"):
+            sp.fill("{npc:nope}", FIELDS, EXTRA)
+
+
+class TestParts(unittest.TestCase):
+    TEXT = "A portrait of {npc:identity}, with {npc:hair}. {secret:Poses}, {secret:Clothing}. {secret:Poses}."
+
+    def test_parts_join_to_the_filled_prompt(self):
+        parts = sp.parts(self.TEXT, FIELDS, EXTRA)
+        self.assertEqual("".join(p["text"] for p in parts), sp.fill(self.TEXT, FIELDS, EXTRA))
+
+    def test_slot_parts_carry_ids_sources_and_values(self):
+        parts = sp.parts(self.TEXT, FIELDS, EXTRA)
+        ids = [p["id"] for p in parts]
+        self.assertEqual([i for i in ids if not i.startswith("text:")],
+                         ["npc:identity", "npc:hair", "secret:Poses", "secret:Clothing", "secret:Poses:2"])
+        by_id = {p["id"]: p for p in parts}
+        self.assertEqual(by_id["npc:identity"]["sources"], ["Role", "Age", "Pronouns"])
+        self.assertEqual(by_id["npc:hair"]["sources"], ["Hair", "Hair colour"])
+        self.assertEqual(by_id["secret:Poses"]["sources"], ["Poses"])
+        self.assertEqual(by_id["secret:Poses"]["value"], "Kneeling upright with knees spread")
+        self.assertEqual(by_id["secret:Poses:2"]["value"], "Kneeling upright with knees spread")
+        for part in parts:
+            if part["id"].startswith("text:"):
+                self.assertEqual(part["sources"], [])
+        self.assertEqual(len(set(ids)), len(ids))
+
+    def test_tidy_edits_land_on_the_parts_not_between_them(self):
+        parts = sp.parts("{secret:Poses} ,  {npc:hair}", FIELDS, EXTRA)
+        self.assertEqual("".join(p["text"] for p in parts), "Kneeling upright with knees spread, a long silver braid.")
+        self.assertEqual(parts[-1]["sources"], ["Hair", "Hair colour"])
+
+
 if __name__ == "__main__":
     unittest.main()

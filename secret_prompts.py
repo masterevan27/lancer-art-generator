@@ -334,3 +334,66 @@ def listing(paths, tables_dir, npc_tables, required, read_tables):
              "npcSlots": list(t["npc_slots"]), "secretSlots": list(t["secret_slots"])}
             for t in templates.values()]})
     return {"dir": str(Path(paths[0]).resolve().parent) if paths else "", "files": files}
+
+
+def tidy(text):
+    """Spec 2.4 rules 2-4: one space, no space before , or ., ',.' and '..'
+    collapse to '.', stripped, and closed with a full stop after a letter."""
+    text = re.sub(r"\s+", " ", text)
+    text = text.replace(" ,", ",").replace(" .", ".")
+    text = re.sub(r",\s*\.", ".", text)
+    text = re.sub(r"\.{2,}", ".", text)
+    text = text.strip()
+    if text and text[-1].isalpha():
+        text += "."
+    return text
+
+
+def _value(kind, name, fields, extra, so_far):
+    """One slot's value, capitalised when it opens a sentence."""
+    source = fields if kind == "npc" else extra
+    if name not in source:
+        raise ValueError("no value for {%s:%s}" % (kind, name))
+    value = str(source[name])
+    before = so_far.rstrip()
+    if value and (not before or before[-1] in ".!?"):
+        value = value[0].upper() + value[1:]
+    return value
+
+
+def fill(text, fields, extra):
+    """The template text with every slot filled and the result tidied.
+
+    Rule 1 of the tidy-up (a value that begins a sentence is capitalised)
+    lives here rather than in tidy(), because only the filler knows which
+    characters came from a value and which were the author's own.
+    """
+    out = []
+    for kind, value in tokens(text):
+        out.append(value if kind == "text" else _value(kind, value, fields, extra, "".join(out)))
+    return tidy("".join(out))
+
+
+def parts(text, fields, extra):
+    """Composer fragments whose texts join to exactly fill(text, fields, extra).
+
+    Literal runs are 'text:<n>' parts with no sources; each slot is one part
+    whose id names it ('npc:hair', 'secret:Kneeling Poses', a second use of
+    the same slot ':2') and whose sources are the tables it came from, so
+    the GUI can show '[Random value from Kneeling Poses]' where nothing has
+    fixed the draw. The tidy-up is then mapped back across the parts.
+    """
+    import prompt_composer
+    pieces, counts, so_far = [], {}, ""
+    for index, (kind, value) in enumerate(tokens(text)):
+        if kind == "text":
+            pieces.append(prompt_composer._part("text:%d" % index, value))
+            so_far += value
+            continue
+        filled = _value(kind, value, fields, extra, so_far)
+        counts[(kind, value)] = counts.get((kind, value), 0) + 1
+        ident = "%s:%s" % (kind, value) + (":%d" % counts[(kind, value)] if counts[(kind, value)] > 1 else "")
+        sources = list(NPC_SOURCES.get(value, ())) if kind == "npc" else [value]
+        pieces.append(prompt_composer._part(ident, filled, sources))
+        so_far += filled
+    return prompt_composer.reflow(pieces, tidy(so_far))
