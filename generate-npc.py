@@ -5480,7 +5480,22 @@ def regenerate_one(args):
     # the entry's own seed so the same reroll of the same NPC is repeatable,
     # unless --new-seed asks for a different draw.
     rerolled = None
-    if args.reroll_trait:
+    snapshot = npc.get("_secret_prompt")
+    slot_tables = secret_prompts.snapshot_secret_slots(snapshot) if snapshot else []
+    if args.reroll_trait and args.reroll_trait in slot_tables:
+        # A secret prompt slot: drawn again from the tables file the snapshot
+        # recorded, everything else reproduced. No cascade - a private table
+        # gates nothing.
+        try:
+            rows = load_extra_tables(snapshot["tables"], [args.reroll_trait])
+        except ValueError as exc:
+            raise SystemExit("--reroll-trait %s: %s" % (args.reroll_trait, exc))
+        before = dict(npc.get("_extra") or {})
+        rerolled = roll_extra(rows, random.Random(
+            args.new_seed if args.new_seed is not None else entry["seed"]))[args.reroll_trait]
+        npc.setdefault("_extra", {})[args.reroll_trait] = rerolled
+        say("re-rolled %s: %r -> %r" % (args.reroll_trait, before.get(args.reroll_trait), rerolled))
+    elif args.reroll_trait:
         if not args.tables.exists():
             raise SystemExit("--reroll-trait needs the tables file: %s" % args.tables)
         tables = parse_tables(args.tables)

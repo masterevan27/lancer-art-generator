@@ -705,5 +705,54 @@ class TestCli(unittest.TestCase):
         self.assertEqual(ids["npc:Subject"]["randomSources"], [])
 
 
+class TestRegeneration(unittest.TestCase):
+    def setUp(self):
+        self.ws = Workspace(self)
+        self.private = self.ws.root / "private"
+        self.private.mkdir()
+        npc = rolled_with_template(self.ws)
+        self.entry = manifest_entry(seed=3)
+        self.entry.update({"secret": True, "seed": 3, "files": [], "portrait": None, "token": None})
+        gen.persist_traits(self.entry, npc)
+        gen.persist_flags(self.entry, npc)
+        self.manifest = self.private / "manifest.json"
+        self.manifest.write_text(json.dumps({str(self.private / "npcs" / "Test"): self.entry}), encoding="utf-8")
+
+    def run_regen(self, *argv):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = gen.main(["--tables", str(FIXTURE_TABLES), "--secret", "--secret-config", str(self.ws.config),
+                             "--regen-manifest", str(self.manifest), "--regen-id", self.entry["id"],
+                             "--apply-only"] + list(argv))
+        return code, out.getvalue(), err.getvalue()
+
+    def saved(self):
+        return next(iter(json.loads(self.manifest.read_text(encoding="utf-8")).values()))
+
+    def test_a_slot_table_rerolls_and_persists(self):
+        self.ws.write_tables("tables.md", TABLES_MD.replace("- x2 kneeling upright with knees spread\n", ""))
+        code, out, err = self.run_regen("--reroll-trait", "Poses", "--new-seed", "9")
+        self.assertEqual(code, 0, err)
+        self.assertIn("re-rolled Poses", err)
+        saved = self.saved()
+        self.assertEqual(saved["extraTraits"]["Poses"], "lying on her back with legs raised")
+        self.assertEqual(saved["secretPrompt"]["name"], "Kneeling")
+        self.assertTrue(saved["artStale"])
+
+    def test_an_unknown_extra_name_is_still_refused(self):
+        with self.assertRaises(SystemExit) as caught:
+            self.run_regen("--reroll-trait", "Nope", "--new-seed", "9")
+        self.assertIn("Nope", str(caught.exception))
+
+    def test_set_trait_refuses_a_young_age_on_a_templated_entry(self):
+        with self.assertRaisesRegex(SystemExit, "adults only"):
+            self.run_regen("--set-trait", "Age=in {possessive} late teens || young", "--new-seed", "9")
+
+    def test_a_trait_reroll_keeps_the_snapshot(self):
+        code, _, err = self.run_regen("--reroll-trait", "Hair", "--new-seed", "9")
+        self.assertEqual(code, 0, err)
+        self.assertEqual(self.saved()["secretPrompt"], self.entry["secretPrompt"])
+
+
 if __name__ == "__main__":
     unittest.main()
