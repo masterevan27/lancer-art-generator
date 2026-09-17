@@ -528,5 +528,175 @@ class TestAdultsOnly(unittest.TestCase):
             gen.reroll_from_raw(TABLES, npc, {"Age"}, random.Random(1), {"Age": self.YOUNG})
 
 
+def rolled_with_template(ws, name="Kneeling", seed=3):
+    templates = ws.load()
+    template = sp.choose(templates, name, seed)
+    rng = random.Random(seed)
+    npc = gen.roll_npc(TABLES, rng, sp.merge_pins(template, {}), adults_only=True)
+    npc["_extra"] = gen.roll_extra(gen.load_extra_tables(template["tables"], template["secret_slots"]), rng)
+    npc["_extra_targets"] = {}
+    npc["_secret_prompt"] = sp.snapshot(template)
+    return npc
+
+
+class TestBuildPrompts(unittest.TestCase):
+    def test_the_template_replaces_both_house_prompts(self):
+        ws = Workspace(self)
+        npc = rolled_with_template(ws)
+        portrait, token = gen.build_prompts(npc)
+        # identity is "<Role>, <maturity> <gender> <age>", so only its head is pinned here.
+        self.assertTrue(portrait.startswith("A portrait of %s, " % npc["Role"]), portrait)
+        self.assertIn(", with %s. She is %s, completely nude. Soft candlelight." % (npc["Hair"], npc["_extra"]["Poses"]), portrait)
+        self.assertTrue(token.startswith("A full-body figure of %s, " % npc["Role"]), token)
+        self.assertIn("%s, completely nude, against an empty plain white background." % npc["_extra"]["Poses"], token)
+        for prompt in (portrait, token):
+            self.assertNotIn("painterly", prompt)
+            self.assertNotIn("Keep the palette", prompt)
+            self.assertNotIn("both feet in frame", prompt)
+
+    def test_style_and_colour_guidance_apply(self):
+        ws = Workspace(self)
+        npc = rolled_with_template(ws)
+        style = {"id": "ink", "name": "Ink", "prompt": "Monochrome ink wash.", "hidden": False}
+        guidance = {"id": "warm", "name": "Warm", "prompt": "Warm amber palette throughout.", "hidden": False}
+        portrait, token = gen.build_prompts(npc, style, guidance)
+        for prompt in (portrait, token):
+            self.assertTrue(prompt.endswith("\nArt style: Monochrome ink wash."), prompt)
+            self.assertIn("Soft candlelight. Warm amber palette throughout.", portrait)
+        plain = gen.build_prompts(npc)[0]
+        self.assertNotIn("Warm amber", plain)
+
+    def test_parts_join_to_the_prompts(self):
+        ws = Workspace(self)
+        npc = rolled_with_template(ws)
+        parts = gen.build_prompt_parts(npc)
+        prompts = gen.build_prompts(npc)
+        for target, prompt in zip(("portrait", "token"), prompts):
+            self.assertEqual("".join(p["text"] for p in parts[target]), prompt)
+        ids = [p["id"] for p in parts["portrait"]]
+        self.assertIn("secret:Poses", ids)
+        self.assertIn("npc:identity", ids)
+        self.assertEqual(next(p for p in parts["portrait"] if p["id"] == "secret:Poses")["sources"], ["Poses"])
+
+
+class TestRecord(unittest.TestCase):
+    def test_snapshot_round_trips_and_survives_the_file_going(self):
+        ws = Workspace(self)
+        npc = rolled_with_template(ws)
+        prompts = gen.build_prompts(npc)
+        entry = manifest_entry(seed=3)
+        gen.persist_traits(entry, npc)
+        gen.persist_flags(entry, npc)   # the 'young' flag the maturity wording reads
+        self.assertEqual(entry["secretPrompt"]["name"], "Kneeling")
+        self.assertEqual(entry["secretPrompt"]["file"], "x.md")
+        self.assertEqual(entry["extraTraits"], npc["_extra"])
+        self.assertNotIn("extraTraitTargets", entry)
+        ws.prompts.unlink()
+        ws.write_tables("tables.md", "## Poses\n- something else entirely\n")
+        restored = gen.npc_from_entry(json.loads(json.dumps(entry)), entry["id"], warn=False)
+        self.assertEqual(restored["_secret_prompt"], npc["_secret_prompt"])
+        self.assertEqual(gen.build_prompts(restored), prompts)
+
+    def test_a_record_without_a_template_has_no_key(self):
+        npc = gen.roll_npc(TABLES, random.Random(1), None)
+        self.assertNotIn("secretPrompt", gen.extra_record(npc))
+        self.assertNotIn("_secret_prompt", gen.npc_from_entry(manifest_entry(seed=1), "x", warn=False))
+
+    def test_the_dossier_names_the_template(self):
+        ws = Workspace(self)
+        npc = rolled_with_template(ws)
+        path = ws.root / "d.md"
+        gen.write_dossier(path, npc, 3, gen.build_prompts(npc), [])
+        self.assertIn("| Secret prompt | Kneeling (x.md) |", path.read_text(encoding="utf-8"))
+
+
+class TestCli(unittest.TestCase):
+    def setUp(self):
+        self.ws = Workspace(self)
+
+    def run_main(self, *argv, secret=True):
+        out = io.StringIO()
+        base = ["--tables", str(FIXTURE_TABLES), "--dry-run", "--seed", "5"]
+        if secret:
+            base += ["--secret", "--secret-config", str(self.ws.config)]
+        with contextlib.redirect_stdout(out):
+            code = gen.main(base + list(argv))
+        return code, out.getvalue()
+
+    def templated(self, name, *argv):
+        return self.run_main("--secret-prompts", str(self.ws.prompts), "--secret-prompt", name, *argv)
+
+    def test_dry_run_prints_the_filled_template_and_names_it(self):
+        code, out = self.templated("Kneeling")
+        self.assertEqual(code, 0)
+        self.assertIn("secret prompt: Kneeling (x.md)", out)
+        self.assertIn("She is ", out)
+        self.assertIn("completely nude", out)
+        self.assertNotIn("painterly", out)
+
+    def test_a_template_leaves_the_base_npc_unchanged(self):
+        _, plain = self.run_main()
+        _, templated = self.templated("Plain")
+        self.assertEqual(plain.splitlines()[3], templated.splitlines()[3])
+
+    def test_random_picks_by_weight_and_is_reproducible(self):
+        names = []
+        for seed in range(40):
+            _, out = self.run_main("--secret-prompts", str(self.ws.prompts), "--secret-prompt", "random",
+                                   "--seed", str(seed))
+            names.append("Kneeling" if "secret prompt: Kneeling" in out else "Plain")
+        self.assertGreater(names.count("Kneeling"), 20)
+        self.assertIn("Plain", names)
+        again = [self.run_main("--secret-prompts", str(self.ws.prompts), "--secret-prompt", "random",
+                               "--seed", str(seed))[1] for seed in range(40)]
+        self.assertEqual(names, ["Kneeling" if "secret prompt: Kneeling" in out else "Plain" for out in again])
+
+    def test_only_referenced_tables_roll(self):
+        self.ws.write_prompts("x.md", PROMPTS_MD.replace("{secret:Lighting}.", ""))
+        _, out = self.templated("Kneeling")
+        self.assertNotIn("candlelight", out)
+
+    def test_extra_value_pins_a_slot(self):
+        _, out = self.templated("Kneeling", "--extra-value", "Poses=lying on her back with legs raised", "--count", "3")
+        self.assertEqual(out.count("lying on her back with legs raised"), 6)
+        with self.assertRaises(SystemExit):
+            self.templated("Kneeling", "--extra-value", "Nope=x")
+
+    def test_a_pin_versus_override_conflict_is_a_clean_exit(self):
+        with self.assertRaises(SystemExit) as caught:
+            self.templated("Kneeling", "--pronouns", "they")
+        self.assertIn("Pronouns", str(caught.exception))
+
+    def test_a_young_override_is_refused(self):
+        with self.assertRaisesRegex(SystemExit, "adults only"):
+            self.templated("Kneeling", "--set-trait", "Age=in {possessive} late teens || young")
+
+    def test_a_broken_file_is_a_clean_exit_naming_the_line(self):
+        self.ws.write_prompts("x.md", "## A\n### portrait\n{npc:nope}\n### token\ny\n")
+        with self.assertRaises(SystemExit) as caught:
+            self.templated("A")
+        self.assertIn("x.md, 'A', line 3", str(caught.exception))
+
+    def test_list_secret_prompts_prints_json_and_nothing_else(self):
+        broken = self.ws.write_prompts("broken.md", "## A\n### portrait\n{npc:nope}\n### token\ny\n")
+        code, out = self.run_main("--secret-prompts", str(self.ws.prompts), "--secret-prompts", str(broken),
+                                  "--list-secret-prompts")
+        self.assertEqual(code, 0)
+        data = json.loads(out)
+        self.assertEqual([f["file"] for f in data["files"]], ["x.md", "broken.md"])
+        self.assertEqual(data["files"][0]["templates"][0]["name"], "Kneeling")
+        self.assertRegex(data["files"][1]["error"], r"^broken\.md, 'A', line 3: ")
+
+    def test_prompt_preview_parts(self):
+        code, out = self.templated("Kneeling", "--prompt-preview", "--extra-value", "Clothing=completely nude")
+        self.assertEqual(code, 0)
+        data = json.loads(out)
+        ids = {p["id"]: p for p in data["portrait"]}
+        self.assertEqual(ids["secret:Poses"]["randomSources"], ["Poses"])
+        self.assertEqual(ids["secret:Clothing"]["randomSources"], [])
+        self.assertEqual(ids["npc:identity"]["randomSources"], ["Role", "Age"])
+        self.assertEqual(ids["npc:Subject"]["randomSources"], [])
+
+
 if __name__ == "__main__":
     unittest.main()

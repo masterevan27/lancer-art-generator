@@ -69,6 +69,7 @@ import math
 import os
 import random
 import re
+import secret_prompts
 import sys
 import time
 import urllib.parse
@@ -3765,6 +3766,46 @@ def extra_sentence(npc, target=None):
     return "%s%s. " % (text[0].upper(), text[1:])
 
 
+def warn_token_limit(prompts):
+    """The over-limit warning both prompt builders print, on stderr."""
+    for label, text in zip(("portrait", "token"), prompts):
+        n = estimate_tokens(text)
+        if n > TOKEN_LIMIT:
+            print("! %s prompt is about %d tokens, over Krea 2's %d-token limit - the "
+                  "tail will be truncated. Shorten the longest bullet it rolled."
+                  % (label, n, TOKEN_LIMIT), file=sys.stderr)
+
+
+def _secret_prompt_build(npc, template, fields, style, guidance, parts_only):
+    """Both prompts from the NPC's secret prompt snapshot, not the house templates.
+
+    The template's two texts are filled from the same field dict the house
+    templates get plus the NPC's name, then the selected art style is applied
+    exactly as for a house prompt. A selected colour guidance sentence is
+    appended before the style line; the house glow and palette sentences are
+    never added - the template author decides what the prompt says.
+    """
+    import prompt_composer
+    fields = dict(fields, name=npc["name"])
+    extra = npc.get("_extra") or {}
+    palette = guidance["prompt"].strip() if color_guidance.is_custom(guidance) else ""
+    prompts, parts = [], {}
+    for target in ("portrait", "token"):
+        text = secret_prompts.fill(template[target], fields, extra)
+        if palette:
+            text = "%s %s" % (text, palette)
+        prompts.append(art_styles.apply_style(text, style))
+        if parts_only:
+            pieces = secret_prompts.parts(template[target], fields, extra)
+            if palette:
+                pieces.append(prompt_composer._part("text:guidance", " " + palette))
+            parts[target] = prompt_composer._restyle(pieces, style)
+    if parts_only:
+        return parts
+    warn_token_limit(prompts)
+    return tuple(prompts)
+
+
 def build_prompt_parts(npc, style=None, guidance=None):
     return build_prompts(npc, style, guidance, _parts=True)
 
@@ -3859,6 +3900,12 @@ def build_prompts(npc, style=None, guidance=None, _parts=False):
     if description:
         identity.append(description)
     fields["identity"] = ", ".join(identity) or "a person"
+    # A secret prompt replaces both house templates from here on. Everything
+    # above computed the fields a template may read; everything below is the
+    # house prompt's own composition.
+    template = npc.get("_secret_prompt")
+    if template:
+        return _secret_prompt_build(npc, template, fields, style, guidance, _parts)
     fields["backdrop_line"] = scene + " " if scene else ""
     if "Glow placement" in disabled or ("Backdrop" in disabled and
             "scene" in split_flags((npc.get("_raw") or {}).get("Glow placement", ""))[1]):
@@ -3969,12 +4016,7 @@ def build_prompts(npc, style=None, guidance=None, _parts=False):
                                                bool(layout.get(target))) if layout.get(target) else original
                         for target, original in zip(('portrait', 'token'), prompts))
 
-    for label, text in zip(("portrait", "token"), prompts):
-        n = estimate_tokens(text)
-        if n > TOKEN_LIMIT:
-            print("! %s prompt is about %d tokens, over Krea 2's %d-token limit - the "
-                  "tail will be truncated. Shorten the longest bullet it rolled."
-                  % (label, n, TOKEN_LIMIT), file=sys.stderr)
+    warn_token_limit(prompts)
 
     return prompts
 
@@ -4054,6 +4096,8 @@ def write_dossier(path, npc, seed, prompts, images):
                if marks.get(label, label) in disabled else value)
               for label, value in traits]
     traits += list((npc.get("_extra") or {}).items())
+    if npc.get("_secret_prompt"):
+        traits.append(("Secret prompt", "%s (%s)" % (npc["_secret_prompt"]["name"], npc["_secret_prompt"]["file"])))
 
     lines = [
         "# %s" % npc["name"],
@@ -5312,6 +5356,8 @@ def npc_from_entry(entry, regen_id, warn=True):
     npc["_disabled"] = tuple(entry.get("disabledTables") or ())
     if entry.get('promptLayout'):
         npc['_prompt_layout'] = entry['promptLayout']
+    if entry.get("secretPrompt"):
+        npc["_secret_prompt"] = dict(entry["secretPrompt"])
     # No default here either, for the same reason: absent means "not
     # recorded" (an entry written before rawTraits existed), and that has to
     # stay distinguishable from a recorded-but-empty dict. A plain regen never
@@ -5371,6 +5417,8 @@ def extra_record(npc):
         record["disabledTables"] = list(npc["_disabled"])
     if npc.get('_prompt_layout'):
         record['promptLayout'] = npc['_prompt_layout']
+    if npc.get("_secret_prompt"):
+        record["secretPrompt"] = dict(npc["_secret_prompt"])
     return record
 
 
@@ -5702,6 +5750,20 @@ def main(argv=None):
                   sys.stdout)
         return 0
 
+    # Templates load before anything rolls: a broken file is a clean exit,
+    # and the listing prints JSON alone on stdout, like --trait-odds.
+    templates = None
+    if args.secret_prompts:
+        if args.list_secret_prompts:
+            json.dump(secret_prompts.listing(args.secret_prompts, args.secret_tables_dir, tables,
+                                             REQUIRED_TABLES, load_extra_tables), sys.stdout)
+            return 0
+        try:
+            templates = secret_prompts.load(args.secret_prompts, args.secret_tables_dir, tables,
+                                            REQUIRED_TABLES, load_extra_tables)
+        except ValueError as exc:
+            raise SystemExit("--secret-prompts: %s" % exc)
+
     unknown = [t for t in args.overrides if t not in REQUIRED_TABLES and t != "name"]
     if unknown:
         raise SystemExit(
@@ -5753,7 +5815,19 @@ def main(argv=None):
             if not separator or not name or not value:
                 raise ValueError("--extra-value needs TABLE=VALUE")
             values[name] = value
-        extra = load_extra_tables(args.extra_tables, args.extra_table, values)
+        if templates:
+            # A template run never loads args.extra_tables - it is empty
+            # anyway (--extra-tables cannot be combined with --secret-prompt) -
+            # so an --extra-value here is checked against the templates'
+            # own secret slots instead, and rolled from them below.
+            known = {t for tpl in templates.values() for t in tpl["secret_slots"]}
+            stray = [name for name in values if name not in known]
+            if stray:
+                raise ValueError("--extra-value %s: no loaded secret prompt has that slot table (slots: %s)"
+                                 % (", ".join(stray), ", ".join(sorted(known)) or "none"))
+            extra = {}
+        else:
+            extra = load_extra_tables(args.extra_tables, args.extra_table, values)
         targets = {}
         for choice in args.extra_target:
             name, separator, target = choice.partition("=")
@@ -5779,11 +5853,32 @@ def main(argv=None):
     for n in range(1 if args.prompt_preview else args.count):
         seed = base_seed + n
         rng = random.Random(seed)
-        npc = roll_npc(tables, rng, overrides, args.unarmed)
-        # From the same generator, after the base roll, so the default tables
-        # see the stream they always have - see roll_extra().
-        npc["_extra"] = roll_extra(extra, rng)
-        npc["_extra_targets"] = dict(targets)
+        template = None
+        if templates:
+            template = secret_prompts.choose(templates, args.secret_prompt, seed)
+            try:
+                pinned = secret_prompts.merge_pins(template, overrides)
+            except ValueError as exc:
+                raise SystemExit(str(exc))
+            npc = roll_npc(tables, rng, pinned, args.unarmed, adults_only=True)
+            # Only the tables the template reads roll, from the same generator
+            # after the base roll - see roll_extra().
+            try:
+                slot_tables = load_extra_tables(
+                    template["tables"], template["secret_slots"],
+                    {name: value for name, value in values.items() if name in template["secret_slots"]}
+                ) if template["secret_slots"] else {}
+            except ValueError as exc:
+                raise SystemExit("--secret-prompts: %s" % exc)
+            npc["_extra"] = roll_extra(slot_tables, rng)
+            npc["_extra_targets"] = {}
+            npc["_secret_prompt"] = secret_prompts.snapshot(template)
+        else:
+            npc = roll_npc(tables, rng, overrides, args.unarmed)
+            # From the same generator, after the base roll, so the default tables
+            # see the stream they always have - see roll_extra().
+            npc["_extra"] = roll_extra(extra, rng)
+            npc["_extra_targets"] = dict(targets)
         npc["_disabled"] = tuple(dict.fromkeys(args.disable_table))
         if layout:
             npc['_prompt_layout'] = layout
@@ -5791,6 +5886,8 @@ def main(argv=None):
             parts = build_prompt_parts(npc, args.selected_style, args.selected_guidance)
             fixed = set(overrides)
             fixed.update(values)
+            if template:
+                fixed.update(template["pins"])
             for snippets in parts.values():
                 for part in snippets:
                     part['randomSources'] = [source for source in part['sources'] if source not in fixed]
@@ -5806,6 +5903,8 @@ def main(argv=None):
         for seed, npc, (portrait_prompt, token_prompt) in rolled:
             print("\n  %s  \"%s\"  (seed %d)" % (npc["name"], npc["Callsigns"], seed))
             print("    %s, %s" % (npc["Role"], split_faction(npc["Faction"])[0]))
+            if npc.get("_secret_prompt"):
+                print("    secret prompt: %s (%s)" % (npc["_secret_prompt"]["name"], npc["_secret_prompt"]["file"]))
             print("    -> %s" % (npc_folder(args.out, npc["name"], role_category(npc), args.overwrite)))
             print("    workflow %s" % workflow_for(args, npc).name)
             if not args.no_portrait:
