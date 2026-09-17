@@ -461,15 +461,15 @@ class TestFlags(unittest.TestCase):
         self.assertTrue(listing.list_secret_prompts)
 
     def test_secret_is_required(self):
-        self.assertRefused("--secret", "--secret-prompts", str(self.ws.prompts), "--secret-prompt", "random")
-        self.assertRefused("--secret", "--secret-prompts", str(self.ws.prompts), "--list-secret-prompts")
+        self.assertRefused("require --secret", "--secret-prompts", str(self.ws.prompts), "--secret-prompt", "random")
+        self.assertRefused("require --secret", "--secret-prompts", str(self.ws.prompts), "--list-secret-prompts")
 
     def test_the_pair_requires_each_other(self):
-        self.assertRefused("--secret-prompt", *self.secret, "--secret-prompts", str(self.ws.prompts))
-        self.assertRefused("--secret-prompts", *self.secret, "--secret-prompt", "random")
+        self.assertRefused("go together", *self.secret, "--secret-prompts", str(self.ws.prompts))
+        self.assertRefused("go together", *self.secret, "--secret-prompt", "random")
 
     def test_listing_requires_the_files(self):
-        self.assertRefused("--secret-prompts", *self.secret, "--list-secret-prompts")
+        self.assertRefused("--list-secret-prompts needs at least one", *self.secret, "--list-secret-prompts")
 
     def test_refused_combinations(self):
         base = self.secret + ["--secret-prompts", str(self.ws.prompts), "--secret-prompt", "Plain"]
@@ -477,7 +477,7 @@ class TestFlags(unittest.TestCase):
                      ["--extra-tables", str(self.ws.tables)], ["--extra-table", "Poses"],
                      ["--extra-target", "Poses=portrait"]):
             with self.subTest(flag=flag[0]):
-                self.assertRefused(re.escape(flag[0]), *base, *flag)
+                self.assertRefused(re.escape(flag[0]) + " cannot be combined with --secret-prompt", *base, *flag)
 
     def test_extra_value_stays_allowed(self):
         args = self.parse(*self.secret, "--secret-prompts", str(self.ws.prompts), "--secret-prompt", "Plain",
@@ -485,7 +485,7 @@ class TestFlags(unittest.TestCase):
         self.assertEqual(args.extra_value, ["Poses=completely nude"])
 
     def test_refused_on_regeneration(self):
-        self.assertRefused("--secret-prompt", *self.secret, "--regen-manifest", str(self.ws.root / "private" / "manifest.json"),
+        self.assertRefused("--secret-prompt is for new NPCs", *self.secret, "--regen-manifest", str(self.ws.root / "private" / "manifest.json"),
                            "--regen-id", "x", "--secret-prompts", str(self.ws.prompts), "--secret-prompt", "Plain")
 
 
