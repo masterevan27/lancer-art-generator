@@ -92,7 +92,10 @@ def parse_file(path):
     Everything a file can get wrong on its own is reported here with the
     file, the template and the line; what needs the tables or the default
     tables (a secret slot naming no table, a pin the table does not offer)
-    is checked by load().
+    is checked by load(). Each returned template dict keeps: name, file,
+    line, weight, pin_text, pin_lines (the source line each pin: sits on,
+    keyed the same as pin_text), portrait, token, npc_slots, secret_slots
+    and slot_lines.
     """
     path = Path(path)
     try:
@@ -147,7 +150,8 @@ def parse_file(path):
             if any(t["name"] == name for t in templates):
                 raise _error(path, name, number, "template name already used in this file")
             current = {"name": name, "file": path.name, "line": number, "weight": 1.0, "pin_text": {},
-                       "portrait": None, "token": None, "_lines": {"portrait": [], "token": []},
+                       "pin_lines": {}, "portrait": None, "token": None,
+                       "_lines": {"portrait": [], "token": []},
                        "_weight_line": None, "_section_lines": {}}
             section = None
             continue
@@ -195,6 +199,7 @@ def parse_file(path):
                 if table in current["pin_text"]:
                     raise _error(path, current["name"], number, "%s is pinned twice" % table)
                 current["pin_text"][table] = pinned
+                current["pin_lines"][table] = number
                 continue
             raise _error(path, current["name"], number,
                          "unexpected line between '## %s' and its first '###': %r" % (current["name"], line.strip()))
@@ -307,26 +312,14 @@ def load(paths, tables_dir, npc_tables, required, read_tables):
                 try:
                     pins[table] = _resolve_pin(table, value, npc_tables, required)
                 except ValueError as exc:
-                    raise _error(path, template["name"], _pin_line(path, template, table), str(exc))
+                    raise _error(path, template["name"], template["pin_lines"].get(table, template["line"]),
+                                 str(exc))
             if template["name"] in templates:
                 raise _error(path, template["name"], template["line"],
                              "template name already used in %s" % templates[template["name"]]["file"])
             template.update(path=path, tables=[str(t) for t in resolved], pins=pins)
             templates[template["name"]] = template
     return templates
-
-
-def _pin_line(path, template, table):
-    """The line a template's 'pin: <table>' sits on, re-read for the message."""
-    lines = Path(path).read_text(encoding="utf-8-sig").splitlines()
-    for number in range(template["line"], len(lines) + 1):
-        line = lines[number - 1].strip()
-        if number > template["line"] and line.startswith("#"):
-            break
-        key, sep, value = line.partition(":")
-        if sep and key.strip() == "pin" and value.partition("=")[0].strip() == table:
-            return number
-    return template["line"]
 
 
 def listing(paths, tables_dir, npc_tables, required, read_tables):
@@ -450,7 +443,7 @@ def merge_pins(template, overrides):
             else:
                 same = _core(merged[table], table) == _core(bullet, table)
             if not same:
-                raise ValueError("secret prompt '%s' pins %s = %s, but --set-trait asks for %s = %s"
+                raise ValueError("secret prompt '%s' pins %s = %s, but an explicit override asks for %s = %s"
                                  % (template["name"], table, template["pin_text"][table], table, merged[table]))
         merged[table] = bullet
     return merged

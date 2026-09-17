@@ -128,6 +128,11 @@ class TestParseFile(unittest.TestCase):
         self.assertEqual(plain["pin_text"], {})
         self.assertEqual(plain["portrait"], "{{Literal}} braces and {npc:name}")
 
+    def test_pin_lines_are_recorded(self):
+        ws = Workspace(self)
+        kneeling = sp.parse_file(ws.prompts)[2][0]
+        self.assertEqual(kneeling["pin_lines"], {"Pronouns": 6})
+
     def test_lines_join_with_single_spaces(self):
         ws = Workspace(self)
         kneeling = sp.parse_file(ws.prompts)[2][0]
@@ -608,6 +613,15 @@ class TestRecord(unittest.TestCase):
         path = ws.root / "d.md"
         gen.write_dossier(path, npc, 3, gen.build_prompts(npc), [])
         self.assertIn("| Secret prompt | Kneeling (x.md) |", path.read_text(encoding="utf-8"))
+
+    def test_an_edited_snapshot_naming_an_absent_field_exits_cleanly(self):
+        ws = Workspace(self)
+        npc = rolled_with_template(ws)
+        npc["_secret_prompt"]["portrait"] = "{secret:Nope}"
+        with self.assertRaisesRegex(SystemExit, "Kneeling"):
+            gen.build_prompts(npc)
+        with self.assertRaisesRegex(SystemExit, "secret:Nope"):
+            gen.build_prompts(npc)
 
 
 class TestCli(unittest.TestCase):

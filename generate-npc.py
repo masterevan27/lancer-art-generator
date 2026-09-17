@@ -2710,6 +2710,12 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None, adults_only
         runs them through exactly the gates the flat list passed. Consumes no
         randomness: the snapshot test is what holds that.
 
+        The one exception to "options in, drawn-from list out" is the
+        adults-only Age gate below: when every bullet the roll could reach
+        is flagged 'young' it exits rather than handing back an empty list,
+        so every other gate's "never filter the pool down to nothing"
+        guard still has a non-empty pool to fall back to.
+
         `theme_share=False` skips the duplication step and nothing else, for
         the one caller that hands in a pool it is about to split back apart -
         see the draw site, which sizes the share separately for the parent and
@@ -3074,9 +3080,12 @@ def roll_npc(tables, rng, overrides=None, unarmed=False, probe=None, adults_only
             # roller reaches. Every gate in narrow() hands its whole input back
             # sooner than return nothing, which is the invariant rng.choice()
             # has always rested on, so a non-empty parent list cannot narrow to
-            # an empty one. It was a live third level while `parent` was carved
-            # out of the union's survivors - the union could stay alive on a
-            # group's members while every parent bullet fell - and it is kept
+            # an empty one. The one exception is the adults-only Age gate,
+            # which exits rather than handing its input back, so a non-empty
+            # parent still can never narrow to nothing silently. It was a
+            # live third level while `parent` was carved out of the union's
+            # survivors - the union could stay alive on a group's members
+            # while every parent bullet fell - and it is kept
             # here for the same reason the `or options` guards inside narrow()
             # are kept: the draw below cannot be allowed to meet an empty list,
             # whatever a future filter does.
@@ -3791,12 +3800,16 @@ def _secret_prompt_build(npc, template, fields, style, guidance, parts_only):
     palette = guidance["prompt"].strip() if color_guidance.is_custom(guidance) else ""
     prompts, parts = [], {}
     for target in ("portrait", "token"):
-        text = secret_prompts.fill(template[target], fields, extra)
+        try:
+            text = secret_prompts.fill(template[target], fields, extra)
+            if parts_only:
+                pieces = secret_prompts.parts(template[target], fields, extra)
+        except ValueError as exc:
+            raise SystemExit("secret prompt %r: %s" % (template["name"], exc))
         if palette:
             text = "%s %s" % (text, palette)
         prompts.append(art_styles.apply_style(text, style))
         if parts_only:
-            pieces = secret_prompts.parts(template[target], fields, extra)
             if palette:
                 pieces.append(prompt_composer._part("text:guidance", " " + palette))
             parts[target] = prompt_composer._restyle(pieces, style)

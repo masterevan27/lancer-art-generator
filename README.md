@@ -181,21 +181,26 @@ A full-body figure of {npc:identity}, {secret:Standing/Squatting Poses},
 `tables:` names files in the secret tables folder (`--secret-tables-dir`,
 default the `secret-tables` sibling of the template file's folder). `{npc:…}`
 reads the rolled NPC - `identity`, `hair`, `eyes`, `skin`, `outfit`, `stance`,
-`backdrop`, `shot`, `name`, the pronoun fields and the rest of the list
-`generate-npc.py --help` prints on an error - and `{secret:Table}` rolls one
-row of a table from the `tables:` files, once per NPC however often it is
-used; `{{` and `}}` are literal braces. `weight:` steers `random`; `pin:`
-forces a default table's bullet, the way `--set-trait` does. Every template
-pins adults only: an Age flagged `young` cannot be rolled, pinned or forced
-while a secret prompt is active. `--prompt-layout`, `--disable-table` and the
-`--extra-*` flags except `--extra-value` are refused beside a template, since
-the template decides what appears and in what order. The chosen template is
-saved on the manifest entry as `secretPrompt` (text included, so regeneration
-works after the file changes), the dossier names it, and `--reroll-trait`
-accepts any table the template reads. `--list-secret-prompts` prints the
-templates as JSON for the Import GUI; a file with an error is listed with the
-file, template and line. Templates live in `prompts/secret-prompts/`, which
-is gitignored beside the tables.
+`backdrop`, `shot`, `name`, the pronoun fields and more; the full field list
+is printed by the load error for an unknown `{npc:…}` field - and
+`{secret:Table}` rolls one row of a table from the `tables:` files, once per
+NPC however often it is used; `{{` and `}}` are literal braces. `weight:`
+steers `random`; `pin:` forces a default table's bullet, the way
+`--set-trait` does. Every template pins adults only: an Age flagged `young`
+cannot be rolled, pinned or forced while a secret prompt is active.
+`--prompt-layout`, `--disable-table` and the `--extra-*` flags except
+`--extra-value` are refused beside a template, since the template decides
+what appears and in what order. The chosen template is saved on the manifest
+entry as `secretPrompt` (text included, so regeneration works after the file
+changes); a slot re-roll (`--reroll-trait <slot table>`) still re-reads the
+`tables:` files at the absolute paths recorded on the entry, so moving the
+secret tables folder makes that one operation report a missing file until
+the NPC is regenerated with the template again (plain regeneration still
+works). The dossier names the template, and `--reroll-trait` accepts any
+table the template reads. `--list-secret-prompts` prints the templates as
+JSON for the Import GUI; a file with an error is listed with the file,
+template and line. Templates live in `prompts/secret-prompts/`, which is
+gitignored beside the tables.
 
 `prompts/secret-tables/` is gitignored and is where the Import GUI looks for
 these files in Secret mode. The flags themselves are not tied to `--secret`.
