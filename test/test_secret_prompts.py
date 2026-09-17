@@ -338,5 +338,65 @@ class TestParts(unittest.TestCase):
         self.assertEqual(parts[-1]["sources"], ["Hair", "Hair colour"])
 
 
+class TestChoose(unittest.TestCase):
+    def setUp(self):
+        self.ws = Workspace(self)
+        self.templates = self.ws.load()
+
+    def test_a_name_is_looked_up(self):
+        self.assertEqual(sp.choose(self.templates, "Plain", 1)["name"], "Plain")
+
+    def test_an_unknown_name_lists_the_choices(self):
+        with self.assertRaisesRegex(ValueError, "Kneeling, Plain"):
+            sp.choose(self.templates, "Nope", 1)
+
+    def test_random_is_weighted_and_reproducible_per_seed(self):
+        picks = [sp.choose(self.templates, "random", seed)["name"] for seed in range(200)]
+        self.assertEqual(picks, [sp.choose(self.templates, "random", seed)["name"] for seed in range(200)])
+        self.assertGreater(picks.count("Kneeling"), 120)
+        self.assertGreater(picks.count("Plain"), 15)
+
+    def test_random_draws_from_its_own_stream(self):
+        self.assertEqual(sp.choose(self.templates, "random", 7)["name"],
+                         sp.choose(self.templates, "random", "7")["name"])
+        expected = random.Random("7:secret-prompt").choices(["Kneeling", "Plain"], [3.0, 1.0])[0]
+        self.assertEqual(sp.choose(self.templates, "random", 7)["name"], expected)
+
+
+class TestPins(unittest.TestCase):
+    def setUp(self):
+        self.template = Workspace(self).load()["Kneeling"]
+
+    def test_pins_merge_into_the_overrides(self):
+        merged = sp.merge_pins(self.template, {"Role": "a dockworker"})
+        self.assertEqual(merged, {"Role": "a dockworker", "Pronouns": "she/her/her/woman"})
+
+    def test_an_agreeing_override_is_fine(self):
+        merged = sp.merge_pins(self.template, {"Pronouns": "she/her/her/woman"})
+        self.assertEqual(merged["Pronouns"], "she/her/her/woman")
+
+    def test_a_disagreeing_override_names_both_values(self):
+        with self.assertRaisesRegex(ValueError, r"she/her.*they/them/their/person|they/them/their/person.*she/her"):
+            sp.merge_pins(self.template, {"Pronouns": "they/them/their/person"})
+
+    def test_the_caller_dict_is_not_mutated(self):
+        overrides = {}
+        sp.merge_pins(self.template, overrides)
+        self.assertEqual(overrides, {})
+
+
+class TestSnapshot(unittest.TestCase):
+    def test_snapshot_holds_the_text_and_the_tables(self):
+        ws = Workspace(self)
+        snap = sp.snapshot(ws.load()["Kneeling"])
+        self.assertEqual(set(snap), {"file", "name", "portrait", "token", "tables"})
+        self.assertEqual(snap["file"], "x.md")
+        self.assertEqual(snap["name"], "Kneeling")
+        self.assertIn("{secret:Poses}", snap["portrait"])
+        self.assertEqual(snap["tables"], [str(ws.tables.resolve())])
+        self.assertEqual(sp.snapshot_secret_slots(snap), ["Poses", "Clothing", "Lighting"])
+        json.dumps(snap)
+
+
 if __name__ == "__main__":
     unittest.main()

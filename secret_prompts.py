@@ -397,3 +397,52 @@ def parts(text, fields, extra):
         pieces.append(prompt_composer._part(ident, filled, sources))
         so_far += filled
     return prompt_composer.reflow(pieces, tidy(so_far))
+
+
+def choose(templates, name, seed):
+    """The template `name` asks for, or a weighted draw for 'random'.
+
+    The draw seeds its own generator from the NPC's seed and a fixed tag,
+    so it neither reads nor moves the stream roll_npc() consumes: the NPC a
+    seed produces is the same with or without a template.
+    """
+    if name == "random":
+        pool = list(templates.values())
+        rng = random.Random("%s:secret-prompt" % seed)
+        return rng.choices(pool, [t["weight"] for t in pool])[0]
+    if name not in templates:
+        raise ValueError("no secret prompt named %r; loaded: %s" % (name, ", ".join(templates) or "none"))
+    return templates[name]
+
+
+def merge_pins(template, overrides):
+    """`overrides` plus the template's pins, refusing a pin that contradicts one."""
+    merged = dict(overrides or {})
+    for table, bullet in template["pins"].items():
+        if table in merged:
+            if table == "Pronouns":
+                same = merged[table].split("/")[0].strip().lower() == bullet.split("/")[0].strip().lower()
+            else:
+                same = _core(merged[table]) == _core(bullet)
+            if not same:
+                raise ValueError("secret prompt '%s' pins %s = %s, but --set-trait asks for %s = %s"
+                                 % (template["name"], table, template["pin_text"][table], table, merged[table]))
+        merged[table] = bullet
+    return merged
+
+
+def snapshot(template):
+    """What the manifest keeps: enough to refill the prompt with the file gone."""
+    return {"file": template["file"], "name": template["name"],
+            "portrait": template["portrait"], "token": template["token"],
+            "tables": list(template["tables"])}
+
+
+def snapshot_secret_slots(snap):
+    """Every {secret:...} table the snapshot's two texts read, in order."""
+    out = []
+    for target in ("portrait", "token"):
+        for table in slots(snap.get(target, ""))[1]:
+            if table not in out:
+                out.append(table)
+    return out
