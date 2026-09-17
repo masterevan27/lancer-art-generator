@@ -84,6 +84,41 @@ matches a default table is refused, as is the same name in two files.
 `--extra-table NAME` (repeatable) rolls only the named tables from the loaded
 files.
 
+#### Tags and gates
+
+A private table can be *gated*: it rolls only when a value rolled (or fixed)
+earlier carries one of its tags.
+
+```markdown
+## Styles
+- x2 Rugged dockworker #man
+- x2 Elegant courtesan #woman #noble
+
+## Men's Attributes (when: man)
+- heavy stubble #scarred
+- broad shoulders
+
+## Scars (when: scarred)
+- a burn scar across one cheek
+
+## Jewellery (when: woman, noble)
+- a thin gold circlet
+```
+
+- `#tag`s at the very end of a bullet are removed from the value and name the
+  gates it opens (letters, digits, `-`, `_`; case-insensitive).
+- `(when: a, b)` at the end of a heading gates the table; it opens on *any*
+  listed tag. The table's name is the heading without the suffix, so
+  `--extra-value "Men's Attributes=broad shoulders"`.
+- Tables roll in order: files in `--extra-tables` order, then tables in file
+  order. A gated table above every table that could open it is refused; a tag
+  no loaded file carries simply keeps the gate shut.
+- Fixing a value in a gated table narrows its single Random opener to the
+  values that open it; if no table, or more than one, could open it the run
+  stops with a message saying which.
+- JSON: `{"value": "...", "tags": ["man"]}` on a row, and
+  `"Men's Attributes": {"when": ["man"], "rows": [...]}` for a gated table.
+
 `--extra-target TABLE=portrait`, `TABLE=token`, or `TABLE=both` (repeatable)
 chooses which image prompts receive a selected table's value. Unspecified
 tables apply to both images, sharing one roll. For example,
