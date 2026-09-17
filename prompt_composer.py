@@ -67,6 +67,44 @@ def render(parts, customized=False):
     return text.strip()
 
 
+def reflow(parts, text):
+    """The same parts, re-spanned so their texts join to exactly `text`.
+
+    Character-level diff between the parts' current join and `text`; equal
+    runs stay with the part that owned them, replaced or inserted runs go to
+    the part owning the character they replace. Used by _restyle() for an
+    art style's whole-prompt edits and by secret_prompts.parts() for the
+    tidy-up a filled template gets, so a preview's fragments always join to
+    the prompt the generator will render.
+    """
+    original = ''.join(part['text'] for part in parts)
+    if text == original:
+        return parts
+    owners = []
+    buffers = [{key: [] for key in ('prefix', 'value', 'suffix')} for _ in parts]
+    for index, part in enumerate(parts):
+        for key in ('prefix', 'value', 'suffix'):
+            owners.extend([(index, key)] * len(part[key]))
+    for operation, left, right, start, end in SequenceMatcher(None, original, text, autojunk=False).get_opcodes():
+        if operation == 'equal':
+            for offset, char in enumerate(text[start:end]):
+                index, key = owners[left + offset]
+                buffers[index][key].append(char)
+        elif operation in ('replace', 'insert') and owners:
+            index, key = owners[min(left, len(owners) - 1)]
+            buffers[index][key].append(text[start:end])
+    result = []
+    for part, buffer in zip(parts, buffers):
+        value = {key: ''.join(chars) for key, chars in buffer.items()}
+        updated = dict(part, **value)
+        updated['text'] = value['prefix'] + value['value'] + value['suffix']
+        if updated['text']:
+            if not updated['value']:
+                updated['sources'] = []
+            result.append(updated)
+    return result
+
+
 def _restyle(parts, style):
     """Apply the existing whole-prompt style rules, preserving span ownership.
 
@@ -85,29 +123,10 @@ def _restyle(parts, style):
             styled = styled[:-len(tail)]
         else:
             tail = ''
-    owners = []
-    buffers = [{key: [] for key in ('prefix', 'value', 'suffix')} for _ in parts]
-    for index, part in enumerate(parts):
-        for key in ('prefix', 'value', 'suffix'):
-            owners.extend([(index, key)] * len(part[key]))
-    for operation, left, right, start, end in SequenceMatcher(None, original, styled, autojunk=False).get_opcodes():
-        if operation == 'equal':
-            for offset, char in enumerate(styled[start:end]):
-                index, key = owners[left + offset]
-                buffers[index][key].append(char)
-        elif operation in ('replace', 'insert') and owners:
-            index, key = owners[min(left, len(owners) - 1)]
-            buffers[index][key].append(styled[start:end])
-    result = []
-    for part, buffer in zip(parts, buffers):
-        value = {key: ''.join(chars) for key, chars in buffer.items()}
-        updated = dict(part, **value)
-        updated['text'] = value['prefix'] + value['value'] + value['suffix']
-        if updated['text']:
-            if not updated['value']:
-                updated['sources'] = []
-            result.append(updated)
+    result = reflow(parts, styled)
     if tail:
+        if result is parts:
+            result = list(parts)
         result.append(_part('style:suffix', tail))
     return result
 

@@ -95,6 +95,29 @@ class PromptComposerTests(unittest.TestCase):
         original = gen.build_prompts(npc, style)[0]
         self.assertEqual(''.join(p['text'] for p in parts['portrait']), original)
 
+    def test_reflow_maps_an_edited_string_back_onto_its_parts(self):
+        import prompt_composer
+        parts = [prompt_composer._part('text:0', 'a  portrait of '),
+                 prompt_composer._part('npc:hair', 'red  hair', ['Hair']),
+                 prompt_composer._part('text:2', ' , here')]
+        moved = prompt_composer.reflow(parts, 'a portrait of red hair, here.')
+        self.assertEqual(''.join(p['text'] for p in moved), 'a portrait of red hair, here.')
+        self.assertEqual([p['id'] for p in moved], ['text:0', 'npc:hair', 'text:2'])
+        self.assertEqual(moved[1]['value'], 'red hair')
+        self.assertEqual(moved[1]['sources'], ['Hair'])
+        self.assertIs(prompt_composer.reflow(parts, ''.join(p['text'] for p in parts)), parts)
+
+    def test_restyle_with_tail_only_style_does_not_mutate_input(self):
+        import prompt_composer
+        from prompt_composer import _part
+        style = {'id': 'ink', 'prompt': 'Ink wash.'}
+        parts = [_part('text:0', 'A half-body portrait of a pilot in a cockpit, '), _part('npc:mood', 'moody lighting.', ['Mood'])]
+        original_len = len(parts)
+        result = prompt_composer._restyle(parts, style)
+        self.assertIsNot(result, parts)
+        self.assertEqual(len(parts), original_len)
+        self.assertEqual(result[-1]['id'], 'style:suffix')
+
     def test_preview_cannot_enter_regeneration(self):
         from unittest.mock import patch
         with patch.object(gen, 'regenerate_one') as regenerate:
