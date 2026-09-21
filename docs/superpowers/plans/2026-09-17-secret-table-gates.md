@@ -1,5 +1,8 @@
 # Secret Table Gates Implementation Plan
 
+> **Status, 2026-09-17: implemented and tested.** The generator and GUI work
+> landed on `main`; this checklist is retained as an implementation record.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Let private (Secret mode) tables carry `#tag`s on bullets and `(when: tag)` gates on headings, so a gated table rolls or is offered only when an earlier pick opens it, with a collapsible roll-order panel in Create NPC.

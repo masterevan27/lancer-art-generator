@@ -1,7 +1,9 @@
 # Secret table gates: tables that only roll when an earlier pick opens them
 
 **Date:** 2026-09-16
-**Status:** approved (spec reviewed 2026-09-16; roll order panel added)
+**Status:** implemented and tested 2026-09-17; retained as design history. The
+generator gate parsing/rolling and GUI validation, greying, and roll-order panel
+are present on `main`.
 **Repositories:** `lancer-art-generator` (the format and the roll),
 `lancer-npc-import-gui` (the Secret tables section of Create NPC and the
 server-side check of a selection)

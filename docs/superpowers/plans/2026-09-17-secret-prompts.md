@@ -1,5 +1,8 @@
 # Secret Prompts Implementation Plan
 
+> **Status, 2026-09-17: implemented and tested.** The generator and GUI work
+> landed on `main`; this checklist is retained as an implementation record.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Let a Secret-mode NPC be prompted from a user-written fill-in-the-blank template (`prompts/secret-prompts/*.md`) whose blanks are filled from the NPC's own rolled traits and from private tables, selectable by name or at random from the Secret Create NPC page, saved on the record and in presets, and regenerable.

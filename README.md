@@ -1,5 +1,36 @@
 # Lancer Art Generator
 
+## Python setup
+
+The generator CLIs and Python tests use the standard library only. No pip
+packages or `requirements.txt` are needed. A project-local `.venv` is optional
+and keeps the interpreter separate from other tools. From this repository in
+PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe generate-npc.py --dry-run --count 5
+.\.venv\Scripts\python.exe -m unittest discover test
+```
+
+To use the README's plain `python` commands, activate the environment with
+`.\.venv\Scripts\Activate.ps1`; run `deactivate` when finished. Activation is
+not required when using the executable path above. On Linux/macOS, use
+`python3 -m venv .venv` and `.venv/bin/python`. Virtual environments are local,
+gitignored files; recreate them after moving the checkout.
+
+Actual rendering requires the separately installed ComfyUI server, models and
+workflow custom nodes. Keep those dependencies in ComfyUI's own environment.
+The optional 3D pipeline also requires Blender (see
+[3D setup](docs/generate-3d.md)); scripts under `blender/` and the 3D fixture
+builder run in Blender's bundled Python, which supplies `bpy`, `bmesh`,
+`mathutils` and `bpy_extras`. They are not pip dependencies of these CLIs.
+
+For the sibling Import GUI, set `pythonExecutable` in its `config.json` to
+the absolute path of this environment's interpreter, for example
+`G:/GIT-REPOS/lancer-art-generator/.venv/Scripts/python.exe`, then restart the
+GUI server. The GUI does not need a separate Python environment.
+
 ## Art styles and private generation
 
 NPC and spaceship generation accept `--preset-name NAME` to record the originating

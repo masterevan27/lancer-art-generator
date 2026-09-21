@@ -2,6 +2,10 @@
 __pycache__/
 *.pyc
 
+# Local Python environments
+.venv/
+venv/
+
 # Local workflow visibility
 workflows.json
 

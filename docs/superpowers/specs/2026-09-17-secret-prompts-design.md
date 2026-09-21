@@ -1,7 +1,10 @@
 # Secret prompts: fill-in-the-blank NPC prompts for Secret mode
 
 **Date:** 2026-09-17
-**Status:** approved design; not yet implemented
+**Status:** implemented and tested 2026-09-17; retained as design history. The
+generator, GUI routes, Secret Create NPC controls, preview, presets, and
+regeneration path are present on `main`. The unchecked implementation plan
+below is historical; use the current code and tests as the source of truth.
 **Repositories:** `lancer-art-generator` (file format, generator, content),
 `lancer-npc-import-gui` (Secret Create NPC page, presets, gallery)
 
