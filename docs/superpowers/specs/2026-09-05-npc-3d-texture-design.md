@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Texturing the reconstruction: the reference image's own colours on the mesh"
+description: "Design decisions and requirements for Texturing the reconstruction: the reference image's own colours on the mesh."
+---
 # Texturing the reconstruction: the reference image's own colours on the mesh
 
 > **Status:** designed 2026-09-05; since implemented as `generate-3d.py`'s

@@ -1,3 +1,8 @@
+---
+type: "Reference"
+title: "Versioning"
+description: "Release version source, increment rules and automation for this repository."
+---
 # Versioning
 
 A repository coordination version is stored in the root `VERSION` file.

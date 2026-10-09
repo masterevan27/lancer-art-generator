@@ -1,3 +1,8 @@
+---
+type: "Plan"
+title: "Spaceship support in the import GUI — implementation plan (Repo GUI)"
+description: "Implementation steps and constraints for Spaceship support in the import GUI — implementation plan (Repo GUI)."
+---
 # Spaceship support in the import GUI — implementation plan (Repo GUI)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -8,7 +13,7 @@
 
 **Tech Stack:** Node.js (no framework, no dependencies), `node:test` + `node:assert/strict`, vanilla browser JS. `server.js` is 2,808 lines; `public/app.js` is 3,812.
 
-**Spec:** [`docs/superpowers/specs/2026-09-06-gui-spaceships-design.md`](../specs/2026-09-06-gui-spaceships-design.md) — §1 the decision, §2 server, §3 client, §4 Foundry import, §5 trait accumulation parity, §6 build order, §7 test plan, §8 contract assumptions.
+**Spec:** [`docs/superpowers/specs/2026-09-06-gui-spaceships-design.md`](https://github.com/masterevan27/lancer-npc-import-gui/blob/e11e99c/docs/superpowers/specs/2026-09-06-gui-spaceships-design.md) — §1 the decision, §2 server, §3 client, §4 Foundry import, §5 trait accumulation parity, §6 build order, §7 test plan, §8 contract assumptions.
 Companion: [`docs/superpowers/plans/2026-09-07-spaceships-and-trait-fixes.md`](2026-09-07-spaceships-and-trait-fixes.md) (why), [`REMAINING-WORK.md`](../../../REMAINING-WORK.md).
 **Sibling plan:** `docs/superpowers/plans/2026-09-07-spaceship-generator-completion.md` in the ART repo. **Its Task 1 and Task 1b block this plan's Task 1.**
 

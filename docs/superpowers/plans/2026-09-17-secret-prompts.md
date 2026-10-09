@@ -1,3 +1,8 @@
+---
+type: "Plan"
+title: "Secret Prompts Implementation Plan"
+description: "Implementation steps and constraints for Secret Prompts."
+---
 # Secret Prompts Implementation Plan
 
 > **Status, 2026-09-17: implemented and tested.** The generator and GUI work

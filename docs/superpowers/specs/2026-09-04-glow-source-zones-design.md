@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Glow placement filtered against the source that licensed it"
+description: "Design decisions and requirements for Glow placement filtered against the source that licensed it."
+---
 # Glow placement filtered against the source that licensed it
 
 > **Status:** design, not started 2026-09-04. Follow-up to `Glow placement`,

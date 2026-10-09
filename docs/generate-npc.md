@@ -1,3 +1,8 @@
+---
+type: "Runbook"
+title: "generate-npc.py — random NPCs, portrait + token"
+description: "Roll NPC traits and generate paired portraits and tokens."
+---
 # generate-npc.py — random NPCs, portrait + token
 
 A companion script, not a mode of [`generate-art.py`](generate-art.md). That script

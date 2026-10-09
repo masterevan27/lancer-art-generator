@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Secret prompts: fill-in-the-blank NPC prompts for Secret mode"
+description: "Design decisions and requirements for Secret prompts: fill-in-the-blank NPC prompts for Secret mode."
+---
 # Secret prompts: fill-in-the-blank NPC prompts for Secret mode
 
 **Date:** 2026-09-17

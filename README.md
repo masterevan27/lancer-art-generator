@@ -680,3 +680,8 @@ The import GUI discovers graphs in `workflows/api/`. Put private graphs in
 files are always excluded. Optional `workflows.json` beside the scripts uses
 the format in `workflows.example.json` to give main-folder graphs friendly
 names or mark them `hidden`/`secret`. This local catalog is ignored by Git.
+
+## Documentation bundle
+
+Start at [docs/index.md](docs/index.md). Follow the pinned metadata and validation
+workflow in [docs/OKF.md](docs/OKF.md) when maintaining project documentation.

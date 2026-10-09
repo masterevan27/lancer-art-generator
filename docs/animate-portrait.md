@@ -1,3 +1,8 @@
+---
+type: "Runbook"
+title: "animate-portrait.py"
+description: "Generate looping portrait and scene animations from existing images."
+---
 # animate-portrait.py
 
 Turns an image into a looping animated `.webp`. Point it at a portrait and you

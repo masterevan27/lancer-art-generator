@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Token fidelity, weapon policy and trait naming"
+description: "Design decisions and requirements for Token fidelity, weapon policy and trait naming."
+---
 # Token fidelity, weapon policy and trait naming
 
 Six changes to `generate-npc.py` and `prompts/npc-generator-tables.md`, covering

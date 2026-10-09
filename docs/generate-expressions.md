@@ -1,3 +1,8 @@
+---
+type: "Runbook"
+title: "Expression sprites"
+description: "Generate full-body expression sprites from NPC portraits or tokens."
+---
 # Expression sprites
 
 `generate-expressions.py` turns one original NPC token or portrait into tall,

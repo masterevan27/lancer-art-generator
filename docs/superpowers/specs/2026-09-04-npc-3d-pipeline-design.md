@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "NPC 3D pipeline: turning a generated NPC into a rigged, printable model"
+description: "Design decisions and requirements for NPC 3D pipeline: turning a generated NPC into a rigged, printable model."
+---
 # NPC 3D pipeline: turning a generated NPC into a rigged, printable model
 
 > **Status:** designed 2026-09-04; since implemented as `generate-3d.py`

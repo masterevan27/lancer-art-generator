@@ -1,3 +1,8 @@
+---
+type: "Plan"
+title: "Theme re-roll cascade — implementation plan"
+description: "Implementation steps and constraints for Theme re-roll cascade."
+---
 # Theme re-roll cascade — implementation plan
 
 Spec: [2026-09-04-theme-reroll-cascade-design.md](../specs/2026-09-04-theme-reroll-cascade-design.md)

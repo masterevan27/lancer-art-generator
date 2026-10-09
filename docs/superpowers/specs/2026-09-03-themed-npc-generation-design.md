@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Themed NPC generation"
+description: "Design decisions and requirements for Themed NPC generation."
+---
 # Themed NPC generation
 
 Design for making `generate-npc.py` roll NPCs that read as one coherent

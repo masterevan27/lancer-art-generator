@@ -30,3 +30,8 @@ Use unique event ids and never edit `ai-agent-dashboard/data/state.json` or
 Read [`docs/VERSIONING.md`](docs/VERSIONING.md) before completing project work.
 It identifies the machine-readable version source and any project-specific
 release automation.
+
+## Documentation bundle
+
+Start at [docs/index.md](docs/index.md). Follow the pinned metadata and validation
+workflow in [docs/OKF.md](docs/OKF.md) when maintaining project documentation.

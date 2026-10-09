@@ -1,3 +1,8 @@
+---
+type: "Runbook"
+title: "generate-art.py — batch art generation through ComfyUI"
+description: "Run authored Markdown art prompts through ComfyUI batch workflows."
+---
 # generate-art.py — batch art generation through ComfyUI
 
 Reads an art-prompt markdown file, pulls every prompt block out of it, and queues

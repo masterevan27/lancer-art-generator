@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Table groups: one slot for a family of near-duplicate bullets"
+description: "Design decisions and requirements for Table groups: one slot for a family of near-duplicate bullets."
+---
 # Table groups: one slot for a family of near-duplicate bullets
 
 **Date:** 2026-09-12

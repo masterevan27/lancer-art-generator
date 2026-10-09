@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Trait roll odds: what a bullet's real chance of being rolled is"
+description: "Design decisions and requirements for Trait roll odds: what a bullet's real chance of being rolled is."
+---
 # Trait roll odds: what a bullet's real chance of being rolled is
 
 > **Status:** design 2026-09-04; shipped as `--trait-odds` (`3e68698`).

@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Phase 2: structural splits (Gear/Weapon, Hair/Hair colour)"
+description: "Design decisions and requirements for Phase 2: structural splits (Gear/Weapon, Hair/Hair colour)."
+---
 # Phase 2: structural splits (Gear/Weapon, Hair/Hair colour)
 
 > **Status:** design, approved 2026-09-03. Implements Phase 2 of

@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Headgear and outfit register: keeping hard tech off a kimono"
+description: "Design decisions and requirements for Headgear and outfit register: keeping hard tech off a kimono."
+---
 # Headgear and outfit register: keeping hard tech off a kimono
 
 > **Status:** design, 2026-09-04, for branch `headgear-outfit-register`,

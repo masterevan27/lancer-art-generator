@@ -1,3 +1,8 @@
+---
+type: "Reference"
+title: "Spaceship generator completion — implementation plan (Repo ART)"
+description: "Reference notes and context for Spaceship generator completion — implementation plan (Repo ART)."
+---
 # Spaceship generator completion — implementation plan (Repo ART)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

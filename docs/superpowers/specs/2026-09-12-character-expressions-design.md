@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Character expressions: SillyTavern expression sprites from one portrait"
+description: "Design decisions and requirements for Character expressions: SillyTavern expression sprites from one portrait."
+---
 # Character expressions: SillyTavern expression sprites from one portrait
 
 **Date:** 2026-09-12

@@ -1,3 +1,8 @@
+---
+type: "Plan"
+title: "Character Expressions Implementation Plan"
+description: "Implementation steps and constraints for Character Expressions."
+---
 # Character Expressions Implementation Plan
 
 > **Status:** Implemented. This unchecked task list is retained as implementation

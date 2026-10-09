@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Setting a trait to a chosen value on an already-rolled NPC"
+description: "Design decisions and requirements for Setting a trait to a chosen value on an already-rolled NPC."
+---
 # Setting a trait to a chosen value on an already-rolled NPC
 
 Date: 2026-09-06

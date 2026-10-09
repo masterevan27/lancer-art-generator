@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Re-rolling Theme, and the twelve traits that go with it"
+description: "Design decisions and requirements for Re-rolling Theme, and the twelve traits that go with it."
+---
 # Re-rolling Theme, and the twelve traits that go with it
 
 > **Status:** shipped 2026-09-04, in `generate-npc.py`, except §5. Landed wider

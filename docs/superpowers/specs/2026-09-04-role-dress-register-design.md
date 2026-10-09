@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Role and dress register: gating Outfit and Faction on what the job is"
+description: "Design decisions and requirements for Role and dress register: gating Outfit and Faction on what the job is."
+---
 # Role and dress register: gating Outfit and Faction on what the job is
 
 > **Status:** implemented 2026-09-04, on branch `dress-register`.

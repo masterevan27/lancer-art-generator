@@ -1,3 +1,8 @@
+---
+type: "Plan"
+title: "NPC 3D Texturing Implementation Plan"
+description: "Implementation steps and constraints for NPC 3D Texturing."
+---
 # NPC 3D Texturing Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

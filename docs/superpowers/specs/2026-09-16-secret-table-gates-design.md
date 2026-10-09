@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Secret table gates: tables that only roll when an earlier pick opens them"
+description: "Design decisions and requirements for Secret table gates: tables that only roll when an earlier pick opens them."
+---
 # Secret table gates: tables that only roll when an earlier pick opens them
 
 **Date:** 2026-09-16

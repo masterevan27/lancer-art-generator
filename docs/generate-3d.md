@@ -1,3 +1,8 @@
+---
+type: "Runbook"
+title: "generate-3d.py"
+description: "Reconstruct generated NPC artwork as printable models and turnaround renders."
+---
 # generate-3d.py
 
 Turns an NPC that already exists in `.generated-npcs.json` into a printable
@@ -23,7 +28,7 @@ not modify it, and it never writes to the manifest.
 
 You select an **NPC**, not an image file - the whole rebuild starts from a
 manifest entry, and the image it reconstructs from is one this tool renders
-for itself (see [Input](#input-one-image-and-this-tool-renders-it)).
+for itself (see [Input](#input-one-image-rendered-here-or-supplied-by-you)).
 
 ```
 # one NPC by manifest id - the unambiguous form

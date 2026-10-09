@@ -1,3 +1,8 @@
+---
+type: "Plan"
+title: "Remaining work — spaceships"
+description: "Historical spaceship task list with its original completion and remaining-work notes."
+---
 # Remaining work — spaceships
 
 > **Status, 2026-09-12: complete and merged.** All eight tasks below are implemented —

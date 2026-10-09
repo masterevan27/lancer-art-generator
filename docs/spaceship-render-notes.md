@@ -1,3 +1,8 @@
+---
+type: "Reference"
+title: "Spaceship render notes — first real renders against ComfyUI"
+description: "Reference notes and context for Spaceship render notes — first real renders against ComfyUI."
+---
 # Spaceship render notes — first real renders against ComfyUI
 
 Everything before this document was `--dry-run`. This is the record of the

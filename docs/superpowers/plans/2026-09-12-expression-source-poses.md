@@ -1,3 +1,8 @@
+---
+type: "Plan"
+title: "Selectable Expression Sources and Poses Implementation Plan"
+description: "Implementation steps and constraints for Selectable Expression Sources and Poses."
+---
 # Selectable Expression Sources and Poses Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development. Steps use checkbox (`- [ ]`) syntax for tracking.

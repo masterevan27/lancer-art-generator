@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Storing raw bullets in the manifest, so any trait can be re-rolled"
+description: "Design decisions and requirements for Storing raw bullets in the manifest, so any trait can be re-rolled."
+---
 # Storing raw bullets in the manifest, so any trait can be re-rolled
 
 > **Status:** shipped 2026-09-04. `rawTraits` is written by both entry writers

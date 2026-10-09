@@ -1,3 +1,8 @@
+---
+type: "Design"
+title: "Spaceship Generation — Implementation Design"
+description: "Design decisions and requirements for Spaceship Generation."
+---
 # Spaceship Generation — Implementation Design
 
 **Target repo:** `G:/GIT-REPOS/lancer-art-generator/.claude/worktrees/ultracode-spaceships/` (all unprefixed paths below are relative to it).

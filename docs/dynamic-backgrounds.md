@@ -1,3 +1,8 @@
+---
+type: "Runbook"
+title: "Dynamic backgrounds and battlemaps"
+description: "Preview, edit and render dynamic scenes and reference-based battlemaps."
+---
 # Dynamic backgrounds and battlemaps
 
 `generate-background.py` generates editable scene plans without contacting

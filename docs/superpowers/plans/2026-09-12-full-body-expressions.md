@@ -1,3 +1,8 @@
+---
+type: "Plan"
+title: "Full-body Expressions Implementation Plan"
+description: "Implementation steps and constraints for Full-body Expressions."
+---
 # Full-body Expressions Implementation Plan
 
 **Status:** Implemented and reviewed on 2026-09-12 in `de1d440` and `6f3801d`.
