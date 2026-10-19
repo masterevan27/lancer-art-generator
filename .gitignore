@@ -56,3 +56,6 @@ color-guidance.json
 
 # Ignore personal prompt files:
 prompts/secret-prompts
+
+# Local Obsidian settings
+.obsidian/
