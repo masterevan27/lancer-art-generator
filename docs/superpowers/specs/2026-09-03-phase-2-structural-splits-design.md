@@ -2,6 +2,13 @@
 type: "Design"
 title: "Phase 2: structural splits (Gear/Weapon, Hair/Hair colour)"
 description: "Design decisions and requirements for Phase 2: structural splits (Gear/Weapon, Hair/Hair colour)."
+status: stable
+tags:
+  - npc
+  - traits
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-03T12:39:36-04:00
 ---
 # Phase 2: structural splits (Gear/Weapon, Hair/Hair colour)
 

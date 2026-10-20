@@ -2,6 +2,13 @@
 type: "Design"
 title: "NPC 3D pipeline: turning a generated NPC into a rigged, printable model"
 description: "Design decisions and requirements for NPC 3D pipeline: turning a generated NPC into a rigged, printable model."
+status: stable
+tags:
+  - 3d-models
+  - npc
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-12T20:58:52-04:00
 ---
 # NPC 3D pipeline: turning a generated NPC into a rigged, printable model
 

@@ -2,6 +2,12 @@
 type: "Design"
 title: "Storing raw bullets in the manifest, so any trait can be re-rolled"
 description: "Design decisions and requirements for Storing raw bullets in the manifest, so any trait can be re-rolled."
+status: stable
+tags:
+  - traits
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-04T19:36:57-04:00
 ---
 # Storing raw bullets in the manifest, so any trait can be re-rolled
 

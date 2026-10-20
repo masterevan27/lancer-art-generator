@@ -2,6 +2,13 @@
 type: "Plan"
 title: "Theme re-roll cascade — implementation plan"
 description: "Implementation steps and constraints for Theme re-roll cascade."
+status: stable
+tags:
+  - npc
+  - traits
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-04T17:42:26-04:00
 ---
 # Theme re-roll cascade — implementation plan
 

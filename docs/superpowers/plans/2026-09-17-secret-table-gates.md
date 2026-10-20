@@ -2,6 +2,13 @@
 type: "Plan"
 title: "Secret Table Gates Implementation Plan"
 description: "Implementation steps and constraints for Secret Table Gates."
+status: stable
+tags:
+  - traits
+  - gui
+generated:
+  by: claude-code/claude-fable-5-1
+  at: 2026-09-20T22:23:33-04:00
 ---
 # Secret Table Gates Implementation Plan
 

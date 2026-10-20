@@ -2,6 +2,24 @@
 type: "Runbook"
 title: "animate-portrait.py"
 description: "Generate looping portrait and scene animations from existing images."
+status: stable
+tags:
+  - animation
+  - comfyui
+sources:
+  - id: animate-portrait
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/92815231b1670e9b6cf4a4cffc2af10397995c14/animate-portrait.py
+    title: Animation entry point
+  - id: wan22-workflow
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/92815231b1670e9b6cf4a4cffc2af10397995c14/workflows/api/Util_Portrait_to_AnimatedWEBP_Wan22_v1.json
+    title: Wan 2.2 animation workflow
+  - id: wan22-forward-workflow
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/92815231b1670e9b6cf4a4cffc2af10397995c14/workflows/api/Util_Portrait_to_AnimatedWEBP_Wan22_Forward_v1.json
+    title: Wan 2.2 forward animation workflow
+generated:
+  by: codex/unrecorded
+  at: 2026-09-12T19:05:18-04:00
+stale_after: 2026-12-11T00:00:00Z
 ---
 # animate-portrait.py
 

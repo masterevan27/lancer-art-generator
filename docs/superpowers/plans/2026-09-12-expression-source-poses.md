@@ -2,6 +2,12 @@
 type: "Plan"
 title: "Selectable Expression Sources and Poses Implementation Plan"
 description: "Implementation steps and constraints for Selectable Expression Sources and Poses."
+status: stable
+tags:
+  - expressions
+generated:
+  by: codex/unrecorded
+  at: 2026-09-12T23:28:15-04:00
 ---
 # Selectable Expression Sources and Poses Implementation Plan
 

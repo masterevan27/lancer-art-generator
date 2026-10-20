@@ -2,6 +2,25 @@
 type: "Runbook"
 title: "generate-npc.py — random NPCs, portrait + token"
 description: "Roll NPC traits and generate paired portraits and tokens."
+status: stable
+tags:
+  - npc
+  - traits
+  - comfyui
+sources:
+  - id: generate-npc
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/b45ea8890a93a8303b3fc786c53a97bb76eca4c9/generate-npc.py
+    title: NPC generator entry point
+  - id: npc-tables
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/b45ea8890a93a8303b3fc786c53a97bb76eca4c9/prompts/npc-generator-tables.md
+    title: NPC generator tables
+  - id: generate-art
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/b45ea8890a93a8303b3fc786c53a97bb76eca4c9/generate-art.py
+    title: Shared ComfyUI submission code
+generated:
+  by: claude-code/claude-fable-5-1
+  at: 2026-09-14T02:23:35-04:00
+stale_after: 2026-12-13T00:00:00Z
 ---
 # generate-npc.py — random NPCs, portrait + token
 

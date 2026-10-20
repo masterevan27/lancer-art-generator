@@ -2,6 +2,30 @@
 type: "Runbook"
 title: "generate-art.py — batch art generation through ComfyUI"
 description: "Run authored Markdown art prompts through ComfyUI batch workflows."
+status: stable
+tags:
+  - comfyui
+  - prompts
+sources:
+  - id: generate-art
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/cb96b225ba57a785e9d75e2a16ad8faf4fbd1463/generate-art.py
+    title: Batch art entry point
+  - id: scene-workflow
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/cb96b225ba57a785e9d75e2a16ad8faf4fbd1463/workflows/api/Lancer_Scene_Workflow_v1.json
+    title: Scene workflow
+  - id: scene-workflow-girls
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/cb96b225ba57a785e9d75e2a16ad8faf4fbd1463/workflows/api/Lancer_Scene_Workflow_for_girls_v1.json
+    title: Alternate scene workflow
+  - id: rmbg-workflow
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/cb96b225ba57a785e9d75e2a16ad8faf4fbd1463/workflows/api/Util_RemoveBackground_makeTransparent.json
+    title: Background removal workflow
+  - id: inpaint-workflow
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/cb96b225ba57a785e9d75e2a16ad8faf4fbd1463/workflows/api/Util_Krea2_Inpaint_v1.json
+    title: Krea2 inpaint workflow
+generated:
+  by: codex/unrecorded
+  at: 2026-09-12T14:41:00-04:00
+stale_after: 2026-12-11T00:00:00Z
 ---
 # generate-art.py — batch art generation through ComfyUI
 

@@ -2,8 +2,26 @@
 type: "Reference"
 title: "Versioning"
 description: "Release version source, increment rules and automation for this repository."
+status: stable
+tags:
+  - documentation
+  - versioning
+sources:
+  - id: version-file
+    resource: ../VERSION
+    title: Machine-readable repository version
+generated:
+  by: claude-code/claude-opus-5-5
+  at: 2026-10-20T05:04:51Z
+stale_after: 2027-01-18T00:00:00Z
 ---
 # Versioning
+
+Version `0.1.4` records OKF lifecycle, tags, provenance, code sources and review
+deadlines in every documentation concept and adopts house profile 1.1.0, which
+warns when provenance, runbook sources or review deadlines are missing. No
+document is marked verified. This documentation-only change has no user-facing
+changelog entry.
 
 A repository coordination version is stored in the root `VERSION` file.
 

@@ -2,6 +2,13 @@
 type: "Design"
 title: "Table groups: one slot for a family of near-duplicate bullets"
 description: "Design decisions and requirements for Table groups: one slot for a family of near-duplicate bullets."
+status: stable
+tags:
+  - traits
+  - prompts
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-12T20:58:52-04:00
 ---
 # Table groups: one slot for a family of near-duplicate bullets
 

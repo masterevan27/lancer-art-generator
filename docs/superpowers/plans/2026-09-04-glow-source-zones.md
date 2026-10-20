@@ -2,6 +2,13 @@
 type: "Plan"
 title: "Glow Source Zones Implementation Plan"
 description: "Implementation steps and constraints for Glow Source Zones."
+status: stable
+tags:
+  - npc
+  - traits
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-04T13:23:42-04:00
 ---
 # Glow Source Zones Implementation Plan
 

@@ -2,6 +2,12 @@
 type: "Design"
 title: "Texturing the reconstruction: the reference image's own colours on the mesh"
 description: "Design decisions and requirements for Texturing the reconstruction: the reference image's own colours on the mesh."
+status: stable
+tags:
+  - 3d-models
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-12T20:58:52-04:00
 ---
 # Texturing the reconstruction: the reference image's own colours on the mesh
 

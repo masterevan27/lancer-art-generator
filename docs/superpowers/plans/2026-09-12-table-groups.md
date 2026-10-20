@@ -2,6 +2,13 @@
 type: "Plan"
 title: "Table Groups (generator) Implementation Plan"
 description: "Implementation steps and constraints for Table Groups (generator)."
+status: stable
+tags:
+  - traits
+  - prompts
+generated:
+  by: claude-code/claude-fable-5-1
+  at: 2026-09-12T11:35:36-04:00
 ---
 # Table Groups (generator) Implementation Plan
 

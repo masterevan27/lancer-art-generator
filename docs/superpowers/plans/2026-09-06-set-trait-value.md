@@ -2,6 +2,13 @@
 type: "Plan"
 title: "Setting a trait to a chosen value — Implementation Plan"
 description: "Implementation steps and constraints for Setting a trait to a chosen value."
+status: stable
+tags:
+  - traits
+  - gui
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-06T02:30:58-04:00
 ---
 # Setting a trait to a chosen value — Implementation Plan
 

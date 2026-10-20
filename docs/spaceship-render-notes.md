@@ -2,6 +2,26 @@
 type: "Reference"
 title: "Spaceship render notes — first real renders against ComfyUI"
 description: "Reference notes and context for Spaceship render notes — first real renders against ComfyUI."
+status: stable
+tags:
+  - spaceships
+  - comfyui
+sources:
+  - id: generate-spaceship
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/62c1751b1c3e8bbc93c31a18b10a3db18265c3b4/generate-spaceship.py
+    title: Spaceship generator entry point
+  - id: ship-policy
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/62c1751b1c3e8bbc93c31a18b10a3db18265c3b4/ship_policy.py
+    title: Spaceship type and size equipment policy
+  - id: ship-prompt-budget
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/62c1751b1c3e8bbc93c31a18b10a3db18265c3b4/test/ship_prompt_budget.py
+    title: Spaceship prompt budget helper
+  - id: scene-workflow
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/62c1751b1c3e8bbc93c31a18b10a3db18265c3b4/workflows/api/Lancer_Scene_Workflow_v1.json
+    title: Scene workflow
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-07T20:02:16-04:00
 ---
 # Spaceship render notes — first real renders against ComfyUI
 

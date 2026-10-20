@@ -2,6 +2,13 @@
 type: "Design"
 title: "Secret table gates: tables that only roll when an earlier pick opens them"
 description: "Design decisions and requirements for Secret table gates: tables that only roll when an earlier pick opens them."
+status: stable
+tags:
+  - traits
+  - gui
+generated:
+  by: claude-code/claude-fable-5-1
+  at: 2026-09-20T22:23:33-04:00
 ---
 # Secret table gates: tables that only roll when an earlier pick opens them
 

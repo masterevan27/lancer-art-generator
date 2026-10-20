@@ -2,6 +2,13 @@
 type: "Plan"
 title: "Secret Prompts Implementation Plan"
 description: "Implementation steps and constraints for Secret Prompts."
+status: stable
+tags:
+  - prompts
+  - gui
+generated:
+  by: claude-code/claude-fable-5-1
+  at: 2026-09-20T22:23:33-04:00
 ---
 # Secret Prompts Implementation Plan
 

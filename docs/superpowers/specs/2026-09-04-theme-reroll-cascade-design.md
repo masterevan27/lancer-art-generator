@@ -2,6 +2,13 @@
 type: "Design"
 title: "Re-rolling Theme, and the twelve traits that go with it"
 description: "Design decisions and requirements for Re-rolling Theme, and the twelve traits that go with it."
+status: stable
+tags:
+  - npc
+  - traits
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-04T18:46:46-04:00
 ---
 # Re-rolling Theme, and the twelve traits that go with it
 

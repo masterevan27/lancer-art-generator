@@ -2,6 +2,13 @@
 type: "Design"
 title: "Glow placement filtered against the source that licensed it"
 description: "Design decisions and requirements for Glow placement filtered against the source that licensed it."
+status: stable
+tags:
+  - npc
+  - traits
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-04T13:01:14-04:00
 ---
 # Glow placement filtered against the source that licensed it
 

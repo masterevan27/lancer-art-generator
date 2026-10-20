@@ -2,6 +2,14 @@
 type: "Plan"
 title: "Token Fidelity, Weapon Policy and Trait Naming Implementation Plan"
 description: "Implementation steps and constraints for Token Fidelity, Weapon Policy and Trait Naming."
+status: stable
+tags:
+  - npc
+  - traits
+  - prompts
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-03T18:50:47-04:00
 ---
 # Token Fidelity, Weapon Policy and Trait Naming Implementation Plan
 

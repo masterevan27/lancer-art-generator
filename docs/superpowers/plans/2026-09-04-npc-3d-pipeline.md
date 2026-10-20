@@ -2,6 +2,13 @@
 type: "Plan"
 title: "NPC 3D Pipeline Implementation Plan"
 description: "Implementation steps and constraints for NPC 3D Pipeline."
+status: stable
+tags:
+  - 3d-models
+  - npc
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-04T15:51:32-04:00
 ---
 # NPC 3D Pipeline Implementation Plan
 

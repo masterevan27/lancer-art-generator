@@ -2,6 +2,27 @@
 type: "Runbook"
 title: "Dynamic backgrounds and battlemaps"
 description: "Preview, edit and render dynamic scenes and reference-based battlemaps."
+status: stable
+tags:
+  - backgrounds
+  - comfyui
+sources:
+  - id: generate-background
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/c9bfa539225e6131d53ff7cd4382e4f39c241ed7/generate-background.py
+    title: Background and battlemap entry point
+  - id: background-tables
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/c9bfa539225e6131d53ff7cd4382e4f39c241ed7/prompts/background-generator-tables.md
+    title: Background generator tables
+  - id: scene-workflow
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/c9bfa539225e6131d53ff7cd4382e4f39c241ed7/workflows/api/Lancer_Scene_Workflow_v1.json
+    title: Still scene workflow
+  - id: background-scene-tests
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/c9bfa539225e6131d53ff7cd4382e4f39c241ed7/test/test_background_scene.py
+    title: Background scene tests
+generated:
+  by: claude-code/claude-fable-5-1
+  at: 2026-09-14T22:30:17-04:00
+stale_after: 2026-12-13T00:00:00Z
 ---
 # Dynamic backgrounds and battlemaps
 

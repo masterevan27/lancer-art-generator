@@ -2,6 +2,13 @@
 type: "Plan"
 title: "Headgear/Outfit Register Implementation Plan"
 description: "Implementation steps and constraints for Headgear/Outfit Register."
+status: stable
+tags:
+  - npc
+  - traits
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-04T03:03:06-04:00
 ---
 # Headgear/Outfit Register Implementation Plan
 

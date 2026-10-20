@@ -2,6 +2,13 @@
 type: "Design"
 title: "Secret prompts: fill-in-the-blank NPC prompts for Secret mode"
 description: "Design decisions and requirements for Secret prompts: fill-in-the-blank NPC prompts for Secret mode."
+status: stable
+tags:
+  - prompts
+  - gui
+generated:
+  by: claude-code/claude-fable-5-1
+  at: 2026-09-20T22:23:33-04:00
 ---
 # Secret prompts: fill-in-the-blank NPC prompts for Secret mode
 

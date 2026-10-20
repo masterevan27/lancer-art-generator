@@ -2,6 +2,12 @@
 type: "Design"
 title: "Trait roll odds: what a bullet's real chance of being rolled is"
 description: "Design decisions and requirements for Trait roll odds: what a bullet's real chance of being rolled is."
+status: stable
+tags:
+  - traits
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-12T20:58:52-04:00
 ---
 # Trait roll odds: what a bullet's real chance of being rolled is
 

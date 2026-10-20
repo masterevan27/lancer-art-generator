@@ -2,6 +2,12 @@
 type: "Plan"
 title: "NPC 3D Texturing Implementation Plan"
 description: "Implementation steps and constraints for NPC 3D Texturing."
+status: stable
+tags:
+  - 3d-models
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-05T13:35:54-04:00
 ---
 # NPC 3D Texturing Implementation Plan
 

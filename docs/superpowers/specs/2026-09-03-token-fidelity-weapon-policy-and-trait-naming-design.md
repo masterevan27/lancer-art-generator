@@ -2,6 +2,14 @@
 type: "Design"
 title: "Token fidelity, weapon policy and trait naming"
 description: "Design decisions and requirements for Token fidelity, weapon policy and trait naming."
+status: stable
+tags:
+  - npc
+  - traits
+  - prompts
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-03T18:35:05-04:00
 ---
 # Token fidelity, weapon policy and trait naming
 

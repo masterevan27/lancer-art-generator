@@ -2,6 +2,30 @@
 type: "Runbook"
 title: "generate-3d.py"
 description: "Reconstruct generated NPC artwork as printable models and turnaround renders."
+status: stable
+tags:
+  - 3d-models
+  - npc
+sources:
+  - id: generate-3d
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/855b7781de075591fcda1212738b613f5385f475/generate-3d.py
+    title: 3D reconstruction entry point
+  - id: assemble-npc
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/855b7781de075591fcda1212738b613f5385f475/blender/assemble_npc.py
+    title: Blender assembly script
+  - id: npc-rig
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/855b7781de075591fcda1212738b613f5385f475/blender/npc_rig.py
+    title: Blender rigging helpers
+  - id: npc-mesh
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/855b7781de075591fcda1212738b613f5385f475/blender/npc_mesh.py
+    title: Blender mesh and printable-copy helpers
+  - id: hunyuan-workflow
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/855b7781de075591fcda1212738b613f5385f475/workflows/api/Util_Image_to_Mesh_Hunyuan3D_v1.json
+    title: Hunyuan3D image-to-mesh workflow
+generated:
+  by: codex/unrecorded
+  at: 2026-10-09T15:59:42-04:00
+stale_after: 2027-01-07T00:00:00Z
 ---
 # generate-3d.py
 

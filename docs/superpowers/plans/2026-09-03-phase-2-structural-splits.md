@@ -2,6 +2,13 @@
 type: "Plan"
 title: "Phase 2: Structural Splits Implementation Plan"
 description: "Implementation steps and constraints for Phase 2: Structural Splits."
+status: stable
+tags:
+  - npc
+  - traits
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-03T12:45:32-04:00
 ---
 # Phase 2: Structural Splits Implementation Plan
 

@@ -2,6 +2,13 @@
 type: "Design"
 title: "Headgear and outfit register: keeping hard tech off a kimono"
 description: "Design decisions and requirements for Headgear and outfit register: keeping hard tech off a kimono."
+status: stable
+tags:
+  - npc
+  - traits
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-12T20:58:52-04:00
 ---
 # Headgear and outfit register: keeping hard tech off a kimono
 

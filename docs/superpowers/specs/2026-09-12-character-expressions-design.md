@@ -2,6 +2,12 @@
 type: "Design"
 title: "Character expressions: SillyTavern expression sprites from one portrait"
 description: "Design decisions and requirements for Character expressions: SillyTavern expression sprites from one portrait."
+status: stable
+tags:
+  - expressions
+generated:
+  by: codex/unrecorded
+  at: 2026-09-12T21:27:32-04:00
 ---
 # Character expressions: SillyTavern expression sprites from one portrait
 

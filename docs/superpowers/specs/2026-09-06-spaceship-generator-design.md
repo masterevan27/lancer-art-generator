@@ -2,6 +2,12 @@
 type: "Design"
 title: "Spaceship Generation — Implementation Design"
 description: "Design decisions and requirements for Spaceship Generation."
+status: stable
+tags:
+  - spaceships
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-07T00:40:08-04:00
 ---
 # Spaceship Generation — Implementation Design
 

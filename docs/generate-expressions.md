@@ -2,6 +2,24 @@
 type: "Runbook"
 title: "Expression sprites"
 description: "Generate full-body expression sprites from NPC portraits or tokens."
+status: stable
+tags:
+  - expressions
+  - comfyui
+sources:
+  - id: generate-expressions
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/e3ae5cafdb6ba4b0c60f5f5b36cac36d36c72874/generate-expressions.py
+    title: Expression sprite entry point
+  - id: expression-tables
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/e3ae5cafdb6ba4b0c60f5f5b36cac36d36c72874/prompts/expression-tables.md
+    title: Expression tables
+  - id: expression-workflow
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/e3ae5cafdb6ba4b0c60f5f5b36cac36d36c72874/workflows/api/Util_Expression_QwenEdit_RMBG_v1.json
+    title: Expression edit workflow
+generated:
+  by: codex/unrecorded
+  at: 2026-09-13T00:29:16-04:00
+stale_after: 2026-12-12T00:00:00Z
 ---
 # Expression sprites
 

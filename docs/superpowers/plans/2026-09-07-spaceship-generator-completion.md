@@ -2,6 +2,22 @@
 type: "Reference"
 title: "Spaceship generator completion — implementation plan (Repo ART)"
 description: "Reference notes and context for Spaceship generator completion — implementation plan (Repo ART)."
+status: stable
+tags:
+  - spaceships
+sources:
+  - id: ship-roll
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/c7e1bae233269d515b7677da090e39acaa0aa867/_ship_roll.py
+    title: Spaceship rolling half before the merge
+  - id: ship-cli
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/c7e1bae233269d515b7677da090e39acaa0aa867/_ship_cli.py
+    title: Spaceship CLI half before the merge
+  - id: ship-policy
+    resource: https://github.com/masterevan27/lancer-art-generator/blob/c7e1bae233269d515b7677da090e39acaa0aa867/ship_policy.py
+    title: Spaceship type and size equipment policy
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-07T01:32:22-04:00
 ---
 # Spaceship generator completion — implementation plan (Repo ART)
 

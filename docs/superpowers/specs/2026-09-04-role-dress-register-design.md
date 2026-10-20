@@ -2,6 +2,13 @@
 type: "Design"
 title: "Role and dress register: gating Outfit and Faction on what the job is"
 description: "Design decisions and requirements for Role and dress register: gating Outfit and Faction on what the job is."
+status: stable
+tags:
+  - npc
+  - traits
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-04T01:58:23-04:00
 ---
 # Role and dress register: gating Outfit and Faction on what the job is
 

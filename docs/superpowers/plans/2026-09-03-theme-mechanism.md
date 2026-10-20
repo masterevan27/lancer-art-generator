@@ -2,6 +2,13 @@
 type: "Plan"
 title: "Theme Mechanism (Phase 1) Implementation Plan"
 description: "Implementation steps and constraints for Theme Mechanism (Phase 1)."
+status: stable
+tags:
+  - npc
+  - traits
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-03T01:08:43-04:00
 ---
 # Theme Mechanism (Phase 1) Implementation Plan
 

@@ -2,6 +2,13 @@
 type: "Design"
 title: "Setting a trait to a chosen value on an already-rolled NPC"
 description: "Design decisions and requirements for Setting a trait to a chosen value on an already-rolled NPC."
+status: stable
+tags:
+  - traits
+  - gui
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-12T20:58:52-04:00
 ---
 # Setting a trait to a chosen value on an already-rolled NPC
 

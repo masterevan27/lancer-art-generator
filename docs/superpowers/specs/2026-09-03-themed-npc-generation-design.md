@@ -2,6 +2,13 @@
 type: "Design"
 title: "Themed NPC generation"
 description: "Design decisions and requirements for Themed NPC generation."
+status: stable
+tags:
+  - npc
+  - traits
+generated:
+  by: claude-code/claude-opus-5
+  at: 2026-09-03T01:08:43-04:00
 ---
 # Themed NPC generation
 

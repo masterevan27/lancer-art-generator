@@ -2,6 +2,12 @@
 type: "Plan"
 title: "Full-body Expressions Implementation Plan"
 description: "Implementation steps and constraints for Full-body Expressions."
+status: stable
+tags:
+  - expressions
+generated:
+  by: codex/unrecorded
+  at: 2026-09-12T22:22:16-04:00
 ---
 # Full-body Expressions Implementation Plan
 
