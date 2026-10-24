@@ -1,0 +1,14 @@
+{
+  "asset": "spaceship-output-2026-09-07.png",
+  "sha256": "72d0e363b5e91bcb34a7ade3184fe3cf867234aa21f09fc66554f0d91c6b04bd",
+  "reviewedAt": "2026-10-24",
+  "kind": "historical generated output",
+  "source": "output/LancerSpaceships/run3/Destroyers/ISV Consignment Eleven/ISV Consignment Eleven Portrait.png",
+  "sourceDossier": "output/LancerSpaceships/run3/Destroyers/ISV Consignment Eleven/ISV Consignment Eleven.md",
+  "dossierDate": "2026-09-07",
+  "seed": 1805834517,
+  "generator": "generate-spaceship.py",
+  "generatorRevision": null,
+  "limitations": "Original rendering revision is not recorded; seed requires the original tables/workflow/models to reproduce. No new render or current-quality claim.",
+  "author": "codex/gpt-6.1-sol"
+}

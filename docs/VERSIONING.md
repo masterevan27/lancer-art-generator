@@ -7,15 +7,20 @@ tags:
   - documentation
   - versioning
 sources:
+  - id: readme-preview
+    resource: ../README.md
+    title: README deliverable preview
   - id: version-file
     resource: ../VERSION
     title: Machine-readable repository version
 generated:
-  by: claude-code/claude-opus-5-5
-  at: 2026-10-20T05:04:51Z
+  by: codex/gpt-6.1-sol
+  at: 2026-10-24T20:56:42.122Z
 stale_after: 2027-01-18T00:00:00Z
 ---
 # Versioning
+
+Version `0.1.5` (2026-10-24): Add a dated historical spaceship output preview with retained asset provenance; no new render or current-quality claim.
 
 Version `0.1.4` records OKF lifecycle, tags, provenance, code sources and review
 deadlines in every documentation concept and adopts house profile 1.1.0, which

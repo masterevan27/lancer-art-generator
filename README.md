@@ -1,5 +1,9 @@
 # Lancer Art Generator
 
+![Generated spaceship portrait of ISV Consignment Eleven, a torpedo destroyer with an orange hull band](docs/assets/spaceship-output-2026-09-07.png)
+
+*Historical generator output: ISV Consignment Eleven, dossier dated 2026-09-07, seed `1805834517`. This is a real saved output, not a new render or verification of current generation quality. [Asset provenance](docs/assets/media-provenance.json).*
+
 ## Python setup
 
 The generator CLIs and Python tests use the standard library only. No pip
