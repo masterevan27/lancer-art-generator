@@ -92,3 +92,4 @@ venv/
 .coverage.*
 htmlcov/
 # <<< shared baseline <<<
+/.obsidianignore
