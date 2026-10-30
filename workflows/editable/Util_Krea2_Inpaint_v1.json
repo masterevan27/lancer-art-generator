@@ -41,11 +41,11 @@
         ]
       },
       "widgets_values": [
-        "krea2TurboOfficialComfy_krea2TurboInt8.safetensors",
+        "Krea2\\krea2TurboOfficialComfy_krea2TurboInt8.safetensors",
         "default"
       ],
       "widgets_values_named": {
-        "unet_name": "krea2TurboOfficialComfy_krea2TurboInt8.safetensors",
+        "unet_name": "Krea2\\krea2TurboOfficialComfy_krea2TurboInt8.safetensors",
         "weight_dtype": "default"
       }
     },

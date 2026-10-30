@@ -7,14 +7,14 @@
   "2": {
     "class_type": "UNETLoader",
     "_meta": {"title": "Qwen-Image-Edit 2509"},
-    "inputs": {"unet_name": "qwen_image_edit_2509_fp8_e4m3fn.safetensors", "weight_dtype": "default"}
+    "inputs": {"unet_name": "Qwen\\qwen_image_edit_2509_fp8_e4m3fn.safetensors", "weight_dtype": "default"}
   },
   "3": {
     "class_type": "LoraLoaderModelOnly",
     "_meta": {"title": "4-step Lightning LoRA"},
     "inputs": {
       "model": ["2", 0],
-      "lora_name": "Qwen\\Qwen-Image-Edit-2509-Lightning-4steps-V1.0-bf16.safetensors",
+      "lora_name": "Qwen\\Utility\\Qwen-Image-Edit-2509-Lightning-4steps-V1.0-bf16.safetensors",
       "strength_model": 1.0
     }
   },

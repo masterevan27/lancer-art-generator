@@ -961,9 +961,9 @@ class TestGraph(unittest.TestCase):
         _, unet = only(graph, "UNETLoader")
         _, lora = only(graph, "LoraLoaderModelOnly")
         self.assertEqual(unet["inputs"]["unet_name"],
-                         "qwen_image_edit_2509_fp8_e4m3fn.safetensors")
+                         "Qwen\\qwen_image_edit_2509_fp8_e4m3fn.safetensors")
         self.assertEqual(lora["inputs"]["lora_name"],
-                         "Qwen\\Qwen-Image-Edit-2509-Lightning-4steps-V1.0-bf16.safetensors")
+                         "Qwen\\Utility\\Qwen-Image-Edit-2509-Lightning-4steps-V1.0-bf16.safetensors")
 
 
 class TestWorkflowAgainstLiveServer(unittest.TestCase):

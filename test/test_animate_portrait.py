@@ -90,8 +90,8 @@ class TestWorkflowShape(unittest.TestCase):
         loaded = {d["inputs"]["unet_name"]
                   for d in nodes_of(graph(), "UNETLoader").values()}
         self.assertEqual(loaded, {
-            "wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
-            "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors"})
+            "Wan22\\wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
+            "Wan22\\wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors"})
 
     def test_text_is_encoded_for_wan(self):
         _, clip = only(graph(), "CLIPLoader")

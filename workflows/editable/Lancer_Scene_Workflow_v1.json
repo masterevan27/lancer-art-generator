@@ -313,11 +313,11 @@
         ]
       },
       "widgets_values": [
-        "krea2TurboOfficialComfy_krea2TurboInt8.safetensors",
+        "Krea2\\krea2TurboOfficialComfy_krea2TurboInt8.safetensors",
         "default"
       ],
       "widgets_values_named": {
-        "unet_name": "krea2TurboOfficialComfy_krea2TurboInt8.safetensors",
+        "unet_name": "Krea2\\krea2TurboOfficialComfy_krea2TurboInt8.safetensors",
         "weight_dtype": "default"
       }
     },
@@ -414,12 +414,12 @@
         "Node name for S&R": "LoraLoader"
       },
       "widgets_values": [
-        "Video\\detail_slider_krea2_loraholic.safetensors",
+        "Krea2\\Utility\\detail_slider_krea2_loraholic.safetensors",
         2,
         2
       ],
       "widgets_values_named": {
-        "lora_name": "Video\\detail_slider_krea2_loraholic.safetensors",
+        "lora_name": "Krea2\\Utility\\detail_slider_krea2_loraholic.safetensors",
         "strength_model": 2,
         "strength_clip": 2
       }

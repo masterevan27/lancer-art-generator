@@ -26,7 +26,7 @@
   },
   "8": {
     "inputs": {
-      "unet_name": "krea2TurboOfficialComfy_krea2TurboInt8.safetensors",
+      "unet_name": "Krea2\\krea2TurboOfficialComfy_krea2TurboInt8.safetensors",
       "weight_dtype": "default"
     },
     "class_type": "UNETLoader",

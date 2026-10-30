@@ -14,7 +14,7 @@
   },
   "52": {
     "inputs": {
-      "unet_name": "krea2TurboOfficialComfy_krea2TurboInt8.safetensors",
+      "unet_name": "Krea2\\krea2TurboOfficialComfy_krea2TurboInt8.safetensors",
       "weight_dtype": "default"
     },
     "class_type": "UNETLoader",
@@ -126,7 +126,7 @@
   },
   "181": {
     "inputs": {
-      "lora_name": "Video\\detail_slider_krea2_loraholic.safetensors",
+      "lora_name": "Krea2\\Utility\\detail_slider_krea2_loraholic.safetensors",
       "strength_model": 2,
       "strength_clip": 2,
       "model": [
